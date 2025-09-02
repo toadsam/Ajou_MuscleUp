@@ -5,7 +5,20 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["Poppins", "Pretendard", "sans-serif"],
+        heading: ["Poppins", "sans-serif"],
+        body: ["Pretendard", "sans-serif"],
+      },
+      colors: {
+        brand: {
+          pink: "#ec4899",
+          purple: "#8b5cf6",
+          indigo: "#4f46e5",
+        },
+      },
+    },
   },
   plugins: [],
 }
