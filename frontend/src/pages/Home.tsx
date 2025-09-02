@@ -1,43 +1,51 @@
 export default function Home() {
   return (
-    <section className="relative w-full h-screen flex items-center justify-center bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 text-white overflow-hidden">
-      {/* 오버레이 (Glassmorphism 효과를 주기 위해) */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+    <section className="relative w-full h-screen flex items-center bg-gradient-to-br from-indigo-900 via-purple-900 to-black overflow-hidden">
+      {/* 좌측 비주얼 */}
+      <div className="absolute left-10 w-1/2 h-full flex items-center justify-center">
+        <img
+          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+          alt="Hero Visual"
+          className="object-cover w-3/4 opacity-90 drop-shadow-2xl"
+        />
+      </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="relative z-10 text-center px-6 max-w-4xl">
-        {/* 타이틀 */}
-        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 animate-fade-in-down">
-          득근에서 <span className="text-green-300">함께</span> 성장하세요
+      {/* 텍스트 영역 */}
+      <div className="ml-auto max-w-xl text-right pr-16 relative z-10">
+        {/* ✅ 타이틀 */}
+        <h1 className="text-5xl md:text-6xl font-heading font-extrabold leading-tight">
+          득근에서{" "}
+          <span className="bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+            함께 성장
+          </span>
+          하세요
         </h1>
 
-        {/* 설명 */}
-        <p className="text-lg md:text-2xl text-gray-200 leading-relaxed mb-10 animate-fade-in-up">
-          최신 트렌드 운동 커뮤니티 🚀 <br />
-          프로틴 공동구매 · 헬스장 후기 · 임원진 소개까지,  
-          <span className="font-bold text-white"> 득근 하나로 해결!</span>
+        {/* ✅ 설명 */}
+        <p className="mt-6 text-lg md:text-xl font-body text-gray-300 leading-relaxed">
+          운동 커뮤니티의 <span className="text-pink-400 font-semibold">새로운 기준 🚀</span>
+          <br />
+          <span className="text-white font-semibold">
+            프로틴 공동구매 · 헬스장 후기 · 임원진 소개
+          </span>
         </p>
 
-        {/* 버튼 그룹 */}
-        <div className="flex justify-center gap-6 flex-wrap">
+        {/* ✅ 버튼 */}
+        <div className="mt-10 flex justify-end gap-4">
           <a
             href="/protein"
-            className="px-8 py-4 rounded-xl text-lg font-semibold bg-white text-gray-900 shadow-xl hover:scale-110 hover:shadow-2xl transform transition duration-300"
+            className="px-6 py-3 rounded-lg text-base font-semibold bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:scale-105 shadow-lg transition"
           >
-            지금 시작하기!!!!
+            지금 시작하기
           </a>
           <a
             href="/reviews"
-            className="px-8 py-4 rounded-xl text-lg font-semibold bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-xl hover:scale-110 hover:shadow-2xl transform transition duration-300"
+            className="px-6 py-3 rounded-lg text-base font-semibold border border-gray-400 text-white hover:bg-gray-800 transition"
           >
             후기 보기
           </a>
         </div>
       </div>
-
-      {/* 배경 원형 장식 (애니메이션) */}
-      <div className="absolute top-10 left-10 w-72 h-72 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-ping"></div>
     </section>
   );
 }

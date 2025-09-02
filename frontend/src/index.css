@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 텍스트 그라데이션 공용 클래스 */
+.text-gradient {
+  @apply bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent;
+}
+
+/* 네온 글로우 효과 */
+.text-glow {
+  text-shadow: 0 0 10px rgba(236,72,153,0.7), 0 0 20px rgba(139,92,246,0.6);
+}
