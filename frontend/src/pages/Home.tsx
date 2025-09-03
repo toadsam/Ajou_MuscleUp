@@ -1,4 +1,22 @@
+import { useState, useEffect } from "react";
+
+const images = [
+  "https://images.unsplash.com/photo-1598970434795-0c54fe7c0648",
+  "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
+  "https://images.unsplash.com/photo-1598970434795-0c54fe7c0648",
+];
+
 export default function Home() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // ⏳ 일정 시간마다 이미지 변경
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 5000); // 5초마다 변경
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="relative w-full h-screen flex bg-gradient-to-br from-gray-900 via-black to-gray-800 overflow-hidden">
       {/* 좌측: 텍스트 영역 */}
@@ -34,12 +52,17 @@ export default function Home() {
       </div>
 
       {/* 우측: 이미지 영역 */}
-      <div className="flex-1 flex items-center justify-center relative">
-        <img
-          src="https://images.unsplash.com/photo-1598970434795-0c54fe7c0648"
-          alt="운동 이미지"
-          className="w-3/4 h-auto object-contain drop-shadow-2xl"
-        />
+      <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+        {images.map((src, index) => (
+          <img
+            key={index}
+            src={src}
+            alt="운동 이미지"
+            className={`absolute transition-opacity duration-1000 ease-in-out w-full h-full object-cover ${
+              index === currentIndex ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
       </div>
     </section>
   );

@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Protein from "./pages/Protein";
 import Reviews from "./pages/Reviews";
 import Executives from "./pages/Executives";
+import AiFitness from "./pages/AiFitness";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/protein" element={<Protein />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/executives" element={<Executives />} />
+            <Route path="/ai" element={<AiFitness />} />
           </Routes>
         </main>
         <Footer />
