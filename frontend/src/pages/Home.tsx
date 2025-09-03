@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 
+// 이미지 import
+import shark from "../assets/images/상어.png";
+import jaegun from "../assets/images/재건이형.jpg";
+
+
 const images = [
-  "https://images.unsplash.com/photo-1598970434795-0c54fe7c0648",
+  shark,
   "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
-  "https://images.unsplash.com/photo-1598970434795-0c54fe7c0648",
+  jaegun,
 ];
 
 export default function Home() {

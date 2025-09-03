@@ -1,4 +1,4 @@
-package com.ajou.muscleup.backend;
+package com.ajou.muscleup;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
