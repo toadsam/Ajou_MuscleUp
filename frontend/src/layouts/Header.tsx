@@ -40,7 +40,9 @@ export default function Header() {
       </nav>
 
       {/* 중앙 로고 */}
-              <Logo isScrolled={isScrolled} />
+              <Link to="/">
+          <Logo isScrolled={isScrolled} />
+              </Link>
 
       {/* 우측 액션 */}
       <div className="flex space-x-6 items-center">
@@ -61,7 +63,7 @@ export default function Header() {
               : "bg-white text-gray-900 hover:bg-gray-100"
           }`}
         >
-          회원가입
+          <Link to="/register" className="...">회원가입</Link>
         </button>
       </div>
     </header>
