@@ -6,6 +6,9 @@ import Protein from "./pages/Protein";
 import Reviews from "./pages/Reviews";
 import Executives from "./pages/Executives";
 import AiFitness from "./pages/AiFitness";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import WriteReview from "./pages/WriteReview";
 
 function App() {
   return (
@@ -19,6 +22,9 @@ function App() {
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/executives" element={<Executives />} />
             <Route path="/ai" element={<AiFitness />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/reviews/write" element={<WriteReview />} />
           </Routes>
         </main>
         <Footer />
