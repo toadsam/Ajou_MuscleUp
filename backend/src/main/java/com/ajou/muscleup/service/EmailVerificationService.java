@@ -48,7 +48,8 @@ public class EmailVerificationService {
         // ★ 요청은 즉시 200으로 끝내고, 메일은 비동기로 발송
         String subject = "[Ajou MuscleUp] 이메일 인증코드";
         String text = "인증코드: " + code + "\n유효기간: 10분\n(타인에게 공유 금지)";
-        emailSender.sendSimpleAsync(fromAddress, email, subject, text);
+        System.out.println("DEBUG >>> to=" + email + ", subject=" + subject + ", text=" + text);
+        emailSender.sendSimpleAsync(email, subject, text);
 
         // (개발 편의) 콘솔에도 코드 찍어두면 테스트 쉬움
         System.out.println("[DEV] verification code for " + email + " = " + code);
