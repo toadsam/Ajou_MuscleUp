@@ -1,5 +1,12 @@
 import { useState } from "react";
 
+interface LoginResponse {
+  token: string;
+  email: string;
+  nickname: string;
+  role: string;
+}
+
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
 
@@ -7,10 +14,43 @@ export default function Login() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 👉 나중에 백엔드 연동
-    console.log("로그인 시도:", form);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (response.ok) {
+        const data: LoginResponse = await response.json();
+
+        // ✅ 토큰 저장
+        localStorage.setItem("token", data.token);
+
+        // ✅ 유저 정보 저장
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            email: data.email,
+            nickname: data.nickname,
+            role: data.role,
+          })
+        );
+
+        alert(`로그인 성공! 환영합니다 ${data.nickname}님 🎉`);
+
+        // 로그인 후 메인 페이지로 이동
+        window.location.href = "/";
+      } else {
+        const error = await response.text();
+        alert("로그인 실패: " + error);
+      }
+    } catch (err) {
+      alert("서버와 연결할 수 없습니다. 😢");
+    }
   };
 
   return (
