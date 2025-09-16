@@ -13,11 +13,45 @@ type Protein = {
   avgRating?: number | null;
 };
 
-// 백엔드가 Page 형태({ content: [...] })로 줄 수도 있어 대응
+// 🔑 공통 API 유틸
+async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = `${import.meta.env.VITE_API_BASE}${path}`;
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers || {}),
+    },
+    ...init,
+  });
+
+  // ✅ 401 → 로그인 만료 → 로그아웃 처리
+  if (res.status === 401) {
+    alert("⚠️ 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+    throw new Error("Unauthorized");
+  }
+
+  // ✅ 403 → 권한 부족 → 로그아웃은 하지 않음
+  if (res.status === 403) {
+    alert("⚠️ 권한이 없습니다.");
+    throw new Error("Forbidden");
+  }
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// ✅ 프로틴 목록 불러오기 (토큰 자동 포함됨)
 async function fetchProteins(): Promise<Protein[]> {
-  const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/proteins`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
+  const data = await api<any>("/api/proteins");
   return Array.isArray(data) ? data : (data.content ?? []);
 }
 
@@ -39,13 +73,13 @@ export default function Protein() {
     })();
   }, []);
 
-  // 정렬/필터 버튼 동작(클라이언트 정렬)
+  // 정렬/필터 버튼 동작
   const sortByPriceAsc = () =>
-    setProducts(p => [...p].sort((a, b) => (a.price ?? 0) - (b.price ?? 0)));
+    setProducts((p) => [...p].sort((a, b) => (a.price ?? 0) - (b.price ?? 0)));
   const sortByPriceDesc = () =>
-    setProducts(p => [...p].sort((a, b) => (b.price ?? 0) - (a.price ?? 0)));
+    setProducts((p) => [...p].sort((a, b) => (b.price ?? 0) - (a.price ?? 0)));
   const sortByDays = () =>
-    setProducts(p => [...p].sort((a, b) => (a.days ?? 9e9) - (b.days ?? 9e9)));
+    setProducts((p) => [...p].sort((a, b) => (a.days ?? 9e9) - (b.days ?? 9e9)));
 
   return (
     <section className="pt-32 p-12 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
@@ -53,13 +87,22 @@ export default function Protein() {
 
       {/* 필터 버튼 */}
       <div className="flex justify-center gap-4 mb-10">
-        <button onClick={sortByDays} className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">
+        <button
+          onClick={sortByDays}
+          className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
+        >
           마감 임박순
         </button>
-        <button onClick={sortByPriceAsc} className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">
+        <button
+          onClick={sortByPriceAsc}
+          className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
+        >
           가격 낮은순
         </button>
-        <button onClick={sortByPriceDesc} className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">
+        <button
+          onClick={sortByPriceDesc}
+          className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
+        >
           가격 높은순
         </button>
       </div>
@@ -71,31 +114,44 @@ export default function Protein() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {products.map((p) => {
           const deadlineColor =
-            (p.days ?? 99) <= 3 ? "text-red-400" :
-            (p.days ?? 99) <= 5 ? "text-yellow-400" : "text-green-400";
+            (p.days ?? 99) <= 3
+              ? "text-red-400"
+              : (p.days ?? 99) <= 5
+              ? "text-yellow-400"
+              : "text-green-400";
 
-          // 기존 디자인의 progress는 'participants/goal'이었는데,
-          // 현재 백엔드엔 participants가 없으므로 일단 평점(0~5)을 0~100%로 변환해 대체 표시
           const rating = p.avgRating ?? 0;
-          const progress = Math.max(0, Math.min(100, Math.round((rating / 5) * 100)));
+          const progress = Math.max(
+            0,
+            Math.min(100, Math.round((rating / 5) * 100))
+          );
 
           return (
             <div
               key={p.id}
               className="bg-gray-800/70 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg hover:shadow-pink-500/40 transition hover:scale-105"
             >
-              {/* 상품 이미지 */}
               {p.imageUrl && (
-                <img src={p.imageUrl} alt={p.name} className="w-full h-40 object-cover" />
+                <img
+                  src={p.imageUrl}
+                  alt={p.name}
+                  className="w-full h-40 object-cover"
+                />
               )}
 
               <div className="p-6">
                 <h3 className="text-2xl font-bold mb-2">{p.name}</h3>
-                <p className="text-gray-300 mb-2">₩{p.price?.toLocaleString() ?? "-"}</p>
-                <p className={`${deadlineColor} font-semibold`}>남은 기간: {p.days ?? "-"}일</p>
-                <p className="text-sm text-gray-400">카테고리: {p.category ?? "-"}</p>
+                <p className="text-gray-300 mb-2">
+                  ₩{p.price?.toLocaleString() ?? "-"}
+                </p>
+                <p className={`${deadlineColor} font-semibold`}>
+                  남은 기간: {p.days ?? "-"}일
+                </p>
+                <p className="text-sm text-gray-400">
+                  카테고리: {p.category ?? "-"}
+                </p>
 
-                {/* 진행률 바(임시: 평점 기반) */}
+                {/* 평점 기반 진행률 */}
                 <div className="mt-4">
                   <div className="flex justify-between text-sm text-gray-400 mb-1">
                     <span>평점</span>
@@ -109,7 +165,6 @@ export default function Protein() {
                   </div>
                 </div>
 
-                {/* 상세로 이동 (참여 기능은 서버 스펙 정해지면 붙임) */}
                 <Link
                   to={`/proteins/${p.id}`}
                   className="mt-6 block w-full text-center px-4 py-3 rounded-lg font-semibold transition bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:opacity-90"
@@ -122,7 +177,7 @@ export default function Protein() {
         })}
       </div>
 
-      {/* 등록 페이지 이동 버튼 */}
+      {/* 등록 버튼 */}
       <div className="text-center mt-12">
         <Link
           to="/protein/write"

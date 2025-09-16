@@ -10,8 +10,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import WriteReview from "./pages/WriteReview";
 import WriteProtein from "./pages/WriteProtein";
-import ProteinDetail from './pages/ProteinDetail';
-
+import ProteinDetail from "./pages/ProteinDetail";
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ 추가
 
 function App() {
   return (
@@ -20,16 +20,62 @@ function App() {
         <Header />
         <main className="flex-grow">
           <Routes>
-            <Route path="/proteins/:id" element={<ProteinDetail />} /> 
             <Route path="/" element={<Home />} />
-            <Route path="/protein" element={<Protein />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/executives" element={<Executives />} />
-            <Route path="/ai" element={<AiFitness />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/reviews/write" element={<WriteReview />} />
-            <Route path="/protein/write" element={<WriteProtein />} />
+
+            {/* ✅ 로그인 필요 없는 공개 라우트 */}
+            <Route path="/proteins/:id" element={<ProteinDetail />} />
+
+            {/* ✅ 보호된 라우트 (로그인 필요) */}
+            <Route
+              path="/protein"
+              element={
+                <ProtectedRoute>
+                  <Protein />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reviews"
+              element={
+                <ProtectedRoute>
+                  <Reviews />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/executives"
+              element={
+                <ProtectedRoute>
+                  <Executives />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ai"
+              element={
+                <ProtectedRoute>
+                  <AiFitness />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reviews/write"
+              element={
+                <ProtectedRoute>
+                  <WriteReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/protein/write"
+              element={
+                <ProtectedRoute>
+                  <WriteProtein />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </main>
         <Footer />
