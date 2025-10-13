@@ -39,12 +39,14 @@ public class JwtUtil {
 
     // ✅ 토큰에서 역할(role) 꺼내기
     public String getRoleFromToken(String token) {
-        return Jwts.parserBuilder()
+        String role = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .get("role", String.class);
+        if (role == null) return null;
+        return role.startsWith("ROLE_") ? role : "ROLE_" + role;
     }
 
     // ✅ 토큰 검증

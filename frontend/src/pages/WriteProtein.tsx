@@ -5,8 +5,10 @@ import { useNavigate } from "react-router-dom";
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = BASE ? `${BASE}${path}` : path;
+  const token = localStorage.getItem("token");
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+    headers: { "Content-Type": "application/json", ...authHeader, ...(init?.headers || {}) },
     ...init,
   });
   if (!res.ok) {

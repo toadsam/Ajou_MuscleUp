@@ -28,7 +28,9 @@ export default function ProteinDetail() {
       try {
         setLoading(true);
         const url = (BASE ? `${BASE}` : "") + `/api/proteins/${id}`;
-        const res = await fetch(url);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const res = await fetch(url, { headers });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: Protein = await res.json();
         setData(json);
