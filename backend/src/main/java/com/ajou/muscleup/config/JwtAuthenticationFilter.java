@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         // 2️⃣ 토큰 검증
-        if (jwtUtil.validateToken(token)) {
+        if (jwtUtil.validateToken(token) && "access".equals(jwtUtil.getTokenType(token))) {
             String email = jwtUtil.getEmailFromToken(token);
             String role = jwtUtil.getRoleFromToken(token);
 

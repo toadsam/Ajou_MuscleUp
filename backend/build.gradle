@@ -51,3 +51,8 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Ensure source encoding is UTF-8 for all Java compilation
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

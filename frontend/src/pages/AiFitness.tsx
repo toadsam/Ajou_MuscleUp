@@ -10,42 +10,54 @@ export default function AiFitness() {
 
   const [result, setResult] = useState<string | null>(null);
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setResult(null);
 
-    // 👉 실제로는 백엔드 + AI API 연동
-    // 지금은 간단히 로직만 예시
-    const bmi = Number(form.weight) / Math.pow(Number(form.height) / 100, 2);
-    let advice = "";
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/ai/analyze`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(form),
+        credentials: (import.meta.env.VITE_USE_CREDENTIALS === "true" ? "include" : "same-origin"),
+      });
 
-    if (bmi > 25) {
-      advice += "체중 감량이 필요합니다. 하루 500kcal 적게 섭취하세요.\n";
-    } else if (bmi < 18.5) {
-      advice += "체중 증가가 필요합니다. 단백질 위주의 식단을 추천합니다.\n";
-    } else {
-      advice += "정상 체중 범위입니다. 꾸준한 운동을 유지하세요.\n";
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || `HTTP ${res.status}`);
+      }
+
+      const data: { explanation: string } = await res.json();
+      setResult(data.explanation);
+    } catch (err: any) {
+      setError(err?.message || "AI �м� �� ������ �߻��߽��ϴ�.");
+    } finally {
+      setLoading(false);
     }
-
-    advice += "유산소 운동 시 심박수는 최대심박수의 60~75%가 유리합니다.\n";
-    advice += "단백질:체지방률(%) × 1.2g/day 정도 섭취를 추천합니다.";
-
-    setResult(advice);
   };
 
   return (
     <section className="pt-32 p-12 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
-      <h2 className="text-4xl font-extrabold mb-12 text-center">🤖 AI득근</h2>
+      <h2 className="text-4xl font-extrabold mb-12 text-center">?�� AI?�근</h2>
 
       <form
         onSubmit={handleSubmit}
         className="max-w-lg mx-auto bg-gray-800/70 p-8 rounded-2xl shadow space-y-6"
       >
         <div>
-          <label className="block mb-2">키 (cm)</label>
+          <label className="block mb-2">??(cm)</label>
           <input
             type="number"
             name="height"
@@ -67,7 +79,7 @@ export default function AiFitness() {
           />
         </div>
         <div>
-          <label className="block mb-2">체지방률 (%)</label>
+          <label className="block mb-2">체�?방률 (%)</label>
           <input
             type="number"
             name="bodyFat"
@@ -91,16 +103,26 @@ export default function AiFitness() {
           type="submit"
           className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
         >
-          분석하기
+          분석?�기
         </button>
       </form>
 
+      {loading && (
+        <p className="text-center text-gray-300 mt-8">AI�� �м� ���Դϴ�...</p>
+      )}
+      {error && (
+        <p className="text-center text-red-400 mt-8">{error}</p>
+      )}
       {result && (
         <div className="max-w-lg mx-auto mt-10 bg-gray-800/70 p-6 rounded-2xl shadow">
-          <h3 className="text-2xl font-bold mb-4">맞춤형 AI 피드백</h3>
+          <h3 className="text-2xl font-bold mb-4">������ AI ���̵�</h3>
           <pre className="whitespace-pre-wrap text-gray-300">{result}</pre>
         </div>
       )}
     </section>
   );
 }
+
+
+
+
