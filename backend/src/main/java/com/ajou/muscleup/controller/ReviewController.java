@@ -19,16 +19,16 @@ public class ReviewController {
     }
 
     @GetMapping
-    public ResponseEntity<?> list(@RequestParam Long proteinId,
-                                  @RequestParam(defaultValue = "0") int page,
-                                  @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<?> list(@RequestParam("proteinId") Long proteinId,
+                                  @RequestParam(value = "page", defaultValue = "0") int page,
+                                  @RequestParam(value = "size", defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ReviewResponse> result = reviewService.listByProtein(proteinId, pageable);
         return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id, @RequestParam Long requesterUserId) {
+    public ResponseEntity<?> delete(@PathVariable("id") Long id, @RequestParam("requesterUserId") Long requesterUserId) {
         reviewService.delete(id, requesterUserId);
         return ResponseEntity.ok().build();
     }

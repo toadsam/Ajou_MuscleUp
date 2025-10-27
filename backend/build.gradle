@@ -55,4 +55,6 @@ tasks.named('test') {
 // Ensure source encoding is UTF-8 for all Java compilation
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    // Ensure parameter names are retained for Spring MVC argument resolution
+    options.compilerArgs += ["-parameters"]
 }

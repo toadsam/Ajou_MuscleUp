@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Configuration
 public class SecurityConfig {
@@ -34,7 +35,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                                   @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -42,11 +43,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/ping", "/api/ping").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
                 // Protected APIs
-                .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasRole("USER")
+                // TEMP: Diagnose 500 vs auth issue — open GET proteins
+                .requestMatchers(HttpMethod.GET, "/api/proteins/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasRole("USER")
                 .requestMatchers("/api/ai/**").hasRole("USER")
 
@@ -60,4 +63,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

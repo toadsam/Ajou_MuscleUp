@@ -10,5 +10,5 @@ public interface ProteinService {
     void delete(Long id);
     Protein get(Long id);
     Page<Protein> list(String q, Pageable pageable);
-    Double averageRating(Long proteinId);
+    double averageRating(Long proteinId);
 }

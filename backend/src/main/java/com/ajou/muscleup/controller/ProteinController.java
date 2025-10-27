@@ -21,27 +21,27 @@ public class ProteinController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ProteinCreateUpdateRequest req) {
+    public ResponseEntity<?> update(@PathVariable("id") Long id, @RequestBody ProteinCreateUpdateRequest req) {
         return ResponseEntity.ok(ProteinResponse.from(
                 proteinService.update(id, req), proteinService.averageRating(id)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable("id") Long id) {
         proteinService.delete(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable Long id) {
+    public ResponseEntity<?> get(@PathVariable("id") Long id) {
         Protein p = proteinService.get(id);
         return ResponseEntity.ok(ProteinResponse.from(p, proteinService.averageRating(id)));
     }
 
     @GetMapping
-    public ResponseEntity<?> list(@RequestParam(required = false) String q,
-                                  @RequestParam(defaultValue = "0") int page,
-                                  @RequestParam(defaultValue = "12") int size) {
+    public ResponseEntity<?> list(@RequestParam(value = "q", required = false) String q,
+                                  @RequestParam(value = "page", defaultValue = "0") int page,
+                                  @RequestParam(value = "size", defaultValue = "12") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Protein> result = proteinService.list(q, pageable);
         return ResponseEntity.ok(result.map(p -> ProteinResponse.from(p, proteinService.averageRating(p.getId()))));

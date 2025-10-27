@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query; import org.springframework
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findByProtein_Id(Long proteinId, Pageable pageable);
 
-    @Query("select avg(r.rating) from Review r where r.protein.id = :pid")
-    Double avgRatingByProteinId(@Param("pid") Long proteinId);
+    // 리뷰가 없으면 null이 되므로 0으로 치환해 NPE/언박싱 오류 방지
+    @Query("select coalesce(avg(r.rating), 0) from Review r where r.protein.id = :pid")
+    double avgRatingByProteinId(@Param("pid") Long proteinId);
 }

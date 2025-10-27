@@ -7,6 +7,7 @@ import com.ajou.muscleup.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page; import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException; import org.springframework.http.HttpStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +43,7 @@ public class ProteinServiceImpl implements ProteinService {
     @Override @Transactional(readOnly = true)
     public Protein get(Long id) {
         return proteinRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Protein not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Protein not found"));
     }
 
     @Override @Transactional(readOnly = true)
@@ -52,5 +53,5 @@ public class ProteinServiceImpl implements ProteinService {
     }
 
     @Override @Transactional(readOnly = true)
-    public Double averageRating(Long proteinId) { return reviewRepository.avgRatingByProteinId(proteinId); }
+    public double averageRating(Long proteinId) { return reviewRepository.avgRatingByProteinId(proteinId); }
 }
