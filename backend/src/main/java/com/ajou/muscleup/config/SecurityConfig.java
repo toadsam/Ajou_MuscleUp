@@ -48,8 +48,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
                 // Protected APIs
-                // TEMP: Diagnose 500 vs auth issue — open GET proteins
-                .requestMatchers(HttpMethod.GET, "/api/proteins/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasRole("USER")
                 .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasRole("USER")
                 .requestMatchers("/api/ai/**").hasRole("USER")
 

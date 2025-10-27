@@ -1,0 +1,28 @@
+# Ignore environment files and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+frontend/.env
+
+# Node/Yarn/PNPM caches
+frontend/node_modules/
+frontend/.yarn/
+frontend/.pnpm-store/
+
+# Build outputs
+frontend/dist/
+frontend/build/
+
+# Java/Gradle build artifacts
+backend/build/
+backend/out/
+backend/bin/
+backend/.gradle/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
