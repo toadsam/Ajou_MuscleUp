@@ -4,6 +4,8 @@
 **/.env
 **/.env.*
 frontend/.env
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application.properties
 
 # Node/Yarn/PNPM caches
 frontend/node_modules/
