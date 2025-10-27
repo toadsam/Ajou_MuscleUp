@@ -25,8 +25,8 @@ repositories { mavenCentral() }
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-security'   // BCrypt PasswordEncoder 용
-    implementation 'org.springframework.boot:spring-boot-starter-validation' // ★ DTO 검증
+    implementation 'org.springframework.boot:spring-boot-starter-security'   // BCrypt PasswordEncoder ??
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // ??DTO 검�?
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -34,14 +34,14 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 
-	implementation 'org.springframework.boot:spring-boot-starter-mail' // ✉️
+	implementation 'org.springframework.boot:spring-boot-starter-mail' // ?�️
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // DB: 둘 중 하나 선택(또는 프로필로 분리)
-    runtimeOnly 'com.mysql:mysql-connector-j'  // MySQL 사용 시
-    // runtimeOnly 'com.h2database:h2'         // 로컬 빠른 테스트용
+    // DB: ??�??�나 ?�택(?�는 ?�로?�로 분리)
+    implementation 'com.mysql:mysql-connector-j'  // MySQL ?�용 ??
+    // runtimeOnly 'com.h2database:h2'         // 로컬 빠른 ?�스?�용
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -58,3 +58,4 @@ tasks.withType(JavaCompile).configureEach {
     // Ensure parameter names are retained for Spring MVC argument resolution
     options.compilerArgs += ["-parameters"]
 }
+
