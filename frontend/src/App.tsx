@@ -1,17 +1,22 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+﻿import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./layouts/Header";
 import Footer from "./layouts/Footer";
 import Home from "./pages/Home";
 import Protein from "./pages/Protein";
 import Reviews from "./pages/Reviews";
 import Executives from "./pages/Executives";
+import Members from "./pages/Members";
+import Gallery from "./pages/Gallery";
+import About from "./pages/About";
 import AiFitness from "./pages/AiFitness";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import WriteReview from "./pages/WriteReview";
 import WriteProtein from "./pages/WriteProtein";
 import ProteinDetail from "./pages/ProteinDetail";
-import ProtectedRoute from "./components/ProtectedRoute"; // ✅ 추가
+import ProtectedRoute from "./components/ProtectedRoute"; // ??異붽?
+import AdminRoute from "./components/AdminRoute";
+import Admin from "./pages/Admin";
 
 function App() {
   return (
@@ -24,10 +29,14 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* ✅ 로그인 필요 없는 공개 라우트 */}
+            {/* ??濡쒓렇???꾩슂 ?녿뒗 怨듦컻 ?쇱슦??*/}
             <Route path="/proteins/:id" element={<ProteinDetail />} />
+            <Route path="/members" element={<Members />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
-            {/* ✅ 보호된 라우트 (로그인 필요) */}
+            {/* ??蹂댄샇???쇱슦??(濡쒓렇???꾩슂) */}
             <Route
               path="/protein"
               element={
@@ -85,3 +94,6 @@ function App() {
 }
 
 export default App;
+
+
+
