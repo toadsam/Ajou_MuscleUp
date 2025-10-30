@@ -48,12 +48,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
-                // Protected APIs
-                .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasRole("USER")
-                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasRole("USER")
-                .requestMatchers("/api/ai/**").hasRole("USER")
-                .requestMatchers(HttpMethod.POST, "/api/files/upload").hasRole("USER")
-                .requestMatchers(HttpMethod.GET, "/api/files/**").hasRole("USER")
+                // Protected APIs (allow USER and ADMIN)
+                .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/ai/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/files/upload").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/files/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()
