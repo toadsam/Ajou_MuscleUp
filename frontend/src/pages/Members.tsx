@@ -6,25 +6,21 @@ type Member = {
 
 const members: Member[] = [
   {
-    name: "김피트",
-    role: "운영진 / 프로그램 기획",
-    bio: "근거 기반 훈련 설계와 콘텐츠 제작을 담당합니다.",
+    name: "윤채영",
+    role: "사모님 / 부회장 여자친구",
+    bio: "석세스짐 인포 / 헬린이",
   },
   {
-    name: "이단백",
-    role: "영양 스터디 리드",
-    bio: "지속 가능한 식단과 보충제 선택을 함께 공부합니다.",
+    name: "김민석",
+    role: "광대 / 기계..",
+    bio: "축구 좋아함 / 맨날 아픔",
   },
   {
-    name: "박득근",
-    role: "커뮤니티 매니저",
-    bio: "신입 오리엔테이션, 오프라인 번개 운영을 맡고 있어요.",
+    name: "연서은",
+    role: "천계 마스터",
+    bio: "기본 운동 2시간 / 페이스풀 50",
   },
-  {
-    name: "최바벨",
-    role: "기록/분석",
-    bio: "운동 기록과 정량 분석으로 성장을 돕습니다.",
-  },
+  
 ];
 
 export default function Members() {
@@ -50,7 +46,7 @@ export default function Members() {
         </div>
 
         <p className="text-center text-gray-400 mt-10">
-          소개는 예시이며, 실제 구성원/프로필은 추후 업데이트하세요.
+          득근득근
         </p>
       </div>
     </section>
