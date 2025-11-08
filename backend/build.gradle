@@ -26,7 +26,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'   // BCrypt PasswordEncoder ??
-    implementation 'org.springframework.boot:spring-boot-starter-validation' // ??DTO 검�?
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // ??DTO 검�?
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -34,14 +34,14 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 
-	implementation 'org.springframework.boot:spring-boot-starter-mail' // ?�️
+	implementation 'org.springframework.boot:spring-boot-starter-mail' // ?�️
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // DB: ??�??�나 ?�택(?�는 ?�로?�로 분리)
-    implementation 'com.mysql:mysql-connector-j'  // MySQL ?�용 ??
-    // runtimeOnly 'com.h2database:h2'         // 로컬 빠른 ?�스?�용
+    // DB: ??�??�나 ?�택(?�는 ?�로?�로 분리)
+    implementation 'com.mysql:mysql-connector-j'  // MySQL ?�용 ??
+    // runtimeOnly 'com.h2database:h2'         // 로컬 빠른 ?�스?�용
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -57,5 +57,15 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     // Ensure parameter names are retained for Spring MVC argument resolution
     options.compilerArgs += ["-parameters"]
+}
+
+// Ensure JVM runs tests with UTF-8 default encoding
+tasks.withType(Test).configureEach {
+    systemProperty 'file.encoding', 'UTF-8'
+}
+
+// Ensure bootRun also uses UTF-8 default encoding (when used)
+tasks.matching { it.name == 'bootRun' }.configureEach {
+    systemProperty 'file.encoding', 'UTF-8'
 }
 

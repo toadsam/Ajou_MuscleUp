@@ -9,9 +9,9 @@ export default function AiFitness() {
   });
 
   const [result, setResult] = useState<string | null>(null);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -31,7 +31,7 @@ export default function AiFitness() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(form),
-        credentials: (import.meta.env.VITE_USE_CREDENTIALS === "true" ? "include" : "same-origin"),
+        credentials: import.meta.env.VITE_USE_CREDENTIALS === "true" ? "include" : "same-origin",
       });
 
       if (!res.ok) {
@@ -42,7 +42,7 @@ export default function AiFitness() {
       const data: { explanation: string } = await res.json();
       setResult(data.explanation);
     } catch (err: any) {
-      setError(err?.message || "AI ºĞ¼® Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.");
+      setError(err?.message || "AI ë¶„ì„ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.");
     } finally {
       setLoading(false);
     }
@@ -50,14 +50,11 @@ export default function AiFitness() {
 
   return (
     <section className="pt-32 p-12 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
-      <h2 className="text-4xl font-extrabold mb-12 text-center">?¤– AI?ê·¼</h2>
+      <h2 className="text-4xl font-extrabold mb-12 text-center">AI ìš´ë™ ë¶„ì„</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-lg mx-auto bg-gray-800/70 p-8 rounded-2xl shadow space-y-6"
-      >
+      <form onSubmit={handleSubmit} className="max-w-lg mx-auto bg-gray-800/70 p-8 rounded-2xl shadow space-y-6">
         <div>
-          <label className="block mb-2">??(cm)</label>
+          <label className="block mb-2">í‚¤ (cm)</label>
           <input
             type="number"
             name="height"
@@ -79,7 +76,7 @@ export default function AiFitness() {
           />
         </div>
         <div>
-          <label className="block mb-2">ì²´ì?ë°©ë¥  (%)</label>
+          <label className="block mb-2">ì²´ì§€ë°©ë¥  (%)</label>
           <input
             type="number"
             name="bodyFat"
@@ -103,26 +100,19 @@ export default function AiFitness() {
           type="submit"
           className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
         >
-          ë¶„ì„?˜ê¸°
+          ë¶„ì„í•˜ê¸°
         </button>
       </form>
 
-      {loading && (
-        <p className="text-center text-gray-300 mt-8">AI°¡ ºĞ¼® ÁßÀÔ´Ï´Ù...</p>
-      )}
-      {error && (
-        <p className="text-center text-red-400 mt-8">{error}</p>
-      )}
+      {loading && <p className="text-center text-gray-300 mt-8">AIê°€ ë¶„ì„ ì¤‘ì…ë‹ˆë‹¤...</p>}
+      {error && <p className="text-center text-red-400 mt-8">{error}</p>}
       {result && (
         <div className="max-w-lg mx-auto mt-10 bg-gray-800/70 p-6 rounded-2xl shadow">
-          <h3 className="text-2xl font-bold mb-4">¸ÂÃãÇü AI °¡ÀÌµå</h3>
+          <h3 className="text-2xl font-bold mb-4">AI ë¶„ì„ ê°€ì´ë“œ</h3>
           <pre className="whitespace-pre-wrap text-gray-300">{result}</pre>
         </div>
       )}
     </section>
   );
 }
-
-
-
 

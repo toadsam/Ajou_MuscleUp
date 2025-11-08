@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers("/ping", "/api/ping").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/support/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
                 // Protected APIs (allow USER and ADMIN)

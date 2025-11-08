@@ -17,6 +17,7 @@ import ProteinDetail from "./pages/ProteinDetail";
 import ProtectedRoute from "./components/ProtectedRoute"; // ??異붽?
 import AdminRoute from "./components/AdminRoute";
 import Admin from "./pages/Admin";
+import SupportWidget from "./components/SupportWidget";
 
 function App() {
   return (
@@ -88,6 +89,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        <SupportWidget />
       </div>
     </Router>
   );
