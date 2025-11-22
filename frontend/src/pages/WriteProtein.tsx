@@ -6,10 +6,14 @@ const BASE = import.meta.env.VITE_API_BASE ?? "";
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = BASE ? `${BASE}${path}` : path;
   const token = localStorage.getItem("token");
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...authHeader, ...(init?.headers || {}) },
     ...init,
+    headers,
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");

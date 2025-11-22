@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function Reviews() {
-  const [reviews, setReviews] = useState([
+  const [reviews] = useState([
     { 
       user: "홍길동", 
       gym: "강남 피트니스", 

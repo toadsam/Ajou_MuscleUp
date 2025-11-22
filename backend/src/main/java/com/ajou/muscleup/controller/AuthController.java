@@ -32,21 +32,21 @@ public class AuthController {
     @Value("${spring.mail.username}")
     private String from;
 
-    // ??1) ?´ë©”???¸ì¦ ì½”ë“œ ?„ì†¡
+    
     @PostMapping("/email/send-code")
     public ResponseEntity<Void> send(@RequestBody SendReq req) {
         emailSvc.sendCode(req.getEmail(), from);
         return ResponseEntity.ok().build();
     }
 
-    // ??2) ?´ë©”???¸ì¦ ?•ì¸
+   
     @PostMapping("/email/verify")
     public ResponseEntity<Void> verify(@RequestBody VerifyReq req) {
         emailSvc.verify(req.getEmail(), req.getCode());
         return ResponseEntity.ok().build();
     }
 
-    // ??3) ë¡œê·¸????JWT + ? ì? ?•ë³´ ë°˜í™˜
+    
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginReq req) {
         User user = userService.login(req.getEmail(), req.getPassword());
@@ -67,14 +67,14 @@ public class AuthController {
                 .body(response);
     }
 
-    // 4) ?¡ì„¸??? í° ?¬ë°œê¸?(ë¦¬í”„?ˆì‹œ ì¿ í‚¤ ?„ìš”)
+   
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenResponse> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(401).build();
         }
 
-        // ?Œì „(rotate) + ???¡ì„¸??? í° ë°œê¸‰
+        
         String newRefresh = refreshTokenService.rotate(refreshToken);
         String email = jwtUtil.getEmailFromToken(newRefresh);
         String role = userRepository.findByEmail(email)
@@ -88,17 +88,17 @@ public class AuthController {
                 .body(new AccessTokenResponse(accessToken));
     }
 
-    // 5) ë¡œê·¸?„ì›ƒ (ë¦¬í”„?ˆì‹œ ? í° ?œê±°)
+    
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
         if (refreshToken != null && !refreshToken.isBlank()) {
             String email = jwtUtil.getEmailFromToken(refreshToken);
             refreshTokenService.revokeAllByUserEmail(email);
         }
-        // ì¿ í‚¤ ?œê±°
+       
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false) // ë¡œì»¬ ê°œë°œ ?˜ê²½?ì„œ false, ?´ì˜?ì„œ??true ê¶Œì¥
+                .secure(false) 
                 .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
@@ -111,10 +111,10 @@ public class AuthController {
     private ResponseCookie buildRefreshCookie(String token) {
         return ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(false) // ?´ì˜ ë°°í¬ ??true + sameSite("None") ê¶Œì¥
+                .secure(false) 
                 .sameSite("Lax")
                 .path("/")
-                .maxAge(60L * 60 * 24 * 14) // 14ÀÏ
+                .maxAge(60L * 60 * 24 * 14) 
                 .build();
     }
 

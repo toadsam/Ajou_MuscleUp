@@ -18,11 +18,14 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const response = await fetch(
+  `${import.meta.env.VITE_API_BASE}/api/auth/login`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(form),
+  }
+);
 
       if (response.ok) {
         const data: LoginResponse = await response.json();
