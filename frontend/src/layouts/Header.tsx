@@ -63,7 +63,7 @@ export default function Header() {
       },
       {
         label: "AI",
-        links: [{ to: "/ai", label: "AI득근", highlight: true }],
+        links: [{ to: "/ai", label: "AI독근", highlight: true }],
       },
     ],
     []
@@ -93,13 +93,13 @@ export default function Header() {
           {label}
         </Link>
       ))}
-      {isAdmin && group.label === "Ŀ�´�Ƽ" && (
+      {isAdmin && group.label === "커뮤니티" && (
         <Link
           to="/admin"
-          className="mt-1 block rounded-xl px-3 py-2 font-semibold text-pink-500 hover:bg-pink-50"
+          className="mt-1 block rounded-xl px-3 py-2 font-semibold text-pink-300 hover:bg-white/10"
           onClick={() => setOpenDropdown(null)}
         >
-          ������
+          관리자
         </Link>
       )}
     </div>
@@ -130,7 +130,7 @@ export default function Header() {
           to="/"
           className="absolute left-1/2 flex -translate-x-1/2 items-center lg:static lg:ml-0 lg:translate-x-0"
         >
-          <Logo color={isScrolled || isMenuOpen ? "#111827" : "#ffffff"} />
+          <Logo isScrolled={isScrolled || isMenuOpen} />
         </Link>
 
         <nav className="ml-auto hidden items-center gap-3 lg:flex">

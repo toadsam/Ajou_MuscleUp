@@ -50,7 +50,11 @@ export default function AiFitness() {
   const [error, setError] = useState<string | null>(null);
 
   const token = useMemo(() => localStorage.getItem("token"), []);
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = useMemo(() => {
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) h.Authorization = `Bearer ${token}`;
+    return h;
+  }, [token]);
 
   const callAi = async (path: string, payload: unknown) => {
     setLoading(path);
@@ -58,10 +62,7 @@ export default function AiFitness() {
     try {
       const res = await fetch(`${API_BASE}${path}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
+        headers,
         body: JSON.stringify(payload),
         credentials: USE_CREDENTIALS ? "include" : "same-origin",
       });
@@ -84,10 +85,7 @@ export default function AiFitness() {
     try {
       const res = await fetch(`${API_BASE}/api/ai/chat/history`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
+        headers,
         credentials: USE_CREDENTIALS ? "include" : "same-origin",
       });
       if (!res.ok) {
@@ -127,7 +125,7 @@ export default function AiFitness() {
       setError("AI 상담을 이용하려면 로그인하세요.");
       return;
     }
-    const newHistory = [...chatHistory, { role: "user", content: question }];
+    const newHistory: ChatBubble[] = [...chatHistory, { role: "user", content: question }];
     setChatHistory(newHistory);
     setQuestion("");
     const data = await callAi("/api/ai/chat", {
@@ -253,7 +251,9 @@ export default function AiFitness() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab.id ? "bg-white/80 text-gray-900" : "bg-white/10 text-white hover:bg-white/20"}`}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  activeTab === tab.id ? "bg-white/80 text-gray-900" : "bg-white/10 text-white hover:bg-white/20"
+                }`}
               >
                 {tab.label}
               </button>
