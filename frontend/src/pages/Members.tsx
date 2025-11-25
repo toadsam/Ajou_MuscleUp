@@ -7,7 +7,7 @@ type Member = {
 const members: Member[] = [
   {
     name: "윤채영",
-    role: "사모님 / 부회장 여자친구",
+    role: "까불이",
     bio: "석세스짐 인포 / 헬린이",
   },
   {

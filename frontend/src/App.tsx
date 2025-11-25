@@ -18,6 +18,7 @@ import ProtectedRoute from "./components/ProtectedRoute"; // ??異붽?
 import AdminRoute from "./components/AdminRoute";
 import Admin from "./pages/Admin";
 import SupportWidget from "./components/SupportWidget";
+import Programs from "./pages/Programs";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/about" element={<About />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/programs" element={<Programs />} />
 
             {/* ??蹂댄샇???쇱슦??(濡쒓렇???꾩슂) */}
             <Route

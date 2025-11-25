@@ -1,4 +1,4 @@
-﻿package com.ajou.muscleup.service;
+package com.ajou.muscleup.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

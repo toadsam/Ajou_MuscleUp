@@ -1,4 +1,4 @@
-﻿package com.ajou.muscleup.controller;
+package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.ai.AiAnalyzeRequest;
 import com.ajou.muscleup.dto.ai.AiAnalyzeResponse;
@@ -6,10 +6,17 @@ import com.ajou.muscleup.dto.ai.AiPlanRequest;
 import com.ajou.muscleup.dto.ai.AiPlanResponse;
 import com.ajou.muscleup.dto.ai.AiChatRequest;
 import com.ajou.muscleup.dto.ai.AiChatResponse;
+import com.ajou.muscleup.dto.ai.AiChatLogItem;
 import com.ajou.muscleup.service.AiService;
+import com.ajou.muscleup.service.AiChatHistoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -17,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AiController {
 
     private final AiService aiService;
+    private final AiChatHistoryService aiChatHistoryService;
 
     @PostMapping("/analyze")
     public ResponseEntity<AiAnalyzeResponse> analyze(@RequestBody AiAnalyzeRequest req) {
@@ -33,10 +41,18 @@ public class AiController {
     }
 
     @PostMapping("/chat")
-    public ResponseEntity<AiChatResponse> chat(@RequestBody AiChatRequest req) {
+    public ResponseEntity<AiChatResponse> chat(@AuthenticationPrincipal String email, @RequestBody AiChatRequest req) {
+        String userEmail = requireEmail(email);
         String prompt = buildChatPrompt(req);
         String content = aiService.requestCompletion(systemPromptForCoach(), prompt);
+        aiChatHistoryService.save(userEmail, req.getQuestion(), content);
         return ResponseEntity.ok(new AiChatResponse(content));
+    }
+
+    @GetMapping("/chat/history")
+    public ResponseEntity<List<AiChatLogItem>> history(@AuthenticationPrincipal String email) {
+        String userEmail = requireEmail(email);
+        return ResponseEntity.ok(aiChatHistoryService.getRecent(userEmail, 50));
     }
 
     private String buildAnalysisPrompt(AiAnalyzeRequest r) {
@@ -92,6 +108,13 @@ public class AiController {
     private String systemPromptForPlanner() {
         return "당신은 체계적인 운동 루틴을 설계하는 전문가입니다. " +
                 "운동명, 세트/반복, 휴식, 포인트를 명확하게 정리하고 표 형식으로 제시하세요.";
+    }
+
+    private String requireEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        return email;
     }
 
     private static String nz(String v) {
