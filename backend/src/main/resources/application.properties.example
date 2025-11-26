@@ -34,4 +34,7 @@ spring.mail.properties.mail.debug=true
 openai.api.key=${OPENAI_API_KEY:}
 openai.api.base=${OPENAI_API_BASE:https://api.openai.com}
 
+# --- Google OAuth (ID Token) ---
+google.client-id=${GOOGLE_CLIENT_ID:}
+
 # For local development, create application-local.properties (ignored) overriding sensitive values.

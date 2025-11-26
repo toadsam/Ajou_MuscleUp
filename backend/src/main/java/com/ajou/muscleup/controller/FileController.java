@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -33,7 +34,9 @@ public class FileController {
         Path target = dir.resolve(filename);
         Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
 
-        String url = "/uploads/" + today.getYear() + "/" + String.format("%02d", today.getMonthValue()) + "/" + filename;
+        String relative = "/uploads/" + today.getYear() + "/" + String.format("%02d", today.getMonthValue()) + "/" + filename;
+        String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        String url = baseUrl + relative;
         return ResponseEntity.ok(Map.of(
                 "url", url,
                 "name", original,
@@ -49,9 +52,12 @@ public class FileController {
                 .sorted(Comparator.comparingLong((Path p) -> p.toFile().lastModified()).reversed())
                 .limit(200)
                 .map(p -> root.relativize(p).toString().replace('\\', '/'))
-                .map(rel -> "/uploads/" + rel)
+                .map(rel -> {
+                    String relative = "/uploads/" + rel;
+                    String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+                    return baseUrl + relative;
+                })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(urls);
     }
 }
-

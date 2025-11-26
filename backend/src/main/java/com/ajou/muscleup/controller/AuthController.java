@@ -8,6 +8,10 @@ import com.ajou.muscleup.service.EmailVerificationService;
 import com.ajou.muscleup.service.UserService;
 import com.ajou.muscleup.service.RefreshTokenService;
 import com.ajou.muscleup.repository.UserRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -17,6 +21,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpHeaders;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,7 +39,9 @@ public class AuthController {
     @Value("${spring.mail.username}")
     private String from;
 
-    
+    @Value("${google.client-id:}")
+    private String googleClientId;
+
     @PostMapping("/email/send-code")
     public ResponseEntity<Void> send(@RequestBody SendReq req) {
         emailSvc.sendCode(req.getEmail(), from);
@@ -118,6 +127,52 @@ public class AuthController {
                 .build();
     }
 
+    // ----------------- Google Login -----------------
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> googleLogin(@RequestBody GoogleLoginReq req) {
+        if (googleClientId == null || googleClientId.isBlank()) {
+            return ResponseEntity.status(500).build();
+        }
+        GoogleIdToken.Payload payload = verifyGoogleToken(req.getIdToken());
+        if (payload == null) {
+            return ResponseEntity.status(401).build();
+        }
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+        String nickname = name != null && !name.isBlank() ? name : email.split("@")[0];
+
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
+            User u = new User();
+            u.setEmail(email);
+            u.setName(name != null ? name : nickname);
+            u.setNickname(nickname);
+            u.setRole("ROLE_USER");
+            u.setPassword(userService.encodePassword("google-" + UUID.randomUUID()));
+            return userRepository.save(u);
+        });
+
+        String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRole());
+        String refreshToken = refreshTokenService.issueFor(user);
+        LoginResponse response = new LoginResponse(accessToken, user.getEmail(), user.getNickname(), user.getRole());
+
+        return ResponseEntity
+                .ok()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken).toString())
+                .body(response);
+    }
+
+    private GoogleIdToken.Payload verifyGoogleToken(String idToken) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(List.of(googleClientId))
+                    .build();
+            GoogleIdToken token = verifier.verify(idToken);
+            return token != null ? token.getPayload() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     // ----------------- Request DTO -----------------
 
     @Getter
@@ -140,6 +195,12 @@ public class AuthController {
         private String email;
         @NotBlank
         private String password;
+    }
+
+    @Getter
+    static class GoogleLoginReq {
+        @NotBlank
+        private String idToken;
     }
 }
 

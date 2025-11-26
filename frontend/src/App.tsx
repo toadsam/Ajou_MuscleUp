@@ -1,4 +1,4 @@
-﻿import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./layouts/Header";
 import Footer from "./layouts/Footer";
 import Home from "./pages/Home";
@@ -14,11 +14,15 @@ import Register from "./pages/Register";
 import WriteReview from "./pages/WriteReview";
 import WriteProtein from "./pages/WriteProtein";
 import ProteinDetail from "./pages/ProteinDetail";
-import ProtectedRoute from "./components/ProtectedRoute"; // ??異붽?
+import ProtectedRoute from "./components/ProtectedRoute"; // ??추�?
 import AdminRoute from "./components/AdminRoute";
 import Admin from "./pages/Admin";
 import SupportWidget from "./components/SupportWidget";
 import Programs from "./pages/Programs";
+import BragList from "./pages/BragList";
+import BragWrite from "./pages/BragWrite";
+import BragDetail from "./pages/BragDetail";
+import MyPage from "./pages/MyPage";
 
 function App() {
   return (
@@ -31,15 +35,31 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* ??濡쒓렇???꾩슂 ?녿뒗 怨듦컻 ?쇱슦??*/}
+            {/* ??로그???�요 ?�는 공개 ?�우??*/}
             <Route path="/proteins/:id" element={<ProteinDetail />} />
+            <Route
+              path="/brag/:id"
+              element={
+                <ProtectedRoute>
+                  <BragDetail />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/members" element={<Members />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/about" element={<About />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="/programs" element={<Programs />} />
+            <Route
+              path="/mypage"
+              element={
+                <ProtectedRoute>
+                  <MyPage />
+                </ProtectedRoute>
+              }
+            />
 
-            {/* ??蹂댄샇???쇱슦??(濡쒓렇???꾩슂) */}
+            {/* ??보호???�우??(로그???�요) */}
             <Route
               path="/protein"
               element={
@@ -73,6 +93,22 @@ function App() {
               }
             />
             <Route
+              path="/brag"
+              element={
+                <ProtectedRoute>
+                  <BragList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/brag/write"
+              element={
+                <ProtectedRoute>
+                  <BragWrite />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/reviews/write"
               element={
                 <ProtectedRoute>
@@ -98,6 +134,3 @@ function App() {
 }
 
 export default App;
-
-
-

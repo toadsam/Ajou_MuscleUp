@@ -1,68 +1,91 @@
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 
 type Props = {
   onUploaded?: (url: string) => void;
   accept?: string;
+  multiple?: boolean;
+  className?: string;
 };
 
-export default function UploadDropzone({ onUploaded, accept = "image/*" }: Props) {
-  const [dragOver, setDragOver] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
 
-  const upload = useCallback(async (file: File) => {
-    setUploading(true);
-    setError(null);
-    try {
-      const token = localStorage.getItem("token");
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/upload`, {
-        method: "POST",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: form,
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      if (onUploaded) onUploaded(data.url);
-    } catch (e: any) {
-      setError(e?.message || "업로드 실패");
-    } finally {
-      setUploading(false);
-    }
-  }, [onUploaded]);
+export default function UploadDropzone({ onUploaded, accept = "image/*", multiple = false, className }: Props) {
+  const [dragOver, setDragOver] = useState(false);
+  const [activeUploads, setActiveUploads] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const inputId = useId();
+  const uploading = activeUploads > 0;
+
+  const upload = useCallback(
+    async (file: File) => {
+      setActiveUploads((c) => c + 1);
+      setError(null);
+      try {
+        const token = localStorage.getItem("token");
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/upload`, {
+          method: "POST",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: form,
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        const url = withBase(data.url);
+        if (onUploaded) onUploaded(url);
+      } catch (e: any) {
+        setError(e?.message || "업로드에 실패했어요");
+      } finally {
+        setActiveUploads((c) => Math.max(0, c - 1));
+      }
+    },
+    [onUploaded]
+  );
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((f) => upload(f));
+  };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f) upload(f);
+    handleFiles(e.dataTransfer.files);
   };
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) upload(f);
+    handleFiles(e.target.files);
   };
 
   return (
     <div
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
       className={`rounded-2xl border-2 border-dashed p-6 text-center transition ${
         dragOver ? "border-pink-500 bg-pink-500/10" : "border-gray-600 bg-gray-800/40"
-      }`}
+      } ${className ?? ""}`}
     >
-      <input type="file" accept={accept} className="hidden" id="file-input__uploader" onChange={onPick} />
-      <label htmlFor="file-input__uploader" className="block cursor-pointer select-none">
-        <div className="text-gray-300">이미지를 드래그 앤 드롭하거나 클릭하여 선택하세요</div>
-        <div className="text-sm text-gray-500 mt-1">PNG, JPG 등 (최대 10MB 권장)</div>
+      <input
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        id={inputId}
+        onChange={onPick}
+      />
+      <label htmlFor={inputId} className="block cursor-pointer select-none">
+        <div className="text-gray-300">사진/영상은 드래그하거나 터치해서 올릴 수 있어요.</div>
+        <div className="text-sm text-gray-500 mt-1">PNG, JPG, MP4 등 (최대 10MB 권장)</div>
       </label>
       {uploading && <div className="text-sm text-gray-400 mt-2">업로드 중...</div>}
       {error && <div className="text-sm text-red-400 mt-2">{error}</div>}
     </div>
   );
 }
-

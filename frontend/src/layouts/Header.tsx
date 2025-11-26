@@ -42,9 +42,11 @@ export default function Header() {
       {
         label: "커뮤니티",
         links: [
+          { to: "/brag", label: "자랑방" },
+          { to: "/brag/write", label: "자랑 올리기" },
           { to: "/protein", label: "단백질 추천" },
           { to: "/reviews", label: "회원 리뷰" },
-          { to: "/programs", label: "식단/다이어트반" },
+          { to: "/programs", label: "루틴/다이어트팁" },
         ],
       },
       {
@@ -63,7 +65,11 @@ export default function Header() {
       },
       {
         label: "AI",
-        links: [{ to: "/ai", label: "AI독근", highlight: true }],
+        links: [{ to: "/ai", label: "AI근력", highlight: true }],
+      },
+      {
+        label: "내 정보",
+        links: [{ to: "/mypage", label: "마이페이지" }],
       },
     ],
     []
