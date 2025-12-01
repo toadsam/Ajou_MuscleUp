@@ -1,13 +1,97 @@
+﻿@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 텍스트 그라데이션 공용 클래스 */
+@layer base {
+  html {
+    font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+  }
+
+  body {
+    @apply font-body bg-gray-900 text-white antialiased;
+  }
+}
+
 .text-gradient {
   @apply bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent;
 }
 
-/* 네온 글로우 효과 */
 .text-glow {
-  text-shadow: 0 0 10px rgba(236,72,153,0.7), 0 0 20px rgba(139,92,246,0.6);
+  text-shadow: 0 0 10px rgba(236, 72, 153, 0.7), 0 0 20px rgba(139, 92, 246, 0.6);
+}
+
+@keyframes floatUpDown {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-spin-slower {
+  animation: spin 18s linear infinite;
+}
+
+.animate-orbit {
+  animation: floatUpDown 10s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatUpDown 9s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulseGlow 12s ease-in-out infinite;
+}
+
+.glass-panel {
+  @apply rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl;
+}
+
+.btn-gradient {
+  @apply relative overflow-hidden rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 font-semibold text-white transition hover:brightness-110;
+}
+
+.btn-gradient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-100%);
+  animation: shine 2.6s linear infinite;
+}
+
+.btn-outline {
+  @apply rounded-xl border border-white/30 px-6 py-3 font-semibold text-white transition hover:border-white hover:bg-white/10;
+}
+
+.glow-orb {
+  filter: blur(80px);
+  opacity: 0.55;
 }

@@ -8,6 +8,10 @@ import com.ajou.muscleup.service.EmailVerificationService;
 import com.ajou.muscleup.service.UserService;
 import com.ajou.muscleup.service.RefreshTokenService;
 import com.ajou.muscleup.repository.UserRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -17,6 +21,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpHeaders;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,21 +39,23 @@ public class AuthController {
     @Value("${spring.mail.username}")
     private String from;
 
-    // ??1) ?¥Î©î???∏Ï¶ù ÏΩîÎìú ?ÑÏÜ°
+    @Value("${google.client-id:}")
+    private String googleClientId;
+
     @PostMapping("/email/send-code")
     public ResponseEntity<Void> send(@RequestBody SendReq req) {
         emailSvc.sendCode(req.getEmail(), from);
         return ResponseEntity.ok().build();
     }
 
-    // ??2) ?¥Î©î???∏Ï¶ù ?ïÏù∏
+   
     @PostMapping("/email/verify")
     public ResponseEntity<Void> verify(@RequestBody VerifyReq req) {
         emailSvc.verify(req.getEmail(), req.getCode());
         return ResponseEntity.ok().build();
     }
 
-    // ??3) Î°úÍ∑∏????JWT + ?†Ï? ?ïÎ≥¥ Î∞òÌôò
+    
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginReq req) {
         User user = userService.login(req.getEmail(), req.getPassword());
@@ -67,14 +76,14 @@ public class AuthController {
                 .body(response);
     }
 
-    // 4) ?°ÏÑ∏???†ÌÅ∞ ?¨Î∞úÍ∏?(Î¶¨ÌîÑ?àÏãú Ïø†ÌÇ§ ?ÑÏöî)
+   
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenResponse> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(401).build();
         }
 
-        // ?åÏ†Ñ(rotate) + ???°ÏÑ∏???†ÌÅ∞ Î∞úÍ∏â
+        
         String newRefresh = refreshTokenService.rotate(refreshToken);
         String email = jwtUtil.getEmailFromToken(newRefresh);
         String role = userRepository.findByEmail(email)
@@ -88,17 +97,17 @@ public class AuthController {
                 .body(new AccessTokenResponse(accessToken));
     }
 
-    // 5) Î°úÍ∑∏?ÑÏõÉ (Î¶¨ÌîÑ?àÏãú ?†ÌÅ∞ ?úÍ±∞)
+    
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
         if (refreshToken != null && !refreshToken.isBlank()) {
             String email = jwtUtil.getEmailFromToken(refreshToken);
             refreshTokenService.revokeAllByUserEmail(email);
         }
-        // Ïø†ÌÇ§ ?úÍ±∞
+       
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false) // Î°úÏª¨ Í∞úÎ∞ú ?òÍ≤Ω?êÏÑú false, ?¥ÏòÅ?êÏÑú??true Í∂åÏû•
+                .secure(false) 
                 .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
@@ -111,11 +120,57 @@ public class AuthController {
     private ResponseCookie buildRefreshCookie(String token) {
         return ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(false) // ?¥ÏòÅ Î∞∞Ìè¨ ??true + sameSite("None") Í∂åÏû•
+                .secure(false) 
                 .sameSite("Lax")
                 .path("/")
-                .maxAge(60L * 60 * 24 * 14) // 14¿œ
+                .maxAge(60L * 60 * 24 * 14) 
                 .build();
+    }
+
+    // ----------------- Google Login -----------------
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> googleLogin(@RequestBody GoogleLoginReq req) {
+        if (googleClientId == null || googleClientId.isBlank()) {
+            return ResponseEntity.status(500).build();
+        }
+        GoogleIdToken.Payload payload = verifyGoogleToken(req.getIdToken());
+        if (payload == null) {
+            return ResponseEntity.status(401).build();
+        }
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+        String nickname = name != null && !name.isBlank() ? name : email.split("@")[0];
+
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
+            User u = new User();
+            u.setEmail(email);
+            u.setName(name != null ? name : nickname);
+            u.setNickname(nickname);
+            u.setRole("ROLE_USER");
+            u.setPassword(userService.encodePassword("google-" + UUID.randomUUID()));
+            return userRepository.save(u);
+        });
+
+        String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRole());
+        String refreshToken = refreshTokenService.issueFor(user);
+        LoginResponse response = new LoginResponse(accessToken, user.getEmail(), user.getNickname(), user.getRole());
+
+        return ResponseEntity
+                .ok()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken).toString())
+                .body(response);
+    }
+
+    private GoogleIdToken.Payload verifyGoogleToken(String idToken) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(List.of(googleClientId))
+                    .build();
+            GoogleIdToken token = verifier.verify(idToken);
+            return token != null ? token.getPayload() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ----------------- Request DTO -----------------
@@ -140,6 +195,12 @@ public class AuthController {
         private String email;
         @NotBlank
         private String password;
+    }
+
+    @Getter
+    static class GoogleLoginReq {
+        @NotBlank
+        private String idToken;
     }
 }
 

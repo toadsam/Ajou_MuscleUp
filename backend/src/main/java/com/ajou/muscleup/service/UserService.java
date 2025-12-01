@@ -60,4 +60,8 @@ public class UserService {
 
         return user;
     }
+
+    public String encodePassword(String raw) {
+        return passwordEncoder.encode(raw);
+    }
 }
