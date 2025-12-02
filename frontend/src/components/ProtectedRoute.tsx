@@ -11,7 +11,7 @@ export default function ProtectedRoute({ children }: Props) {
 
   useEffect(() => {
     if (!token) {
-      alert("⚠️ 로그인이 필요합니다!");
+      alert("로그인이 필요합니다.");
       setShouldRedirect(true);
     }
   }, [token]);

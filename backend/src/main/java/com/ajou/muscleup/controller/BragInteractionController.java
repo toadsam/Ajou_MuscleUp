@@ -2,6 +2,7 @@ package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.brag.BragCommentCreateRequest;
 import com.ajou.muscleup.dto.brag.BragCommentResponse;
+import com.ajou.muscleup.dto.brag.BragCommentUpdateRequest;
 import com.ajou.muscleup.dto.brag.BragLikeResponse;
 import com.ajou.muscleup.service.BragInteractionService;
 import jakarta.validation.Valid;
@@ -35,6 +36,13 @@ public class BragInteractionController {
                                               @PathVariable("commentId") Long commentId) {
         interactionService.deleteComment(email, commentId);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/comments/{commentId}")
+    public ResponseEntity<BragCommentResponse> updateComment(@AuthenticationPrincipal String email,
+                                                             @PathVariable("commentId") Long commentId,
+                                                             @Valid @RequestBody BragCommentUpdateRequest req) {
+        return ResponseEntity.ok(interactionService.updateComment(email, commentId, req));
     }
 
     @PostMapping("/{id}/like")

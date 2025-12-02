@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import UploadDropzone from "../components/UploadDropzone";
 
-// 작은 API 유틸: BASE가 있으면 붙이고, 없으면 상대경로(/api/...) 그대로 사용
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = BASE ? `${BASE}${path}` : path;
@@ -22,7 +22,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// 생성용 페이로드 타입(백엔드 필드명에 맞춰 사용)
 type CreateProteinPayload = {
   name: string;
   price: number;
@@ -33,7 +32,6 @@ type CreateProteinPayload = {
   category?: string;
 };
 
-// 서버가 반환하는 타입(필요 최소만)
 type Protein = CreateProteinPayload & { id: number; avgRating?: number | null };
 
 export default function WriteProtein() {
@@ -56,12 +54,11 @@ export default function WriteProtein() {
     e.preventDefault();
     setErr(null);
 
-    // 간단한 전처리 & 검증
     const price = Number(form.price);
     const days = Number(form.days);
     const goal = Number(form.goal);
     if (Number.isNaN(price) || Number.isNaN(days) || Number.isNaN(goal)) {
-      setErr("가격/기간/목표 인원은 숫자여야 합니다.");
+      setErr("가격/기간/목표 인원이 숫자여야 합니다.");
       return;
     }
     if (price < 0 || days <= 0 || goal <= 0) {
@@ -70,24 +67,21 @@ export default function WriteProtein() {
     }
 
     const payload: CreateProteinPayload = {
-      name: form.name.trim(),
-      price,
-      days,
-      goal,
-      imageUrl: form.image.trim() || undefined,
+        name: form.name.trim(),
+        price,
+        days,
+        goal,
+        imageUrl: form.image.trim() || undefined,
     };
 
     try {
       setSubmitting(true);
-      // ✅ 실제 API 호출
       const created = await api<Protein>("/api/proteins", {
         method: "POST",
         body: JSON.stringify(payload),
-        // credentials: "include", // 세션/쿠키 쓰면 주석 해제
       });
 
-      alert("공동구매 상품이 등록되었습니다!");
-      // 생성된 상세로 이동 (백엔드가 id 반환한다고 가정)
+      alert("공동구매 상품이 등록되었습니다.");
       navigate(`/proteins/${created.id}`);
     } catch (e: any) {
       setErr(e?.message ?? "등록에 실패했습니다.");
@@ -103,7 +97,7 @@ export default function WriteProtein() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block mb-2">상품 이름</label>
+            <label className="block mb-2">제품 이름</label>
             <input
               type="text"
               name="name"
@@ -115,7 +109,7 @@ export default function WriteProtein() {
           </div>
 
           <div>
-            <label className="block mb-2">가격 (₩)</label>
+            <label className="block mb-2">가격(원)</label>
             <input
               type="number"
               name="price"
@@ -128,7 +122,7 @@ export default function WriteProtein() {
           </div>
 
           <div>
-            <label className="block mb-2">남은 기간 (일)</label>
+            <label className="block mb-2">진행 기간 (일)</label>
             <input
               type="number"
               name="days"
@@ -153,8 +147,13 @@ export default function WriteProtein() {
             />
           </div>
 
-          <div>
-            <label className="block mb-2">상품 이미지 URL</label>
+          <div className="space-y-3">
+            <label className="block">제품 이미지 (드래그 앤 드롭 또는 URL 입력)</label>
+            <UploadDropzone
+              accept="image/*"
+              multiple={false}
+              onUploaded={(url) => setForm((prev) => ({ ...prev, image: url }))}
+            />
             <input
               type="text"
               name="image"
@@ -163,6 +162,12 @@ export default function WriteProtein() {
               className="w-full p-3 rounded bg-gray-900 border border-gray-600 focus:outline-none"
               placeholder="https://example.com/product.jpg"
             />
+            {form.image && (
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-sm text-gray-300 mb-2">미리보기</p>
+                <img src={form.image} alt="preview" className="w-full h-48 object-cover rounded-lg" />
+              </div>
+            )}
           </div>
 
           {err && <p className="text-red-400 text-sm">{err}</p>}

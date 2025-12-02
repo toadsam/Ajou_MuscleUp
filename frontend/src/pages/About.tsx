@@ -1,4 +1,10 @@
+import { useEffect } from "react";
+import { logEvent } from "../utils/analytics";
+
 export default function About() {
+  useEffect(() => {
+    logEvent("about", "page_view");
+  }, []);
   return (
     <section className="pt-32 p-12 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
       <div className="max-w-5xl mx-auto space-y-10">

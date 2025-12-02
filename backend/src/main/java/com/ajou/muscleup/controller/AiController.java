@@ -7,6 +7,8 @@ import com.ajou.muscleup.dto.ai.AiPlanResponse;
 import com.ajou.muscleup.dto.ai.AiChatRequest;
 import com.ajou.muscleup.dto.ai.AiChatResponse;
 import com.ajou.muscleup.dto.ai.AiChatLogItem;
+import com.ajou.muscleup.dto.ai.AiShareResponse;
+import com.ajou.muscleup.entity.AiMessageType;
 import com.ajou.muscleup.service.AiService;
 import com.ajou.muscleup.service.AiChatHistoryService;
 import lombok.RequiredArgsConstructor;
@@ -27,16 +29,20 @@ public class AiController {
     private final AiChatHistoryService aiChatHistoryService;
 
     @PostMapping("/analyze")
-    public ResponseEntity<AiAnalyzeResponse> analyze(@RequestBody AiAnalyzeRequest req) {
+    public ResponseEntity<AiAnalyzeResponse> analyze(@AuthenticationPrincipal String email, @RequestBody AiAnalyzeRequest req) {
+        String userEmail = requireEmail(email);
         String prompt = buildAnalysisPrompt(req);
         String content = aiService.requestCompletion(systemPromptForCoach(), prompt);
+        aiChatHistoryService.save(userEmail, AiMessageType.ANALYZE, prompt, content);
         return ResponseEntity.ok(new AiAnalyzeResponse(content));
     }
 
     @PostMapping("/plan")
-    public ResponseEntity<AiPlanResponse> buildPlan(@RequestBody AiPlanRequest req) {
+    public ResponseEntity<AiPlanResponse> buildPlan(@AuthenticationPrincipal String email, @RequestBody AiPlanRequest req) {
+        String userEmail = requireEmail(email);
         String prompt = buildPlanPrompt(req);
         String content = aiService.requestCompletion(systemPromptForPlanner(), prompt);
+        aiChatHistoryService.save(userEmail, AiMessageType.PLAN, prompt, content);
         return ResponseEntity.ok(new AiPlanResponse(content));
     }
 
@@ -45,19 +51,47 @@ public class AiController {
         String userEmail = requireEmail(email);
         String prompt = buildChatPrompt(req);
         String content = aiService.requestCompletion(systemPromptForCoach(), prompt);
-        aiChatHistoryService.save(userEmail, req.getQuestion(), content);
+        aiChatHistoryService.save(userEmail, AiMessageType.CHAT, req.getQuestion(), content);
         return ResponseEntity.ok(new AiChatResponse(content));
     }
 
     @GetMapping("/chat/history")
-    public ResponseEntity<List<AiChatLogItem>> history(@AuthenticationPrincipal String email) {
+    public ResponseEntity<List<AiChatLogItem>> history(
+            @AuthenticationPrincipal String email,
+            @RequestParam(value = "type", required = false) AiMessageType type,
+            @RequestParam(value = "limit", defaultValue = "50") int limit
+    ) {
         String userEmail = requireEmail(email);
-        return ResponseEntity.ok(aiChatHistoryService.getRecent(userEmail, 50));
+        return ResponseEntity.ok(aiChatHistoryService.getRecent(userEmail, type, limit));
+    }
+
+    @PostMapping("/chat/history/{id}/share")
+    public ResponseEntity<AiShareResponse> share(
+            @AuthenticationPrincipal String email,
+            @PathVariable("id") Long id
+    ) {
+        String userEmail = requireEmail(email);
+        return ResponseEntity.ok(aiChatHistoryService.share(userEmail, id));
+    }
+
+    @DeleteMapping("/chat/history/{id}/share")
+    public ResponseEntity<Void> unshare(
+            @AuthenticationPrincipal String email,
+            @PathVariable("id") Long id
+    ) {
+        String userEmail = requireEmail(email);
+        aiChatHistoryService.unshare(userEmail, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/share/{slug}")
+    public ResponseEntity<AiShareResponse> viewShared(@PathVariable("slug") String slug) {
+        return ResponseEntity.ok(aiChatHistoryService.getSharedBySlug(slug));
     }
 
     private String buildAnalysisPrompt(AiAnalyzeRequest r) {
         StringBuilder sb = new StringBuilder();
-        sb.append("다음 사용자의 체성 정보를 바탕으로 개인 맞춤형 운동 및 영양 가이드를 작성하세요.\n");
+        sb.append("다음 사용자의 체성 정보를 바탕으로 개인 맞춤 운동·영양 가이드를 작성하세요.\n");
         sb.append("- 키(cm): ").append(nz(r.getHeight())).append('\n');
         sb.append("- 몸무게(kg): ").append(nz(r.getWeight())).append('\n');
         sb.append("- 체지방률(%): ").append(nz(r.getBodyFat())).append('\n');
@@ -67,25 +101,25 @@ public class AiController {
         }
         sb.append("\n요구사항:\n");
         sb.append("1) 현재 상태 분석(BMI/체성 지표 요약).\n");
-        sb.append("2) 주간 운동 계획(빈도, 세트/반복, 유산소/무산소 비율, 난이도).\n");
-        sb.append("3) 식단 가이드(권장 영양소, 회복 팁, 지양해야 할 습관).\n");
+        sb.append("2) 주간 운동 계획(빈도, 세트/반복, 유산소·무산소 비율, 강도).\n");
+        sb.append("3) 식단 가이드(권장 영양분, 회복 팁, 피해야 할 것).\n");
         sb.append("4) 부상 예방 및 주의사항.\n");
-        sb.append("5) 실행 체크리스트 3가지를 bullet로 정리.");
+        sb.append("5) 실행 체크리스트 3가지를 bullet로 제시.");
         return sb.toString();
     }
 
     private String buildPlanPrompt(AiPlanRequest r) {
         StringBuilder sb = new StringBuilder();
-        sb.append("다음 조건을 바탕으로 4주 분량의 맞춤형 루틴을 만들어 주세요.\n");
+        sb.append("다음 조건을 바탕으로 4주 분량의 맞춤 루틴을 만들어 주세요.\n");
         sb.append("- 운동 경험: ").append(nz(r.getExperienceLevel())).append('\n');
-        sb.append("- 주간 가능 일수: ").append(nz(r.getAvailableDays())).append('\n');
+        sb.append("- 주간 가능 횟수: ").append(nz(r.getAvailableDays())).append('\n');
         sb.append("- 집중 부위/목표: ").append(nz(r.getFocusArea())).append('\n');
         sb.append("- 사용 가능한 장비: ").append(nz(r.getEquipment())).append('\n');
-        sb.append("- 하루 운동 시간: ").append(nz(r.getPreferredTime())).append('\n');
+        sb.append("- 선호 운동 시간: ").append(nz(r.getPreferredTime())).append('\n');
         sb.append("- 메모: ").append(nz(r.getNotes())).append('\n');
         sb.append("\n요청사항:\n");
         sb.append("1) 주차별 핵심 목표 요약.\n");
-        sb.append("2) 요일별 세부 루틴을 표 형식으로 제시(운동명, 세트/반복, 휴식, 팁).\n");
+        sb.append("2) 주일별/요일별 루틴을 표 형식 없이 텍스트로 제시(운동명, 세트/반복, 세션 시간 등).\n");
         sb.append("3) 회복/영양 팁과 주의사항을 bullet로 추가.");
         return sb.toString();
     }
@@ -96,18 +130,20 @@ public class AiController {
             sb.append("참고 맥락: ").append(r.getContext()).append("\n\n");
         }
         sb.append("사용자 질문: ").append(r.getQuestion()).append("\n");
-        sb.append("친근한 트레이너처럼 간결하고 실행 가능한 답변을 제공하세요.");
+        sb.append("친근한 트레이너처럼 간결하고 실행 가능한 조언을 제공하세요.");
         return sb.toString();
     }
 
     private String systemPromptForCoach() {
         return "당신은 과학적인 근거를 바탕으로 한국어로 조언하는 피트니스 코치입니다. " +
-                "초보자도 이해하기 쉽게 단계별로 설명하고, 건강과 안전을 최우선으로 안내하세요.";
+                "초보도 이해하기 쉽게 단계별로 설명하고, 건강과 안전을 최우선으로 안내하세요. " +
+                "마크다운 형식(**, __, ###, ``` 등) 없이 평문으로 답변하고, bullet은 '- '만 사용하라.";
     }
 
     private String systemPromptForPlanner() {
         return "당신은 체계적인 운동 루틴을 설계하는 전문가입니다. " +
-                "운동명, 세트/반복, 휴식, 포인트를 명확하게 정리하고 표 형식으로 제시하세요.";
+                "운동명·세트/반복, 세션 시간 등을 명확하게 정리하고 표 형식 없이 제시하세요. " +
+                "마크다운 형식(**, __, ###, ``` 등) 없이 평문으로 답변하고, bullet은 '- '만 사용하라.";
     }
 
     private String requireEmail(String email) {

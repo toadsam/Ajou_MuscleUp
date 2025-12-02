@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { logEvent } from "../utils/analytics";
 
 type BragPost = {
   id: number;
@@ -106,12 +107,16 @@ export default function BragList() {
     fetchPosts();
   }, [fetchPosts]);
 
+  useEffect(() => {
+    logEvent("brag_list", "page_view");
+  }, []);
+
   return (
     <section className="pt-32 pb-20 px-5 md:px-10 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-pink-300">득근회원 자랑방</p>
+            <p className="text-sm uppercase tracking-[0.3em] text-pink-300">우리 회원 자랑방</p>
             <h1 className="text-3xl md:text-4xl font-extrabold">최신 자랑 모음</h1>
           </div>
           <a
@@ -134,7 +139,7 @@ export default function BragList() {
 
         {!loading && posts.length === 0 && (
           <div className="rounded-2xl border border-dashed border-gray-600 bg-gray-800/40 p-10 text-center text-gray-300">
-            아직 올라온 자랑이 없어요. 첫 번째 기록을 남겨주세요!
+            아직 자랑이 없어요. 첫 번째 기록을 남겨주세요!
           </div>
         )}
 
@@ -146,7 +151,7 @@ export default function BragList() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm text-pink-300 font-semibold">{post.authorNickname || "득근회원"}</p>
+                  <p className="text-sm text-pink-300 font-semibold">{post.authorNickname || "익명 회원"}</p>
                   <p className="text-xs text-gray-400">{formatDate(post.createdAt)}</p>
                 </div>
                 {(post.movement || post.weight) && (
@@ -168,7 +173,7 @@ export default function BragList() {
                   onClick={() => toggleLike(post.id)}
                   className="flex items-center gap-2 rounded-full border border-pink-400/50 px-3 py-1 text-sm text-pink-200 hover:bg-pink-500/10 transition"
                 >
-                  <span>❤️</span>
+                  <span>👍</span>
                   <span>{likes[post.id]?.count ?? post.likeCount ?? 0}</span>
                   <span className="text-xs">{likes[post.id]?.liked ? "좋아요 취소" : "좋아요"}</span>
                 </button>
@@ -176,7 +181,7 @@ export default function BragList() {
                   href={`/brag/${post.id}#comments`}
                   className="text-sm text-gray-300 hover:text-white underline-offset-2 hover:underline"
                 >
-                  댓글 보기/달기
+                  댓글 보기/쓰기
                 </a>
               </div>
 

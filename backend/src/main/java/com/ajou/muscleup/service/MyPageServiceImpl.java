@@ -41,7 +41,7 @@ public class MyPageServiceImpl implements MyPageService {
                 .map(p -> BragPostResponse.from(p, likeRepository.countByPostId(p.getId())))
                 .toList();
 
-        List<AiChatLogItem> chats = aiChatHistoryService.getRecent(userEmail, 20);
+        List<AiChatLogItem> chats = aiChatHistoryService.getRecent(userEmail, null, 20);
 
         return new MyPageResponse(user.getEmail(), user.getNickname(), comments, likes, chats);
     }

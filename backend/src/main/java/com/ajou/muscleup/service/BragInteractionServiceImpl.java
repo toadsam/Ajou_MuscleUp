@@ -2,6 +2,7 @@ package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.brag.BragCommentCreateRequest;
 import com.ajou.muscleup.dto.brag.BragCommentResponse;
+import com.ajou.muscleup.dto.brag.BragCommentUpdateRequest;
 import com.ajou.muscleup.dto.brag.BragLikeResponse;
 import com.ajou.muscleup.entity.BragComment;
 import com.ajou.muscleup.entity.BragLike;
@@ -58,11 +59,24 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     }
 
     @Override
+    public BragCommentResponse updateComment(String userEmail, Long commentId, BragCommentUpdateRequest req) {
+        User user = requireUser(userEmail);
+        BragComment c = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
+        if (!c.getUser().getId().equals(user.getId()) && !isAdmin(user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 댓글만 수정할 수 있습니다.");
+        }
+        c.setContent(req.getContent().trim());
+        BragComment saved = commentRepository.save(c);
+        return BragCommentResponse.from(saved);
+    }
+
+    @Override
     public void deleteComment(String userEmail, Long commentId) {
         User user = requireUser(userEmail);
         BragComment c = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
-        if (!c.getUser().getId().equals(user.getId())) {
+        if (!c.getUser().getId().equals(user.getId()) && !isAdmin(user)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 댓글만 삭제할 수 있습니다.");
         }
         commentRepository.delete(c);
@@ -92,5 +106,9 @@ public class BragInteractionServiceImpl implements BragInteractionService {
         User user = requireUser(userEmail);
         boolean liked = likeRepository.existsByBragPost_IdAndUser_Id(postId, user.getId());
         return new BragLikeResponse(count, liked);
+    }
+
+    private boolean isAdmin(User user) {
+        return user != null && "ADMIN".equalsIgnoreCase(user.getRole());
     }
 }

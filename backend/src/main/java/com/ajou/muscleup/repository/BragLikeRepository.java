@@ -10,6 +10,7 @@ import java.util.List;
 public interface BragLikeRepository extends JpaRepository<BragLike, Long> {
     boolean existsByBragPost_IdAndUser_Id(Long postId, Long userId);
     void deleteByBragPost_IdAndUser_Id(Long postId, Long userId);
+    void deleteByBragPost_Id(Long postId);
 
     @Query("select count(bl) from BragLike bl where bl.bragPost.id = :pid")
     long countByPostId(@Param("pid") Long postId);
