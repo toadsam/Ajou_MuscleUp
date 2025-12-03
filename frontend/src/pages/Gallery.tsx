@@ -37,7 +37,7 @@ export default function Gallery() {
   const fetchList = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/list`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/list?folder=gallery`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error(await res.text());

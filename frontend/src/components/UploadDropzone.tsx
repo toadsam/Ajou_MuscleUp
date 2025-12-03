@@ -5,12 +5,13 @@ type Props = {
   accept?: string;
   multiple?: boolean;
   className?: string;
+  folder?: string;
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
 
-export default function UploadDropzone({ onUploaded, accept = "image/*", multiple = false, className }: Props) {
+export default function UploadDropzone({ onUploaded, accept = "image/*", multiple = false, className, folder = "gallery" }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [activeUploads, setActiveUploads] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export default function UploadDropzone({ onUploaded, accept = "image/*", multipl
       try {
         const form = new FormData();
         form.append("file", file);
-        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/upload`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/upload?folder=${encodeURIComponent(folder)}`, {
           method: "POST",
           credentials: "include",
           body: form,

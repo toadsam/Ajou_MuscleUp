@@ -151,7 +151,7 @@ export default function BragWrite() {
 
           <div className="space-y-3">
             <label className="text-sm text-gray-300">사진/영상 첨부</label>
-            <UploadDropzone onUploaded={handleUploaded} accept="image/*,video/*" multiple />
+            <UploadDropzone onUploaded={handleUploaded} accept="image/*,video/*" multiple folder="brag" />
             {form.mediaUrls.length > 0 && (
               <div className="grid grid-cols-2 gap-3">
                 {form.mediaUrls.map((rawUrl) => {

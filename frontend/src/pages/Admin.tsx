@@ -97,7 +97,7 @@ export default function Admin() {
   const loadGallery = async () => {
     try {
       setLoadingGallery(true);
-      const res = await fetch(`${API_BASE}/api/files/list`, { credentials: "include" });
+      const res = await fetch(`${API_BASE}/api/files/list?folder=gallery`, { credentials: "include" });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const data: string[] = await res.json();
       setGallery(data);
@@ -151,9 +151,42 @@ export default function Admin() {
     }
   };
 
+  const [brags, setBrags] = useState<{ id: number; title: string }[]>([]);
+  const [loadingBrags, setLoadingBrags] = useState(false);
+
+  const loadBrags = async () => {
+    try {
+      setLoadingBrags(true);
+      const res = await fetch(`${API_BASE}/api/brags?page=0&size=100`, { credentials: "include" });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : data.content ?? [];
+      setBrags(list.map((b: any) => ({ id: b.id, title: b.title })));
+    } catch (e: any) {
+      setError(e?.message || "자랑 목록을 불러오지 못했어요.");
+    } finally {
+      setLoadingBrags(false);
+    }
+  };
+
+  const deleteBrag = async (id: number) => {
+    if (!confirm("이 자랑글을 삭제할까요?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/brags/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok && res.status !== 204) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      await loadBrags();
+    } catch (e: any) {
+      alert(e?.message || "삭제에 실패했습니다.");
+    }
+  };
+
   useEffect(() => {
     loadGallery();
     loadProteins();
+    loadBrags();
   }, []);
 
   const forceDelete = async (type: "brag" | "comment" | "review" | "ai", id: string) => {
@@ -246,12 +279,11 @@ export default function Admin() {
           statuses={statuses}
         />
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-3">
           <GalleryPanel items={gallery} loading={loadingGallery} onRefresh={loadGallery} onDelete={deleteGalleryItem} />
           <ProteinPanel items={proteins} loading={loadingProteins} onRefresh={loadProteins} onDelete={deleteProtein} />
+          <BragPanel items={brags} loading={loadingBrags} onRefresh={loadBrags} onDelete={deleteBrag} />
         </div>
-
-        <ForceDeletePanel onDelete={forceDelete} />
       </div>
     </section>
   );
@@ -445,73 +477,42 @@ function ProteinPanel({
   );
 }
 
-function ForceDeletePanel({ onDelete }: { onDelete: (type: "brag" | "comment" | "review" | "ai", id: string) => void }) {
-  const [ids, setIds] = useState({ brag: "", comment: "", review: "", ai: "" });
-  const inputClass = "flex-1 rounded-lg bg-black/40 border border-gray-700 px-3 py-2 text-white";
-  const btnClass = "px-3 py-2 rounded-lg bg-red-500/80 text-white text-sm hover:opacity-90";
+function BragPanel({
+  items,
+  loading,
+  onRefresh,
+  onDelete,
+}: {
+  items: { id: number; title: string }[];
+  loading: boolean;
+  onRefresh: () => void;
+  onDelete: (id: number) => void;
+}) {
   return (
-    <div className="rounded-2xl bg-gray-800/70 border border-white/10 p-6 space-y-4 shadow-xl backdrop-blur">
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold">관리자 강제 삭제</h3>
-        <span className="text-xs text-red-300">주의: 복구 불가</span>
+        <div>
+          <h3 className="text-xl font-bold">자랑방 관리</h3>
+          <p className="text-sm text-gray-300">게시글 삭제</p>
+        </div>
+        <button onClick={onRefresh} className="text-sm text-pink-200 hover:text-pink-100" disabled={loading}>
+          새로고침
+        </button>
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="text-sm text-gray-200">
-          자랑글 ID
-          <div className="mt-2 flex gap-2">
-            <input
-              className={inputClass}
-              value={ids.brag}
-              onChange={(e) => setIds((p) => ({ ...p, brag: e.target.value }))}
-              placeholder="예: 12"
-            />
-            <button className={btnClass} onClick={() => onDelete("brag", ids.brag)}>
+      {loading && <p className="text-sm text-gray-300">불러오는 중...</p>}
+      {!loading && items.length === 0 && <p className="text-sm text-gray-400">표시할 게시글이 없습니다.</p>}
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {items.map((b) => (
+          <div key={b.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+            <div className="text-sm text-white truncate pr-2">{b.title || `자랑 #${b.id}`}</div>
+            <button
+              onClick={() => onDelete(b.id)}
+              className="rounded-full bg-red-500/80 px-3 py-1 text-xs text-white hover:opacity-90"
+            >
               삭제
             </button>
           </div>
-        </label>
-        <label className="text-sm text-gray-200">
-          자랑 댓글 ID
-          <div className="mt-2 flex gap-2">
-            <input
-              className={inputClass}
-              value={ids.comment}
-              onChange={(e) => setIds((p) => ({ ...p, comment: e.target.value }))}
-              placeholder="예: 34"
-            />
-            <button className={btnClass} onClick={() => onDelete("comment", ids.comment)}>
-              삭제
-            </button>
-          </div>
-        </label>
-        <label className="text-sm text-gray-200">
-          후기 ID
-          <div className="mt-2 flex gap-2">
-            <input
-              className={inputClass}
-              value={ids.review}
-              onChange={(e) => setIds((p) => ({ ...p, review: e.target.value }))}
-              placeholder="예: 7"
-            />
-            <button className={btnClass} onClick={() => onDelete("review", ids.review)}>
-              삭제
-            </button>
-          </div>
-        </label>
-        <label className="text-sm text-gray-200">
-          AI 히스토리 ID
-          <div className="mt-2 flex gap-2">
-            <input
-              className={inputClass}
-              value={ids.ai}
-              onChange={(e) => setIds((p) => ({ ...p, ai: e.target.value }))}
-              placeholder="예: 3"
-            />
-            <button className={btnClass} onClick={() => onDelete("ai", ids.ai)}>
-              삭제
-            </button>
-          </div>
-        </label>
+        ))}
       </div>
     </div>
   );
