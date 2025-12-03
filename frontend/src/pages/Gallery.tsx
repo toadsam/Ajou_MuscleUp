@@ -11,19 +11,19 @@ type MediaItem = {
 const highlights: MediaItem[] = [
   {
     title: "바디 프로필 캠페인",
-    desc: "10명의 회원이 도전한 바디 프로필, 스토리와 결과를 담았습니다.",
+    desc: "10명의 회원이 도전한 바디 프로필 스토리를 결과까지 담았어요.",
     tag: "브랜디드",
     image: "https://images.unsplash.com/photo-1518611012118-696072aa579a",
   },
   {
-    title: "대회 준비 다큐",
-    desc: "12주 준비 과정, 식단·루틴·마인드셋까지 기록한 단편.",
+    title: "12주 준비 다큐",
+    desc: "12주 준비 과정, 운동·루틴·마인드셋까지 기록한 미니 다큐.",
     tag: "다큐",
     image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
   },
   {
-    title: "브랜드 협업 세션",
-    desc: "스포츠 브랜드와 함께한 커뮤니티 클래스 & 콘텐츠 제작.",
+    title: "브랜딩 워크숍 세션",
+    desc: "스폰서 브랜드와 함께한 커뮤니티 촬영 & 콘텐츠 제작.",
     tag: "콜라보",
     image: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5",
   },
@@ -37,15 +37,14 @@ export default function Gallery() {
   const fetchList = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/list`, {
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
       });
       if (!res.ok) throw new Error(await res.text());
       const data: string[] = await res.json();
       setImages(data);
     } catch (e: any) {
-      setError(e?.message || "미디어를 불러오지 못했습니다.");
+      setError(e?.message || "미디어를 불러오지 못했어요.");
     } finally {
       setLoading(false);
     }
@@ -64,23 +63,23 @@ export default function Gallery() {
         <header className="grid gap-6 lg:grid-cols-2 lg:items-center">
           <div className="space-y-4">
             <p className="text-sm uppercase tracking-[0.25em] text-pink-200">Media Studio</p>
-            <h1 className="text-3xl md:text-4xl font-extrabold">브랜드 스토리를 담는 미디어</h1>
+            <h1 className="text-3xl md:text-4xl font-extrabold">브랜드 스토리를 담은 미디어</h1>
             <p className="text-gray-200 leading-relaxed">
-              회원의 성장을 기록하고, 파트너 브랜드와 함께하는 캠페인·다큐·하이라이트 콘텐츠를 제작합니다.
-              기획부터 촬영, 후반 작업까지 내부 스튜디오에서 책임집니다.
+              회원님의 성장 기록과, 팀이 함께 만든 캠페인·다큐·하이라이트 콘텐츠를 모았습니다.
+              기획부터 촬영, 후반 작업까지 전담 스튜디오에서 책임집니다.
             </p>
             <div className="flex gap-3 flex-wrap text-sm">
               <span className="rounded-full bg-white/10 px-4 py-2 border border-white/10">브랜디드 콘텐츠</span>
               <span className="rounded-full bg-white/10 px-4 py-2 border border-white/10">바디 프로필</span>
-              <span className="rounded-full bg-white/10 px-4 py-2 border border-white/10">대회·다큐</span>
-              <span className="rounded-full bg-white/10 px-4 py-2 border border-white/10">커뮤니티 클래스</span>
+              <span className="rounded-full bg-white/10 px-4 py-2 border border-white/10">다큐·하이라이트</span>
+              <span className="rounded-full bg-white/10 px-4 py-2 border border-white/10">커뮤니티 촬영</span>
             </div>
             <div className="flex gap-3">
               <a
                 href="mailto:contact@example.com"
                 className="btn-gradient px-6 py-3 rounded-xl font-semibold"
               >
-                협업 문의
+                촬영 문의
               </a>
               <a
                 href="/programs"
@@ -93,7 +92,7 @@ export default function Gallery() {
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
             <UploadDropzone onUploaded={() => fetchList()} />
             <p className="mt-3 text-sm text-gray-300">
-              내부 스튜디오 업로드 존입니다. 승인된 계정만 반영됩니다.
+              내부 미디어 스튜디오 업로드 존입니다. 로그인된 계정에 반영돼요.
             </p>
           </div>
         </header>

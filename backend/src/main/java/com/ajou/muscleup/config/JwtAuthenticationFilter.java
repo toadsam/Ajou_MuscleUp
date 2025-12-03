@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -27,33 +30,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1️⃣ 헤더에서 토큰 꺼내기
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token = resolveToken(request);
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
-        String token = authHeader.substring(7);
 
-        // 2️⃣ 토큰 검증
         if (jwtUtil.validateToken(token) && "access".equals(jwtUtil.getTokenType(token))) {
             String email = jwtUtil.getEmailFromToken(token);
             String role = jwtUtil.getRoleFromToken(token);
 
-            // 3️⃣ Authentication 객체 생성 (유저명, 권한)
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            email, null,
-                            java.util.List.of(() -> role) // ROLE_USER, ROLE_ADMIN 같은 권한
+                            email,
+                            null,
+                            java.util.List.of(() -> role)
                     );
 
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            // 4️⃣ SecurityContext에 저장
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        // 다음 필터 진행
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        if (request.getCookies() == null) return null;
+        Optional<String> cookieToken = Arrays.stream(request.getCookies())
+                .filter(c -> "accessToken".equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst();
+        return cookieToken.orElse(null);
     }
 }

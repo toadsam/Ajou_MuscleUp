@@ -5,16 +5,18 @@ import UploadDropzone from "../components/UploadDropzone";
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = BASE ? `${BASE}${path}` : path;
-  const token = localStorage.getItem("token");
   const headers = new Headers(init?.headers);
   headers.set("Content-Type", "application/json");
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
   const res = await fetch(url, {
     ...init,
     headers,
+    credentials: "include",
   });
+  if (res.status === 401) {
+    alert("로그인이 필요합니다.");
+    window.location.href = "/login";
+    throw new Error("Unauthorized");
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`HTTP ${res.status} ${res.statusText} ${text}`);
@@ -58,20 +60,20 @@ export default function WriteProtein() {
     const days = Number(form.days);
     const goal = Number(form.goal);
     if (Number.isNaN(price) || Number.isNaN(days) || Number.isNaN(goal)) {
-      setErr("가격/기간/목표 인원이 숫자여야 합니다.");
+      setErr("가격/기간/목표 인원은 숫자여야 해요.");
       return;
     }
     if (price < 0 || days <= 0 || goal <= 0) {
-      setErr("가격은 0 이상, 기간·목표 인원은 1 이상이어야 합니다.");
+      setErr("가격은 0 이상, 기간·목표 인원은 1 이상이어야 해요.");
       return;
     }
 
     const payload: CreateProteinPayload = {
-        name: form.name.trim(),
-        price,
-        days,
-        goal,
-        imageUrl: form.image.trim() || undefined,
+      name: form.name.trim(),
+      price,
+      days,
+      goal,
+      imageUrl: form.image.trim() || undefined,
     };
 
     try {
@@ -97,7 +99,7 @@ export default function WriteProtein() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block mb-2">제품 이름</label>
+            <label className="block mb-2">상품 이름</label>
             <input
               type="text"
               name="name"
@@ -109,7 +111,7 @@ export default function WriteProtein() {
           </div>
 
           <div>
-            <label className="block mb-2">가격(원)</label>
+            <label className="block mb-2">가격</label>
             <input
               type="number"
               name="price"
@@ -148,7 +150,7 @@ export default function WriteProtein() {
           </div>
 
           <div className="space-y-3">
-            <label className="block">제품 이미지 (드래그 앤 드롭 또는 URL 입력)</label>
+            <label className="block">상품 이미지 (올려도 되고 URL 입력도 가능)</label>
             <UploadDropzone
               accept="image/*"
               multiple={false}
@@ -177,7 +179,7 @@ export default function WriteProtein() {
             disabled={submitting}
             className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-60"
           >
-            {submitting ? "등록 중..." : "등록하기"}
+            {submitting ? "등록 중.." : "등록하기"}
           </button>
         </form>
       </div>

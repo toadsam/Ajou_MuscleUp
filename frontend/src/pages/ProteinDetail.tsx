@@ -16,7 +16,7 @@ type Protein = {
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export default function ProteinDetail() {
-  const { id } = useParams();              // /proteins/:id 에서 id 추출
+  const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState<Protein | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,14 +28,12 @@ export default function ProteinDetail() {
       try {
         setLoading(true);
         const url = (BASE ? `${BASE}` : "") + `/api/proteins/${id}`;
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-        const res = await fetch(url, { headers });
+        const res = await fetch(url, { credentials: "include" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: Protein = await res.json();
         setData(json);
       } catch (e: any) {
-        setErr(e.message ?? "불러오기에 실패했습니다.");
+        setErr(e.message ?? "불러오기 실패했습니다.");
       } finally {
         setLoading(false);
       }
@@ -45,7 +43,7 @@ export default function ProteinDetail() {
   if (loading) {
     return (
       <section className="pt-32 p-12 min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
-        <p className="text-center text-gray-300">불러오는 중…</p>
+        <p className="text-center text-gray-300">불러오는 중...</p>
       </section>
     );
   }
@@ -54,12 +52,12 @@ export default function ProteinDetail() {
     return (
       <section className="pt-32 p-12 min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
         <div className="max-w-3xl mx-auto bg-gray-800/70 p-8 rounded-2xl">
-          <p className="text-red-400 mb-6">{err ?? "데이터가 없습니다."}</p>
+          <p className="text-red-400 mb-6">{err ?? "데이터를 찾을 수 없습니다."}</p>
           <button
             onClick={() => navigate(-1)}
             className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600"
           >
-            ← 뒤로가기
+            이전으로
           </button>
         </div>
       </section>
@@ -79,7 +77,7 @@ export default function ProteinDetail() {
         <h1 className="text-3xl font-extrabold mb-3">{data.name}</h1>
         <p className="text-lg mb-1">₩{data.price?.toLocaleString() ?? "-"}</p>
         <p className="mb-1">남은 기간: <span className="text-green-400">{data.days ?? "-"}</span>일</p>
-        <p className="mb-1">목표 인원: {data.goal ?? "-"}</p>
+        <p className="mb-1">목표 참여자: {data.goal ?? "-"}</p>
         <p className="mb-4">카테고리: {data.category ?? "-"}</p>
 
         <div className="mt-4 mb-6">
@@ -101,13 +99,13 @@ export default function ProteinDetail() {
 
         <div className="mt-8 flex gap-3">
           <button onClick={() => navigate(-1)} className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600">
-            ← 목록으로
+            목록으로
           </button>
           <Link
             to="/protein"
             className="px-4 py-2 rounded bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90"
           >
-            프로틴 목록
+            목록 보기
           </Link>
         </div>
       </div>

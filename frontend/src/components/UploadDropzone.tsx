@@ -22,14 +22,11 @@ export default function UploadDropzone({ onUploaded, accept = "image/*", multipl
       setActiveUploads((c) => c + 1);
       setError(null);
       try {
-        const token = localStorage.getItem("token");
         const form = new FormData();
         form.append("file", file);
         const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/upload`, {
           method: "POST",
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+          credentials: "include",
           body: form,
         });
         if (!res.ok) throw new Error(await res.text());

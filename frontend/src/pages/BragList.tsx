@@ -37,19 +37,16 @@ const formatDate = (v?: string | null) => {
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }

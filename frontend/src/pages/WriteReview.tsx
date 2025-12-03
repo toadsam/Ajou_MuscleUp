@@ -20,21 +20,18 @@ type Protein = { id: number; name: string };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
 
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
 
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -53,7 +50,7 @@ export default function WriteReview() {
   const [form, setForm] = useState({
     rating: editing?.rating ?? 5,
     content: editing?.content ?? "",
-    proteinId: editing?.proteinId ?? 1, // TODO: 제품 선택 UI 연동 필요
+    proteinId: editing?.proteinId ?? 1,
   });
   const [proteins, setProteins] = useState<Protein[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -86,7 +83,7 @@ export default function WriteReview() {
           setForm((prev) => ({ ...prev, proteinId: normalized[0].id }));
         }
       } catch {
-        // ignore fetch failure; fallback remains
+        // ignore fetch failure
       }
     };
     loadProteins();
@@ -96,7 +93,7 @@ export default function WriteReview() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasProtein) {
-      setErr("제품 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+      setErr("제품 목록을 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
     if (!form.content.trim()) {
@@ -120,7 +117,7 @@ export default function WriteReview() {
       }
       navigate("/reviews");
     } catch (e: any) {
-      setErr(e?.message || "저장에 실패했습니다.");
+      setErr(e?.message || "요청에 실패했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -187,7 +184,7 @@ export default function WriteReview() {
               className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-60"
               disabled={submitting}
             >
-              {submitting ? "저장 중..." : editing ? "수정하기" : "등록하기"}
+              {submitting ? "저장 중.." : editing ? "수정하기" : "등록하기"}
             </button>
           </div>
         </form>

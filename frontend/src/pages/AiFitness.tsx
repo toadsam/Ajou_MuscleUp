@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { logEvent } from "../utils/analytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
-const USE_CREDENTIALS = import.meta.env.VITE_USE_CREDENTIALS === "true";
+const USE_CREDENTIALS = true;
 
 const tabs = [
   { id: "analysis", label: "체성 분석", description: "AI가 체성 정보를 분석해 현재 상태와 코칭 포인트를 안내해요." },
@@ -54,12 +54,8 @@ export default function AiFitness() {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const token = useMemo(() => localStorage.getItem("token"), []);
-  const headers = useMemo(() => {
-    const h: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) h.Authorization = `Bearer ${token}`;
-    return h;
-  }, [token]);
+  const [hasSession] = useState<boolean>(() => !!localStorage.getItem("user"));
+  const headers = useMemo(() => ({ "Content-Type": "application/json" }), []);
 
   const callAi = async (path: string, payload: unknown) => {
     setLoading(path);
@@ -69,7 +65,7 @@ export default function AiFitness() {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
-        credentials: USE_CREDENTIALS ? "include" : "same-origin",
+        credentials: "include",
       });
       if (!res.ok) {
         throw new Error((await res.text()) || `HTTP ${res.status}`);
@@ -84,14 +80,14 @@ export default function AiFitness() {
   };
 
   const fetchHistory = async () => {
-    if (!token) return;
+    if (!hasSession) return;
     setHistoryLoading(true);
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/ai/chat/history`, {
         method: "GET",
         headers,
-        credentials: USE_CREDENTIALS ? "include" : "same-origin",
+        credentials: "include",
       });
       if (!res.ok) {
         throw new Error((await res.text()) || `HTTP ${res.status}`);
@@ -107,10 +103,10 @@ export default function AiFitness() {
   };
 
   useEffect(() => {
-    if (activeTab === "chat" && token && !historyFetched) {
+    if (activeTab === "chat" && hasSession && !historyFetched) {
       fetchHistory();
     }
-  }, [activeTab, token, historyFetched]);
+  }, [activeTab, hasSession, historyFetched]);
 
   useEffect(() => {
     logEvent("ai", "page_view");
@@ -130,7 +126,7 @@ export default function AiFitness() {
 
   const handleChat = async () => {
     if (!question.trim()) return;
-    if (!token) {
+    if (!hasSession) {
       setError("AI 상담을 이용하려면 로그인하세요.");
       return;
     }
@@ -152,7 +148,7 @@ export default function AiFitness() {
       const res = await fetch(`${API_BASE}/api/ai/chat/history/${item.id}/share`, {
         method: "POST",
         headers,
-        credentials: USE_CREDENTIALS ? "include" : "same-origin",
+        credentials: "include",
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const data = await res.json();
@@ -174,7 +170,7 @@ export default function AiFitness() {
       const res = await fetch(`${API_BASE}/api/ai/chat/history/${item.id}/share`, {
         method: "DELETE",
         headers,
-        credentials: USE_CREDENTIALS ? "include" : "same-origin",
+        credentials: "include",
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       setSavedHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, shared: false, shareSlug: null } : h)));
@@ -259,15 +255,15 @@ export default function AiFitness() {
           <button
             type="button"
             onClick={fetchHistory}
-            disabled={historyLoading || !token}
+            disabled={historyLoading || !hasSession}
             className="text-sm text-pink-200 hover:text-pink-100 disabled:opacity-50"
           >
             새로고침
           </button>
         </div>
-        {!token && <p className="text-sm text-gray-400">로그인하면 상담 기록을 불러올 수 있습니다.</p>}
+        {!hasSession && <p className="text-sm text-gray-400">로그인하면 상담 기록을 불러올 수 있습니다.</p>}
         {historyLoading && <p className="text-sm text-gray-300">상담 기록을 불러오는 중...</p>}
-        {!historyLoading && savedHistory.length === 0 && token && <p className="text-sm text-gray-400">아직 저장된 상담 기록이 없습니다.</p>}
+        {!historyLoading && savedHistory.length === 0 && hasSession && <p className="text-sm text-gray-400">아직 저장된 상담 기록이 없습니다.</p>}
         <div className="space-y-3">
           {savedHistory.map((item, idx) => (
             <div key={item.id ?? idx} className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-2">

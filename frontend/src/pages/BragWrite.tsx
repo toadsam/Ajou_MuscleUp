@@ -15,21 +15,18 @@ type BragPostPayload = {
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
 
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
 
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -100,7 +97,7 @@ export default function BragWrite() {
           <p className="text-sm uppercase tracking-[0.3em] text-pink-300">우리 회원 자랑방</p>
           <h1 className="text-3xl md:text-4xl font-extrabold">나의 자랑 올리기</h1>
           <p className="text-gray-300 mt-2">
-            모바일에서는 카메라/갤러리에서 불러오고, PC에서는 사진·영상을 여러 개 드래그해도 손쉽게 올릴 수 있어요.
+            모바일에서는 카메라·갤러리에서 불러오고, PC에서는 사진·영상을 드래그해도 쉽게 올릴 수 있어요.
           </p>
         </div>
 
@@ -113,7 +110,7 @@ export default function BragWrite() {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
-                placeholder="예) 데드리프트 150kg 갱신!"
+                placeholder="예: 데드리프트 150kg 갱신!"
                 required
               />
             </div>
@@ -125,7 +122,7 @@ export default function BragWrite() {
                   value={form.movement}
                   onChange={(e) => setForm({ ...form, movement: e.target.value })}
                   className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
-                  placeholder="스쿼트"
+                  placeholder="예: 스쿼트"
                 />
               </div>
               <div className="space-y-2">
@@ -135,7 +132,7 @@ export default function BragWrite() {
                   value={form.weight}
                   onChange={(e) => setForm({ ...form, weight: e.target.value })}
                   className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
-                  placeholder="예) 120kg"
+                  placeholder="예: 120kg"
                 />
               </div>
             </div>
@@ -147,7 +144,7 @@ export default function BragWrite() {
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400 h-28 resize-none"
-              placeholder="세트 간 느낌, 다음 목표 등을 적어주세요."
+              placeholder="세트 느낌, 다음 목표 등을 적어주세요."
               required
             />
           </div>
@@ -180,7 +177,7 @@ export default function BragWrite() {
             )}
             {form.mediaUrls.length === 0 && (
               <p className="text-sm text-gray-400">
-                모바일은 카메라/갤러리에서 불러오고, PC는 여러 파일을 드래그해도 올릴 수 있어요.
+                모바일은 카메라/갤러리, PC는 드래그앤드롭으로 올릴 수 있어요.
               </p>
             )}
           </div>
@@ -199,7 +196,7 @@ export default function BragWrite() {
               disabled={submitting}
               className="flex-1 rounded-xl bg-gradient-to-r from-pink-500 to-orange-500 px-4 py-3 font-semibold hover:opacity-90 transition disabled:opacity-60"
             >
-              {submitting ? "등록 중..." : "자랑 올리기"}
+              {submitting ? "등록 중.." : "자랑 올리기"}
             </button>
           </div>
         </form>

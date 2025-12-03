@@ -29,48 +29,42 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null);
   const [loadingApps, setLoadingApps] = useState(false);
 
-  const token = localStorage.getItem("token");
   const maxAction = useMemo(() => actions.reduce((m, a) => Math.max(m, a.count || 0), 0) || 1, [actions]);
   const maxPage = useMemo(() => pages.reduce((m, p) => Math.max(m, p.count || 0), 0) || 1, [pages]);
 
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const pingRes = await fetch(`${API_BASE}/api/admin/ping`, {
-          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        });
+        const pingRes = await fetch(`${API_BASE}/api/admin/ping`, { credentials: "include" });
         setStatus(pingRes.ok ? "OK" : `에러 ${pingRes.status}`);
 
         const res = await fetch(`${API_BASE}/api/admin/analytics/summary?days=30`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
         if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
         const data: SummaryResponse = await res.json();
         setActions(data.actionCounts ?? []);
         setPages(data.pageCounts ?? []);
       } catch (e: any) {
-        setError(e?.message || "요약을 불러오지 못했습니다.");
+        setError(e?.message || "요약을 불러오지 못했어요.");
       }
     };
     fetchSummary();
     logEvent("admin_dashboard", "page_view");
-  }, [token]);
+  }, []);
 
   const loadApplications = async () => {
-    if (!token) return;
     try {
       setLoadingApps(true);
       const res = await fetch(`${API_BASE}/api/admin/programs/applications`, {
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const data: Application[] = await res.json();
       setApplications(data);
     } catch (e: any) {
-      setError(e?.message || "신청 목록을 불러오지 못했습니다.");
+      setError(e?.message || "신청 목록을 불러오지 못했어요.");
     } finally {
       setLoadingApps(false);
     }
@@ -81,11 +75,10 @@ export default function Admin() {
   }, []);
 
   const updateStatus = async (id: number, status: Application["status"]) => {
-    if (!token) return;
     try {
       const res = await fetch(`${API_BASE}/api/admin/programs/applications/${id}/status?status=${status}`, {
         method: "PATCH",
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       await loadApplications();
@@ -96,7 +89,7 @@ export default function Admin() {
 
   const forceDelete = async (type: "brag" | "comment" | "review" | "ai", id: string) => {
     if (!id) {
-      alert("ID를 입력하세요.");
+      alert("ID를 입력하세요");
       return;
     }
     const map: Record<string, string> = {
@@ -108,7 +101,7 @@ export default function Admin() {
     try {
       const res = await fetch(`${API_BASE}${map[type]}`, {
         method: "DELETE",
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: "include",
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       alert("삭제되었습니다.");
@@ -157,9 +150,9 @@ export default function Admin() {
         </header>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard title="액션 이벤트" value={actions.length} desc="최근 30일 액션 종류" accent="from-pink-500 to-orange-400" />
-          <StatCard title="페이지 트래픽" value={pages.length} desc="최근 30일 페이지 종류" accent="from-emerald-400 to-cyan-400" />
-          <StatCard title="프로그램 신청" value={applications.length} desc="누적 신청서" accent="from-blue-500 to-indigo-500" />
+          <StatCard title="액션 이벤트" value={actions.length} desc="최근 30일 이벤트 종류" accent="from-pink-500 to-orange-400" />
+          <StatCard title="페이지 뷰" value={pages.length} desc="최근 30일 페이지 종류" accent="from-emerald-400 to-cyan-400" />
+          <StatCard title="프로그램 신청" value={applications.length} desc="총 신청 수" accent="from-blue-500 to-indigo-500" />
           <StatCard title="관리자 권한" value="OK" desc="ROLE_ADMIN" accent="from-purple-500 to-pink-400" />
         </div>
 
@@ -247,7 +240,7 @@ function ApplicationTable({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold">프로그램 신청</h3>
-          <p className="text-sm text-gray-300">신청서 목록 및 상태 변경</p>
+          <p className="text-sm text-gray-300">신청자 목록 및 상태 변경</p>
         </div>
         <button onClick={onRefresh} className="text-sm text-pink-200 hover:text-pink-100">
           새로고침

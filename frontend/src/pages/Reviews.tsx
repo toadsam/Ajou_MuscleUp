@@ -21,19 +21,16 @@ type Protein = { id: number; name: string };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -154,7 +151,8 @@ export default function Reviews() {
                 <span className="text-gray-400">{formatDate(r.createdAt)}</span>
               </div>
               <div className="mt-2 text-pink-300">
-                {"★".repeat(r.rating)}{"☆".repeat(Math.max(0, 5 - r.rating))}
+                {"★".repeat(r.rating)}
+                {"☆".repeat(Math.max(0, 5 - r.rating))}
               </div>
               <p className="mt-3 text-gray-100 whitespace-pre-wrap">{r.content}</p>
               {r.proteinName && <p className="mt-2 text-xs text-gray-400">제품: {r.proteinName}</p>}

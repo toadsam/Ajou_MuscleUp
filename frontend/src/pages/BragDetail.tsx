@@ -38,19 +38,16 @@ const formatDate = (v?: string | null) => {
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -58,7 +55,10 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const text = await res.text().catch(() => "");
     throw new Error(text || `HTTP ${res.status}`);
   }
-  return res.json();
+  // DELETE 등에서 빈 본문을 받을 수 있으니 안전하게 처리
+  const text = await res.text();
+  if (!text) return null as T;
+  return JSON.parse(text) as T;
 }
 
 export default function BragDetail() {
@@ -123,7 +123,7 @@ export default function BragDetail() {
       setComments((prev) => [...prev, created]);
       setCommentText("");
     } catch (e: any) {
-      alert(e?.message || "댓글을 남기지 못했어요.");
+      alert(e?.message || "댓글을 저장하지 못했어요.");
     }
   };
 
@@ -137,7 +137,6 @@ export default function BragDetail() {
   };
 
   const handleUpload = (url: string) => {
-    // optional: allow adding media in comments; currently unused but left for extension
     console.info("Uploaded", url);
   };
 
@@ -165,7 +164,7 @@ export default function BragDetail() {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <Link to="/brag" className="text-sm text-gray-300 hover:text-white underline">
-            ← 목록으로
+            목록으로
           </Link>
           <button
             onClick={toggleLike}
@@ -315,7 +314,7 @@ export default function BragDetail() {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400 resize-none"
-              placeholder="응원 한마디를 남겨주세요"
+              placeholder="회원님 이야기를 남겨주세요."
               required
             />
             <div className="flex justify-between items-center gap-3">
@@ -352,7 +351,7 @@ export default function BragDetail() {
                           <button
                             className="text-xs text-red-300 hover:text-red-200"
                             onClick={async () => {
-                              if (!confirm("댓글을 삭제할까요?")) return;
+                              if (!confirm("이 댓글을 삭제할까요?")) return;
                               try {
                                 await api(`/api/brags/comments/${c.id}`, { method: "DELETE" });
                                 setComments((prev) => prev.filter((cc) => cc.id !== c.id));
