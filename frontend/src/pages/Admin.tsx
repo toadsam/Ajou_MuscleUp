@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 
 type ActionCount = { action: string; count: number };
@@ -19,6 +20,8 @@ type SummaryResponse = {
   pageCounts: PageCount[];
 };
 
+type ProteinItem = { id: number; name: string };
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export default function Admin() {
@@ -26,8 +29,12 @@ export default function Admin() {
   const [actions, setActions] = useState<ActionCount[]>([]);
   const [pages, setPages] = useState<PageCount[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [gallery, setGallery] = useState<string[]>([]);
+  const [proteins, setProteins] = useState<ProteinItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loadingApps, setLoadingApps] = useState(false);
+  const [loadingGallery, setLoadingGallery] = useState(false);
+  const [loadingProteins, setLoadingProteins] = useState(false);
 
   const maxAction = useMemo(() => actions.reduce((m, a) => Math.max(m, a.count || 0), 0) || 1, [actions]);
   const maxPage = useMemo(() => pages.reduce((m, p) => Math.max(m, p.count || 0), 0) || 1, [pages]);
@@ -87,6 +94,68 @@ export default function Admin() {
     }
   };
 
+  const loadGallery = async () => {
+    try {
+      setLoadingGallery(true);
+      const res = await fetch(`${API_BASE}/api/files/list`, { credentials: "include" });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const data: string[] = await res.json();
+      setGallery(data);
+    } catch (e: any) {
+      setError(e?.message || "갤러리를 불러오지 못했어요.");
+    } finally {
+      setLoadingGallery(false);
+    }
+  };
+
+  const deleteGalleryItem = async (url: string) => {
+    if (!confirm("이 파일을 삭제할까요?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/files?path=${encodeURIComponent(url)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok && res.status !== 204) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      await loadGallery();
+    } catch (e: any) {
+      alert(e?.message || "삭제에 실패했습니다.");
+    }
+  };
+
+  const loadProteins = async () => {
+    try {
+      setLoadingProteins(true);
+      const res = await fetch(`${API_BASE}/api/proteins?size=100`, { credentials: "include" });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : data.content ?? [];
+      setProteins(list.map((p: any) => ({ id: p.id, name: p.name })));
+    } catch (e: any) {
+      setError(e?.message || "단백질 목록을 불러오지 못했어요.");
+    } finally {
+      setLoadingProteins(false);
+    }
+  };
+
+  const deleteProtein = async (id: number) => {
+    if (!confirm("이 단백질 상품을 삭제할까요?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/proteins/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok && res.status !== 204) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      await loadProteins();
+    } catch (e: any) {
+      alert(e?.message || "삭제에 실패했습니다.");
+    }
+  };
+
+  useEffect(() => {
+    loadGallery();
+    loadProteins();
+  }, []);
+
   const forceDelete = async (type: "brag" | "comment" | "review" | "ai", id: string) => {
     if (!id) {
       alert("ID를 입력하세요");
@@ -141,9 +210,17 @@ export default function Admin() {
                 백엔드 상태: <span className="text-emerald-300 font-semibold">{status}</span>
               </p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-gray-200 shadow-inner">
-              <p className="text-xs text-gray-400">오늘</p>
-              <p className="text-lg font-semibold">{new Date().toLocaleString("ko-KR", { month: "short", day: "numeric" })}</p>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/admin/history"
+                className="rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-sm font-semibold hover:opacity-90"
+              >
+                내역보기
+              </Link>
+              <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-gray-200 shadow-inner">
+                <p className="text-xs text-gray-400">오늘</p>
+                <p className="text-lg font-semibold">{new Date().toLocaleString("ko-KR", { month: "short", day: "numeric" })}</p>
+              </div>
             </div>
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
@@ -168,6 +245,11 @@ export default function Admin() {
           onChangeStatus={updateStatus}
           statuses={statuses}
         />
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <GalleryPanel items={gallery} loading={loadingGallery} onRefresh={loadGallery} onDelete={deleteGalleryItem} />
+          <ProteinPanel items={proteins} loading={loadingProteins} onRefresh={loadProteins} onDelete={deleteProtein} />
+        </div>
 
         <ForceDeletePanel onDelete={forceDelete} />
       </div>
@@ -277,6 +359,88 @@ function ApplicationTable({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function GalleryPanel({
+  items,
+  loading,
+  onRefresh,
+  onDelete,
+}: {
+  items: string[];
+  loading: boolean;
+  onRefresh: () => void;
+  onDelete: (url: string) => void;
+}) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold">갤러리 관리</h3>
+          <p className="text-sm text-gray-300">업로드된 파일 삭제</p>
+        </div>
+        <button onClick={onRefresh} className="text-sm text-pink-200 hover:text-pink-100" disabled={loading}>
+          새로고침
+        </button>
+      </div>
+      {loading && <p className="text-sm text-gray-300">불러오는 중...</p>}
+      {!loading && items.length === 0 && <p className="text-sm text-gray-400">표시할 파일이 없습니다.</p>}
+      <div className="grid grid-cols-2 gap-3">
+        {items.map((url) => (
+          <div key={url} className="relative rounded-xl overflow-hidden border border-white/10 bg-black/30">
+            <img src={url} alt="" className="w-full h-32 object-cover" />
+            <button
+              onClick={() => onDelete(url)}
+              className="absolute top-2 right-2 rounded-full bg-red-500/80 px-3 py-1 text-xs text-white hover:opacity-90"
+            >
+              삭제
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProteinPanel({
+  items,
+  loading,
+  onRefresh,
+  onDelete,
+}: {
+  items: ProteinItem[];
+  loading: boolean;
+  onRefresh: () => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold">단백질 관리</h3>
+          <p className="text-sm text-gray-300">등록된 상품 삭제</p>
+        </div>
+        <button onClick={onRefresh} className="text-sm text-pink-200 hover:text-pink-100" disabled={loading}>
+          새로고침
+        </button>
+      </div>
+      {loading && <p className="text-sm text-gray-300">불러오는 중...</p>}
+      {!loading && items.length === 0 && <p className="text-sm text-gray-400">표시할 상품이 없습니다.</p>}
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {items.map((p) => (
+          <div key={p.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+            <span className="text-sm text-white">{p.name}</span>
+            <button
+              onClick={() => onDelete(p.id)}
+              className="rounded-full bg-red-500/80 px-3 py-1 text-xs text-white hover:opacity-90"
+            >
+              삭제
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

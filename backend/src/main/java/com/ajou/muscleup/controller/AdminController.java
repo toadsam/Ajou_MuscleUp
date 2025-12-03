@@ -8,12 +8,14 @@ import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.ProgramApplicationRepository;
 import com.ajou.muscleup.repository.ReviewRepository;
 import com.ajou.muscleup.service.AnalyticsService;
+import com.ajou.muscleup.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -27,6 +29,7 @@ public class AdminController {
     private final ReviewRepository reviewRepository;
     private final AiChatMessageRepository aiChatMessageRepository;
     private final ProgramApplicationRepository programApplicationRepository;
+    private final AuditLogService auditLogService;
 
     @GetMapping("/ping")
     public ResponseEntity<Map<String, Object>> ping() {
@@ -39,6 +42,20 @@ public class AdminController {
     ) {
         LocalDateTime since = LocalDateTime.now().minusDays(Math.max(1, days));
         return ResponseEntity.ok(analyticsService.summarySince(since));
+    }
+
+    @GetMapping("/analytics/events")
+    public ResponseEntity<List<com.ajou.muscleup.dto.analytics.AnalyticsEventResponse>> recentEvents(
+            @RequestParam(value = "limit", defaultValue = "200") int limit
+    ) {
+        return ResponseEntity.ok(analyticsService.recentEvents(limit));
+    }
+
+    @GetMapping("/audit")
+    public ResponseEntity<List<com.ajou.muscleup.dto.audit.AuditLogResponse>> audit(
+            @RequestParam(value = "limit", defaultValue = "200") int limit
+    ) {
+        return ResponseEntity.ok(auditLogService.recent(limit));
     }
 
     @DeleteMapping("/brags/{id}")

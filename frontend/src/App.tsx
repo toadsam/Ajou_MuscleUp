@@ -25,6 +25,7 @@ import BragWrite from "./pages/BragWrite";
 import BragDetail from "./pages/BragDetail";
 import MyPage from "./pages/MyPage";
 import AiShareView from "./pages/AiShareView";
+import AdminHistory from "./pages/AdminHistory";
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/about" element={<About />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
             <Route path="/programs" element={<Programs />} />
             <Route path="/programs/apply/success" element={<ProgramsApplySuccess />} />
             <Route

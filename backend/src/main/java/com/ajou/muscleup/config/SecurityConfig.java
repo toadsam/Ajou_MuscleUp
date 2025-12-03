@@ -18,9 +18,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuditLogFilter auditLogFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          AuditLogFilter auditLogFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.auditLogFilter = auditLogFilter;
     }
 
     @Bean
@@ -56,10 +59,13 @@ public class SecurityConfig {
                 .requestMatchers("/uploads/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/brags/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/proteins/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/proteins/**").hasRole("ADMIN")
                 .requestMatchers("/api/ai/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/files/upload").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/files/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/files/**").hasRole("ADMIN")
                 .requestMatchers("/api/mypage/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
@@ -70,6 +76,7 @@ public class SecurityConfig {
             .logout(logout -> logout.disable());
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(auditLogFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 }

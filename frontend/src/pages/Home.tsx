@@ -89,7 +89,8 @@ export default function Home() {
           <h1 className="mt-6 text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
             함께 운동하고,
             <br />
-            <span className="text-gradient text-glow">서로를 키우는</span> 커뮤니티
+            <span className="text-gradient text-glow">서로를 키우는</span>{" "}
+            <span className="whitespace-nowrap">커뮤니티</span>
           </h1>
           <p className="mt-6 max-w-2xl text-base text-gray-300 sm:text-lg">
             목표, 체형, 운동 루틴, 식단 인증까지. AI 코칭과 활발한 커뮤니티 활동으로 성장하세요.

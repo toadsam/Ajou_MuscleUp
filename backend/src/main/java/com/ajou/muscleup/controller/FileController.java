@@ -44,6 +44,28 @@ public class FileController {
         ));
     }
 
+    @DeleteMapping
+    public ResponseEntity<Void> delete(@RequestParam("path") String path) throws IOException {
+        // Accept either absolute URL or relative path under uploads/
+        String sanitized = path;
+        int idx = sanitized.indexOf("/uploads/");
+        if (idx >= 0) {
+            sanitized = sanitized.substring(idx + "/".length()); // keep uploads/... part
+        }
+        sanitized = sanitized.replace("\\", "/");
+        if (sanitized.startsWith("/")) sanitized = sanitized.substring(1);
+        if (!sanitized.startsWith("uploads/")) {
+            return ResponseEntity.badRequest().build();
+        }
+        Path target = Paths.get(sanitized).normalize();
+        if (target.startsWith("..")) {
+            return ResponseEntity.badRequest().build();
+        }
+        Path file = root.getParent() == null ? target : root.getParent().resolve(target);
+        Files.deleteIfExists(file);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/list")
     public ResponseEntity<List<String>> list() throws IOException {
         if (!Files.exists(root)) return ResponseEntity.ok(List.of());
