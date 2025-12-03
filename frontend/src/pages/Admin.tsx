@@ -189,29 +189,6 @@ export default function Admin() {
     loadBrags();
   }, []);
 
-  const forceDelete = async (type: "brag" | "comment" | "review" | "ai", id: string) => {
-    if (!id) {
-      alert("ID를 입력하세요");
-      return;
-    }
-    const map: Record<string, string> = {
-      brag: `/api/admin/brags/${id}`,
-      comment: `/api/admin/brags/comments/${id}`,
-      review: `/api/admin/reviews/${id}`,
-      ai: `/api/admin/ai/history/${id}`,
-    };
-    try {
-      const res = await fetch(`${API_BASE}${map[type]}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
-      alert("삭제되었습니다.");
-    } catch (e: any) {
-      alert(e?.message || "삭제에 실패했습니다.");
-    }
-  };
-
   const statuses: Application["status"][] = ["PENDING", "REVIEWING", "APPROVED", "REJECTED"];
 
   return (

@@ -72,7 +72,7 @@ export default function BragDetail() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState(false);
-  const [editPostForm, setEditPostForm] = useState({ title: "", content: "", movement: "", weight: "" });
+  const [editPostForm, setEditPostForm] = useState({ title: "", content: "", movement: "", weight: "", mediaUrls: [] as string[] });
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
 
@@ -92,6 +92,7 @@ export default function BragDetail() {
         content: p.content ?? "",
         movement: p.movement ?? "",
         weight: p.weight ?? "",
+        mediaUrls: p.mediaUrls ?? [],
       });
       const c = await api<Comment[]>(`/api/brags/${postId}/comments`);
       setComments(c);
@@ -137,7 +138,11 @@ export default function BragDetail() {
   };
 
   const handleUpload = (url: string) => {
-    console.info("Uploaded", url);
+    setEditPostForm((prev) => ({ ...prev, mediaUrls: [...prev.mediaUrls, url] }));
+  };
+
+  const removeMedia = (url: string) => {
+    setEditPostForm((prev) => ({ ...prev, mediaUrls: prev.mediaUrls.filter((u) => u !== url) }));
   };
 
   if (loading) {
@@ -234,6 +239,36 @@ export default function BragDetail() {
                 rows={5}
                 className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
               />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">사진/영상 첨부</span>
+                  <span className="text-xs text-gray-400">{editPostForm.mediaUrls.length}/10</span>
+                </div>
+                <UploadDropzone onUploaded={handleUpload} accept="image/*,video/*" multiple folder="brag" />
+                {editPostForm.mediaUrls.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {editPostForm.mediaUrls.map((rawUrl) => {
+                      const url = withBase(rawUrl);
+                      return (
+                        <div key={rawUrl} className="relative rounded-xl overflow-hidden border border-gray-700 bg-gray-900">
+                          {isVideo(url) ? (
+                            <video src={url} className="w-full h-28 object-cover" controls />
+                          ) : (
+                            <img src={url} alt="" className="w-full h-28 object-cover" />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeMedia(rawUrl)}
+                            className="absolute top-2 right-2 bg-black/70 text-xs px-2 py-1 rounded-full hover:bg-black/90"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2 justify-end">
                 <button
                   className="rounded-xl border border-gray-600 px-4 py-2 text-sm"
@@ -252,11 +287,11 @@ export default function BragDetail() {
                         body: JSON.stringify({
                           title: editPostForm.title.trim(),
                           content: editPostForm.content.trim(),
-                          movement: editPostForm.movement.trim() || null,
-                          weight: editPostForm.weight.trim() || null,
-                          mediaUrls: post.mediaUrls,
-                        }),
-                      });
+                        movement: editPostForm.movement.trim() || null,
+                        weight: editPostForm.weight.trim() || null,
+                        mediaUrls: editPostForm.mediaUrls,
+                      }),
+                    });
                       alert("수정되었습니다.");
                       setEditingPost(false);
                       fetchData();
