@@ -54,27 +54,36 @@ public class AiService {
                     .send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
             if (resp.statusCode() >= 300) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI 응답이 실패했습니다: " + resp.statusCode());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?�답???�패?�습?�다: " + resp.statusCode());
             }
 
             JsonNode rootNode = objectMapper.readTree(resp.body());
             String content = rootNode.path("choices").path(0).path("message").path("content").asText("");
             if (content.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI 응답 형식이 올바르지 않습니다.");
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?�답 ?�식???�바르�? ?�습?�다.");
             }
-            return content.trim();
+            return sanitizeMarkdown(content);
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI 호출 중 오류가 발생했습니다.", e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?�출 �??�류가 발생?�습?�다.", e);
         }
     }
 
     private String resolveApiKey() {
         String key = (openAiKeyProp != null && !openAiKeyProp.isBlank()) ? openAiKeyProp : System.getenv("OPENAI_API_KEY");
         if (key == null || key.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "OPENAI_API_KEY가 설정되지 않았습니다.");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "OPENAI_API_KEY가 ?�정?��? ?�았?�니??");
         }
         return key;
+    }
+
+    private String sanitizeMarkdown(String content) {
+        String cleaned = content;
+        cleaned = cleaned.replace("**", "");
+        cleaned = cleaned.replace("__", "");
+        cleaned = cleaned.replace("```", "");
+        cleaned = cleaned.replaceAll("(?m)^\\s*#+\\s*", "");
+        return cleaned.trim();
     }
 }

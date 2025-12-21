@@ -30,11 +30,19 @@ export default function Header() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // ignore
+    } finally {
+      localStorage.removeItem("user");
+      setUser(null);
+      window.location.href = "/";
+    }
   };
 
   const navGroups = useMemo(
@@ -44,9 +52,9 @@ export default function Header() {
         links: [
           { to: "/brag", label: "자랑방" },
           { to: "/brag/write", label: "자랑 올리기" },
-          { to: "/protein", label: "단백질 추천" },
-          { to: "/reviews", label: "회원 리뷰" },
-          { to: "/programs", label: "루틴/다이어트팁" },
+          { to: "/protein", label: "단백질 공동구매" },
+          { to: "/reviews", label: "단백질 리뷰" },
+          { to: "/programs", label: "식단방/다이어트방" },
         ],
       },
       {
@@ -68,7 +76,7 @@ export default function Header() {
         links: [{ to: "/ai", label: "AI근력", highlight: true }],
       },
       {
-        label: "내 정보",
+        label: "내정보",
         links: [{ to: "/mypage", label: "마이페이지" }],
       },
     ],
@@ -188,7 +196,6 @@ export default function Header() {
           )}
         </nav>
 
-        {/* Mobile right controls */}
         <div className="flex items-center lg:hidden">
           {user ? (
             <button
@@ -208,7 +215,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isMenuOpen && (
         <div className="bg-white px-6 py-4 text-gray-800 shadow-lg lg:hidden">
           {navGroups.map((group) => (

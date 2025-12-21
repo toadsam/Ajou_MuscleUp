@@ -13,32 +13,26 @@ type Protein = {
   avgRating?: number | null;
 };
 
-// 🔑 공통 API 유틸
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${import.meta.env.VITE_API_BASE}${path}`;
-  const token = localStorage.getItem("token");
 
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
 
-  // ✅ 401 → 로그인 만료 → 로그아웃 처리
   if (res.status === 401) {
-    alert("⚠️ 로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    alert("로그인이 필요합니다.");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
 
-  // ✅ 403 → 권한 부족 → 로그아웃은 하지 않음
   if (res.status === 403) {
-    alert("⚠️ 권한이 없습니다.");
+    alert("권한이 없습니다.");
     throw new Error("Forbidden");
   }
 
@@ -49,7 +43,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ✅ 프로틴 목록 불러오기 (토큰 자동 포함됨)
 async function fetchProteins(): Promise<Protein[]> {
   const data = await api<any>("/api/proteins");
   return Array.isArray(data) ? data : (data.content ?? []);
@@ -73,7 +66,6 @@ export default function Protein() {
     })();
   }, []);
 
-  // 정렬/필터 버튼 동작
   const sortByPriceAsc = () =>
     setProducts((p) => [...p].sort((a, b) => (a.price ?? 0) - (b.price ?? 0)));
   const sortByPriceDesc = () =>
@@ -83,9 +75,8 @@ export default function Protein() {
 
   return (
     <section className="pt-32 p-12 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
-      <h2 className="text-4xl font-extrabold mb-12 text-center">🥤 프로틴 공동구매</h2>
+      <h2 className="text-4xl font-extrabold mb-12 text-center">단백질 공동구매</h2>
 
-      {/* 필터 버튼 */}
       <div className="flex justify-center gap-4 mb-10">
         <button
           onClick={sortByDays}
@@ -107,10 +98,9 @@ export default function Protein() {
         </button>
       </div>
 
-      {loading && <p className="text-center text-gray-300">불러오는 중…</p>}
+      {loading && <p className="text-center text-gray-300">불러오는 중...</p>}
       {err && <p className="text-center text-red-400">{err}</p>}
 
-      {/* 상품 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {products.map((p) => {
           const deadlineColor =
@@ -121,10 +111,7 @@ export default function Protein() {
               : "text-green-400";
 
           const rating = p.avgRating ?? 0;
-          const progress = Math.max(
-            0,
-            Math.min(100, Math.round((rating / 5) * 100))
-          );
+          const progress = Math.max(0, Math.min(100, Math.round((rating / 5) * 100)));
 
           return (
             <div
@@ -151,7 +138,6 @@ export default function Protein() {
                   카테고리: {p.category ?? "-"}
                 </p>
 
-                {/* 평점 기반 진행률 */}
                 <div className="mt-4">
                   <div className="flex justify-between text-sm text-gray-400 mb-1">
                     <span>평점</span>
@@ -169,7 +155,7 @@ export default function Protein() {
                   to={`/proteins/${p.id}`}
                   className="mt-6 block w-full text-center px-4 py-3 rounded-lg font-semibold transition bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:opacity-90"
                 >
-                  상세 보기
+                  자세히 보기
                 </Link>
               </div>
             </div>
@@ -177,7 +163,6 @@ export default function Protein() {
         })}
       </div>
 
-      {/* 등록 버튼 */}
       <div className="text-center mt-12">
         <Link
           to="/protein/write"

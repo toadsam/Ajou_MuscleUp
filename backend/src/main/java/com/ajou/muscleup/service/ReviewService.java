@@ -4,7 +4,8 @@ import com.ajou.muscleup.dto.review.*;
 import org.springframework.data.domain.Page; import org.springframework.data.domain.Pageable;
 
 public interface ReviewService {
-    ReviewResponse create(ReviewCreateRequest req);
+    ReviewResponse create(String userEmail, ReviewCreateRequest req);
     Page<ReviewResponse> listByProtein(Long proteinId, Pageable pageable);
-    void delete(Long reviewId, Long requesterUserId);
+    ReviewResponse update(Long reviewId, String userEmail, ReviewUpdateRequest req);
+    void delete(Long reviewId, String userEmail);
 }

@@ -2,6 +2,7 @@ package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.brag.BragPostCreateRequest;
 import com.ajou.muscleup.dto.brag.BragPostResponse;
+import com.ajou.muscleup.dto.brag.BragPostUpdateRequest;
 import com.ajou.muscleup.service.BragPostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,22 @@ public class BragPostController {
     @GetMapping("/{id}")
     public ResponseEntity<BragPostResponse> get(@PathVariable("id") Long id) {
         return ResponseEntity.ok(bragPostService.get(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BragPostResponse> update(@AuthenticationPrincipal String email,
+                                                   @PathVariable("id") Long id,
+                                                   @Valid @RequestBody BragPostUpdateRequest req) {
+        requireEmail(email);
+        return ResponseEntity.ok(bragPostService.update(id, email, req));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal String email,
+                                       @PathVariable("id") Long id) {
+        requireEmail(email);
+        bragPostService.delete(id, email);
+        return ResponseEntity.noContent().build();
     }
 
     private void requireEmail(String email) {

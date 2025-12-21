@@ -1,44 +1,42 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { logEvent } from "../utils/analytics";
 
 const images = [
-  //"/상어-DeolQ-Cw",
-  //"/재건이형-SdK5N_0C",
   "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
-  
   "https://images.unsplash.com/photo-1507537297725-24a1c029d3ca",
 ];
 
 const stats = [
-  { label: "활동 멤버", value: "180+" },
-  { label: "주간 세션", value: "45" },
-  { label: "커뮤니티 챌린지", value: "24" },
+  { label: "활동 회원", value: "180+" },
+  { label: "주간 운동", value: "45" },
+  { label: "커뮤니티 체크인", value: "24" },
 ];
 
 const features = [
   {
-    title: "맞춤 루틴",
-    desc: "AI 분석으로 체형과 컨디션에 맞는 루틴을 추천합니다.",
-    icon: "💪",
+    title: "AI 코칭",
+    desc: "AI 분석으로 체형·목표에 맞춘 루틴과 코칭을 제공합니다.",
+    icon: "🤖",
     accent: "from-pink-500/50 to-orange-500/30",
   },
   {
-    title: "실시간 케어",
-    desc: "전문 운영진이 24시간 질문과 자세 피드백을 도와드립니다.",
-    icon: "🧠",
+    title: "커뮤니티",
+    desc: "운동·식단 인증, 챌린지, 번개로 함께 동기부여합니다.",
+    icon: "🧑‍🤝‍🧑",
     accent: "from-purple-500/50 to-indigo-500/30",
   },
   {
-    title: "공동구매",
-    desc: "믿을 수 있는 보충제와 용품을 회원 전용 특가로 만나보세요.",
-    icon: "🛒",
+    title: "구매 혜택",
+    desc: "멤버 전용 공동구매와 체형별 보충제 추천을 제공합니다.",
+    icon: "🎁",
     accent: "from-blue-500/50 to-teal-500/30",
   },
 ];
 
 const quickLinks = [
-  { label: "AI득근으로 분석하기", to: "/ai", color: "from-pink-500 to-purple-500" },
-  { label: "부원 후기 보기", to: "/reviews", color: "from-indigo-500 to-blue-500" },
-  { label: "임원진에게 문의하기", to: "/executives", color: "from-amber-500 to-pink-500" },
+  { label: "AI 상담·루틴 받기", to: "/ai", color: "from-pink-500 to-purple-500" },
+  { label: "후기 보러가기", to: "/reviews", color: "from-indigo-500 to-blue-500" },
+  { label: "운동 번개 참여", to: "/executives", color: "from-amber-500 to-pink-500" },
 ];
 
 const liveHighlights = [
@@ -49,15 +47,15 @@ const liveHighlights = [
     color: "from-emerald-400/10 to-cyan-400/10",
   },
   {
-    badge: "챌린지",
-    title: "스쿼트 30일",
+    badge: "코칭",
+    title: "체형 교정",
     detail: "DAY 12",
     color: "from-pink-500/10 to-purple-400/10",
   },
   {
-    badge: "케어",
-    title: "심박 데이터",
-    detail: "실시간 동기화",
+    badge: "리커버리",
+    title: "회복 세션",
+    detail: "심박 안정화",
     color: "from-blue-500/10 to-indigo-400/10",
   },
 ];
@@ -72,6 +70,10 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    logEvent("home", "page_view");
+  }, []);
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <div className="glow-orb absolute -left-32 top-0 h-72 w-72 rounded-full bg-pink-500/40 animate-float-slow" />
@@ -82,23 +84,23 @@ export default function Home() {
         <div className="z-10 flex-1">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-sm text-white/80">
             <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            새로운 시즌 챌린지 오픈!
+            득근득근 커뮤니티
           </div>
           <h1 className="mt-6 text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
-            득근에서 <br />
-            <span className="text-gradient text-glow">함께 성장</span>하고
+            함께 운동하고,
             <br />
-            기록을 새로 쓰세요
+            <span className="text-gradient text-glow">서로를 키우는</span>{" "}
+            <span className="whitespace-nowrap">커뮤니티</span>
           </h1>
           <p className="mt-6 max-w-2xl text-base text-gray-300 sm:text-lg">
-            운동 목표 달성을 위한 가장 강력한 커뮤니티. AI 피드백부터 루틴 공유, 공동구매까지 모두 한 번에 경험하세요.
+            목표, 체형, 운동 루틴, 식단 인증까지. AI 코칭과 활발한 커뮤니티 활동으로 성장하세요.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <a href="/protein" className="btn-gradient px-8 py-3 text-base sm:text-lg">
-              지금 시작하기
+            <a href="/ai" className="btn-gradient px-8 py-3 text-base sm:text-lg">
+              AI 상담·루틴 받기
             </a>
-            <a href="/members" className="btn-outline px-8 py-3 text-base sm:text-lg">
-              멤버 둘러보기
+            <a href="/brag" className="btn-outline px-8 py-3 text-base sm:text-lg">
+              커뮤니티 둘러보기
             </a>
           </div>
           <div className="mt-12 grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl sm:grid-cols-3">
@@ -130,10 +132,10 @@ export default function Home() {
             <div className="relative z-10 flex flex-col gap-4 p-8">
               <div className="inline-flex items-center gap-2 rounded-full bg-black/30 px-4 py-1 text-sm text-emerald-200">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                실시간 AI 코칭 허브
+                실시간 AI 코칭
               </div>
-              <p className="text-3xl font-semibold text-white">AI 컨트롤 센터</p>
-              <p className="text-sm text-gray-200">지금 124명의 멤버가 AI 피드백을 받고 있어요.</p>
+              <p className="text-3xl font-semibold text-white">AI 트레이닝 랩</p>
+              <p className="text-sm text-gray-200">오늘 124명이 AI 코칭을 받고 있어요.</p>
               <div className="mt-2 space-y-3">
                 {liveHighlights.map((highlight) => (
                   <div
@@ -151,9 +153,9 @@ export default function Home() {
             </div>
           </div>
           <div className="glass-panel absolute -bottom-10 left-4 w-52 animate-orbit p-4 text-sm text-white shadow-2xl">
-            <p className="text-xs text-gray-300">오늘의 추천 루틴</p>
+            <p className="text-xs text-gray-300">추천 루틴</p>
             <p className="text-lg font-semibold">HIIT 12분</p>
-            <p className="text-emerald-300">심박 안정화 + 지방 연소</p>
+            <p className="text-emerald-300">심박 안정화 + 칼로리 소모</p>
           </div>
         </div>
       </div>

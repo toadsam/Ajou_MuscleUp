@@ -17,12 +17,15 @@ import ProteinDetail from "./pages/ProteinDetail";
 import ProtectedRoute from "./components/ProtectedRoute"; // ??추�?
 import AdminRoute from "./components/AdminRoute";
 import Admin from "./pages/Admin";
+import ProgramsApplySuccess from "./pages/ProgramsApplySuccess";
 import SupportWidget from "./components/SupportWidget";
 import Programs from "./pages/Programs";
 import BragList from "./pages/BragList";
 import BragWrite from "./pages/BragWrite";
 import BragDetail from "./pages/BragDetail";
 import MyPage from "./pages/MyPage";
+import AiShareView from "./pages/AiShareView";
+import AdminHistory from "./pages/AdminHistory";
 
 function App() {
   return (
@@ -34,6 +37,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/ai/share/:slug" element={<AiShareView />} />
 
             {/* ??로그???�요 ?�는 공개 ?�우??*/}
             <Route path="/proteins/:id" element={<ProteinDetail />} />
@@ -49,7 +53,9 @@ function App() {
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/about" element={<About />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
             <Route path="/programs" element={<Programs />} />
+            <Route path="/programs/apply/success" element={<ProgramsApplySuccess />} />
             <Route
               path="/mypage"
               element={

@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
+import { logEvent } from "../utils/analytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
-const USE_CREDENTIALS = import.meta.env.VITE_USE_CREDENTIALS === "true";
 
 const tabs = [
-  { id: "analysis", label: "체성 분석", description: "AI가 체성 정보를 분석해 현재 상태와 코칭 포인트를 제안합니다." },
+  { id: "analysis", label: "체성 분석", description: "AI가 체성 정보를 분석해 현재 상태와 코칭 포인트를 안내해요." },
   { id: "plan", label: "루틴 설계", description: "목표와 일정에 맞춘 4주 루틴을 구체적으로 받아보세요." },
-  { id: "chat", label: "AI 상담", description: "운동/식단 고민을 상담하면 기록에 남아 언제든 다시 볼 수 있습니다." },
+  { id: "chat", label: "AI 상담", description: "운동/식단 고민을 상담하면 기록으로 남아 언제든 다시 볼 수 있습니다." },
 ];
 
 const liveTiles = [
   { title: "AI 루틴 분석", tag: "분석", status: "92% 진행", color: "from-emerald-400/20 to-cyan-300/20" },
-  { title: "30일 체형 교정", tag: "코칭", status: "DAY 12", color: "from-pink-400/20 to-purple-400/20" },
+  { title: "30분 체형 교정", tag: "코칭", status: "DAY 12", color: "from-pink-400/20 to-purple-400/20" },
   { title: "목표 심박 유지", tag: "현황", status: "120 bpm", color: "from-blue-400/20 to-indigo-400/20" },
 ];
 
@@ -21,9 +21,13 @@ interface ChatBubble {
 }
 
 interface ChatHistoryItem {
+  id?: number;
+  type?: string;
   question: string;
   answer: string;
   createdAt: string;
+  shared?: boolean;
+  shareSlug?: string | null;
 }
 
 export default function AiFitness() {
@@ -32,13 +36,13 @@ export default function AiFitness() {
   const [analysisForm, setAnalysisForm] = useState({ height: "", weight: "", bodyFat: "", muscleMass: "", goal: "" });
   const [planForm, setPlanForm] = useState({
     experienceLevel: "초급",
-    availableDays: "주 3일",
-    focusArea: "상체/체형 개선",
+    availableDays: "주 3회",
+    focusArea: "자세/체형 개선",
     equipment: "덤벨, 밴드",
     preferredTime: "40분",
-    notes: "오전 운동 선호",
+    notes: "최근 하체 운동 선호",
   });
-  const [question, setQuestion] = useState("헬스 처음인데 체형교정이 필요해. 어떤 루틴부터 시작할까?");
+  const [question, setQuestion] = useState("필라테스 처음인데 체형교정은 어떻게 시작할까요?");
   const [chatHistory, setChatHistory] = useState<ChatBubble[]>([]);
   const [savedHistory, setSavedHistory] = useState<ChatHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -49,12 +53,8 @@ export default function AiFitness() {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const token = useMemo(() => localStorage.getItem("token"), []);
-  const headers = useMemo(() => {
-    const h: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) h.Authorization = `Bearer ${token}`;
-    return h;
-  }, [token]);
+  const [hasSession] = useState<boolean>(() => !!localStorage.getItem("user"));
+  const headers = useMemo(() => ({ "Content-Type": "application/json" }), []);
 
   const callAi = async (path: string, payload: unknown) => {
     setLoading(path);
@@ -64,7 +64,7 @@ export default function AiFitness() {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
-        credentials: USE_CREDENTIALS ? "include" : "same-origin",
+        credentials: "include",
       });
       if (!res.ok) {
         throw new Error((await res.text()) || `HTTP ${res.status}`);
@@ -79,14 +79,14 @@ export default function AiFitness() {
   };
 
   const fetchHistory = async () => {
-    if (!token) return;
+    if (!hasSession) return;
     setHistoryLoading(true);
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/ai/chat/history`, {
         method: "GET",
         headers,
-        credentials: USE_CREDENTIALS ? "include" : "same-origin",
+        credentials: "include",
       });
       if (!res.ok) {
         throw new Error((await res.text()) || `HTTP ${res.status}`);
@@ -102,10 +102,14 @@ export default function AiFitness() {
   };
 
   useEffect(() => {
-    if (activeTab === "chat" && token && !historyFetched) {
+    if (activeTab === "chat" && hasSession && !historyFetched) {
       fetchHistory();
     }
-  }, [activeTab, token, historyFetched]);
+  }, [activeTab, hasSession, historyFetched]);
+
+  useEffect(() => {
+    logEvent("ai", "page_view");
+  }, []);
 
   const handleAnalysis = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +125,7 @@ export default function AiFitness() {
 
   const handleChat = async () => {
     if (!question.trim()) return;
-    if (!token) {
+    if (!hasSession) {
       setError("AI 상담을 이용하려면 로그인하세요.");
       return;
     }
@@ -135,6 +139,52 @@ export default function AiFitness() {
     const answer = data.answer ?? JSON.stringify(data);
     setChatHistory((prev) => [...prev, { role: "assistant", content: answer }]);
     setSavedHistory((prev) => [{ question, answer, createdAt: new Date().toISOString() }, ...prev]);
+  };
+
+  const shareHistory = async (item: ChatHistoryItem) => {
+    if (!item.id) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/ai/chat/history/${item.id}/share`, {
+        method: "POST",
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const data = await res.json();
+      setSavedHistory((prev) =>
+        prev.map((h) => (h.id === item.id ? { ...h, shared: true, shareSlug: data.shareSlug } : h))
+      );
+      if (data.shareSlug) {
+        await navigator.clipboard.writeText(`${window.location.origin}/ai/share/${data.shareSlug}`);
+        alert("공유 링크가 복사되었습니다.");
+      }
+    } catch (e: any) {
+      alert(e?.message || "공유에 실패했습니다.");
+    }
+  };
+
+  const unshareHistory = async (item: ChatHistoryItem) => {
+    if (!item.id) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/ai/chat/history/${item.id}/share`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      setSavedHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, shared: false, shareSlug: null } : h)));
+    } catch (e: any) {
+      alert(e?.message || "공유 해제에 실패했습니다.");
+    }
+  };
+
+  const copyShareLink = (slug?: string | null) => {
+    if (!slug) return;
+    const link = `${window.location.origin}/ai/share/${slug}`;
+    navigator.clipboard.writeText(link).then(
+      () => alert("링크가 클립보드에 복사되었습니다."),
+      () => alert("클립보드 복사에 실패했습니다.")
+    );
   };
 
   const renderAnalysisForm = () => (
@@ -164,7 +214,7 @@ export default function AiFitness() {
       </div>
       <Input label="추가 메모" name="notes" value={planForm.notes} onChange={setPlanForm} textarea />
       <button className="btn-gradient w-full py-3 text-lg" disabled={loading === "/api/ai/plan"}>
-        {loading === "/api/ai/plan" ? "AI가 루틴을 설계하는 중..." : "맞춤 루틴 받기"}
+        {loading === "/api/ai/plan" ? "AI가 루틴을 설계 중..." : "맞춤 루틴 받기"}
       </button>
       {planResult && <ResultCard title="AI 루틴 제안" content={planResult} />}
     </form>
@@ -174,7 +224,7 @@ export default function AiFitness() {
     <div className="space-y-4">
       <div className="glass-panel flex flex-col gap-4 p-6">
         <div className="max-h-64 space-y-4 overflow-y-auto pr-1">
-          {chatHistory.length === 0 && <p className="text-sm text-gray-400">AI 상담을 시작해 보세요. 기록은 자동으로 저장됩니다.</p>}
+            {chatHistory.length === 0 && <p className="text-sm text-gray-400">AI 상담을 시작해보세요. 기록이 자동으로 저장됩니다.</p>}
           {chatHistory.map((msg, idx) => (
             <div key={idx} className={`rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "bg-white/20 text-white" : "bg-black/30 text-gray-100"}`}>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">{msg.role === "user" ? "나" : "AI 코치"}</p>
@@ -204,24 +254,52 @@ export default function AiFitness() {
           <button
             type="button"
             onClick={fetchHistory}
-            disabled={historyLoading || !token}
+            disabled={historyLoading || !hasSession}
             className="text-sm text-pink-200 hover:text-pink-100 disabled:opacity-50"
           >
             새로고침
           </button>
         </div>
-        {!token && <p className="text-sm text-gray-400">로그인 후 상담 기록이 저장됩니다.</p>}
+        {!hasSession && <p className="text-sm text-gray-400">로그인하면 상담 기록을 불러올 수 있습니다.</p>}
         {historyLoading && <p className="text-sm text-gray-300">상담 기록을 불러오는 중...</p>}
-        {!historyLoading && savedHistory.length === 0 && token && <p className="text-sm text-gray-400">아직 저장된 상담 기록이 없습니다.</p>}
+        {!historyLoading && savedHistory.length === 0 && hasSession && <p className="text-sm text-gray-400">아직 저장된 상담 기록이 없습니다.</p>}
         <div className="space-y-3">
           {savedHistory.map((item, idx) => (
-            <div key={idx} className="rounded-xl border border-white/5 bg-white/5 p-4">
+            <div key={item.id ?? idx} className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-2">
               <div className="flex items-center justify-between text-xs text-gray-300">
                 <span>Q&A</span>
                 <span>{formatDate(item.createdAt)}</span>
               </div>
-              <p className="mt-2 text-sm font-semibold text-white">Q. {item.question}</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-gray-100">A. {item.answer}</p>
+              <p className="text-sm font-semibold text-white">Q. {item.question}</p>
+              <p className="whitespace-pre-wrap text-sm text-gray-100">A. {item.answer}</p>
+              {item.id && (
+                <div className="flex items-center gap-2 text-xs text-gray-200">
+                  {item.shared && item.shareSlug ? (
+                    <>
+                      <span className="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200">공유 중</span>
+                      <button
+                        className="px-3 py-1 rounded-full border border-emerald-400 hover:bg-emerald-500/10"
+                        onClick={() => copyShareLink(item.shareSlug)}
+                      >
+                        링크 복사
+                      </button>
+                      <button
+                        className="px-3 py-1 rounded-full border border-red-400 text-red-200 hover:bg-red-500/10"
+                        onClick={() => unshareHistory(item)}
+                      >
+                        공유 해제
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="px-3 py-1 rounded-full border border-pink-400 text-pink-100 hover:bg-pink-500/10"
+                      onClick={() => shareHistory(item)}
+                    >
+                      공유 링크 만들기
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -286,11 +364,11 @@ export default function AiFitness() {
             </div>
           </div>
           <div className="glass-panel space-y-4 p-6">
-            <p className="text-sm text-gray-300">AI 스냅숏</p>
+            <p className="text-sm text-gray-300">AI 수행 현황</p>
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                { label: "분석 응답", value: "3초" },
-                { label: "대화 응답", value: "1회" },
+                { label: "분석 응답", value: "3회" },
+                { label: "상담 응답", value: "1건" },
                 { label: "루틴 생성", value: "1.8s" },
               ].map((item) => (
                 <div key={item.label} className="rounded-2xl bg-white/5 p-4 text-center">

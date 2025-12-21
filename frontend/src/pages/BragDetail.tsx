@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import UploadDropzone from "../components/UploadDropzone";
+import { logEvent } from "../utils/analytics";
 
 type BragPost = {
   id: number;
@@ -37,19 +38,16 @@ const formatDate = (v?: string | null) => {
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -57,7 +55,10 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const text = await res.text().catch(() => "");
     throw new Error(text || `HTTP ${res.status}`);
   }
-  return res.json();
+  // DELETE 등에서 빈 본문을 받을 수 있으니 안전하게 처리
+  const text = await res.text();
+  if (!text) return null as T;
+  return JSON.parse(text) as T;
 }
 
 export default function BragDetail() {
@@ -70,6 +71,15 @@ export default function BragDetail() {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingPost, setEditingPost] = useState(false);
+  const [editPostForm, setEditPostForm] = useState({ title: "", content: "", movement: "", weight: "", mediaUrls: [] as string[] });
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+
+  const userRaw = localStorage.getItem("user");
+  const user = userRaw ? (JSON.parse(userRaw) as { email?: string; role?: string }) : null;
+  const isAdmin = (user?.role || "").toUpperCase().includes("ADMIN");
+  const isOwner = post && user?.email && post.authorEmail === user.email;
 
   const fetchData = useCallback(async () => {
     try {
@@ -77,6 +87,13 @@ export default function BragDetail() {
       setError(null);
       const p = await api<BragPost>(`/api/brags/${postId}`);
       setPost(p);
+      setEditPostForm({
+        title: p.title ?? "",
+        content: p.content ?? "",
+        movement: p.movement ?? "",
+        weight: p.weight ?? "",
+        mediaUrls: p.mediaUrls ?? [],
+      });
       const c = await api<Comment[]>(`/api/brags/${postId}/comments`);
       setComments(c);
       const l = await api<LikeRes>(`/api/brags/${postId}/like`);
@@ -92,6 +109,10 @@ export default function BragDetail() {
     if (!Number.isNaN(postId)) fetchData();
   }, [fetchData, postId]);
 
+  useEffect(() => {
+    logEvent("brag_detail", "page_view", { postId });
+  }, [postId]);
+
   const submitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -103,7 +124,7 @@ export default function BragDetail() {
       setComments((prev) => [...prev, created]);
       setCommentText("");
     } catch (e: any) {
-      alert(e?.message || "댓글을 남기지 못했어요.");
+      alert(e?.message || "댓글을 저장하지 못했어요.");
     }
   };
 
@@ -117,8 +138,11 @@ export default function BragDetail() {
   };
 
   const handleUpload = (url: string) => {
-    // optional: allow adding media in comments; currently unused but left for extension
-    console.info("Uploaded", url);
+    setEditPostForm((prev) => ({ ...prev, mediaUrls: [...prev.mediaUrls, url] }));
+  };
+
+  const removeMedia = (url: string) => {
+    setEditPostForm((prev) => ({ ...prev, mediaUrls: prev.mediaUrls.filter((u) => u !== url) }));
   };
 
   if (loading) {
@@ -145,33 +169,156 @@ export default function BragDetail() {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <Link to="/brag" className="text-sm text-gray-300 hover:text-white underline">
-            ← 목록으로
+            목록으로
           </Link>
           <button
             onClick={toggleLike}
             className="flex items-center gap-2 rounded-full border border-pink-400/50 px-3 py-1 text-sm text-pink-200 hover:bg-pink-500/10 transition"
           >
-            <span>❤️</span>
+            <span>👍</span>
             <span>{like.likeCount}</span>
             <span className="text-xs">{like.liked ? "좋아요 취소" : "좋아요"}</span>
           </button>
         </div>
 
         <header className="space-y-2">
-          <p className="text-sm text-pink-300 font-semibold">
-            {post.authorNickname || "득근회원"} · {formatDate(post.createdAt)}
-          </p>
-          <h1 className="text-3xl md:text-4xl font-extrabold">{post.title}</h1>
-          {(post.movement || post.weight) && (
-            <div className="px-3 py-2 rounded-xl bg-gray-900 text-sm text-gray-200 border border-gray-700 inline-flex gap-1">
-              {post.movement && <span className="font-semibold">{post.movement}</span>}
-              {post.movement && post.weight && <span className="text-gray-500 mx-1">·</span>}
-              {post.weight && <span>{post.weight}</span>}
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-pink-300 font-semibold">
+              {post.authorNickname || "익명 회원"} · {formatDate(post.createdAt)}
+            </p>
+            {(isOwner || isAdmin) && (
+              <div className="flex gap-2 text-xs">
+                <button
+                  onClick={() => setEditingPost((v) => !v)}
+                  className="rounded-full border border-gray-600 px-3 py-1 text-gray-200 hover:border-pink-400 hover:text-white"
+                >
+                  {editingPost ? "수정 취소" : "수정"}
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm("이 게시글을 삭제할까요?")) return;
+                    try {
+                      await api(`/api/brags/${postId}`, { method: "DELETE" });
+                      alert("삭제되었습니다.");
+                      window.location.href = "/brag";
+                    } catch (e: any) {
+                      alert(e?.message || "삭제에 실패했습니다.");
+                    }
+                  }}
+                  className="rounded-full border border-red-500 px-3 py-1 text-red-200 hover:bg-red-600/20"
+                >
+                  삭제
+                </button>
+              </div>
+            )}
+          </div>
+          {editingPost ? (
+            <div className="space-y-3">
+              <input
+                value={editPostForm.title}
+                onChange={(e) => setEditPostForm((p) => ({ ...p, title: e.target.value }))}
+                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
+              />
+              <div className="flex gap-3">
+                <input
+                  value={editPostForm.movement}
+                  onChange={(e) => setEditPostForm((p) => ({ ...p, movement: e.target.value }))}
+                  placeholder="종목"
+                  className="flex-1 rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
+                />
+                <input
+                  value={editPostForm.weight}
+                  onChange={(e) => setEditPostForm((p) => ({ ...p, weight: e.target.value }))}
+                  placeholder="무게"
+                  className="flex-1 rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
+                />
+              </div>
+              <textarea
+                value={editPostForm.content}
+                onChange={(e) => setEditPostForm((p) => ({ ...p, content: e.target.value }))}
+                rows={5}
+                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
+              />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">사진/영상 첨부</span>
+                  <span className="text-xs text-gray-400">{editPostForm.mediaUrls.length}/10</span>
+                </div>
+                <UploadDropzone onUploaded={handleUpload} accept="image/*,video/*" multiple folder="brag" />
+                {editPostForm.mediaUrls.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {editPostForm.mediaUrls.map((rawUrl) => {
+                      const url = withBase(rawUrl);
+                      return (
+                        <div key={rawUrl} className="relative rounded-xl overflow-hidden border border-gray-700 bg-gray-900">
+                          {isVideo(url) ? (
+                            <video src={url} className="w-full h-28 object-cover" controls />
+                          ) : (
+                            <img src={url} alt="" className="w-full h-28 object-cover" />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeMedia(rawUrl)}
+                            className="absolute top-2 right-2 bg-black/70 text-xs px-2 py-1 rounded-full hover:bg-black/90"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  className="rounded-xl border border-gray-600 px-4 py-2 text-sm"
+                  onClick={() => setEditingPost(false)}
+                  type="button"
+                >
+                  취소
+                </button>
+                <button
+                  className="rounded-xl bg-gradient-to-r from-pink-500 to-orange-500 px-4 py-2 text-sm font-semibold"
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await api(`/api/brags/${postId}`, {
+                        method: "PUT",
+                        body: JSON.stringify({
+                          title: editPostForm.title.trim(),
+                          content: editPostForm.content.trim(),
+                        movement: editPostForm.movement.trim() || null,
+                        weight: editPostForm.weight.trim() || null,
+                        mediaUrls: editPostForm.mediaUrls,
+                      }),
+                    });
+                      alert("수정되었습니다.");
+                      setEditingPost(false);
+                      fetchData();
+                    } catch (e: any) {
+                      alert(e?.message || "수정에 실패했습니다.");
+                    }
+                  }}
+                >
+                  저장
+                </button>
+              </div>
             </div>
+          ) : (
+            <>
+              <h1 className="text-3xl md:text-4xl font-extrabold">{post.title}</h1>
+              {(post.movement || post.weight) && (
+                <div className="px-3 py-2 rounded-xl bg-gray-900 text-sm text-gray-200 border border-gray-700 inline-flex gap-1">
+                  {post.movement && <span className="font-semibold">{post.movement}</span>}
+                  {post.movement && post.weight && <span className="text-gray-500 mx-1">·</span>}
+                  {post.weight && <span>{post.weight}</span>}
+                </div>
+              )}
+            </>
           )}
         </header>
 
-        <p className="text-gray-200 leading-relaxed whitespace-pre-line">{post.content}</p>
+        {!editingPost && <p className="text-gray-200 leading-relaxed whitespace-pre-line">{post.content}</p>}
 
         {post.mediaUrls?.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,7 +349,7 @@ export default function BragDetail() {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400 resize-none"
-              placeholder="응원 한마디를 남겨주세요."
+              placeholder="회원님 이야기를 남겨주세요."
               required
             />
             <div className="flex justify-between items-center gap-3">
@@ -211,21 +358,88 @@ export default function BragDetail() {
                 type="submit"
                 className="rounded-xl bg-gradient-to-r from-pink-500 to-orange-500 px-4 py-3 font-semibold hover:opacity-90 transition"
               >
-                댓글 달기
+                댓글 남기기
               </button>
             </div>
           </form>
 
           <div className="space-y-3">
-            {comments.map((c) => (
-              <div key={c.id} className="rounded-xl border border-gray-700 bg-gray-900/60 p-4">
-                <div className="flex items-center justify-between text-sm text-gray-300">
-                  <span className="font-semibold">{c.authorNickname || "득근회원"}</span>
-                  <span className="text-gray-500">{formatDate(c.createdAt)}</span>
+            {comments.map((c) => {
+              const mine = c.authorEmail && user?.email === c.authorEmail;
+              return (
+                <div key={c.id} className="rounded-xl border border-gray-700 bg-gray-900/60 p-4">
+                  <div className="flex items-center justify-between text-sm text-gray-300">
+                    <span className="font-semibold">{c.authorNickname || "익명 회원"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">{formatDate(c.createdAt)}</span>
+                      {(mine || isAdmin) && (
+                        <>
+                          <button
+                            className="text-xs text-pink-200 hover:text-pink-100"
+                            onClick={() => {
+                              setEditingCommentId(c.id);
+                              setEditingCommentText(c.content);
+                            }}
+                          >
+                            수정
+                          </button>
+                          <button
+                            className="text-xs text-red-300 hover:text-red-200"
+                            onClick={async () => {
+                              if (!confirm("이 댓글을 삭제할까요?")) return;
+                              try {
+                                await api(`/api/brags/comments/${c.id}`, { method: "DELETE" });
+                                setComments((prev) => prev.filter((cc) => cc.id !== c.id));
+                              } catch (e: any) {
+                                alert(e?.message || "삭제에 실패했습니다.");
+                              }
+                            }}
+                          >
+                            삭제
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {editingCommentId === c.id ? (
+                    <div className="mt-2 space-y-2">
+                      <textarea
+                        value={editingCommentText}
+                        onChange={(e) => setEditingCommentText(e.target.value)}
+                        className="w-full rounded-xl bg-gray-900 border border-gray-700 px-3 py-2 text-sm"
+                      />
+                      <div className="flex gap-2 justify-end text-xs">
+                        <button
+                          className="px-3 py-1 rounded-lg border border-gray-600"
+                          onClick={() => setEditingCommentId(null)}
+                        >
+                          취소
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 text-white"
+                          onClick={async () => {
+                            try {
+                              const updated = await api<Comment>(`/api/brags/comments/${c.id}`, {
+                                method: "PATCH",
+                                body: JSON.stringify({ content: editingCommentText.trim() }),
+                              });
+                              setComments((prev) => prev.map((cc) => (cc.id === c.id ? updated : cc)));
+                              setEditingCommentId(null);
+                            } catch (e: any) {
+                              alert(e?.message || "수정에 실패했습니다.");
+                            }
+                          }}
+                        >
+                          저장
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-gray-200 whitespace-pre-line">{c.content}</p>
+                  )}
                 </div>
-                <p className="mt-2 text-gray-200 whitespace-pre-line">{c.content}</p>
-              </div>
-            ))}
+              );
+            })}
             {comments.length === 0 && <p className="text-gray-400 text-sm">첫 댓글을 남겨주세요.</p>}
           </div>
         </div>

@@ -8,4 +8,5 @@ import java.util.List;
 public interface BragCommentRepository extends JpaRepository<BragComment, Long> {
     List<BragComment> findByBragPost_IdOrderByCreatedAtAsc(Long postId);
     List<BragComment> findTop20ByUser_IdOrderByCreatedAtDesc(Long userId);
+    void deleteByBragPost_Id(Long postId);
 }

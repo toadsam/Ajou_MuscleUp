@@ -6,15 +6,15 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children }: Props) {
-  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      alert("⚠️ 로그인이 필요합니다!");
+    if (!user) {
+      alert("로그인이 필요합니다.");
       setShouldRedirect(true);
     }
-  }, [token]);
+  }, [user]);
 
   if (shouldRedirect) {
     return <Navigate to="/login" replace />;

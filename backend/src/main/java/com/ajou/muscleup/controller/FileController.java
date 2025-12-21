@@ -19,11 +19,12 @@ public class FileController {
     private final Path root = Paths.get("uploads");
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, Object>> upload(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<Map<String, Object>> upload(@RequestParam("file") MultipartFile file,
+                                                      @RequestParam(value = "folder", defaultValue = "gallery") String folder) throws IOException {
         if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "EMPTY_FILE"));
 
         LocalDate today = LocalDate.now();
-        Path dir = root.resolve(Paths.get(String.valueOf(today.getYear()), String.format("%02d", today.getMonthValue())));
+        Path dir = root.resolve(Paths.get(folder, String.valueOf(today.getYear()), String.format("%02d", today.getMonthValue())));
         Files.createDirectories(dir);
 
         String original = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
@@ -34,7 +35,7 @@ public class FileController {
         Path target = dir.resolve(filename);
         Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
 
-        String relative = "/uploads/" + today.getYear() + "/" + String.format("%02d", today.getMonthValue()) + "/" + filename;
+        String relative = "/uploads/" + folder + "/" + today.getYear() + "/" + String.format("%02d", today.getMonthValue()) + "/" + filename;
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         String url = baseUrl + relative;
         return ResponseEntity.ok(Map.of(
@@ -44,10 +45,33 @@ public class FileController {
         ));
     }
 
+    @DeleteMapping
+    public ResponseEntity<Void> delete(@RequestParam("path") String path) throws IOException {
+        // Accept either absolute URL or relative path under uploads/
+        String sanitized = path;
+        int idx = sanitized.indexOf("/uploads/");
+        if (idx >= 0) {
+            sanitized = sanitized.substring(idx + "/".length()); // keep uploads/... part
+        }
+        sanitized = sanitized.replace("\\", "/");
+        if (sanitized.startsWith("/")) sanitized = sanitized.substring(1);
+        if (!sanitized.startsWith("uploads/")) {
+            return ResponseEntity.badRequest().build();
+        }
+        Path target = Paths.get(sanitized).normalize();
+        if (target.startsWith("..")) {
+            return ResponseEntity.badRequest().build();
+        }
+        Path file = root.getParent() == null ? target : root.getParent().resolve(target);
+        Files.deleteIfExists(file);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/list")
-    public ResponseEntity<List<String>> list() throws IOException {
-        if (!Files.exists(root)) return ResponseEntity.ok(List.of());
-        List<String> urls = Files.walk(root)
+    public ResponseEntity<List<String>> list(@RequestParam(value = "folder", defaultValue = "gallery") String folder) throws IOException {
+        Path base = root.resolve(folder);
+        if (!Files.exists(base)) return ResponseEntity.ok(List.of());
+        List<String> urls = Files.walk(base)
                 .filter(Files::isRegularFile)
                 .sorted(Comparator.comparingLong((Path p) -> p.toFile().lastModified()).reversed())
                 .limit(200)

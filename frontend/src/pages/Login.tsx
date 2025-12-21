@@ -20,6 +20,7 @@ async function loginRequest(body: any, path: string) {
   const response = await fetch(`${API_BASE}/api/auth/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -31,7 +32,6 @@ async function loginRequest(body: any, path: string) {
 }
 
 function storeSession(data: LoginResponse) {
-  localStorage.setItem("token", data.token);
   localStorage.setItem(
     "user",
     JSON.stringify({
@@ -55,7 +55,7 @@ export default function Login() {
     try {
       const data = await loginRequest(form, "login");
       storeSession(data);
-      alert(`로그인 성공! 환영합니다 ${data.nickname}님`);
+      alert(`로그인 성공! 환영합니다 ${data.nickname}`);
       window.location.href = "/";
     } catch (err: any) {
       alert(err?.message || "로그인에 실패했습니다.");
@@ -66,7 +66,7 @@ export default function Login() {
     try {
       const data = await loginRequest({ idToken: credential }, "google");
       storeSession(data);
-      alert(`Google 로그인 성공! 환영합니다 ${data.nickname}님`);
+      alert(`Google 로그인 성공! 환영합니다 ${data.nickname}`);
       window.location.href = "/";
     } catch (err: any) {
       alert(err?.message || "Google 로그인에 실패했습니다.");

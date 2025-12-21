@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import UploadDropzone from "../components/UploadDropzone";
+import { logEvent } from "../utils/analytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
@@ -14,21 +15,18 @@ type BragPostPayload = {
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
 
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
 
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -49,6 +47,10 @@ export default function BragWrite() {
   });
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    logEvent("brag_write", "page_view");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +73,7 @@ export default function BragWrite() {
         mediaUrls: form.mediaUrls,
       };
       await api("/api/brags", { method: "POST", body: JSON.stringify(payload) });
-      alert("자랑이 등록됐어요!");
+      alert("자랑이 등록되었어요!");
       window.location.href = "/brag";
     } catch (e: any) {
       setErr(e?.message || "자랑을 등록하지 못했어요.");
@@ -92,10 +94,10 @@ export default function BragWrite() {
     <section className="pt-32 pb-20 px-5 md:px-10 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
       <div className="max-w-4xl mx-auto bg-gray-800/70 backdrop-blur-md border border-white/5 rounded-3xl p-8 shadow-xl space-y-6">
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-pink-300">득근회원 자랑방</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold">새 자랑 올리기</h1>
+          <p className="text-sm uppercase tracking-[0.3em] text-pink-300">우리 회원 자랑방</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold">나의 자랑 올리기</h1>
           <p className="text-gray-300 mt-2">
-            모바일은 탭해서 갤러리/파일에서 불러오고, PC에서는 사진·영상 여러 개를 드래그 앤 드롭으로 올릴 수 있어요.
+            모바일에서는 카메라·갤러리에서 불러오고, PC에서는 사진·영상을 드래그해도 쉽게 올릴 수 있어요.
           </p>
         </div>
 
@@ -108,7 +110,7 @@ export default function BragWrite() {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
-                placeholder="예) 데드리프트 150kg 갱신!"
+                placeholder="예: 데드리프트 150kg 갱신!"
                 required
               />
             </div>
@@ -120,7 +122,7 @@ export default function BragWrite() {
                   value={form.movement}
                   onChange={(e) => setForm({ ...form, movement: e.target.value })}
                   className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
-                  placeholder="스쿼트"
+                  placeholder="예: 스쿼트"
                 />
               </div>
               <div className="space-y-2">
@@ -130,26 +132,26 @@ export default function BragWrite() {
                   value={form.weight}
                   onChange={(e) => setForm({ ...form, weight: e.target.value })}
                   className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400"
-                  placeholder="예) 120kg"
+                  placeholder="예: 120kg"
                 />
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300">한 줄 메모 / 후기</label>
+            <label className="text-sm text-gray-300">자세 메모 / 후기</label>
             <textarea
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 focus:outline-none focus:border-pink-400 h-28 resize-none"
-              placeholder="세트 수, 느낌, 다음 목표 등을 남겨주세요."
+              placeholder="세트 느낌, 다음 목표 등을 적어주세요."
               required
             />
           </div>
 
           <div className="space-y-3">
             <label className="text-sm text-gray-300">사진/영상 첨부</label>
-            <UploadDropzone onUploaded={handleUploaded} accept="image/*,video/*" multiple />
+            <UploadDropzone onUploaded={handleUploaded} accept="image/*,video/*" multiple folder="brag" />
             {form.mediaUrls.length > 0 && (
               <div className="grid grid-cols-2 gap-3">
                 {form.mediaUrls.map((rawUrl) => {
@@ -175,7 +177,7 @@ export default function BragWrite() {
             )}
             {form.mediaUrls.length === 0 && (
               <p className="text-sm text-gray-400">
-                모바일은 탭해서 갤러리/파일에서 불러오고, PC에서는 여러 장을 드래그 앤 드롭으로 올릴 수 있어요.
+                모바일은 카메라/갤러리, PC는 드래그앤드롭으로 올릴 수 있어요.
               </p>
             )}
           </div>
@@ -194,7 +196,7 @@ export default function BragWrite() {
               disabled={submitting}
               className="flex-1 rounded-xl bg-gradient-to-r from-pink-500 to-orange-500 px-4 py-3 font-semibold hover:opacity-90 transition disabled:opacity-60"
             >
-              {submitting ? "올리는 중..." : "자랑 올리기"}
+              {submitting ? "등록 중.." : "자랑 올리기"}
             </button>
           </div>
         </form>

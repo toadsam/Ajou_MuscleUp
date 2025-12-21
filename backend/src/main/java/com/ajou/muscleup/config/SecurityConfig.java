@@ -18,9 +18,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuditLogFilter auditLogFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          AuditLogFilter auditLogFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.auditLogFilter = auditLogFilter;
     }
 
     @Bean
@@ -44,21 +47,25 @@ public class SecurityConfig {
                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/ping", "/api/ping").permitAll()
-                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/auth/google").permitAll()
                 .requestMatchers("/api/support/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/programs/apply").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/analytics/events").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/ai/share/**").permitAll()
 
                 // Protected APIs (allow USER and ADMIN)
-                .requestMatchers(HttpMethod.GET, "/api/brags/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/brags/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/brags/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/uploads/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/brags/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/proteins/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/proteins/**").hasRole("ADMIN")
                 .requestMatchers("/api/ai/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/files/upload").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/files/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/files/**").hasRole("ADMIN")
                 .requestMatchers("/api/mypage/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
@@ -69,6 +76,7 @@ public class SecurityConfig {
             .logout(logout -> logout.disable());
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(auditLogFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 }

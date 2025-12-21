@@ -34,15 +34,14 @@ export default function SupportWidget() {
 
     try {
       setSending(true);
-      const token = localStorage.getItem("token");
       const userRaw = localStorage.getItem("user");
       const user = userRaw ? JSON.parse(userRaw) as { id?: number; email?: string; nickname?: string } : null;
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/support/inquiries`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: "include",
         body: JSON.stringify({
           name: user?.nickname ?? undefined,
           email: user?.email ?? undefined,

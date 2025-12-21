@@ -2,6 +2,7 @@ package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.brag.BragPostCreateRequest;
 import com.ajou.muscleup.dto.brag.BragPostResponse;
+import com.ajou.muscleup.dto.brag.BragPostUpdateRequest;
 import com.ajou.muscleup.entity.BragPost;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.BragLikeRepository;
@@ -65,5 +66,52 @@ public class BragPostServiceImpl implements BragPostService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
         long likes = bragLikeRepository.countByPostId(id);
         return BragPostResponse.from(post, likes);
+    }
+
+    @Override
+    public BragPostResponse update(Long id, String userEmail, BragPostUpdateRequest req) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
+
+        BragPost post = bragPostRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+
+        if (!post.getUser().getId().equals(user.getId()) && !isAdmin(user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 글만 수정할 수 있습니다.");
+        }
+
+        List<String> media = req.getMediaUrls() == null
+                ? List.of()
+                : req.getMediaUrls().stream()
+                    .filter(url -> url != null && !url.isBlank())
+                    .map(String::trim)
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+        post.setTitle(req.getTitle().trim());
+        post.setContent(req.getContent().trim());
+        post.setMovement(req.getMovement() == null ? null : req.getMovement().trim());
+        post.setWeight(req.getWeight() == null ? null : req.getWeight().trim());
+        post.setMediaUrls(media);
+
+        BragPost saved = bragPostRepository.save(post);
+        long likes = bragLikeRepository.countByPostId(id);
+        return BragPostResponse.from(saved, likes);
+    }
+
+    @Override
+    public void delete(Long id, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
+        BragPost post = bragPostRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+
+        if (!post.getUser().getId().equals(user.getId()) && !isAdmin(user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 글만 삭제할 수 있습니다.");
+        }
+        bragPostRepository.delete(post);
+    }
+
+    private boolean isAdmin(User user) {
+        return user != null && "ADMIN".equalsIgnoreCase(user.getRole());
     }
 }

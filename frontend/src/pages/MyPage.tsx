@@ -33,19 +33,16 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const token = localStorage.getItem("token");
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
+    credentials: "include",
     ...init,
   });
   if (res.status === 401) {
     alert("로그인이 필요합니다.");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -107,12 +104,12 @@ export default function MyPage() {
                 <h2 className="text-xl font-bold">최근 댓글</h2>
                 <span className="text-sm text-gray-400">최대 20개</span>
               </div>
-              {data.recentComments.length === 0 && <p className="text-gray-400 text-sm">댓글 내역이 없습니다.</p>}
+              {data.recentComments.length === 0 && <p className="text-gray-400 text-sm">댓글 기록이 없습니다.</p>}
               <div className="space-y-3">
                 {data.recentComments.map((c) => (
                   <div key={c.id} className="rounded-xl bg-gray-900/60 border border-gray-700 p-3">
                     <div className="flex justify-between text-xs text-gray-400">
-                      <span>{c.authorNickname || "나"}</span>
+                      <span>{c.authorNickname || "익명"}</span>
                       <span>{formatDate(c.createdAt)}</span>
                     </div>
                     <p className="text-gray-200 mt-1 whitespace-pre-line">{c.content}</p>
@@ -126,7 +123,7 @@ export default function MyPage() {
                 <h2 className="text-xl font-bold">좋아요한 자랑</h2>
                 <span className="text-sm text-gray-400">최신순</span>
               </div>
-              {data.recentLikes.length === 0 && <p className="text-gray-400 text-sm">좋아요 내역이 없습니다.</p>}
+              {data.recentLikes.length === 0 && <p className="text-gray-400 text-sm">좋아요 기록이 없습니다.</p>}
               <div className="space-y-3">
                 {data.recentLikes.map((p) => (
                   <a
@@ -148,7 +145,7 @@ export default function MyPage() {
 
             <div className="md:col-span-2 rounded-2xl border border-white/5 bg-gray-800/70 p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">AI 이용 내역</h2>
+                <h2 className="text-xl font-bold">AI 이용 이력</h2>
                 <span className="text-sm text-gray-400">최근 20개</span>
               </div>
               {data.recentAiChats.length === 0 && <p className="text-gray-400 text-sm">AI 기록이 없습니다.</p>}
