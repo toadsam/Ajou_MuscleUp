@@ -26,6 +26,7 @@ import BragDetail from "./pages/BragDetail";
 import MyPage from "./pages/MyPage";
 import AiShareView from "./pages/AiShareView";
 import AdminHistory from "./pages/AdminHistory";
+import Attendance from "./pages/Attendance";
 
 function App() {
   return (
@@ -119,6 +120,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WriteReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendance"
+              element={
+                <ProtectedRoute>
+                  <Attendance />
                 </ProtectedRoute>
               }
             />
