@@ -66,6 +66,12 @@ type CharacterChange = {
   tierChanged: boolean;
 };
 
+type RankSummary = {
+  totalPublic: number;
+  myRank: number | null;
+  myTopPercent: number | null;
+};
+
 type StatsCharacterResponse = {
   stats: UserBodyStats;
   character: CharacterProfile;
@@ -130,6 +136,7 @@ export default function MyPage() {
   const [character, setCharacter] = useState<CharacterProfile | null>(null);
   const [evaluation, setEvaluation] = useState<CharacterEvaluation | null>(null);
   const [change, setChange] = useState<CharacterChange | null>(null);
+  const [rank, setRank] = useState<RankSummary | null>(null);
   const [form, setForm] = useState<StatsForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -149,6 +156,12 @@ export default function MyPage() {
         setData(pageRes);
         setStats(statsRes);
         setCharacter(characterRes);
+        try {
+          const rankRes = await api<RankSummary>("/api/rankings/characters?type=LEVEL&limit=1");
+          setRank(rankRes);
+        } catch (e) {
+          setRank(null);
+        }
 
         if (statsRes) {
           setForm({
@@ -231,6 +244,12 @@ export default function MyPage() {
       setCharacter(res.character);
       setEvaluation(res.evaluation);
       setChange(res.change);
+      try {
+        const rankRes = await api<RankSummary>("/api/rankings/characters?type=LEVEL&limit=1");
+        setRank(rankRes);
+      } catch (e) {
+        setRank(null);
+      }
       showToast({ type: "success", message: "스탯이 저장되었습니다." });
     } catch (e: any) {
       showToast({ type: "error", message: e?.message || "저장에 실패했습니다." });
@@ -360,6 +379,23 @@ export default function MyPage() {
                 </button>
               </div>
               <CharacterCard character={character} evaluation={evaluation} gender={stats?.gender ?? "MALE"} change={change} />
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 flex flex-wrap gap-6">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">My Rank</div>
+                  <div className="text-white text-lg font-semibold">{rank?.myRank ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Top Percent</div>
+                  <div className="text-white text-lg font-semibold">{rank?.myTopPercent !== undefined && rank?.myTopPercent !== null ? `${rank.myTopPercent}%` : "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Public Total</div>
+                  <div className="text-white text-lg font-semibold">{rank?.totalPublic ?? 0}</div>
+                </div>
+                {!character.isPublic && (
+                  <div className="text-xs text-gray-400">공개 설정 시 랭킹이 계산됩니다.</div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-gray-300">

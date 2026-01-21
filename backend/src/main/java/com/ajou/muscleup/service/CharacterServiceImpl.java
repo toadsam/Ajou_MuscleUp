@@ -123,11 +123,11 @@ public class CharacterServiceImpl implements CharacterService {
         double strengthRatio = weight > 0 ? threeLiftTotal / weight : 0.0;
         double strengthMultiplier = resolveStrengthMultiplier(gender, strengthRatio);
         double muscleMultiplier = gender == Gender.FEMALE ? 22.0 : 20.0;
-        double base = clamp(strengthRatio * strengthMultiplier, 0.0, 60.0);
+        double base = clamp(strengthRatio * strengthMultiplier, 0.0, 70.0);
 
         double muscleBonus = 0.0;
         if (stats.getSkeletalMuscleKg() != null && weight > 0) {
-            muscleBonus = clamp((stats.getSkeletalMuscleKg() / weight) * muscleMultiplier, 0.0, 20.0);
+            muscleBonus = clamp((stats.getSkeletalMuscleKg() / weight) * muscleMultiplier, 0.0, 30.0);
         }
 
         double totalScore = clamp(base + muscleBonus, 0.0, 100.0);
@@ -173,9 +173,9 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     private int resolveStage(int level) {
-        if (level >= 80) return 3;
-        if (level >= 50) return 2;
-        if (level >= 20) return 1;
+        if (level >= 70) return 3;
+        if (level >= 40) return 2;
+        if (level >= 15) return 1;
         return 0;
     }
 
