@@ -1,0 +1,30 @@
+package com.ajou.muscleup.dto.character;
+
+import com.ajou.muscleup.entity.UserBodyStats;
+import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class UserBodyStatsResponse {
+    private Integer heightCm;
+    private Double weightKg;
+    private Double skeletalMuscleKg;
+    private Double benchKg;
+    private Double squatKg;
+    private Double deadliftKg;
+    private LocalDateTime updatedAt;
+
+    public static UserBodyStatsResponse from(UserBodyStats stats) {
+        return UserBodyStatsResponse.builder()
+                .heightCm(stats.getHeightCm())
+                .weightKg(stats.getWeightKg())
+                .skeletalMuscleKg(stats.getSkeletalMuscleKg())
+                .benchKg(stats.getBenchKg())
+                .squatKg(stats.getSquatKg())
+                .deadliftKg(stats.getDeadliftKg())
+                .updatedAt(stats.getUpdatedAt())
+                .build();
+    }
+}

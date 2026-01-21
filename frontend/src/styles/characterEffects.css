@@ -1,0 +1,75 @@
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(45, 212, 191, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(45, 212, 191, 0.45);
+  }
+}
+
+@keyframes sparkleFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+@keyframes badgeBounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.avatar-glow-light {
+  filter: drop-shadow(0 0 12px rgba(45, 212, 191, 0.25));
+}
+
+.avatar-glow-medium {
+  filter: drop-shadow(0 0 18px rgba(94, 234, 212, 0.45));
+}
+
+.avatar-glow-strong {
+  filter: drop-shadow(0 0 26px rgba(56, 189, 248, 0.6));
+}
+
+.avatar-ring {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.avatar-sparkle {
+  animation: sparkleFloat 2.6s ease-in-out infinite;
+}
+
+.sparkle-2 {
+  animation-delay: 0.4s;
+}
+
+.sparkle-3 {
+  animation-delay: 0.8s;
+}
+
+.sparkle-4 {
+  animation-delay: 1.2s;
+}
+
+.card-levelup {
+  animation: glowPulse 2s ease-in-out 2;
+}
+
+.card-evolution {
+  animation: glowPulse 1.4s ease-in-out 3;
+}
+
+.badge-bounce {
+  animation: badgeBounce 1s ease-in-out 2;
+}
