@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS user_body_stats (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     height_cm INT NULL,
+    gender VARCHAR(10) NOT NULL DEFAULT 'MALE',
     weight_kg DOUBLE NOT NULL,
     skeletal_muscle_kg DOUBLE NULL,
     bench_kg DOUBLE NULL,
@@ -15,6 +16,9 @@ CREATE TABLE IF NOT EXISTS user_body_stats (
     CONSTRAINT fk_body_stats_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT uq_body_stats_user UNIQUE (user_id)
 );
+
+-- If user_body_stats already exists without gender, run:
+-- ALTER TABLE user_body_stats ADD COLUMN gender VARCHAR(10) NOT NULL DEFAULT 'MALE';
 
 CREATE TABLE IF NOT EXISTS character_profiles (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

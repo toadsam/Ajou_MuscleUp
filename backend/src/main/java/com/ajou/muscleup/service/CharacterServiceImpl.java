@@ -11,6 +11,7 @@ import com.ajou.muscleup.entity.CharacterEvolutionHistory;
 import com.ajou.muscleup.entity.CharacterEvolutionTriggerType;
 import com.ajou.muscleup.entity.CharacterProfile;
 import com.ajou.muscleup.entity.CharacterTier;
+import com.ajou.muscleup.entity.Gender;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.UserBodyStats;
 import com.ajou.muscleup.repository.CharacterEvolutionHistoryRepository;
@@ -116,18 +117,21 @@ public class CharacterServiceImpl implements CharacterService {
         if (weight < 20 || weight > 300) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "weightKg must be between 20 and 300");
         }
+        Gender gender = stats.getGender() != null ? stats.getGender() : Gender.MALE;
 
         double threeLiftTotal = bench + squat + deadlift;
         double strengthRatio = weight > 0 ? threeLiftTotal / weight : 0.0;
-        double base = clamp(strengthRatio * 20.0, 0.0, 60.0);
+        double strengthMultiplier = resolveStrengthMultiplier(gender, strengthRatio);
+        double muscleMultiplier = gender == Gender.FEMALE ? 22.0 : 20.0;
+        double base = clamp(strengthRatio * strengthMultiplier, 0.0, 60.0);
 
         double muscleBonus = 0.0;
         if (stats.getSkeletalMuscleKg() != null && weight > 0) {
-            muscleBonus = clamp((stats.getSkeletalMuscleKg() / weight) * 20.0, 0.0, 20.0);
+            muscleBonus = clamp((stats.getSkeletalMuscleKg() / weight) * muscleMultiplier, 0.0, 20.0);
         }
 
         double totalScore = clamp(base + muscleBonus, 0.0, 100.0);
-        int level = 1 + (int) Math.floor(totalScore / 5.0);
+        int level = Math.min(100, 1 + (int) Math.floor(totalScore));
         CharacterTier tier = resolveTier(totalScore);
         int stage = resolveStage(level);
         String title = resolveTitle(stage);
@@ -151,10 +155,27 @@ public class CharacterServiceImpl implements CharacterService {
         return CharacterTier.BRONZE;
     }
 
+    private double resolveStrengthMultiplier(Gender gender, double ratio) {
+        if (gender == Gender.FEMALE) {
+            if (ratio < 1.0) return 16.0;
+            if (ratio < 1.5) return 20.0;
+            if (ratio < 2.0) return 24.0;
+            if (ratio < 2.5) return 28.0;
+            if (ratio < 3.0) return 32.0;
+            return 36.0;
+        }
+        if (ratio < 1.0) return 14.0;
+        if (ratio < 1.5) return 18.0;
+        if (ratio < 2.0) return 22.0;
+        if (ratio < 2.5) return 26.0;
+        if (ratio < 3.0) return 30.0;
+        return 34.0;
+    }
+
     private int resolveStage(int level) {
-        if (level >= 15) return 3;
-        if (level >= 10) return 2;
-        if (level >= 5) return 1;
+        if (level >= 80) return 3;
+        if (level >= 50) return 2;
+        if (level >= 20) return 1;
         return 0;
     }
 

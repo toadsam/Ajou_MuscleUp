@@ -25,6 +25,10 @@ public class UserBodyStats extends BaseTimeEntity {
     @Column(name = "height_cm")
     private Integer heightCm;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private Gender gender;
+
     @Column(name = "weight_kg", nullable = false)
     private Double weightKg;
 

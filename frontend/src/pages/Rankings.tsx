@@ -10,6 +10,13 @@ type RankingItem = {
   updatedAt?: string | null;
 };
 
+type RankingResponse = {
+  items: RankingItem[];
+  totalPublic: number;
+  myRank: number | null;
+  myTopPercent: number | null;
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 async function api<T>(path: string): Promise<T> {
@@ -30,6 +37,9 @@ async function api<T>(path: string): Promise<T> {
 export default function Rankings() {
   const [type, setType] = useState<"LEVEL" | "THREE_LIFT">("LEVEL");
   const [data, setData] = useState<RankingItem[]>([]);
+  const [myRank, setMyRank] = useState<number | null>(null);
+  const [myTopPercent, setMyTopPercent] = useState<number | null>(null);
+  const [totalPublic, setTotalPublic] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +48,11 @@ export default function Rankings() {
       try {
         setLoading(true);
         setError(null);
-        const res = await api<RankingItem[]>(`/api/rankings/characters?type=${type}&limit=50`);
-        setData(res);
+        const res = await api<RankingResponse>(`/api/rankings/characters?type=${type}&limit=50`);
+        setData(res.items);
+        setMyRank(res.myRank ?? null);
+        setMyTopPercent(res.myTopPercent ?? null);
+        setTotalPublic(res.totalPublic ?? 0);
       } catch (e: any) {
         setError(e?.message || "Failed to load rankings.");
       } finally {
@@ -73,6 +86,23 @@ export default function Rankings() {
           >
             3-Lift
           </button>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 flex flex-wrap gap-6">
+          <div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">
+              {type === "LEVEL" ? "My Level Rank" : "My 3-Lift Rank"}
+            </div>
+            <div className="text-white text-lg font-semibold">{myRank ?? "-"}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">Top Percent</div>
+            <div className="text-white text-lg font-semibold">{myTopPercent !== null ? `${myTopPercent}%` : "-"}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">Public Total</div>
+            <div className="text-white text-lg font-semibold">{totalPublic}</div>
+          </div>
         </div>
 
         {loading && <div className="text-gray-300">Loading...</div>}

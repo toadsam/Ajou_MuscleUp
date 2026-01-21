@@ -4,6 +4,7 @@ import com.ajou.muscleup.dto.character.StatsCharacterResponse;
 import com.ajou.muscleup.dto.character.UserBodyStatsRequest;
 import com.ajou.muscleup.dto.character.UserBodyStatsResponse;
 import com.ajou.muscleup.entity.CharacterEvolutionTriggerType;
+import com.ajou.muscleup.entity.Gender;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.UserBodyStats;
 import com.ajou.muscleup.repository.UserBodyStatsRepository;
@@ -29,6 +30,7 @@ public class StatsServiceImpl implements StatsService {
                 .map(UserBodyStatsResponse::from)
                 .orElse(UserBodyStatsResponse.builder()
                         .heightCm(null)
+                        .gender(null)
                         .weightKg(null)
                         .skeletalMuscleKg(null)
                         .benchKg(null)
@@ -50,6 +52,7 @@ public class StatsServiceImpl implements StatsService {
                 .orElseGet(() -> UserBodyStats.builder().user(user).build());
 
         stats.setHeightCm(request.getHeightCm());
+        stats.setGender(request.getGender() != null ? request.getGender() : Gender.MALE);
         stats.setWeightKg(request.getWeightKg());
         stats.setSkeletalMuscleKg(request.getSkeletalMuscleKg());
         stats.setBenchKg(request.getBenchKg());

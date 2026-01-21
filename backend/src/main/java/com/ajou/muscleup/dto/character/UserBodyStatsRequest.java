@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import com.ajou.muscleup.entity.Gender;
 import lombok.Getter;
 
 @Getter
@@ -12,6 +13,8 @@ public class UserBodyStatsRequest {
     @Min(50)
     @Max(250)
     private Integer heightCm;
+
+    private Gender gender;
 
     @NotNull
     @DecimalMin(value = "20.0")

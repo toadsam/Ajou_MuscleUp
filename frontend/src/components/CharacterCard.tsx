@@ -10,6 +10,8 @@ type CharacterProfile = {
   isPublic: boolean;
 };
 
+type Gender = "MALE" | "FEMALE";
+
 type Evaluation = {
   threeLiftTotal: number;
   strengthRatio: number;
@@ -29,17 +31,18 @@ type ChangeState = {
 type Props = {
   character: CharacterProfile;
   evaluation: Evaluation | null;
+  gender?: Gender | null;
   change?: ChangeState | null;
 };
 
-export default function CharacterCard({ character, evaluation, change }: Props) {
+export default function CharacterCard({ character, evaluation, gender, change }: Props) {
   const glowClass = change?.evolved ? "card-evolution" : change?.leveledUp ? "card-levelup" : "";
   const tierBadgeClass = change?.tierChanged ? "badge-bounce" : "";
 
   return (
     <div className={`rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5 ${glowClass}`}>
       <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-        <CharacterAvatar tier={character.tier} stage={character.evolutionStage} level={character.level} size={150} />
+        <CharacterAvatar tier={character.tier} stage={character.evolutionStage} level={character.level} gender={gender} size={150} />
         <div className="flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-white/10 ${tierBadgeClass}`}>

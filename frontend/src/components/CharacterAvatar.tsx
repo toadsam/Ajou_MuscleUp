@@ -1,9 +1,11 @@
 type Tier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
+type Gender = "MALE" | "FEMALE";
 
 type Props = {
   tier: Tier;
   stage: number;
   level: number;
+  gender?: Gender | null;
   size?: number;
 };
 
@@ -15,12 +17,17 @@ const tierPalette: Record<Tier, { base: string; accent: string; glow: string }> 
   DIAMOND: { base: "#6f8cff", accent: "#d7e3ff", glow: "#8eb0ff" },
 };
 
-export default function CharacterAvatar({ tier, stage, level, size = 140 }: Props) {
+export default function CharacterAvatar({ tier, stage, level, gender, size = 140 }: Props) {
   const palette = tierPalette[tier];
   const sparkleCount = stage >= 2 ? 4 : stage === 1 ? 2 : 0;
   const crownVisible = stage >= 3;
   const ringVisible = stage >= 1;
   const glowClass = stage >= 3 ? "avatar-glow-strong" : stage === 2 ? "avatar-glow-medium" : "avatar-glow-light";
+  const muscleTier = Math.min(4, Math.floor((level - 1) / 20));
+  const bodyWidth = 44 + stage * 4 + muscleTier * 4;
+  const bodyX = 70 - bodyWidth / 2;
+  const armSpread = 20 + stage * 3 + muscleTier * 5;
+  const shoulderSize = 6 + muscleTier * 2;
 
   return (
     <div className={`relative ${glowClass}`} style={{ width: size, height: size }}>
@@ -44,10 +51,39 @@ export default function CharacterAvatar({ tier, stage, level, size = 140 }: Prop
           />
         )}
         <circle cx="70" cy="60" r="32" fill={palette.base} stroke={palette.accent} strokeWidth="4" />
+        {gender === "FEMALE" && (
+          <path d="M42 62C48 46 60 40 70 40C82 40 94 46 98 62" stroke={palette.accent} strokeWidth="6" strokeLinecap="round" />
+        )}
+        {gender === "MALE" && (
+          <path d="M54 72C62 78 78 78 86 72" stroke={palette.accent} strokeWidth="5" strokeLinecap="round" />
+        )}
         <circle cx="58" cy="56" r="4" fill="#121212" />
         <circle cx="82" cy="56" r="4" fill="#121212" />
         <path d="M60 74C65 80 75 80 80 74" stroke="#121212" strokeWidth="4" strokeLinecap="round" />
-        <rect x="45" y="92" width="50" height="30" rx="14" fill={palette.base} stroke={palette.accent} strokeWidth="4" />
+        {muscleTier >= 2 && (
+          <>
+            <circle cx={70 - bodyWidth / 2 + 2} cy="94" r={shoulderSize} fill={palette.accent} opacity="0.8" />
+            <circle cx={70 + bodyWidth / 2 - 2} cy="94" r={shoulderSize} fill={palette.accent} opacity="0.8" />
+          </>
+        )}
+        <line x1={70 - armSpread} y1="98" x2={70 - bodyWidth / 2} y2="104" stroke={palette.accent} strokeWidth="5" strokeLinecap="round" />
+        <line x1={70 + bodyWidth / 2} y1="104" x2={70 + armSpread} y2="98" stroke={palette.accent} strokeWidth="5" strokeLinecap="round" />
+        <rect x={bodyX} y="92" width={bodyWidth} height="32" rx="16" fill={palette.base} stroke={palette.accent} strokeWidth="4" />
+        {muscleTier >= 3 && (
+          <path
+            d={`M${bodyX + 6} 104H${bodyX + bodyWidth - 6}`}
+            stroke={palette.accent}
+            strokeWidth="3"
+            strokeLinecap="round"
+            opacity="0.7"
+          />
+        )}
+        {muscleTier >= 4 && (
+          <>
+            <line x1={70 - armSpread + 4} y1="100" x2={70 - bodyWidth / 2 + 6} y2="110" stroke={palette.glow} strokeWidth="3" strokeLinecap="round" />
+            <line x1={70 + bodyWidth / 2 - 6} y1="110" x2={70 + armSpread - 4} y2="100" stroke={palette.glow} strokeWidth="3" strokeLinecap="round" />
+          </>
+        )}
         <text x="70" y="112" textAnchor="middle" fill={palette.accent} fontSize="14" fontWeight="700">
           Lv.{level}
         </text>

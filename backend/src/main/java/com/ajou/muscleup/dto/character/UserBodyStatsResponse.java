@@ -1,6 +1,7 @@
 package com.ajou.muscleup.dto.character;
 
 import com.ajou.muscleup.entity.UserBodyStats;
+import com.ajou.muscleup.entity.Gender;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,6 +10,7 @@ import lombok.Getter;
 @Builder
 public class UserBodyStatsResponse {
     private Integer heightCm;
+    private Gender gender;
     private Double weightKg;
     private Double skeletalMuscleKg;
     private Double benchKg;
@@ -19,6 +21,7 @@ public class UserBodyStatsResponse {
     public static UserBodyStatsResponse from(UserBodyStats stats) {
         return UserBodyStatsResponse.builder()
                 .heightCm(stats.getHeightCm())
+                .gender(stats.getGender())
                 .weightKg(stats.getWeightKg())
                 .skeletalMuscleKg(stats.getSkeletalMuscleKg())
                 .benchKg(stats.getBenchKg())

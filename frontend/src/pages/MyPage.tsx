@@ -32,6 +32,7 @@ type MyPageResponse = {
 
 type UserBodyStats = {
   heightCm: number | null;
+  gender: "MALE" | "FEMALE" | null;
   weightKg: number | null;
   skeletalMuscleKg: number | null;
   benchKg: number | null;
@@ -110,6 +111,7 @@ const formatDate = (v?: string | null) => {
 
 const emptyForm = {
   heightCm: "",
+  gender: "MALE",
   weightKg: "",
   skeletalMuscleKg: "",
   benchKg: "",
@@ -151,6 +153,7 @@ export default function MyPage() {
         if (statsRes) {
           setForm({
             heightCm: statsRes.heightCm?.toString() ?? "",
+            gender: statsRes.gender ?? "MALE",
             weightKg: statsRes.weightKg?.toString() ?? "",
             skeletalMuscleKg: statsRes.skeletalMuscleKg?.toString() ?? "",
             benchKg: statsRes.benchKg?.toString() ?? "",
@@ -205,6 +208,7 @@ export default function MyPage() {
   const saveStats = async () => {
     const payload = {
       heightCm: parseNumber(form.heightCm),
+      gender: form.gender,
       weightKg: parseNumber(form.weightKg),
       skeletalMuscleKg: parseNumber(form.skeletalMuscleKg),
       benchKg: parseNumber(form.benchKg),
@@ -212,8 +216,8 @@ export default function MyPage() {
       deadliftKg: parseNumber(form.deadliftKg),
     };
 
-    if (payload.weightKg === null || payload.weightKg <= 0) {
-      showToast({ type: "error", message: "몸무게를 정확히 입력해 주세요." });
+    if (payload.weightKg === null || payload.weightKg < 20 || payload.weightKg > 300) {
+      showToast({ type: "error", message: "몸무게는 20~300kg 사이로 입력해 주세요." });
       return;
     }
 
@@ -255,6 +259,7 @@ export default function MyPage() {
   const statInputs = useMemo(
     () => [
       { key: "heightCm", label: "키(cm)", placeholder: "170", step: "1" },
+      { key: "gender", label: "성별", placeholder: "", step: "" },
       { key: "weightKg", label: "몸무게(kg)", placeholder: "72.5", step: "0.1" },
       { key: "skeletalMuscleKg", label: "골격근량(kg)", placeholder: "33", step: "0.1" },
       { key: "benchKg", label: "벤치(kg)", placeholder: "90", step: "0.5" },
@@ -292,14 +297,37 @@ export default function MyPage() {
               {statInputs.map((field) => (
                 <label key={field.key} className="text-sm text-gray-300 space-y-2">
                   <span>{field.label}</span>
-                  <input
-                    type="number"
-                    step={field.step}
-                    placeholder={field.placeholder}
-                    value={form[field.key as keyof StatsForm]}
-                    onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                    className="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
-                  />
+                  {field.key === "gender" ? (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, gender: "MALE" }))}
+                        className={`px-4 py-2 rounded-full text-xs border transition ${
+                          form.gender === "MALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"
+                        }`}
+                      >
+                        남
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, gender: "FEMALE" }))}
+                        className={`px-4 py-2 rounded-full text-xs border transition ${
+                          form.gender === "FEMALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"
+                        }`}
+                      >
+                        여
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      step={field.step}
+                      placeholder={field.placeholder}
+                      value={form[field.key as keyof StatsForm] as string}
+                      onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                      className="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                    />
+                  )}
                 </label>
               ))}
             </div>
@@ -331,7 +359,7 @@ export default function MyPage() {
                   {character.isPublic ? "공개 중" : "비공개"}
                 </button>
               </div>
-              <CharacterCard character={character} evaluation={evaluation} change={change} />
+              <CharacterCard character={character} evaluation={evaluation} gender={stats?.gender ?? "MALE"} change={change} />
             </div>
           ) : (
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-gray-300">

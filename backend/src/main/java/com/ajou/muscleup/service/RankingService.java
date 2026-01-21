@@ -1,8 +1,7 @@
 package com.ajou.muscleup.service;
 
-import com.ajou.muscleup.dto.character.CharacterRankingResponse;
-import java.util.List;
+import com.ajou.muscleup.dto.character.CharacterRankingListResponse;
 
 public interface RankingService {
-    List<CharacterRankingResponse> getCharacterRankings(String type, int limit);
+    CharacterRankingListResponse getCharacterRankings(String email, String type, int limit);
 }
