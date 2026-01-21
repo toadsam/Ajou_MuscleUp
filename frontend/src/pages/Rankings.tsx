@@ -3,7 +3,7 @@
 type RankingItem = {
   nickname: string;
   level: number;
-  tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
+  tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "GRANDMASTER" | "CHALLENGER";
   evolutionStage: number;
   title: string;
   threeLiftTotal?: number | null;

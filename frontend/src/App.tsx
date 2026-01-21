@@ -28,6 +28,7 @@ import AiShareView from "./pages/AiShareView";
 import AdminHistory from "./pages/AdminHistory";
 import Attendance from "./pages/Attendance";
 import Rankings from "./pages/Rankings";
+import Lounge from "./pages/Lounge";
 
 function App() {
   return (
@@ -137,6 +138,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Rankings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lounge"
+              element={
+                <ProtectedRoute>
+                  <Lounge />
                 </ProtectedRoute>
               }
             />

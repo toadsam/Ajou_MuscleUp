@@ -43,7 +43,7 @@ type UserBodyStats = {
 
 type CharacterProfile = {
   level: number;
-  tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
+  tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "GRANDMASTER" | "CHALLENGER";
   evolutionStage: number;
   title: string;
   isPublic: boolean;
@@ -55,7 +55,7 @@ type CharacterEvaluation = {
   strengthRatio: number;
   totalScore: number;
   level: number;
-  tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
+  tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "GRANDMASTER" | "CHALLENGER";
   evolutionStage: number;
   title: string;
 };
@@ -124,6 +124,30 @@ const emptyForm = {
   squatKg: "",
   deadliftKg: "",
 };
+
+const tierDescriptions: Record<string, string> = {
+  BRONZE: "입문 단계",
+  SILVER: "기초 루틴 완성",
+  GOLD: "꾸준함의 증거",
+  PLATINUM: "강한 실력자",
+  DIAMOND: "상위권 파워",
+  MASTER: "최상위 강자",
+  GRANDMASTER: "엘리트 중 엘리트",
+  CHALLENGER: "정점의 전설",
+};
+
+const stageDescriptions = [
+  "초기 성장",
+  "근육 각성",
+  "코어 강화",
+  "근지구력 상승",
+  "상체 강화",
+  "하체 강화",
+  "전신 밸런스",
+  "파워 급상승",
+  "마스터 폼",
+  "완전체",
+];
 
 type StatsForm = typeof emptyForm;
 
@@ -379,6 +403,20 @@ export default function MyPage() {
                 </button>
               </div>
               <CharacterCard character={character} evaluation={evaluation} gender={stats?.gender ?? "MALE"} change={change} />
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 grid md:grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Tier Info</div>
+                  <div className="text-white font-semibold">
+                    {character.tier} · {tierDescriptions[character.tier] ?? "-"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Evolution Stage</div>
+                  <div className="text-white font-semibold">
+                    Stage {character.evolutionStage} · {stageDescriptions[character.evolutionStage] ?? "성장 중"}
+                  </div>
+                </div>
+              </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 flex flex-wrap gap-6">
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">My Rank</div>

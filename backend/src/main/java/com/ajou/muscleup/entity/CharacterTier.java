@@ -5,5 +5,8 @@ public enum CharacterTier {
     SILVER,
     GOLD,
     PLATINUM,
-    DIAMOND
+    DIAMOND,
+    MASTER,
+    GRANDMASTER,
+    CHALLENGER
 }

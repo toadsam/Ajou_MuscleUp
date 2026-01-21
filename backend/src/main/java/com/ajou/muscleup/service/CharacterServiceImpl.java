@@ -132,7 +132,7 @@ public class CharacterServiceImpl implements CharacterService {
 
         double totalScore = clamp(base + muscleBonus, 0.0, 100.0);
         int level = Math.min(100, 1 + (int) Math.floor(totalScore));
-        CharacterTier tier = resolveTier(totalScore);
+        CharacterTier tier = resolveTier(totalScore, threeLiftTotal, gender);
         int stage = resolveStage(level);
         String title = resolveTitle(stage);
 
@@ -147,10 +147,33 @@ public class CharacterServiceImpl implements CharacterService {
                 .build();
     }
 
-    private CharacterTier resolveTier(double totalScore) {
-        if (totalScore >= 85.0) return CharacterTier.DIAMOND;
-        if (totalScore >= 70.0) return CharacterTier.PLATINUM;
-        if (totalScore >= 50.0) return CharacterTier.GOLD;
+    private CharacterTier resolveTier(double totalScore, double threeLiftTotal, Gender gender) {
+        if (threeLiftTotal > 0) {
+            if (gender == Gender.FEMALE) {
+                if (threeLiftTotal >= 420) return CharacterTier.CHALLENGER;
+                if (threeLiftTotal >= 360) return CharacterTier.GRANDMASTER;
+                if (threeLiftTotal >= 300) return CharacterTier.MASTER;
+                if (threeLiftTotal >= 240) return CharacterTier.DIAMOND;
+                if (threeLiftTotal >= 180) return CharacterTier.PLATINUM;
+                if (threeLiftTotal >= 120) return CharacterTier.GOLD;
+                if (threeLiftTotal >= 70) return CharacterTier.SILVER;
+                return CharacterTier.BRONZE;
+            }
+            if (threeLiftTotal >= 700) return CharacterTier.CHALLENGER;
+            if (threeLiftTotal >= 600) return CharacterTier.GRANDMASTER;
+            if (threeLiftTotal >= 500) return CharacterTier.MASTER;
+            if (threeLiftTotal >= 420) return CharacterTier.DIAMOND;
+            if (threeLiftTotal >= 320) return CharacterTier.PLATINUM;
+            if (threeLiftTotal >= 220) return CharacterTier.GOLD;
+            if (threeLiftTotal >= 120) return CharacterTier.SILVER;
+            return CharacterTier.BRONZE;
+        }
+        if (totalScore >= 98.0) return CharacterTier.CHALLENGER;
+        if (totalScore >= 94.0) return CharacterTier.GRANDMASTER;
+        if (totalScore >= 88.0) return CharacterTier.MASTER;
+        if (totalScore >= 80.0) return CharacterTier.DIAMOND;
+        if (totalScore >= 65.0) return CharacterTier.PLATINUM;
+        if (totalScore >= 45.0) return CharacterTier.GOLD;
         if (totalScore >= 25.0) return CharacterTier.SILVER;
         return CharacterTier.BRONZE;
     }
@@ -173,10 +196,8 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     private int resolveStage(int level) {
-        if (level >= 70) return 3;
-        if (level >= 40) return 2;
-        if (level >= 15) return 1;
-        return 0;
+        int normalized = Math.max(1, Math.min(level, 100));
+        return Math.min(9, (normalized - 1) / 10);
     }
 
     private String resolveTitle(int stage) {
@@ -184,6 +205,12 @@ public class CharacterServiceImpl implements CharacterService {
             case 1 -> "\uB8E8\uD2F4 \uC785\uBB38\uC790";
             case 2 -> "\uC911\uAE09 \uD2B8\uB808\uC774\uB108";
             case 3 -> "\uC0C1\uAE09 \uD30C\uC6CC\uB7EC";
+            case 4 -> "\uD30C\uC6CC \uAC00\uC18D\uC790";
+            case 5 -> "\uD53C\uD2B8\uB2C8\uC2A4 \uAC15\uC790";
+            case 6 -> "\uC5D0\uC9C0 \uB9C8\uC2A4\uD130";
+            case 7 -> "\uC5D0\uD3EC\uC2A4 \uC5D0\uC2DC\uC5B8\uD2B8";
+            case 8 -> "\uB808\uC804\uB4DC \uD30C\uC6CC\uB7EC";
+            case 9 -> "\uC5B4\uC758\uB108";
             default -> "\uCD08\uBCF4 \uD5EC\uB9B0\uC774";
         };
     }

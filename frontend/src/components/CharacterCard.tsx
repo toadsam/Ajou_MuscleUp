@@ -1,6 +1,6 @@
 ﻿import CharacterAvatar from "./CharacterAvatar";
 
-type Tier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
+type Tier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "GRANDMASTER" | "CHALLENGER";
 
 type CharacterProfile = {
   level: number;
