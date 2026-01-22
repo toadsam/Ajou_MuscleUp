@@ -1,10 +1,44 @@
+@keyframes avatarBreathe {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+@keyframes avatarBounce {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 @keyframes glowPulse {
   0%,
   100% {
-    box-shadow: 0 0 12px rgba(45, 212, 191, 0.2);
+    opacity: 0.25;
+    filter: blur(0px);
   }
   50% {
-    box-shadow: 0 0 28px rgba(45, 212, 191, 0.45);
+    opacity: 0.6;
+    filter: blur(1px);
+  }
+}
+
+@keyframes auraWave {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.5;
   }
 }
 
@@ -12,42 +46,36 @@
   0%,
   100% {
     transform: translateY(0px);
-    opacity: 0.6;
+    opacity: 0.4;
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
     opacity: 1;
   }
 }
 
-@keyframes badgeBounce {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
+.avatar-breathe {
+  animation: avatarBreathe 3.2s ease-in-out infinite;
 }
 
-.avatar-glow-light {
-  filter: drop-shadow(0 0 12px rgba(45, 212, 191, 0.25));
+.avatar-bounce {
+  animation: avatarBounce 1.8s ease-in-out infinite;
 }
 
-.avatar-glow-medium {
-  filter: drop-shadow(0 0 18px rgba(94, 234, 212, 0.45));
+.avatar-aura .avatar-ring {
+  animation: glowPulse 2.6s ease-in-out infinite;
 }
 
-.avatar-glow-strong {
-  filter: drop-shadow(0 0 26px rgba(56, 189, 248, 0.6));
+.avatar-wave {
+  animation: auraWave 2.4s ease-in-out infinite;
 }
 
-.avatar-ring {
-  animation: glowPulse 3s ease-in-out infinite;
+.avatar-wave-strong {
+  animation: auraWave 1.8s ease-in-out infinite;
 }
 
 .avatar-sparkle {
-  animation: sparkleFloat 2.6s ease-in-out infinite;
+  animation: sparkleFloat 2.8s ease-in-out infinite;
 }
 
 .sparkle-2 {
@@ -62,14 +90,18 @@
   animation-delay: 1.2s;
 }
 
-.card-levelup {
-  animation: glowPulse 2s ease-in-out 2;
+.sparkle-5 {
+  animation-delay: 1.6s;
 }
 
-.card-evolution {
-  animation: glowPulse 1.4s ease-in-out 3;
+.sparkle-6 {
+  animation-delay: 2s;
 }
 
-.badge-bounce {
-  animation: badgeBounce 1s ease-in-out 2;
+.sparkle-7 {
+  animation-delay: 2.4s;
+}
+
+.sparkle-8 {
+  animation-delay: 2.8s;
 }
