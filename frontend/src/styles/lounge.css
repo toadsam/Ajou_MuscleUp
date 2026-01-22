@@ -1,0 +1,389 @@
+.gym-rack {
+  border-radius: 18px;
+  border: 2px solid rgba(148, 163, 184, 0.4);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.9));
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.5);
+  position: relative;
+}
+
+.gym-rack::before,
+.gym-rack::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  width: 6px;
+  background: rgba(148, 163, 184, 0.6);
+  border-radius: 6px;
+}
+
+.gym-rack::before {
+  left: 18px;
+}
+
+.gym-rack::after {
+  right: 18px;
+}
+
+.gym-bench {
+  border-radius: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.2);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+  position: relative;
+}
+
+.gym-bench::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 18px;
+  height: 18px;
+  border-radius: 12px;
+  background: rgba(226, 232, 240, 0.15);
+}
+
+.gym-bench::after {
+  content: "";
+  position: absolute;
+  left: 32px;
+  right: 32px;
+  bottom: 12px;
+  height: 10px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.gym-treadmill {
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.25);
+  background: linear-gradient(120deg, rgba(15, 23, 42, 0.7), rgba(51, 65, 85, 0.9));
+  position: relative;
+}
+
+.gym-treadmill::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 16px;
+  height: 16px;
+  border-radius: 10px;
+  background: rgba(226, 232, 240, 0.2);
+}
+
+.gym-treadmill::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 16px;
+  height: 30px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.gym-dumbbell {
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.18);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.85));
+  position: relative;
+}
+
+.gym-dumbbell::before {
+  content: "";
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 18px;
+  height: 10px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.4);
+}
+
+.gym-dumbbell::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.35);
+  box-shadow: 60px 0 0 rgba(148, 163, 184, 0.3), 120px 0 0 rgba(148, 163, 184, 0.25), 180px 0 0 rgba(148, 163, 184, 0.2), 240px 0 0 rgba(148, 163, 184, 0.15);
+}
+
+.gym-mirror {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.05), rgba(15, 23, 42, 0.5));
+  box-shadow: inset 0 0 30px rgba(148, 163, 184, 0.2);
+}
+
+.gym-plates {
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.9));
+  position: relative;
+}
+
+.gym-plates::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  border: 8px solid rgba(148, 163, 184, 0.35);
+  box-shadow: inset 0 0 20px rgba(15, 23, 42, 0.6);
+}
+
+.gym-teleport {
+  border-radius: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.4), rgba(15, 23, 42, 0.9));
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+  position: relative;
+}
+
+.gym-teleport::after {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 2px dashed rgba(125, 211, 252, 0.7);
+  animation: teleportSpin 6s linear infinite;
+}
+
+.gym-interactive {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.gym-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.gym-selected {
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.35);
+  border-color: rgba(16, 185, 129, 0.6);
+  animation: gymPulse 1.6s ease-in-out infinite;
+}
+
+.avatar-walk {
+  animation: loungeWalk 0.35s ease-in-out infinite;
+}
+
+.avatar-squat {
+  animation: loungeSquat 1.6s ease-in-out infinite;
+}
+
+.speech-bubble {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 180px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-size: 11px;
+  color: #e2e8f0;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.6);
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  writing-mode: horizontal-tb;
+}
+
+.minimap {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 180px;
+  height: 120px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(2, 6, 23, 0.7);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.45);
+  padding: 8px;
+  z-index: 10;
+}
+
+.minimap-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.minimap-item {
+  position: absolute;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.minimap-teleport {
+  background: rgba(56, 189, 248, 0.7);
+}
+
+.minimap-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.9);
+}
+
+.minimap-me {
+  background: rgba(16, 185, 129, 0.95);
+}
+
+.zone-label {
+  position: absolute;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.7);
+  pointer-events: none;
+}
+
+.mobile-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 12;
+}
+
+.ctrl-row {
+  display: flex;
+  gap: 6px;
+}
+
+.ctrl-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.help-card {
+  width: min(520px, 90vw);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 20px;
+  padding: 20px 24px;
+  color: #e2e8f0;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.6);
+}
+
+.help-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.help-list {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.help-close {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: rgba(15, 23, 42, 0.95);
+  border-left: 1px solid rgba(148, 163, 184, 0.4);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+  transform: translateX(-50%) rotate(-45deg);
+}
+
+.typing-bubble {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+@keyframes loungeWalk {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@keyframes loungeSquat {
+  0%,
+  100% {
+    transform: translateY(0px) scaleY(1);
+  }
+  50% {
+    transform: translateY(4px) scaleY(0.96);
+  }
+}
+
+@keyframes gymPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes teleportSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

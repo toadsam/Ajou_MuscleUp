@@ -1,8 +1,8 @@
 import type { JoinPayload, PlayerState } from "./types.js";
 
 const ROOM_NAME = "lounge";
-const MAP_WIDTH = 1200;
-const MAP_HEIGHT = 700;
+const MAP_WIDTH = 2000;
+const MAP_HEIGHT = 1200;
 
 const players = new Map<string, PlayerState>();
 
@@ -29,6 +29,7 @@ export const addPlayer = (socketId: string, payload: JoinPayload) => {
     level: payload.level,
     tier: payload.tier,
     evolutionStage: payload.evolutionStage,
+    gender: payload.gender,
     x,
     y,
     lastUpdatedAt: nowIso(),

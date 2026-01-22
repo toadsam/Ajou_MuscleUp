@@ -1,6 +1,7 @@
 ﻿@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
 @import "./styles/characterEffects.css";
+@import "./styles/lounge.css";
 
 @tailwind base;
 @tailwind components;

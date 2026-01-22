@@ -8,7 +8,7 @@ import {
   removePlayer,
   updatePlayerPosition,
 } from "./rooms.js";
-import type { CharacterTier, JoinPayload } from "./types.js";
+import type { CharacterTier, Gender, JoinPayload, PingPayload, TypingPayload } from "./types.js";
 
 const PORT = Number(process.env.PORT ?? 4001);
 const ORIGIN = process.env.ORIGIN ?? "http://localhost:5173";
@@ -36,8 +36,13 @@ const TIER_VALUES: CharacterTier[] = [
   "CHALLENGER",
 ];
 
+const GENDER_VALUES: Gender[] = ["MALE", "FEMALE"];
+
 const isValidTier = (tier: any): tier is CharacterTier =>
   typeof tier === "string" && TIER_VALUES.includes(tier as CharacterTier);
+
+const isValidGender = (gender: any): gender is Gender =>
+  typeof gender === "string" && GENDER_VALUES.includes(gender as Gender);
 
 const sanitizeNickname = (nickname: string) => nickname.trim().slice(0, 30);
 
@@ -49,6 +54,7 @@ const isValidJoinPayload = (payload: any): payload is JoinPayload => {
   if (!Number.isFinite(payload.level) || payload.level < 1) return false;
   if (!Number.isFinite(payload.evolutionStage) || payload.evolutionStage < 0) return false;
   if (!isValidTier(payload.tier)) return false;
+  if (payload.gender && !isValidGender(payload.gender)) return false;
   return true;
 };
 
@@ -61,7 +67,7 @@ setInterval(() => {
   if (!pendingBroadcast) return;
   pendingBroadcast = false;
   broadcastPlayers();
-}, 100);
+}, 60);
 
 const scheduleBroadcast = () => {
   pendingBroadcast = true;
@@ -110,6 +116,21 @@ io.on("connection", (socket) => {
       message,
       ts: new Date().toISOString(),
     });
+  });
+
+  socket.on("chat:typing", (payload: TypingPayload) => {
+    if (!payload || typeof payload.isTyping !== "boolean") return;
+    const nickname =
+      (socket.data.profile && socket.data.profile.nickname) || "Unknown";
+    socket.to(roomName).emit("chat:typing", {
+      nickname,
+      isTyping: payload.isTyping,
+    });
+  });
+
+  socket.on("ping:check", (payload: PingPayload) => {
+    if (!payload || !Number.isFinite(payload.clientTs)) return;
+    socket.emit("ping:result", { clientTs: payload.clientTs, serverTs: Date.now() });
   });
 
   socket.on("disconnect", () => {

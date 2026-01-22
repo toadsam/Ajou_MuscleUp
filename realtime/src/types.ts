@@ -8,6 +8,8 @@ export type CharacterTier =
   | "GRANDMASTER"
   | "CHALLENGER";
 
+export type Gender = "MALE" | "FEMALE";
+
 export type PlayerState = {
   socketId: string;
   userId?: string;
@@ -15,6 +17,7 @@ export type PlayerState = {
   level: number;
   tier: CharacterTier;
   evolutionStage: number;
+  gender?: Gender;
   x: number;
   y: number;
   lastUpdatedAt: string;
@@ -26,4 +29,13 @@ export type JoinPayload = {
   level: number;
   tier: CharacterTier;
   evolutionStage: number;
+  gender?: Gender;
+};
+
+export type TypingPayload = {
+  isTyping: boolean;
+};
+
+export type PingPayload = {
+  clientTs: number;
 };
