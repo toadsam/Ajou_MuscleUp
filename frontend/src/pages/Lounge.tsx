@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import PlayerAvatar from "../components/PlayerAvatar";
+import CharacterAvatar from "../components/CharacterAvatar";
 
 type CharacterTier =
   | "BRONZE"
@@ -28,6 +29,9 @@ type PlayerState = {
   tier: CharacterTier;
   evolutionStage: number;
   gender?: Gender;
+  recentAttendanceCount?: number;
+  activeEventTitle?: string;
+  activeEventProgress?: string;
   x: number;
   y: number;
   lastUpdatedAt: string;
@@ -78,17 +82,6 @@ const GAMEPAD_DEADZONE = 0.2;
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-const parseCharacter = (payload: any): CharacterResponse | null => {
-  if (!payload) return null;
-  const raw = payload.character ?? payload;
-  if (!raw) return null;
-  return {
-    level: Number(raw.level ?? 1),
-    tier: (raw.tier ?? "BRONZE") as CharacterTier,
-    evolutionStage: Number(raw.evolutionStage ?? 0),
-  };
-};
-
 export default function Lounge() {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -112,6 +105,12 @@ export default function Lounge() {
     name: string;
     description: string;
   } | null>(null);
+  const [recentAttendanceCount, setRecentAttendanceCount] = useState<number>(0);
+  const [activeEventSummary, setActiveEventSummary] = useState<{
+    title: string;
+    progress: string;
+  } | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerState | null>(null);
   const [pingMs, setPingMs] = useState<number | null>(null);
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
   const [showHelp, setShowHelp] = useState(false);
@@ -154,27 +153,34 @@ export default function Lounge() {
     if (!user) return;
     (async () => {
       try {
-        const characterUrl = API_BASE ? `${API_BASE}/api/character/me` : "/api/character/me";
+        const loungeUrl = API_BASE ? `${API_BASE}/api/lounge/profile` : "/api/lounge/profile";
         const statsUrl = API_BASE ? `${API_BASE}/api/mypage/stats` : "/api/mypage/stats";
-        const [characterRes, statsRes] = await Promise.all([
-          fetch(characterUrl, { credentials: "include" }),
+        const [loungeRes, statsRes] = await Promise.all([
+          fetch(loungeUrl, { credentials: "include" }),
           fetch(statsUrl, { credentials: "include" }),
         ]);
 
-        if (characterRes.status === 401 || statsRes.status === 401) {
+        if (loungeRes.status === 401 || statsRes.status === 401) {
           window.location.href = "/login";
           return;
         }
-        if (!characterRes.ok) {
-          const text = await characterRes.text().catch(() => "");
+        if (!loungeRes.ok) {
+          const text = await loungeRes.text().catch(() => "");
           throw new Error(text || "캐릭터 정보를 불러오지 못했습니다.");
         }
-        const payload = await characterRes.json();
-        const parsed = parseCharacter(payload);
-        if (!parsed) {
-          throw new Error("캐릭터 정보 형식이 올바르지 않습니다.");
+        const loungePayload = (await loungeRes.json()) as LoungeProfileResponse;
+        setCharacter(loungePayload.character);
+        setRecentAttendanceCount(loungePayload.recentAttendanceCount ?? 0);
+        const activeEvent = loungePayload.activeEvents?.[0];
+        if (activeEvent) {
+          setActiveEventSummary({
+            title: activeEvent.title,
+            progress: `${activeEvent.currentAttendanceCount}/${activeEvent.requiredAttendanceCount}`,
+          });
+        } else {
+          setActiveEventSummary(null);
         }
-        setCharacter(parsed);
+
         if (statsRes.ok) {
           const statsPayload = await statsRes.json().catch(() => null);
           const nextGender = statsPayload?.gender ?? null;
@@ -207,6 +213,9 @@ export default function Lounge() {
         tier: character.tier,
         evolutionStage: character.evolutionStage,
         gender: gender ?? undefined,
+        recentAttendanceCount,
+        activeEventTitle: activeEventSummary?.title,
+        activeEventProgress: activeEventSummary?.progress,
       });
     });
 
@@ -321,7 +330,7 @@ export default function Lounge() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [user, character, gender]);
+  }, [user, character, gender, recentAttendanceCount, activeEventSummary]);
 
   useEffect(() => {
     const handleKey = (down: boolean) => (event: KeyboardEvent) => {
@@ -872,6 +881,9 @@ export default function Lounge() {
                     const speech = muted ? null : speechMap[player.nickname];
                     const speechText = speech ? filterMessage(speech.message) : "";
                     const isTyping = !muted && Boolean(typingUsers[player.nickname]);
+                    const showProximity =
+                      Boolean(localPosition) &&
+                      Math.hypot(player.x - (localPosition?.x ?? 0), player.y - (localPosition?.y ?? 0)) < 180;
                     return (
                       <div
                         key={player.socketId}
@@ -880,10 +892,16 @@ export default function Lounge() {
                           left: player.x,
                           top: player.y,
                         }}
+                        onClick={() => setSelectedPlayer(player)}
                       >
                         {speech && (
                           <div className="speech-bubble">
                             {speechText}
+                          </div>
+                        )}
+                        {showProximity && (
+                          <div className="proximity-badge">
+                            {player.nickname} · Lv.{player.level} · {player.tier} · S{player.evolutionStage}
                           </div>
                         )}
                         {isTyping && !speech && (
@@ -1020,6 +1038,61 @@ export default function Lounge() {
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold">프로필 카드</h2>
+                {selectedPlayer && (
+                  <button
+                    onClick={() => setSelectedPlayer(null)}
+                    className="text-xs text-gray-400 hover:text-gray-200"
+                  >
+                    닫기
+                  </button>
+                )}
+              </div>
+              {selectedPlayer ? (
+                <div className="space-y-3 text-sm text-gray-300">
+                  <div className="flex items-center gap-3">
+                    <CharacterAvatar
+                      gender={selectedPlayer.gender ?? "MALE"}
+                      tier={selectedPlayer.tier}
+                      stage={selectedPlayer.evolutionStage}
+                      level={selectedPlayer.level}
+                      size={90}
+                    />
+                    <div>
+                      <div className="text-white font-semibold">{selectedPlayer.nickname}</div>
+                      <div className="text-xs text-gray-400">
+                        Lv.{selectedPlayer.level} · {selectedPlayer.tier} · Stage {selectedPlayer.evolutionStage}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="profile-line">
+                    <span>최근 출석</span>
+                    <span className="text-white font-semibold">
+                      {selectedPlayer.recentAttendanceCount ?? 0}회
+                    </span>
+                  </div>
+                  <div className="profile-line">
+                    <span>참여 이벤트</span>
+                    <span className="text-white font-semibold">
+                      {selectedPlayer.activeEventTitle ?? "없음"}
+                    </span>
+                  </div>
+                  {selectedPlayer.activeEventProgress && (
+                    <div className="profile-line">
+                      <span>진행률</span>
+                      <span className="text-white font-semibold">{selectedPlayer.activeEventProgress}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-400">
+                  라운지에서 캐릭터를 클릭하면 상세 정보가 표시됩니다.
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold">장비 정보</h2>
                 {selectedEquipment && (
                   <button
@@ -1142,3 +1215,20 @@ export default function Lounge() {
     </section>
   );
 }
+type LoungeProfileResponse = {
+  nickname: string;
+  character: {
+    level: number;
+    tier: CharacterTier;
+    evolutionStage: number;
+  };
+  recentAttendanceCount: number;
+  activeEvents: Array<{
+    eventId: number;
+    title: string;
+    requiredAttendanceCount: number;
+    currentAttendanceCount: number;
+    status: string;
+    success?: boolean | null;
+  }>;
+};

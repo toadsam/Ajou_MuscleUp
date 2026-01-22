@@ -3,6 +3,8 @@ package com.ajou.muscleup.service;
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
+import com.ajou.muscleup.dto.character.CharacterChangeResponse;
+import com.ajou.muscleup.dto.event.EventProgressResponse;
 import com.ajou.muscleup.entity.AttendanceLog;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
@@ -26,22 +28,32 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     private final AttendanceLogRepository attendanceLogRepository;
     private final UserRepository userRepository;
+    private final EventService eventService;
+    private final CharacterGrowthService characterGrowthService;
 
     @Override
     @Transactional
     public AttendanceLogResponse upsertToday(String email, AttendanceUpsertRequest request) {
         User user = getUserOrThrow(email);
         LocalDate today = LocalDate.now(KST);
-        AttendanceLog log = upsert(user, today, request);
-        return AttendanceLogResponse.from(log);
+        UpsertResult result = upsert(user, today, request);
+        List<EventProgressResponse> eventProgress =
+                eventService.updateAttendanceProgress(user, today, result.previousDidWorkout, result.currentDidWorkout);
+        CharacterChangeResponse change =
+                characterGrowthService.applyAttendance(user, result.previousDidWorkout, result.currentDidWorkout);
+        return AttendanceLogResponse.from(result.log, eventProgress, change);
     }
 
     @Override
     @Transactional
     public AttendanceLogResponse upsertByDate(String email, LocalDate date, AttendanceUpsertRequest request) {
         User user = getUserOrThrow(email);
-        AttendanceLog log = upsert(user, date, request);
-        return AttendanceLogResponse.from(log);
+        UpsertResult result = upsert(user, date, request);
+        List<EventProgressResponse> eventProgress =
+                eventService.updateAttendanceProgress(user, date, result.previousDidWorkout, result.currentDidWorkout);
+        CharacterChangeResponse change =
+                characterGrowthService.applyAttendance(user, result.previousDidWorkout, result.currentDidWorkout);
+        return AttendanceLogResponse.from(result.log, eventProgress, change);
     }
 
     @Override
@@ -75,15 +87,18 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .build();
     }
 
-    private AttendanceLog upsert(User user, LocalDate date, AttendanceUpsertRequest request) {
+    private UpsertResult upsert(User user, LocalDate date, AttendanceUpsertRequest request) {
         AttendanceLog log = attendanceLogRepository.findByUserAndDate(user, date)
                 .orElseGet(() -> AttendanceLog.builder()
                         .user(user)
                         .date(date)
                         .build());
-        log.setDidWorkout(Boolean.TRUE.equals(request.getDidWorkout()));
+        boolean previousDidWorkout = log.isDidWorkout();
+        boolean currentDidWorkout = Boolean.TRUE.equals(request.getDidWorkout());
+        log.setDidWorkout(currentDidWorkout);
         log.setMemo(request.getMemo());
-        return attendanceLogRepository.save(log);
+        AttendanceLog saved = attendanceLogRepository.save(log);
+        return new UpsertResult(saved, previousDidWorkout, currentDidWorkout);
     }
 
     private int calculateCurrentStreak(User user, LocalDate today) {
@@ -135,4 +150,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
     }
+
+    private record UpsertResult(AttendanceLog log, boolean previousDidWorkout, boolean currentDidWorkout) {}
 }

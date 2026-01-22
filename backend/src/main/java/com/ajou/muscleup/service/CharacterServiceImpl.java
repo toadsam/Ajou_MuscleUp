@@ -71,7 +71,8 @@ public class CharacterServiceImpl implements CharacterService {
                 .orElseGet(() -> profileRepository.save(defaultProfile(user)));
         CharacterSnapshotResponse beforeSnapshot = CharacterSnapshotResponse.from(profile);
 
-        CharacterEvaluationResponse evaluation = evaluateStats(stats);
+        double attendanceBonus = calculateAttendanceBonus(profile.getAttendancePoints());
+        CharacterEvaluationResponse evaluation = evaluateStats(stats, attendanceBonus);
         profile.setLevel(evaluation.getLevel());
         profile.setTier(evaluation.getTier());
         profile.setEvolutionStage(evaluation.getEvolutionStage());
@@ -109,7 +110,7 @@ public class CharacterServiceImpl implements CharacterService {
                 .build();
     }
 
-    private CharacterEvaluationResponse evaluateStats(UserBodyStats stats) {
+    private CharacterEvaluationResponse evaluateStats(UserBodyStats stats, double attendanceBonus) {
         double bench = stats.getBenchKg() == null ? 0.0 : stats.getBenchKg();
         double squat = stats.getSquatKg() == null ? 0.0 : stats.getSquatKg();
         double deadlift = stats.getDeadliftKg() == null ? 0.0 : stats.getDeadliftKg();
@@ -130,7 +131,7 @@ public class CharacterServiceImpl implements CharacterService {
             muscleBonus = clamp((stats.getSkeletalMuscleKg() / weight) * muscleMultiplier, 0.0, 30.0);
         }
 
-        double totalScore = clamp(base + muscleBonus, 0.0, 100.0);
+        double totalScore = clamp(base + muscleBonus + attendanceBonus, 0.0, 100.0);
         int level = Math.min(100, 1 + (int) Math.floor(totalScore));
         CharacterTier tier = resolveTier(totalScore, threeLiftTotal, gender);
         int stage = resolveStage(level);
@@ -228,6 +229,10 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     private CharacterProfile defaultProfile(User user) {
+        return defaultProfileStatic(user);
+    }
+
+    static CharacterProfile defaultProfileStatic(User user) {
         return CharacterProfile.builder()
                 .user(user)
                 .level(1)
@@ -235,7 +240,12 @@ public class CharacterServiceImpl implements CharacterService {
                 .evolutionStage(0)
                 .title("\uCD08\uBCF4 \uD5EC\uB9B0\uC774")
                 .isPublic(false)
+                .attendancePoints(0)
                 .build();
+    }
+
+    private double calculateAttendanceBonus(int attendancePoints) {
+        return clamp(attendancePoints * 0.5, 0.0, 15.0);
     }
 
     private User getUserOrThrow(String email) {

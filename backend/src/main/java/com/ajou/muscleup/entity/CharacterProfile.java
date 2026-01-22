@@ -41,4 +41,7 @@ public class CharacterProfile extends BaseTimeEntity {
 
     @Column(name = "last_evaluated_at")
     private LocalDateTime lastEvaluatedAt;
+
+    @Column(name = "attendance_points", nullable = false)
+    private int attendancePoints;
 }

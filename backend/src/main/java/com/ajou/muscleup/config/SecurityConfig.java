@@ -70,6 +70,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/character/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/rankings/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/attendance/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/events/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/lounge/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()

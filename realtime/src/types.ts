@@ -18,6 +18,9 @@ export type PlayerState = {
   tier: CharacterTier;
   evolutionStage: number;
   gender?: Gender;
+  recentAttendanceCount?: number;
+  activeEventTitle?: string;
+  activeEventProgress?: string;
   x: number;
   y: number;
   lastUpdatedAt: string;
@@ -30,6 +33,9 @@ export type JoinPayload = {
   tier: CharacterTier;
   evolutionStage: number;
   gender?: Gender;
+  recentAttendanceCount?: number;
+  activeEventTitle?: string;
+  activeEventProgress?: string;
 };
 
 export type TypingPayload = {

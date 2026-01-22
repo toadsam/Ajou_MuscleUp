@@ -55,6 +55,18 @@ const isValidJoinPayload = (payload: any): payload is JoinPayload => {
   if (!Number.isFinite(payload.evolutionStage) || payload.evolutionStage < 0) return false;
   if (!isValidTier(payload.tier)) return false;
   if (payload.gender && !isValidGender(payload.gender)) return false;
+  if (
+    payload.recentAttendanceCount !== undefined &&
+    (!Number.isFinite(payload.recentAttendanceCount) || payload.recentAttendanceCount < 0)
+  ) {
+    return false;
+  }
+  if (payload.activeEventTitle && typeof payload.activeEventTitle !== "string") {
+    return false;
+  }
+  if (payload.activeEventProgress && typeof payload.activeEventProgress !== "string") {
+    return false;
+  }
   return true;
 };
 
