@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import "../styles/attendance.css";
 
 type AttendanceLog = {
   date: string;
   didWorkout: boolean;
   memo?: string | null;
+  workoutTypes?: string[] | null;
+  workoutIntensity?: string | null;
+  expEarned?: number | null;
   updatedAt?: string | null;
 };
 
@@ -13,9 +17,28 @@ type AttendanceSummary = {
   bestStreakInMonth?: number | null;
 };
 
-type Toast = { type: "success" | "error"; message: string };
+type Toast = { type: "success" | "error"; message: string; expEarned?: number | null };
+
+type WorkoutOption = { id: string; label: string; icon: string; hint: string };
+
+type IntensityOption = { id: string; label: string; tag: string; power: number };
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+const WORKOUT_TYPES: WorkoutOption[] = [
+  { id: "weight", label: "웨이트", icon: "🏋️", hint: "근육 펌핑" },
+  { id: "cardio", label: "유산소", icon: "🏃", hint: "심폐 폭주" },
+  { id: "stretch", label: "스트레칭", icon: "🧘", hint: "회복 모드" },
+];
+
+const INTENSITIES: IntensityOption[] = [
+  { id: "light", label: "가벼움", tag: "회복", power: 1 },
+  { id: "normal", label: "보통", tag: "루틴", power: 2 },
+  { id: "hard", label: "빡셈", tag: "폭발", power: 3 },
+];
+
+const MEMO_KEYWORDS = ["3대", "갱신", "PR", "데드", "스쿼트"] as const;
+const STREAK_MILESTONES = [3, 7, 14, 30];
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
@@ -52,6 +75,22 @@ const formatDateKey = (date: Date) => {
   return `${y}-${m}-${d}`;
 };
 
+const startOfWeek = (date: Date) => {
+  const clone = new Date(date);
+  const day = (clone.getDay() + 6) % 7;
+  clone.setDate(clone.getDate() - day);
+  clone.setHours(0, 0, 0, 0);
+  return clone;
+};
+
+const streakBonus = (streak: number) => {
+  if (streak >= 30) return 6;
+  if (streak >= 14) return 4;
+  if (streak >= 7) return 3;
+  if (streak >= 3) return 2;
+  return 0;
+};
+
 export default function Attendance() {
   const [month, setMonth] = useState(() => new Date());
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
@@ -60,7 +99,9 @@ export default function Attendance() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [didWorkout, setDidWorkout] = useState(false);
+  const [didWorkout, setDidWorkout] = useState(true);
+  const [workoutTypes, setWorkoutTypes] = useState<string[]>([]);
+  const [workoutIntensity, setWorkoutIntensity] = useState<string | null>(null);
   const [memo, setMemo] = useState("");
 
   const monthKey = formatMonthKey(month);
@@ -86,14 +127,36 @@ export default function Attendance() {
     })();
   }, [monthKey]);
 
+  const todayLog = useMemo(() => {
+    if (!isCurrentMonth) return null;
+    return logs.find((log) => log.date === todayKey) ?? null;
+  }, [logs, isCurrentMonth, todayKey]);
+
+  const isLocked = Boolean(todayLog);
+
   useEffect(() => {
     if (!isCurrentMonth) {
       return;
     }
-    const todayLog = logs.find((log) => log.date === todayKey);
-    setDidWorkout(todayLog?.didWorkout ?? false);
-    setMemo(todayLog?.memo ?? "");
-  }, [logs, isCurrentMonth, todayKey]);
+    if (todayLog) {
+      setDidWorkout(todayLog.didWorkout);
+      setMemo(todayLog.memo ?? "");
+      setWorkoutTypes(todayLog.workoutTypes ?? []);
+      setWorkoutIntensity(todayLog.workoutIntensity ?? null);
+      return;
+    }
+    setDidWorkout(true);
+    setMemo("");
+    setWorkoutTypes([]);
+    setWorkoutIntensity(null);
+  }, [todayLog, isCurrentMonth]);
+
+  useEffect(() => {
+    if (!didWorkout && !isLocked) {
+      setWorkoutTypes([]);
+      setWorkoutIntensity(null);
+    }
+  }, [didWorkout, isLocked]);
 
   const logMap = useMemo(() => {
     const map = new Map<string, AttendanceLog>();
@@ -119,19 +182,73 @@ export default function Attendance() {
     });
   }, [month]);
 
+  const weekStats = useMemo(() => {
+    const start = startOfWeek(new Date());
+    const typeCounts: Record<string, number> = { weight: 0, cardio: 0, stretch: 0 };
+    let intensityTotal = 0;
+    let intensityCount = 0;
+    let workoutDays = 0;
+    const days = Array.from({ length: 7 }, (_, idx) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + idx);
+      const key = formatDateKey(date);
+      const log = logMap.get(key);
+      if (log?.didWorkout) {
+        workoutDays += 1;
+        (log.workoutTypes ?? []).forEach((type) => {
+          if (typeCounts[type] !== undefined) {
+            typeCounts[type] += 1;
+          }
+        });
+        if (log.workoutIntensity) {
+          const intensity = INTENSITIES.find((item) => item.id === log.workoutIntensity);
+          if (intensity) {
+            intensityTotal += intensity.power;
+            intensityCount += 1;
+          }
+        }
+      }
+      return { key, log };
+    });
+
+    const mostType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const avgIntensity = intensityCount ? intensityTotal / intensityCount : 0;
+
+    return {
+      days,
+      workoutDays,
+      mostType,
+      avgIntensity,
+    };
+  }, [logMap]);
+
   const showToast = (next: Toast) => {
     setToast(next);
     window.setTimeout(() => setToast(null), 2200);
   };
 
   const saveToday = async () => {
+    if (isLocked) {
+      showToast({ type: "error", message: "오늘 기록은 이미 저장됐어요." });
+      return;
+    }
     try {
       setSaving(true);
-      await api<AttendanceLog>("/api/attendance/today", {
+      const res = await api<AttendanceLog>("/api/attendance/today", {
         method: "POST",
-        body: JSON.stringify({ didWorkout, memo: memo.trim() || null }),
+        body: JSON.stringify({
+          didWorkout,
+          memo: memo.trim() || null,
+          workoutTypes: didWorkout ? workoutTypes : [],
+          workoutIntensity: didWorkout ? workoutIntensity : null,
+        }),
       });
-      showToast({ type: "success", message: "오늘 기록을 저장했어요." });
+      const exp = res.expEarned ?? 0;
+      showToast({
+        type: "success",
+        message: didWorkout ? "오늘의 기록 완료!" : "휴식도 기록했어요.",
+        expEarned: exp,
+      });
       const [logsRes, summaryRes] = await Promise.all([
         api<AttendanceLog[]>(`/api/attendance?month=${monthKey}`),
         api<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`),
@@ -153,66 +270,106 @@ export default function Attendance() {
     setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
+  const toggleWorkoutType = (id: string) => {
+    if (isLocked || !didWorkout) {
+      return;
+    }
+    setWorkoutTypes((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      }
+      return [...prev, id].slice(0, 3);
+    });
+  };
+
+  const keywordMatches = useMemo(() => {
+    if (!memo.trim()) {
+      return [] as string[];
+    }
+    return MEMO_KEYWORDS.filter((keyword) => memo.includes(keyword));
+  }, [memo]);
+
+  const currentStreak = summary?.currentStreak ?? 0;
+  const bestStreak = summary?.bestStreakInMonth ?? 0;
+  const nextMilestone = STREAK_MILESTONES.find((milestone) => milestone > currentStreak) ?? 30;
+  const streakProgress = Math.min(currentStreak / nextMilestone, 1);
+
+  const projectedStreak = isLocked ? currentStreak : currentStreak + (didWorkout ? 1 : 0);
+  const estimatedExp = useMemo(() => {
+    if (isLocked || !didWorkout) {
+      return 0;
+    }
+    const base = 5;
+    const typeBonus = workoutTypes.length;
+    const intensityBonus = workoutIntensity
+      ? INTENSITIES.find((item) => item.id === workoutIntensity)?.power ?? 0
+      : 0;
+    const memoBonus = memo.trim() ? 1 : 0;
+    const keywordBonus = Math.min(keywordMatches.length, 3);
+    return base + typeBonus + intensityBonus + memoBonus + keywordBonus + streakBonus(projectedStreak);
+  }, [didWorkout, workoutTypes, workoutIntensity, memo, keywordMatches.length, projectedStreak, isLocked]);
+
   const titleLabel = `${month.getFullYear()}년 ${String(month.getMonth() + 1).padStart(2, "0")}월`;
 
   return (
-    <section className="pt-28 pb-20 px-5 md:px-10 bg-gradient-to-br from-slate-900 via-slate-950 to-neutral-900 min-h-screen text-white">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <header className="flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-[0.4em] text-teal-300">Workout Attendance</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold">출석 체크</h1>
-          <p className="text-gray-300">매일의 운동 기록을 달력과 스트릭으로 확인하세요.</p>
+    <section className="attendance-shell">
+      <div className="attendance-bg" />
+      <div className="attendance-wrap">
+        <header className="attendance-hero">
+          <p className="attendance-eyebrow">MuscleUp Attendance Engine</p>
+          <h1>출석 체크</h1>
+          <p>
+            하루의 운동 기록이 캐릭터를 성장시키는 엔진이에요. 버튼이 아닌 행동 기록으로, 즉시 보상을
+            느껴보세요.
+          </p>
         </header>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={goPrevMonth}
-            className="px-4 py-2 rounded-full border border-white/20 text-sm hover:border-teal-300/60 transition"
-          >
-            이전
-          </button>
-          <div className="text-xl font-semibold tracking-tight">{titleLabel}</div>
-          <button
-            onClick={goNextMonth}
-            className="px-4 py-2 rounded-full border border-white/20 text-sm hover:border-teal-300/60 transition"
-          >
-            다음
-          </button>
-        </div>
+        <div className="attendance-grid">
+          <div className="attendance-card calendar-card">
+            <div className="calendar-header">
+              <div>
+                <h2>월간 캘린더</h2>
+                <p>출석은 체크 아이콘으로, 오늘은 가장 선명하게 보여요.</p>
+              </div>
+              <div className="calendar-nav">
+                <button onClick={goPrevMonth} className="ghost-btn">
+                  이전
+                </button>
+                <span>{titleLabel}</span>
+                <button onClick={goNextMonth} className="ghost-btn">
+                  다음
+                </button>
+              </div>
+            </div>
 
-        {loading && <div className="text-gray-300">불러오는 중...</div>}
-        {error && <div className="text-red-400">{error}</div>}
+            {loading && <div className="muted">불러오는 중...</div>}
+            {error && <div className="error-text">{error}</div>}
 
-        <div className="grid lg:grid-cols-[2fr,1fr] gap-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-            <div className="grid grid-cols-7 text-xs text-gray-400 mb-2">
-              {["일", "월", "화", "수", "목", "금", "토"].map((label) => (
-                <div key={label} className="text-center">{label}</div>
+            <div className="calendar-weekdays">
+              {["월", "화", "수", "목", "금", "토", "일"].map((label) => (
+                <span key={label}>{label}</span>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-2">
+
+            <div className="calendar-grid">
               {calendarCells.map((cell, idx) => {
                 if (!cell) {
-                  return <div key={`empty-${idx}`} className="h-20 rounded-lg bg-white/5 border border-white/5" />;
+                  return <div key={`empty-${idx}`} className="calendar-cell empty" />;
                 }
                 const log = logMap.get(cell.key);
                 const did = log?.didWorkout;
-                const memoIcon = log?.memo?.trim() ? "📝" : "";
+                const memoIcon = log?.memo?.trim() ? "✍️" : "";
                 const isToday = cell.key === todayKey;
                 return (
                   <div
                     key={cell.key}
-                    className={`h-20 rounded-lg border p-2 flex flex-col justify-between ${
-                      did
-                        ? "bg-emerald-500/20 border-emerald-400/40"
-                        : log
-                        ? "bg-rose-500/10 border-rose-400/40"
-                        : "bg-white/5 border-white/10"
-                    } ${isToday ? "ring-1 ring-teal-300/60" : ""}`}
+                    className={`calendar-cell ${
+                      did ? "done" : log ? "rest" : ""
+                    } ${isToday ? "today" : ""}`}
                   >
-                    <div className="text-sm font-semibold">{cell.day}</div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{did ? "✓" : ""}</span>
+                    <div className="calendar-day">{cell.day}</div>
+                    <div className="calendar-meta">
+                      <span>{did ? "✅" : log ? "🫧" : ""}</span>
                       <span>{memoIcon}</span>
                     </div>
                   </div>
@@ -221,75 +378,192 @@ export default function Attendance() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
-              <h2 className="text-lg font-semibold">이번 달 요약</h2>
-              <div className="flex items-center justify-between text-sm text-gray-300">
-                <span>운동 횟수</span>
-                <span className="text-white font-semibold">{summary?.monthWorkoutCount ?? 0}회</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-gray-300">
-                <span>현재 스트릭</span>
-                <span className="text-white font-semibold">{summary?.currentStreak ?? 0}일</span>
-              </div>
-              {summary?.bestStreakInMonth !== undefined && (
-                <div className="flex items-center justify-between text-sm text-gray-300">
-                  <span>월 최고 스트릭</span>
-                  <span className="text-white font-semibold">{summary.bestStreakInMonth ?? 0}일</span>
+          <div className="attendance-side">
+            <div className="attendance-card streak-card">
+              <div className="streak-header">
+                <div>
+                  <h3>연속 출석</h3>
+                  <p>{currentStreak ? `🔥 ${currentStreak}일 연속 출석 중!` : "다시 시작할 시간!"}</p>
                 </div>
-              )}
+                <div className={`streak-flame ${currentStreak ? "live" : "off"}`}>
+                  <span className="flame-core" />
+                </div>
+              </div>
+              <div className="streak-progress">
+                <div className="streak-bar">
+                  <div className="streak-fill" style={{ width: `${streakProgress * 100}%` }} />
+                </div>
+                <div className="streak-meta">
+                  <span>다음 보상: {nextMilestone}일</span>
+                  <span>이번 달 최고 {bestStreak}일</span>
+                </div>
+              </div>
+              <div className="streak-tiers">
+                {[7, 14, 30].map((tier) => (
+                  <div key={tier} className={`tier-chip ${currentStreak >= tier ? "active" : ""}`}>
+                    {tier}일 {tier === 7 ? "미세 오라" : tier === 14 ? "포즈 강화" : "특수 이펙트"}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-              <h2 className="text-lg font-semibold">오늘 운동 체크</h2>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setDidWorkout(true)}
-                  className={`px-4 py-2 rounded-full text-sm border transition ${
-                    didWorkout ? "border-emerald-300 bg-emerald-500/20" : "border-white/20"
-                  }`}
-                >
-                  운동함
-                </button>
-                <button
-                  onClick={() => setDidWorkout(false)}
-                  className={`px-4 py-2 rounded-full text-sm border transition ${
-                    !didWorkout ? "border-rose-300 bg-rose-500/20" : "border-white/20"
-                  }`}
-                >
-                  안함
-                </button>
+            <div className="attendance-card summary-card">
+              <h3>이번 달 요약</h3>
+              <div className="summary-row">
+                <span>운동 출석</span>
+                <strong>{summary?.monthWorkoutCount ?? 0}일</strong>
               </div>
-              <textarea
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                maxLength={200}
-                rows={4}
-                placeholder="메모를 남겨주세요 (최대 200자)"
-                className="w-full rounded-xl bg-black/30 border border-white/10 p-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-              />
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>{memo.length}/200</span>
-                <button
-                  onClick={saveToday}
-                  disabled={saving}
-                  className="px-5 py-2 rounded-full bg-teal-500 text-black text-sm font-semibold hover:bg-teal-400 transition disabled:opacity-60"
-                >
-                  {saving ? "저장 중..." : "저장"}
-                </button>
+              <div className="summary-row">
+                <span>현재 스트릭</span>
+                <strong>{currentStreak}일</strong>
+              </div>
+              <div className="summary-row">
+                <span>최고 스트릭</span>
+                <strong>{bestStreak}일</strong>
               </div>
             </div>
+
+            <div className="attendance-card weekly-card">
+              <h3>주간 리포트</h3>
+              <div className="weekly-grid">
+                {weekStats.days.map((day, idx) => (
+                  <div
+                    key={day.key}
+                    className={`weekly-dot ${day.log?.didWorkout ? "active" : ""}`}
+                    style={{ animationDelay: `${idx * 0.05}s` }}
+                  />
+                ))}
+              </div>
+              <div className="weekly-row">
+                <span>이번 주 출석</span>
+                <strong>{weekStats.workoutDays} / 7</strong>
+              </div>
+              <div className="weekly-row">
+                <span>가장 많이 한 운동</span>
+                <strong>
+                  {weekStats.mostType
+                    ? WORKOUT_TYPES.find((item) => item.id === weekStats.mostType)?.label
+                    : "-"}
+                </strong>
+              </div>
+              <div className="weekly-row">
+                <span>평균 강도</span>
+                <strong>
+                  {weekStats.avgIntensity
+                    ? INTENSITIES[Math.round(weekStats.avgIntensity) - 1]?.label
+                    : "-"}
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="attendance-card action-card">
+          <div className="action-header">
+            <div>
+              <h2>오늘의 운동 체크</h2>
+              <p>아이콘만 눌러도 기록이 끝나요. 10초면 충분합니다.</p>
+            </div>
+            <div className={`status-pill ${didWorkout ? "active" : "rest"}`}>
+              {didWorkout ? "운동 완료" : "휴식"}
+            </div>
+          </div>
+
+          <div className="action-row">
+            <div className="toggle-group">
+              <button
+                onClick={() => setDidWorkout(true)}
+                className={`toggle-btn ${didWorkout ? "selected" : ""}`}
+                disabled={isLocked}
+              >
+                💪 운동했다
+              </button>
+              <button
+                onClick={() => setDidWorkout(false)}
+                className={`toggle-btn ${!didWorkout ? "selected" : ""}`}
+                disabled={isLocked}
+              >
+                🌙 쉬었다
+              </button>
+            </div>
+            {isLocked && <span className="lock-badge">오늘 기록 완료</span>}
+          </div>
+
+          <div className={`action-grid ${!didWorkout ? "disabled" : ""}`}>
+            {WORKOUT_TYPES.map((option) => {
+              const active = workoutTypes.includes(option.id);
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => toggleWorkoutType(option.id)}
+                  className={`workout-chip ${active ? "active" : ""}`}
+                  disabled={isLocked || !didWorkout}
+                >
+                  <span className="chip-icon">{option.icon}</span>
+                  <span className="chip-text">
+                    <strong>{option.label}</strong>
+                    <small>{option.hint}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className={`intensity-row ${!didWorkout ? "disabled" : ""}`}>
+            {INTENSITIES.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => setWorkoutIntensity(option.id)}
+                className={`intensity-chip ${workoutIntensity === option.id ? "active" : ""}`}
+                disabled={isLocked || !didWorkout}
+              >
+                <span className="chip-icon">⚡</span>
+                <span>
+                  <strong>{option.label}</strong>
+                  <small>{option.tag}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="memo-block">
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              maxLength={200}
+              rows={3}
+              placeholder="오늘 운동 한 줄 요약"
+              disabled={isLocked}
+            />
+            <div className="memo-meta">
+              <span>{memo.length}/200</span>
+              <span className="keyword-tag">
+                보너스 키워드: {keywordMatches.length ? keywordMatches.join(", ") : "-"}
+              </span>
+            </div>
+          </div>
+
+          <div className="action-footer">
+            <div className="reward-preview">
+              <span>예상 EXP</span>
+              <strong>{didWorkout ? `+${estimatedExp}` : "+0"}</strong>
+              <small>스트릭 보너스 포함</small>
+            </div>
+            <button onClick={saveToday} disabled={saving || isLocked} className="primary-btn">
+              {saving ? "저장 중..." : "출석 기록 저장"}
+            </button>
           </div>
         </div>
       </div>
 
       {toast && (
-        <div
-          className={`fixed top-24 right-6 z-50 rounded-full px-4 py-2 text-sm shadow-lg ${
-            toast.type === "success" ? "bg-emerald-400 text-black" : "bg-rose-500 text-white"
-          }`}
-        >
-          {toast.message}
+        <div className={`toast ${toast.type}`}>
+          <div>
+            <strong>{toast.message}</strong>
+            {toast.type === "success" && (toast.expEarned ?? 0) > 0 && (
+              <span className="toast-exp">EXP +{toast.expEarned}</span>
+            )}
+          </div>
         </div>
       )}
     </section>

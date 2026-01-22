@@ -12,9 +12,12 @@ import com.ajou.muscleup.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,14 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class AttendanceServiceImpl implements AttendanceService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final List<String> ALLOWED_TYPES = List.of("weight", "cardio", "stretch");
+    private static final Set<String> ALLOWED_INTENSITIES = Set.of("light", "normal", "hard");
+    private static final Map<String, Integer> INTENSITY_POINTS = Map.of(
+            "light", 1,
+            "normal", 2,
+            "hard", 3
+    );
+    private static final List<String> MEMO_KEYWORDS = List.of("3대", "갱신", "PR", "데드", "스쿼트");
 
     private final AttendanceLogRepository attendanceLogRepository;
     private final UserRepository userRepository;
@@ -39,9 +50,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         UpsertResult result = upsert(user, today, request);
         List<EventProgressResponse> eventProgress =
                 eventService.updateAttendanceProgress(user, today, result.previousDidWorkout, result.currentDidWorkout);
-        CharacterChangeResponse change =
-                characterGrowthService.applyAttendance(user, result.previousDidWorkout, result.currentDidWorkout);
-        return AttendanceLogResponse.from(result.log, eventProgress, change);
+        CharacterChangeResponse change = characterGrowthService.applyAttendance(user, result.pointsEarned);
+        return AttendanceLogResponse.from(result.log, eventProgress, change, result.pointsEarned);
     }
 
     @Override
@@ -51,9 +61,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         UpsertResult result = upsert(user, date, request);
         List<EventProgressResponse> eventProgress =
                 eventService.updateAttendanceProgress(user, date, result.previousDidWorkout, result.currentDidWorkout);
-        CharacterChangeResponse change =
-                characterGrowthService.applyAttendance(user, result.previousDidWorkout, result.currentDidWorkout);
-        return AttendanceLogResponse.from(result.log, eventProgress, change);
+        CharacterChangeResponse change = characterGrowthService.applyAttendance(user, result.pointsEarned);
+        return AttendanceLogResponse.from(result.log, eventProgress, change, result.pointsEarned);
     }
 
     @Override
@@ -88,17 +97,27 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     private UpsertResult upsert(User user, LocalDate date, AttendanceUpsertRequest request) {
-        AttendanceLog log = attendanceLogRepository.findByUserAndDate(user, date)
-                .orElseGet(() -> AttendanceLog.builder()
-                        .user(user)
-                        .date(date)
-                        .build());
-        boolean previousDidWorkout = log.isDidWorkout();
-        boolean currentDidWorkout = Boolean.TRUE.equals(request.getDidWorkout());
-        log.setDidWorkout(currentDidWorkout);
-        log.setMemo(request.getMemo());
+        AttendanceInput input = normalizeInput(request);
+        AttendanceLog existing = attendanceLogRepository.findByUserAndDate(user, date).orElse(null);
+        if (existing != null) {
+            if (isSame(existing, input, request.getMemo())) {
+                return new UpsertResult(existing, existing.isDidWorkout(), existing.isDidWorkout(), 0);
+            }
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Attendance already recorded for this date.");
+        }
+
+        AttendanceLog log = AttendanceLog.builder()
+                .user(user)
+                .date(date)
+                .didWorkout(input.didWorkout())
+                .memo(normalizeMemo(request.getMemo()))
+                .workoutTypes(input.workoutTypesCsv())
+                .workoutIntensity(input.workoutIntensity())
+                .build();
         AttendanceLog saved = attendanceLogRepository.save(log);
-        return new UpsertResult(saved, previousDidWorkout, currentDidWorkout);
+
+        int pointsEarned = input.didWorkout() ? calculatePointsEarned(user, date, input, request.getMemo()) : 0;
+        return new UpsertResult(saved, false, input.didWorkout(), pointsEarned);
     }
 
     private int calculateCurrentStreak(User user, LocalDate today) {
@@ -146,10 +165,158 @@ public class AttendanceServiceImpl implements AttendanceService {
         return best;
     }
 
+    private AttendanceInput normalizeInput(AttendanceUpsertRequest request) {
+        boolean didWorkout = Boolean.TRUE.equals(request.getDidWorkout());
+        if (!didWorkout) {
+            return new AttendanceInput(false, List.of(), null, null);
+        }
+
+        List<String> normalizedTypes = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        if (request.getWorkoutTypes() != null) {
+            for (String raw : request.getWorkoutTypes()) {
+                if (raw == null || raw.isBlank()) {
+                    continue;
+                }
+                String value = raw.trim().toLowerCase();
+                if (!ALLOWED_TYPES.contains(value)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid workout type: " + raw);
+                }
+                if (seen.add(value)) {
+                    normalizedTypes.add(value);
+                }
+            }
+        }
+        if (normalizedTypes.size() > 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workout type limit exceeded.");
+        }
+
+        String intensity = null;
+        if (request.getWorkoutIntensity() != null && !request.getWorkoutIntensity().isBlank()) {
+            intensity = request.getWorkoutIntensity().trim().toLowerCase();
+            if (!ALLOWED_INTENSITIES.contains(intensity)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid workout intensity.");
+            }
+        }
+
+        return new AttendanceInput(true, normalizedTypes, intensity, joinTypes(normalizedTypes));
+    }
+
+    private boolean isSame(AttendanceLog log, AttendanceInput input, String memo) {
+        String normalizedMemo = normalizeMemo(memo);
+        String existingMemo = normalizeMemo(log.getMemo());
+        String existingTypes = log.getWorkoutTypes() == null ? null : log.getWorkoutTypes();
+        String inputTypes = input.workoutTypesCsv();
+        String existingIntensity = log.getWorkoutIntensity();
+        return log.isDidWorkout() == input.didWorkout()
+                && equalsNullable(existingMemo, normalizedMemo)
+                && equalsNullable(existingTypes, inputTypes)
+                && equalsNullable(existingIntensity, input.workoutIntensity());
+    }
+
+    private String normalizeMemo(String memo) {
+        if (memo == null) {
+            return null;
+        }
+        String trimmed = memo.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean equalsNullable(String a, String b) {
+        if (a == null) {
+            return b == null;
+        }
+        return a.equals(b);
+    }
+
+    private String joinTypes(List<String> types) {
+        if (types == null || types.isEmpty()) {
+            return null;
+        }
+        return String.join(",", types);
+    }
+
+    private int calculatePointsEarned(User user, LocalDate date, AttendanceInput input, String memo) {
+        int points = 0;
+        points += 5;
+        points += input.workoutTypes().size();
+
+        if (input.workoutIntensity() != null) {
+            points += INTENSITY_POINTS.getOrDefault(input.workoutIntensity(), 0);
+        }
+
+        String normalizedMemo = normalizeMemo(memo);
+        if (normalizedMemo != null) {
+            points += 1;
+            points += countKeywordBonus(normalizedMemo);
+        }
+
+        int streak = calculateStreakForDate(user, date);
+        points += streakBonus(streak);
+        return points;
+    }
+
+    private int countKeywordBonus(String memo) {
+        int bonus = 0;
+        for (String keyword : MEMO_KEYWORDS) {
+            if (memo.contains(keyword)) {
+                bonus += 1;
+            }
+        }
+        return Math.min(bonus, 3);
+    }
+
+    private int streakBonus(int streak) {
+        if (streak >= 30) {
+            return 6;
+        }
+        if (streak >= 14) {
+            return 4;
+        }
+        if (streak >= 7) {
+            return 3;
+        }
+        if (streak >= 3) {
+            return 2;
+        }
+        return 0;
+    }
+
+    private int calculateStreakForDate(User user, LocalDate date) {
+        AttendanceLog dateLog = attendanceLogRepository.findByUserAndDate(user, date).orElse(null);
+        if (dateLog != null && !dateLog.isDidWorkout()) {
+            return 0;
+        }
+
+        LocalDate cursor = (dateLog != null) ? date : date.minusDays(1);
+        int streak = 0;
+        while (true) {
+            AttendanceLog log = attendanceLogRepository.findByUserAndDate(user, cursor).orElse(null);
+            if (log == null || !log.isDidWorkout()) {
+                break;
+            }
+            streak += 1;
+            cursor = cursor.minusDays(1);
+        }
+        return streak;
+    }
+
     private User getUserOrThrow(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
     }
 
-    private record UpsertResult(AttendanceLog log, boolean previousDidWorkout, boolean currentDidWorkout) {}
+    private record AttendanceInput(
+            boolean didWorkout,
+            List<String> workoutTypes,
+            String workoutIntensity,
+            String workoutTypesCsv
+    ) {}
+
+    private record UpsertResult(
+            AttendanceLog log,
+            boolean previousDidWorkout,
+            boolean currentDidWorkout,
+            int pointsEarned
+    ) {}
 }
