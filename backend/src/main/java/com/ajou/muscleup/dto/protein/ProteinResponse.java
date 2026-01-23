@@ -13,6 +13,9 @@ import lombok.Setter;
 @Builder
 public class ProteinResponse {
     private Long id;
+    private Long ownerId;
+    private String ownerEmail;
+    private String ownerNickname;
     private String name;
     private Integer price;
     private Integer days;
@@ -33,6 +36,9 @@ public class ProteinResponse {
 
         return ProteinResponse.builder()
                 .id(p.getId())
+                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)
+                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)
+                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)
                 .name(p.getName())
                 .price(p.getPrice())
                 .days(p.getDays())

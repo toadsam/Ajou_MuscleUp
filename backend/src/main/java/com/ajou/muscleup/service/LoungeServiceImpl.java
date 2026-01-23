@@ -29,7 +29,7 @@ public class LoungeServiceImpl implements LoungeService {
     private final LoungeVisitLogRepository loungeVisitLogRepository;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public LoungeProfileResponse getProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
