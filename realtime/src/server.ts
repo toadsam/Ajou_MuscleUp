@@ -17,7 +17,35 @@ const ALLOWED_ORIGINS = ORIGIN.split(",").map((origin) => origin.trim());
 const roomName = getRoomName();
 const mapSize = getMapSize();
 
-const httpServer = createServer();
+const httpServer = createServer((req, res) => {
+  const origin = req.headers.origin ?? "";
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+  }
+
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.url?.startsWith("/status")) {
+    const payload = {
+      room: roomName,
+      activePlayers: listPlayers().length,
+    };
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(payload));
+    return;
+  }
+
+  res.writeHead(404);
+  res.end();
+});
 const io = new Server(httpServer, {
   cors: {
     origin: ALLOWED_ORIGINS,

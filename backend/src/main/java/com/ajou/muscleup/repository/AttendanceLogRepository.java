@@ -13,4 +13,6 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
     List<AttendanceLog> findAllByUserAndDateBetweenOrderByDateAsc(User user, LocalDate start, LocalDate end);
 
     long countByUserAndDidWorkoutTrueAndDateBetween(User user, LocalDate start, LocalDate end);
+
+    long countByDate(LocalDate date);
 }

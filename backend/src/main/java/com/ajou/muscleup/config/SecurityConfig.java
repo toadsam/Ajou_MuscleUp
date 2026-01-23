@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/programs/apply").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/analytics/events").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/ai/share/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/metrics/lobby").permitAll()
 
                 // Protected APIs (allow USER and ADMIN)
                 .requestMatchers("/uploads/**").hasAnyRole("USER", "ADMIN")

@@ -3,8 +3,10 @@ package com.ajou.muscleup.service;
 import com.ajou.muscleup.dto.character.CharacterProfileResponse;
 import com.ajou.muscleup.dto.event.EventProgressResponse;
 import com.ajou.muscleup.dto.lounge.LoungeProfileResponse;
+import com.ajou.muscleup.entity.LoungeVisitLog;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
+import com.ajou.muscleup.repository.LoungeVisitLogRepository;
 import com.ajou.muscleup.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -24,6 +26,7 @@ public class LoungeServiceImpl implements LoungeService {
     private final AttendanceLogRepository attendanceLogRepository;
     private final CharacterService characterService;
     private final EventService eventService;
+    private final LoungeVisitLogRepository loungeVisitLogRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,6 +40,7 @@ public class LoungeServiceImpl implements LoungeService {
                 .countByUserAndDidWorkoutTrueAndDateBetween(user, start, today);
         CharacterProfileResponse character = characterService.getOrCreateProfile(email);
         List<EventProgressResponse> activeEvents = eventService.getActiveProgress(user, today);
+        loungeVisitLogRepository.save(LoungeVisitLog.builder().user(user).build());
 
         return LoungeProfileResponse.builder()
                 .nickname(user.getNickname())

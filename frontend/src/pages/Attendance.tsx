@@ -243,6 +243,7 @@ export default function Attendance() {
           workoutIntensity: didWorkout ? workoutIntensity : null,
         }),
       });
+      localStorage.setItem("attendanceCompletedAt", todayKey);
       const exp = res.expEarned ?? 0;
       showToast({
         type: "success",
