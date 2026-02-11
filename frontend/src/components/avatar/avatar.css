@@ -23,14 +23,14 @@
   animation: tier-pulse 1.8s ease-in-out infinite;
 }
 
-.avatar-tier-bronze { filter: saturate(0.92); }
-.avatar-tier-silver { filter: saturate(1); }
-.avatar-tier-gold { filter: saturate(1.08) brightness(1.02); }
-.avatar-tier-platinum { filter: saturate(1.14) brightness(1.04); }
-.avatar-tier-diamond { filter: saturate(1.2) brightness(1.06); }
-.avatar-tier-master { filter: saturate(1.28) brightness(1.09); }
-.avatar-tier-grandmaster { filter: saturate(1.36) brightness(1.12); }
-.avatar-tier-challenger { filter: saturate(1.45) brightness(1.16); }
+.avatar-tier-bronze { filter: saturate(0.9) contrast(0.98); }
+.avatar-tier-silver { filter: saturate(1.05) contrast(1.02); }
+.avatar-tier-gold { filter: saturate(1.2) brightness(1.06) contrast(1.05); }
+.avatar-tier-platinum { filter: saturate(1.35) brightness(1.1) contrast(1.08); }
+.avatar-tier-diamond { filter: saturate(1.5) brightness(1.16) contrast(1.12); }
+.avatar-tier-master { filter: saturate(1.7) brightness(1.2) contrast(1.16); }
+.avatar-tier-grandmaster { filter: saturate(1.9) brightness(1.24) contrast(1.2); }
+.avatar-tier-challenger { filter: saturate(2.1) brightness(1.3) contrast(1.24); }
 
 .avatar-energy-ring {
   transform-origin: 72px 96px;
@@ -43,6 +43,10 @@
 
 .avatar-particle-burst {
   animation: particle-burst 0.9s ease-out infinite;
+}
+
+.avatar-dumbbell-follower {
+  animation: dumbbell-float 1.4s ease-in-out infinite;
 }
 
 .avatar-master-burst::after {
@@ -136,4 +140,9 @@
 @keyframes high-tier-pop {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(-1px) scale(1.015); }
+}
+
+@keyframes dumbbell-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(6deg); }
 }

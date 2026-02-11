@@ -59,6 +59,10 @@ type CharacterProfile = {
 type CharacterEvaluation = {
   threeLiftTotal: number;
   strengthRatio: number;
+  bmi?: number;
+  skeletalMuscleIndex?: number;
+  heightWeightScore?: number;
+  heightMuscleScore?: number;
   totalScore: number;
   level: number;
   tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "GRANDMASTER" | "CHALLENGER";

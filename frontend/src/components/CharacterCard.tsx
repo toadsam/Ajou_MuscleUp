@@ -16,6 +16,10 @@ type CharacterProfile = {
 type Evaluation = {
   threeLiftTotal: number;
   strengthRatio: number;
+  bmi?: number;
+  skeletalMuscleIndex?: number;
+  heightWeightScore?: number;
+  heightMuscleScore?: number;
   totalScore: number;
   level: number;
   tier: CharacterTier;
@@ -92,6 +96,22 @@ export default function CharacterCard({ character, evaluation, mbti, change }: P
             <div className="text-xs uppercase tracking-wide text-gray-500">Tier</div>
             <div className="text-lg font-semibold text-white">{evaluation.tier}</div>
           </div>
+          {evaluation.bmi !== undefined && (
+            <div className="rounded-2xl bg-black/30 border border-white/10 p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-500">BMI / Height-Weight</div>
+              <div className="text-lg font-semibold text-white">
+                {evaluation.bmi} ({evaluation.heightWeightScore ?? 0}p)
+              </div>
+            </div>
+          )}
+          {evaluation.skeletalMuscleIndex !== undefined && (
+            <div className="rounded-2xl bg-black/30 border border-white/10 p-3">
+              <div className="text-xs uppercase tracking-wide text-gray-500">SMI / Height-Muscle</div>
+              <div className="text-lg font-semibold text-white">
+                {evaluation.skeletalMuscleIndex} ({evaluation.heightMuscleScore ?? 0}p)
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
