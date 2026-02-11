@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import CharacterCard from "../components/CharacterCard";
+import type { GrowthParams } from "../components/avatar/types";
 
 type BragPost = {
   id: number;
@@ -35,6 +36,8 @@ type UserBodyStats = {
   gender: "MALE" | "FEMALE" | null;
   weightKg: number | null;
   skeletalMuscleKg: number | null;
+  bodyFatPercent: number | null;
+  mbti: string | null;
   benchKg: number | null;
   squatKg: number | null;
   deadliftKg: number | null;
@@ -47,6 +50,9 @@ type CharacterProfile = {
   evolutionStage: number;
   title: string;
   isPublic: boolean;
+  avatarSeed: string;
+  stylePreset: string;
+  growthParams?: GrowthParams | null;
   lastEvaluatedAt?: string | null;
 };
 
@@ -120,6 +126,8 @@ const emptyForm = {
   gender: "MALE",
   weightKg: "",
   skeletalMuscleKg: "",
+  bodyFatPercent: "",
+  mbti: "",
   benchKg: "",
   squatKg: "",
   deadliftKg: "",
@@ -166,6 +174,7 @@ export default function MyPage() {
   const [toast, setToast] = useState<Toast | null>(null);
   const [banner, setBanner] = useState<EffectBanner | null>(null);
   const [publicUpdating, setPublicUpdating] = useState(false);
+  const [rerolling, setRerolling] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -193,6 +202,8 @@ export default function MyPage() {
             gender: statsRes.gender ?? "MALE",
             weightKg: statsRes.weightKg?.toString() ?? "",
             skeletalMuscleKg: statsRes.skeletalMuscleKg?.toString() ?? "",
+            bodyFatPercent: statsRes.bodyFatPercent?.toString() ?? "",
+            mbti: statsRes.mbti ?? "",
             benchKg: statsRes.benchKg?.toString() ?? "",
             squatKg: statsRes.squatKg?.toString() ?? "",
             deadliftKg: statsRes.deadliftKg?.toString() ?? "",
@@ -248,6 +259,8 @@ export default function MyPage() {
       gender: form.gender,
       weightKg: parseNumber(form.weightKg),
       skeletalMuscleKg: parseNumber(form.skeletalMuscleKg),
+      bodyFatPercent: parseNumber(form.bodyFatPercent),
+      mbti: form.mbti.trim() ? form.mbti.trim().toUpperCase() : null,
       benchKg: parseNumber(form.benchKg),
       squatKg: parseNumber(form.squatKg),
       deadliftKg: parseNumber(form.deadliftKg),
@@ -255,6 +268,10 @@ export default function MyPage() {
 
     if (payload.weightKg === null || payload.weightKg < 20 || payload.weightKg > 300) {
       showToast({ type: "error", message: "몸무게는 20~300kg 사이로 입력해 주세요." });
+      return;
+    }
+    if (payload.mbti && !/^[EI][NS][TF][JP]$/.test(payload.mbti)) {
+      showToast({ type: "error", message: "MBTI는 예: INTP 형태로 입력해 주세요." });
       return;
     }
 
@@ -299,12 +316,28 @@ export default function MyPage() {
     }
   };
 
+  const rerollAvatar = async () => {
+    try {
+      setRerolling(true);
+      const res = await api<CharacterProfile>("/api/character/reroll", { method: "POST" });
+      setCharacter(res);
+      setChange({ leveledUp: false, evolved: false, tierChanged: true });
+      showToast({ type: "success", message: "외형이 새롭게 생성되었습니다." });
+    } catch (e: any) {
+      showToast({ type: "error", message: e?.message || "리롤에 실패했습니다." });
+    } finally {
+      setRerolling(false);
+    }
+  };
+
   const statInputs = useMemo(
     () => [
       { key: "heightCm", label: "키(cm)", placeholder: "170", step: "1" },
       { key: "gender", label: "성별", placeholder: "", step: "" },
       { key: "weightKg", label: "몸무게(kg)", placeholder: "72.5", step: "0.1" },
       { key: "skeletalMuscleKg", label: "골격근량(kg)", placeholder: "33", step: "0.1" },
+      { key: "bodyFatPercent", label: "체지방률(%)", placeholder: "18.5", step: "0.1" },
+      { key: "mbti", label: "MBTI", placeholder: "INTP", step: "1" },
       { key: "benchKg", label: "벤치(kg)", placeholder: "90", step: "0.5" },
       { key: "squatKg", label: "스쿼트(kg)", placeholder: "120", step: "0.5" },
       { key: "deadliftKg", label: "데드(kg)", placeholder: "140", step: "0.5" },
@@ -361,6 +394,15 @@ export default function MyPage() {
                         여
                       </button>
                     </div>
+                  ) : field.key === "mbti" ? (
+                    <input
+                      type="text"
+                      placeholder={field.placeholder}
+                      value={form[field.key as keyof StatsForm] as string}
+                      onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value.toUpperCase() }))}
+                      className="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                      maxLength={4}
+                    />
                   ) : (
                     <input
                       type="number"
@@ -390,19 +432,28 @@ export default function MyPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">내 캐릭터</h2>
-                <button
-                  onClick={togglePublic}
-                  disabled={publicUpdating}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold border transition ${
-                    character.isPublic
-                      ? "border-emerald-400 text-emerald-200"
-                      : "border-white/30 text-gray-200"
-                  }`}
-                >
-                  {character.isPublic ? "공개 중" : "비공개"}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={rerollAvatar}
+                    disabled={rerolling}
+                    className="px-4 py-2 rounded-full text-xs font-semibold border border-amber-300/60 text-amber-100 hover:bg-amber-400/15 transition disabled:opacity-60"
+                  >
+                    {rerolling ? "리롤 중..." : "다시 만들기"}
+                  </button>
+                  <button
+                    onClick={togglePublic}
+                    disabled={publicUpdating}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold border transition ${
+                      character.isPublic
+                        ? "border-emerald-400 text-emerald-200"
+                        : "border-white/30 text-gray-200"
+                    }`}
+                  >
+                    {character.isPublic ? "공개 중" : "비공개"}
+                  </button>
+                </div>
               </div>
-              <CharacterCard character={character} evaluation={evaluation} gender={stats?.gender ?? "MALE"} change={change} />
+              <CharacterCard character={character} evaluation={evaluation} mbti={stats?.mbti} change={change} />
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 grid md:grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Tier Info</div>

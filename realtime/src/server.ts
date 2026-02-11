@@ -83,6 +83,10 @@ const isValidJoinPayload = (payload: any): payload is JoinPayload => {
   if (!Number.isFinite(payload.evolutionStage) || payload.evolutionStage < 0) return false;
   if (!isValidTier(payload.tier)) return false;
   if (payload.gender && !isValidGender(payload.gender)) return false;
+  if (payload.avatarSeed !== undefined && typeof payload.avatarSeed !== "string") return false;
+  if (payload.stylePreset !== undefined && typeof payload.stylePreset !== "string") return false;
+  if (payload.mbti !== undefined && typeof payload.mbti !== "string") return false;
+  if (payload.growthParams !== undefined && typeof payload.growthParams !== "object") return false;
   if (
     payload.recentAttendanceCount !== undefined &&
     (!Number.isFinite(payload.recentAttendanceCount) || payload.recentAttendanceCount < 0)

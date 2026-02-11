@@ -39,4 +39,9 @@ public class CharacterController {
     ) {
         return ResponseEntity.ok(characterService.updatePublic(email, request));
     }
+
+    @PostMapping("/reroll")
+    public ResponseEntity<CharacterProfileResponse> reroll(@AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(characterService.reroll(email));
+    }
 }

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import com.ajou.muscleup.entity.Gender;
 import lombok.Getter;
 
@@ -24,6 +25,13 @@ public class UserBodyStatsRequest {
     @DecimalMin(value = "0.0")
     @DecimalMax(value = "150.0")
     private Double skeletalMuscleKg;
+
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "70.0")
+    private Double bodyFatPercent;
+
+    @Pattern(regexp = "^[EI][NS][TF][JP]$", message = "MBTI must be a valid 4-letter type")
+    private String mbti;
 
     @DecimalMin(value = "0.0")
     @DecimalMax(value = "500.0")

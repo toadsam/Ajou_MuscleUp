@@ -1,23 +1,15 @@
-import CharacterAvatar from "./CharacterAvatar";
-
-type CharacterTier =
-  | "BRONZE"
-  | "SILVER"
-  | "GOLD"
-  | "PLATINUM"
-  | "DIAMOND"
-  | "MASTER"
-  | "GRANDMASTER"
-  | "CHALLENGER";
-
-type Gender = "MALE" | "FEMALE";
+import AvatarRenderer from "./avatar/AvatarRenderer";
+import type { CharacterTier, GrowthParams } from "./avatar/types";
+import { defaultGrowthParams } from "./avatar/types";
 
 type PlayerAvatarProps = {
   nickname: string;
   level: number;
   tier: CharacterTier;
   evolutionStage: number;
-  gender?: Gender | null;
+  avatarSeed?: string;
+  growthParams?: GrowthParams;
+  mbti?: string;
   facing?: "left" | "right";
   isMe?: boolean;
 };
@@ -33,12 +25,20 @@ const tierStyles: Record<CharacterTier, { badge: string }> = {
   CHALLENGER: { badge: "bg-rose-300 text-black" },
 };
 
+const fallbackSeed = (nickname: string) => {
+  let h = 0;
+  for (let i = 0; i < nickname.length; i += 1) h = (h * 31 + nickname.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, "0").repeat(4).slice(0, 32);
+};
+
 export default function PlayerAvatar({
   nickname,
   level,
   tier,
   evolutionStage,
-  gender,
+  avatarSeed,
+  growthParams,
+  mbti,
   facing = "right",
   isMe = false,
 }: PlayerAvatarProps) {
@@ -50,11 +50,12 @@ export default function PlayerAvatar({
         className={isMe ? "drop-shadow-[0_0_14px_rgba(16,185,129,0.7)]" : ""}
         style={{ transform: facing === "left" ? "scaleX(-1)" : "scaleX(1)" }}
       >
-        <CharacterAvatar
+        <AvatarRenderer
+          avatarSeed={avatarSeed ?? fallbackSeed(nickname)}
+          growthParams={growthParams ?? defaultGrowthParams}
           tier={tier}
           stage={evolutionStage}
-          level={level}
-          gender={gender ?? undefined}
+          mbti={mbti}
           size={76}
         />
       </div>

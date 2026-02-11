@@ -1,0 +1,139 @@
+.avatar-shell-v2 {
+  position: relative;
+  transform-origin: center;
+}
+
+.avatar-motion-energetic {
+  animation: avatar-energetic 1.8s ease-in-out infinite;
+}
+
+.avatar-motion-calm {
+  animation: avatar-calm 3.2s ease-in-out infinite;
+}
+
+.avatar-aura-ring {
+  animation: aura-expand 2.3s ease-in-out infinite;
+}
+
+.avatar-light-wave {
+  animation: light-wave 1.6s ease-in-out infinite;
+}
+
+.avatar-tier-pulse {
+  animation: tier-pulse 1.8s ease-in-out infinite;
+}
+
+.avatar-tier-bronze { filter: saturate(0.92); }
+.avatar-tier-silver { filter: saturate(1); }
+.avatar-tier-gold { filter: saturate(1.08) brightness(1.02); }
+.avatar-tier-platinum { filter: saturate(1.14) brightness(1.04); }
+.avatar-tier-diamond { filter: saturate(1.2) brightness(1.06); }
+.avatar-tier-master { filter: saturate(1.28) brightness(1.09); }
+.avatar-tier-grandmaster { filter: saturate(1.36) brightness(1.12); }
+.avatar-tier-challenger { filter: saturate(1.45) brightness(1.16); }
+
+.avatar-energy-ring {
+  transform-origin: 72px 96px;
+  animation: energy-rotate 2.2s linear infinite;
+}
+
+.avatar-particle {
+  animation: particle-float 2.1s ease-in-out infinite;
+}
+
+.avatar-particle-burst {
+  animation: particle-burst 0.9s ease-out infinite;
+}
+
+.avatar-master-burst::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 62%);
+  animation: master-wave 1.5s ease-out infinite;
+  pointer-events: none;
+}
+
+.avatar-tier-master,
+.avatar-tier-grandmaster,
+.avatar-tier-challenger {
+  animation: high-tier-pop 1.2s ease-in-out infinite;
+}
+
+.tierup-pop-scale {
+  animation: tier-up-scale 0.9s cubic-bezier(0.15, 0.85, 0.26, 1);
+}
+
+.tierup-master-screen-burst::before {
+  content: "";
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(circle, rgba(255, 244, 196, 0.24) 0%, rgba(255, 244, 196, 0) 68%);
+  pointer-events: none;
+  animation: master-screen-burst 0.9s ease-out;
+}
+
+@keyframes avatar-energetic {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.01); }
+}
+
+@keyframes avatar-calm {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes aura-expand {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes light-wave {
+  0% { transform: scale(0.95); opacity: 0.05; }
+  60% { transform: scale(1.05); opacity: 0.3; }
+  100% { transform: scale(1.1); opacity: 0; }
+}
+
+@keyframes tier-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.86; }
+}
+
+@keyframes energy-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes particle-float {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
+
+@keyframes particle-burst {
+  0% { transform: scale(0.7); opacity: 0; }
+  40% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes master-wave {
+  0% { transform: scale(0.92); opacity: 0.65; }
+  100% { transform: scale(1.14); opacity: 0; }
+}
+
+@keyframes tier-up-scale {
+  0% { transform: scale(1); }
+  24% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes master-screen-burst {
+  0% { transform: scale(0.85); opacity: 0; }
+  30% { transform: scale(1.04); opacity: 0.55; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
+@keyframes high-tier-pop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(1.015); }
+}

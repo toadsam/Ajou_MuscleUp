@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import CharacterAvatar from "../components/CharacterAvatar";
+import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import type { GrowthParams } from "../components/avatar/types";
 import "../styles/homeLobby.css";
 import { logEvent } from "../utils/analytics";
 
@@ -33,10 +34,14 @@ type CharacterProfile = {
   tier: CharacterTier;
   evolutionStage: number;
   title?: string;
+  avatarSeed: string;
+  stylePreset: string;
+  growthParams?: GrowthParams | null;
 };
 
 type StatsResponse = {
   gender?: "MALE" | "FEMALE";
+  mbti?: string | null;
 };
 
 type LocalUser = {
@@ -119,7 +124,7 @@ export default function Home() {
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [character, setCharacter] = useState<CharacterProfile | null>(null);
-  const [gender, setGender] = useState<"MALE" | "FEMALE">("MALE");
+  const [mbti, setMbti] = useState<string | null>(null);
   const [loungeCount, setLoungeCount] = useState<number | null>(null);
   const [metrics, setMetrics] = useState<LobbyMetrics | null>(null);
   const [loading, setLoading] = useState(false);
@@ -153,9 +158,7 @@ export default function Home() {
       if (logsRes) setLogs(logsRes);
       if (summaryRes) setSummary(summaryRes);
       if (characterRes) setCharacter(characterRes);
-      if (statsRes?.gender === "MALE" || statsRes?.gender === "FEMALE") {
-        setGender(statsRes.gender);
-      }
+      setMbti(statsRes?.mbti ?? null);
     } catch (err: any) {
       setError(err?.message ?? "로비 정보를 불러오지 못했어요.");
     } finally {
@@ -394,11 +397,12 @@ export default function Home() {
             <div className="character-stage">
               {character ? (
                 <div className={`avatar-shell ${showReaction ? "reacted" : ""}`}>
-                  <CharacterAvatar
-                    gender={gender}
+                  <AvatarRenderer
+                    avatarSeed={character.avatarSeed}
+                    growthParams={character.growthParams}
                     tier={character.tier}
                     stage={character.evolutionStage}
-                    level={character.level}
+                    mbti={mbti}
                     size={180}
                   />
                 </div>

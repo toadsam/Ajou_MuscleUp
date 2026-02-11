@@ -10,6 +10,28 @@ export type CharacterTier =
 
 export type Gender = "MALE" | "FEMALE";
 
+export type GrowthParams = {
+  bmiNormalized: number;
+  muscularityNormalized: number;
+  fatNormalized: number;
+  armGrowth: number;
+  legGrowth: number;
+  torsoGrowth: number;
+  armScale: number;
+  legScale: number;
+  torsoScaleX: number;
+  chestGrowth: number;
+  backGrowth: number;
+  shoulderGrowth: number;
+  quadGrowth: number;
+  hamstringGrowth: number;
+  gluteGrowth: number;
+  strokeWidth: number;
+  muscleDetailOpacity: number;
+  fatShadowOpacity: number;
+  contrastBoost: number;
+};
+
 export type PlayerState = {
   socketId: string;
   userId?: string;
@@ -18,6 +40,10 @@ export type PlayerState = {
   tier: CharacterTier;
   evolutionStage: number;
   gender?: Gender;
+  avatarSeed?: string;
+  stylePreset?: string;
+  mbti?: string;
+  growthParams?: GrowthParams;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
   activeEventProgress?: string;
@@ -33,6 +59,10 @@ export type JoinPayload = {
   tier: CharacterTier;
   evolutionStage: number;
   gender?: Gender;
+  avatarSeed?: string;
+  stylePreset?: string;
+  mbti?: string;
+  growthParams?: GrowthParams;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
   activeEventProgress?: string;

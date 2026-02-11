@@ -25,7 +25,7 @@ public class CharacterGrowthService {
             return null;
         }
         CharacterProfile profile = profileRepository.findByUser(user)
-                .orElseGet(() -> profileRepository.save(CharacterServiceImpl.defaultProfileStatic(user)));
+                .orElseGet(() -> profileRepository.save(CharacterServiceImpl.defaultProfileStatic(user, null)));
         int points = Math.max(0, profile.getAttendancePoints() + pointsEarned);
         profile.setAttendancePoints(points);
         profileRepository.save(profile);
@@ -42,7 +42,7 @@ public class CharacterGrowthService {
     @Transactional
     public CharacterChangeResponse applyEventSuccess(User user, Event event) {
         CharacterProfile profile = profileRepository.findByUser(user)
-                .orElseGet(() -> profileRepository.save(CharacterServiceImpl.defaultProfileStatic(user)));
+                .orElseGet(() -> profileRepository.save(CharacterServiceImpl.defaultProfileStatic(user, null)));
         profile.setAttendancePoints(profile.getAttendancePoints() + 10);
         profileRepository.save(profile);
 

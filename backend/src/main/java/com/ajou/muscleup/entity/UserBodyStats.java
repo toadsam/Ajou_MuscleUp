@@ -35,6 +35,12 @@ public class UserBodyStats extends BaseTimeEntity {
     @Column(name = "skeletal_muscle_kg")
     private Double skeletalMuscleKg;
 
+    @Column(name = "body_fat_percent")
+    private Double bodyFatPercent;
+
+    @Column(length = 4)
+    private String mbti;
+
     @Column(name = "bench_kg")
     private Double benchKg;
 

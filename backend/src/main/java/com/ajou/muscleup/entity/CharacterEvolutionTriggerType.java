@@ -4,5 +4,6 @@ public enum CharacterEvolutionTriggerType {
     STATS_UPDATED,
     MANUAL_EVALUATE,
     ATTENDANCE,
-    EVENT_SUCCESS
+    EVENT_SUCCESS,
+    REROLL
 }

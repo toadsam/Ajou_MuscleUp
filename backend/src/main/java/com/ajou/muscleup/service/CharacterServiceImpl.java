@@ -5,6 +5,7 @@ import com.ajou.muscleup.dto.character.CharacterEvaluationResponse;
 import com.ajou.muscleup.dto.character.CharacterProfileResponse;
 import com.ajou.muscleup.dto.character.CharacterPublicUpdateRequest;
 import com.ajou.muscleup.dto.character.CharacterSnapshotResponse;
+import com.ajou.muscleup.dto.character.GrowthParamsResponse;
 import com.ajou.muscleup.dto.character.StatsCharacterResponse;
 import com.ajou.muscleup.dto.character.UserBodyStatsResponse;
 import com.ajou.muscleup.entity.CharacterEvolutionHistory;
@@ -18,8 +19,11 @@ import com.ajou.muscleup.repository.CharacterEvolutionHistoryRepository;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.UserBodyStatsRepository;
 import com.ajou.muscleup.repository.UserRepository;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,19 +34,24 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class CharacterServiceImpl implements CharacterService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final List<String> STYLE_PRESETS = List.of("POWER", "AGILE", "BALANCED", "CALM");
 
     private final UserRepository userRepository;
     private final UserBodyStatsRepository statsRepository;
     private final CharacterProfileRepository profileRepository;
     private final CharacterEvolutionHistoryRepository historyRepository;
+    private final CharacterGrowthCalculator growthCalculator;
 
     @Override
     @Transactional
     public CharacterProfileResponse getOrCreateProfile(String email) {
         User user = getUserOrThrow(email);
+        UserBodyStats stats = statsRepository.findByUser(user).orElse(null);
         CharacterProfile profile = profileRepository.findByUser(user)
-                .orElseGet(() -> profileRepository.save(defaultProfile(user)));
-        return CharacterProfileResponse.from(profile);
+                .orElseGet(() -> profileRepository.save(defaultProfile(user, stats)));
+        ensureIdentity(profile, stats);
+        return toProfileResponse(profile, stats);
     }
 
     @Override
@@ -59,16 +68,51 @@ public class CharacterServiceImpl implements CharacterService {
     @Transactional
     public CharacterProfileResponse updatePublic(String email, CharacterPublicUpdateRequest request) {
         User user = getUserOrThrow(email);
+        UserBodyStats stats = statsRepository.findByUser(user).orElse(null);
         CharacterProfile profile = profileRepository.findByUser(user)
-                .orElseGet(() -> profileRepository.save(defaultProfile(user)));
+                .orElseGet(() -> profileRepository.save(defaultProfile(user, stats)));
+        ensureIdentity(profile, stats);
         profile.setPublic(Boolean.TRUE.equals(request.getIsPublic()));
-        return CharacterProfileResponse.from(profileRepository.save(profile));
+        CharacterProfile saved = profileRepository.save(profile);
+        return toProfileResponse(saved, stats);
+    }
+
+    @Override
+    @Transactional
+    public CharacterProfileResponse reroll(String email) {
+        User user = getUserOrThrow(email);
+        UserBodyStats stats = statsRepository.findByUser(user).orElse(null);
+        CharacterProfile profile = profileRepository.findByUser(user)
+                .orElseGet(() -> profileRepository.save(defaultProfile(user, stats)));
+        ensureIdentity(profile, stats);
+
+        CharacterSnapshotResponse beforeSnapshot = CharacterSnapshotResponse.from(profile);
+
+        profile.setAvatarSeed(generateAvatarSeed());
+        profile.setStylePreset(pickStylePreset(stats == null ? null : stats.getMbti()));
+        profile.setRerollCount(profile.getRerollCount() + 1);
+        CharacterProfile saved = profileRepository.save(profile);
+
+        CharacterSnapshotResponse afterSnapshot = CharacterSnapshotResponse.from(saved);
+        historyRepository.save(CharacterEvolutionHistory.builder()
+                .user(user)
+                .triggerType(CharacterEvolutionTriggerType.REROLL)
+                .beforeLevel(beforeSnapshot.getLevel())
+                .afterLevel(afterSnapshot.getLevel())
+                .beforeTier(beforeSnapshot.getTier())
+                .afterTier(afterSnapshot.getTier())
+                .beforeStage(beforeSnapshot.getEvolutionStage())
+                .afterStage(afterSnapshot.getEvolutionStage())
+                .build());
+
+        return toProfileResponse(saved, stats);
     }
 
     @Transactional
     public StatsCharacterResponse evaluateAndUpdate(User user, UserBodyStats stats, CharacterEvolutionTriggerType triggerType) {
         CharacterProfile profile = profileRepository.findByUser(user)
-                .orElseGet(() -> profileRepository.save(defaultProfile(user)));
+                .orElseGet(() -> profileRepository.save(defaultProfile(user, stats)));
+        ensureIdentity(profile, stats);
         CharacterSnapshotResponse beforeSnapshot = CharacterSnapshotResponse.from(profile);
 
         double attendanceBonus = calculateAttendanceBonus(profile.getAttendancePoints());
@@ -104,10 +148,30 @@ public class CharacterServiceImpl implements CharacterService {
 
         return StatsCharacterResponse.builder()
                 .stats(UserBodyStatsResponse.from(stats))
-                .character(CharacterProfileResponse.from(saved))
+                .character(toProfileResponse(saved, stats))
                 .evaluation(evaluation)
                 .change(change)
                 .build();
+    }
+
+    private CharacterProfileResponse toProfileResponse(CharacterProfile profile, UserBodyStats stats) {
+        GrowthParamsResponse growthParams = growthCalculator.calculate(stats);
+        return CharacterProfileResponse.from(profile, growthParams);
+    }
+
+    private void ensureIdentity(CharacterProfile profile, UserBodyStats stats) {
+        boolean dirty = false;
+        if (profile.getAvatarSeed() == null || profile.getAvatarSeed().isBlank()) {
+            profile.setAvatarSeed(generateAvatarSeed());
+            dirty = true;
+        }
+        if (profile.getStylePreset() == null || profile.getStylePreset().isBlank()) {
+            profile.setStylePreset(pickStylePreset(stats == null ? null : stats.getMbti()));
+            dirty = true;
+        }
+        if (dirty) {
+            profileRepository.save(profile);
+        }
     }
 
     private CharacterEvaluationResponse evaluateStats(UserBodyStats stats, double attendanceBonus) {
@@ -203,16 +267,16 @@ public class CharacterServiceImpl implements CharacterService {
 
     private String resolveTitle(int stage) {
         return switch (stage) {
-            case 1 -> "\uB8E8\uD2F4 \uC785\uBB38\uC790";
-            case 2 -> "\uC911\uAE09 \uD2B8\uB808\uC774\uB108";
-            case 3 -> "\uC0C1\uAE09 \uD30C\uC6CC\uB7EC";
-            case 4 -> "\uD30C\uC6CC \uAC00\uC18D\uC790";
-            case 5 -> "\uD53C\uD2B8\uB2C8\uC2A4 \uAC15\uC790";
-            case 6 -> "\uC5D0\uC9C0 \uB9C8\uC2A4\uD130";
-            case 7 -> "\uC5D0\uD3EC\uC2A4 \uC5D0\uC2DC\uC5B8\uD2B8";
-            case 8 -> "\uB808\uC804\uB4DC \uD30C\uC6CC\uB7EC";
-            case 9 -> "\uC5B4\uC758\uB108";
-            default -> "\uCD08\uBCF4 \uD5EC\uB9B0\uC774";
+            case 1 -> "루틴 입문자";
+            case 2 -> "중급 트레이너";
+            case 3 -> "상급 파워러";
+            case 4 -> "파워 가속자";
+            case 5 -> "피트니스 강자";
+            case 6 -> "에지 마스터";
+            case 7 -> "에포스 에시언트";
+            case 8 -> "레전드 파워러";
+            case 9 -> "어의너";
+            default -> "초보 헬린이";
         };
     }
 
@@ -228,19 +292,22 @@ public class CharacterServiceImpl implements CharacterService {
         return Math.round(value * 100.0) / 100.0;
     }
 
-    private CharacterProfile defaultProfile(User user) {
-        return defaultProfileStatic(user);
+    private CharacterProfile defaultProfile(User user, UserBodyStats stats) {
+        return defaultProfileStatic(user, stats == null ? null : stats.getMbti());
     }
 
-    static CharacterProfile defaultProfileStatic(User user) {
+    static CharacterProfile defaultProfileStatic(User user, String mbti) {
         return CharacterProfile.builder()
                 .user(user)
                 .level(1)
                 .tier(CharacterTier.BRONZE)
                 .evolutionStage(0)
-                .title("\uCD08\uBCF4 \uD5EC\uB9B0\uC774")
+                .title("초보 헬린이")
                 .isPublic(false)
                 .attendancePoints(0)
+                .avatarSeed(generateAvatarSeed())
+                .stylePreset(pickStylePreset(mbti))
+                .rerollCount(0)
                 .build();
     }
 
@@ -252,6 +319,34 @@ public class CharacterServiceImpl implements CharacterService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
     }
+
+    private static String generateAvatarSeed() {
+        byte[] bytes = new byte[16];
+        RANDOM.nextBytes(bytes);
+        StringBuilder builder = new StringBuilder(32);
+        for (byte value : bytes) {
+            builder.append(String.format("%02x", value));
+        }
+        return builder.toString();
+    }
+
+    private static String pickStylePreset(String mbti) {
+        String normalizedMbti = mbti == null ? "" : mbti.trim().toUpperCase(Locale.ROOT);
+        double roll = RANDOM.nextDouble();
+
+        if (normalizedMbti.startsWith("E")) {
+            if (roll < 0.45) return "POWER";
+            if (roll < 0.75) return "AGILE";
+            if (roll < 0.9) return "BALANCED";
+            return "CALM";
+        }
+        if (normalizedMbti.startsWith("I")) {
+            if (roll < 0.4) return "CALM";
+            if (roll < 0.7) return "BALANCED";
+            if (roll < 0.88) return "AGILE";
+            return "POWER";
+        }
+
+        return STYLE_PRESETS.get((int) (roll * STYLE_PRESETS.size()));
+    }
 }
-
-

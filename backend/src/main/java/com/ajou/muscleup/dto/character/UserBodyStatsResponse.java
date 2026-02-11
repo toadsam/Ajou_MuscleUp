@@ -13,6 +13,8 @@ public class UserBodyStatsResponse {
     private Gender gender;
     private Double weightKg;
     private Double skeletalMuscleKg;
+    private Double bodyFatPercent;
+    private String mbti;
     private Double benchKg;
     private Double squatKg;
     private Double deadliftKg;
@@ -24,6 +26,8 @@ public class UserBodyStatsResponse {
                 .gender(stats.getGender())
                 .weightKg(stats.getWeightKg())
                 .skeletalMuscleKg(stats.getSkeletalMuscleKg())
+                .bodyFatPercent(stats.getBodyFatPercent())
+                .mbti(stats.getMbti())
                 .benchKg(stats.getBenchKg())
                 .squatKg(stats.getSquatKg())
                 .deadliftKg(stats.getDeadliftKg())

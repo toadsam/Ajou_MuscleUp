@@ -9,6 +9,7 @@ import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.UserBodyStats;
 import com.ajou.muscleup.repository.UserBodyStatsRepository;
 import com.ajou.muscleup.repository.UserRepository;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ public class StatsServiceImpl implements StatsService {
                         .gender(null)
                         .weightKg(null)
                         .skeletalMuscleKg(null)
+                        .bodyFatPercent(null)
+                        .mbti(null)
                         .benchKg(null)
                         .squatKg(null)
                         .deadliftKg(null)
@@ -55,6 +58,8 @@ public class StatsServiceImpl implements StatsService {
         stats.setGender(request.getGender() != null ? request.getGender() : Gender.MALE);
         stats.setWeightKg(request.getWeightKg());
         stats.setSkeletalMuscleKg(request.getSkeletalMuscleKg());
+        stats.setBodyFatPercent(request.getBodyFatPercent());
+        stats.setMbti(request.getMbti() == null ? null : request.getMbti().toUpperCase(Locale.ROOT));
         stats.setBenchKg(request.getBenchKg());
         stats.setSquatKg(request.getSquatKg());
         stats.setDeadliftKg(request.getDeadliftKg());

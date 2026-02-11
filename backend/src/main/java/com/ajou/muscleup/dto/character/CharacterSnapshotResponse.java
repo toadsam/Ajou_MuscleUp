@@ -12,6 +12,8 @@ public class CharacterSnapshotResponse {
     private CharacterTier tier;
     private int evolutionStage;
     private String title;
+    private String avatarSeed;
+    private String stylePreset;
 
     public static CharacterSnapshotResponse from(CharacterProfile profile) {
         return CharacterSnapshotResponse.builder()
@@ -19,6 +21,8 @@ public class CharacterSnapshotResponse {
                 .tier(profile.getTier())
                 .evolutionStage(profile.getEvolutionStage())
                 .title(profile.getTitle())
+                .avatarSeed(profile.getAvatarSeed())
+                .stylePreset(profile.getStylePreset())
                 .build();
     }
 }

@@ -1,23 +1,24 @@
-﻿import CharacterAvatar from "./CharacterAvatar";
-
-type Tier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "GRANDMASTER" | "CHALLENGER";
+import AvatarRenderer from "./avatar/AvatarRenderer";
+import TierUpAnimation from "./avatar/TierUpAnimation";
+import type { CharacterTier, GrowthParams } from "./avatar/types";
 
 type CharacterProfile = {
   level: number;
-  tier: Tier;
+  tier: CharacterTier;
   evolutionStage: number;
   title: string;
   isPublic: boolean;
+  avatarSeed: string;
+  stylePreset: string;
+  growthParams?: GrowthParams | null;
 };
-
-type Gender = "MALE" | "FEMALE";
 
 type Evaluation = {
   threeLiftTotal: number;
   strengthRatio: number;
   totalScore: number;
   level: number;
-  tier: Tier;
+  tier: CharacterTier;
   evolutionStage: number;
   title: string;
 };
@@ -31,24 +32,34 @@ type ChangeState = {
 type Props = {
   character: CharacterProfile;
   evaluation: Evaluation | null;
-  gender?: Gender | null;
+  mbti?: string | null;
   change?: ChangeState | null;
 };
 
-export default function CharacterCard({ character, evaluation, gender, change }: Props) {
+export default function CharacterCard({ character, evaluation, mbti, change }: Props) {
   const glowClass = change?.evolved ? "card-evolution" : change?.leveledUp ? "card-levelup" : "";
   const tierBadgeClass = change?.tierChanged ? "badge-bounce" : "";
 
   return (
     <div className={`rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5 ${glowClass}`}>
       <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-        <CharacterAvatar tier={character.tier} stage={character.evolutionStage} level={character.level} gender={gender} size={150} />
+        <TierUpAnimation active={Boolean(change?.tierChanged)} tier={character.tier}>
+          <AvatarRenderer
+            avatarSeed={character.avatarSeed}
+            growthParams={character.growthParams}
+            tier={character.tier}
+            stage={character.evolutionStage}
+            mbti={mbti}
+            size={156}
+          />
+        </TierUpAnimation>
         <div className="flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-white/10 ${tierBadgeClass}`}>
               {character.tier}
             </span>
             <span className="text-sm text-gray-300">Stage {character.evolutionStage}</span>
+            <span className="text-xs text-gray-400">Style {character.stylePreset}</span>
           </div>
           <h3 className="text-2xl font-bold">{character.title}</h3>
           <p className="text-gray-300">Level {character.level}</p>
@@ -86,4 +97,3 @@ export default function CharacterCard({ character, evaluation, gender, change }:
     </div>
   );
 }
-

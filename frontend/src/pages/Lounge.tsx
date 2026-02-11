@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import PlayerAvatar from "../components/PlayerAvatar";
-import CharacterAvatar from "../components/CharacterAvatar";
+import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import type { GrowthParams } from "../components/avatar/types";
+import { defaultGrowthParams } from "../components/avatar/types";
 
 type CharacterTier =
   | "BRONZE"
@@ -19,6 +21,9 @@ type CharacterResponse = {
   level: number;
   tier: CharacterTier;
   evolutionStage: number;
+  avatarSeed: string;
+  stylePreset: string;
+  growthParams?: GrowthParams | null;
 };
 
 type PlayerState = {
@@ -29,6 +34,10 @@ type PlayerState = {
   tier: CharacterTier;
   evolutionStage: number;
   gender?: Gender;
+  avatarSeed?: string;
+  stylePreset?: string;
+  mbti?: string;
+  growthParams?: GrowthParams;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
   activeEventProgress?: string;
@@ -69,7 +78,6 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const REALTIME_URL = import.meta.env.VITE_REALTIME_URL ?? "http://localhost:4001";
 
 const DEFAULT_MAP = { width: 2000, height: 1200 };
-const MOVE_SPEED = 320;
 const MOVE_EMIT_MS = 80;
 const RENDER_FPS = 60;
 const SPEECH_TTL_MS = 6000;
@@ -95,6 +103,7 @@ export default function Lounge() {
   const [mySocketId, setMySocketId] = useState<string | null>(null);
   const [localPosition, setLocalPosition] = useState<{ x: number; y: number } | null>(null);
   const [gender, setGender] = useState<Gender | null>(null);
+  const [mbti, setMbti] = useState<string | null>(null);
   const [viewportSize, setViewportSize] = useState({ width: 1, height: 1 });
   const [speechMap, setSpeechMap] = useState<Record<string, { message: string; ts: number }>>({});
   const [movingMap, setMovingMap] = useState<Record<string, boolean>>({});
@@ -187,6 +196,7 @@ export default function Lounge() {
           if (nextGender === "MALE" || nextGender === "FEMALE") {
             setGender(nextGender);
           }
+          setMbti(statsPayload?.mbti ?? null);
         }
       } catch (err: any) {
         setError(err?.message ?? "캐릭터 정보를 불러오지 못했습니다.");
@@ -213,6 +223,10 @@ export default function Lounge() {
         tier: character.tier,
         evolutionStage: character.evolutionStage,
         gender: gender ?? undefined,
+        avatarSeed: character.avatarSeed,
+        stylePreset: character.stylePreset,
+        growthParams: character.growthParams ?? undefined,
+        mbti: mbti ?? undefined,
         recentAttendanceCount,
         activeEventTitle: activeEventSummary?.title,
         activeEventProgress: activeEventSummary?.progress,
@@ -330,7 +344,7 @@ export default function Lounge() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [user, character, gender, recentAttendanceCount, activeEventSummary]);
+  }, [user, character, gender, mbti, recentAttendanceCount, activeEventSummary]);
 
   useEffect(() => {
     const handleKey = (down: boolean) => (event: KeyboardEvent) => {
@@ -584,12 +598,6 @@ export default function Lounge() {
     setChatInput("");
     setTypingState(false);
   };
-
-  const mapStyle = useMemo(() => {
-    const toPercent = (value: number, max: number) =>
-      `${(value / max) * 100}%`;
-    return { toPercent };
-  }, []);
 
   const mapBackground = useMemo(
     () => ({
@@ -913,7 +921,9 @@ export default function Lounge() {
                             level={player.level}
                             tier={player.tier}
                             evolutionStage={player.evolutionStage}
-                            gender={player.gender}
+                            avatarSeed={player.avatarSeed}
+                            growthParams={player.growthParams}
+                            mbti={player.mbti}
                             facing={facingMap[player.socketId] ?? "right"}
                             isMe={isMe}
                           />
@@ -1051,11 +1061,12 @@ export default function Lounge() {
               {selectedPlayer ? (
                 <div className="space-y-3 text-sm text-gray-300">
                   <div className="flex items-center gap-3">
-                    <CharacterAvatar
-                      gender={selectedPlayer.gender ?? "MALE"}
+                    <AvatarRenderer
+                      avatarSeed={selectedPlayer.avatarSeed ?? `${selectedPlayer.nickname}-seed`}
+                      growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
                       tier={selectedPlayer.tier}
                       stage={selectedPlayer.evolutionStage}
-                      level={selectedPlayer.level}
+                      mbti={selectedPlayer.mbti}
                       size={90}
                     />
                     <div>
@@ -1221,6 +1232,9 @@ type LoungeProfileResponse = {
     level: number;
     tier: CharacterTier;
     evolutionStage: number;
+    avatarSeed: string;
+    stylePreset: string;
+    growthParams?: GrowthParams | null;
   };
   recentAttendanceCount: number;
   activeEvents: Array<{

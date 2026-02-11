@@ -11,4 +11,6 @@ public interface CharacterService {
     StatsCharacterResponse evaluate(String email, CharacterEvolutionTriggerType triggerType);
 
     CharacterProfileResponse updatePublic(String email, CharacterPublicUpdateRequest request);
+
+    CharacterProfileResponse reroll(String email);
 }
