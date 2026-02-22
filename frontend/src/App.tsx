@@ -29,6 +29,10 @@ import AdminHistory from "./pages/AdminHistory";
 import Attendance from "./pages/Attendance";
 import Rankings from "./pages/Rankings";
 import Lounge from "./pages/Lounge";
+import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
+import AdminEventsList from "./pages/admin/AdminEventsList";
+import AdminEventForm from "./pages/admin/AdminEventForm";
 
 function App() {
   return (
@@ -55,8 +59,13 @@ function App() {
             <Route path="/members" element={<Members />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/about" element={<About />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
+            <Route path="/admin/events" element={<AdminRoute><AdminEventsList /></AdminRoute>} />
+            <Route path="/admin/events/new" element={<AdminRoute><AdminEventForm mode="create" /></AdminRoute>} />
+            <Route path="/admin/events/:id/edit" element={<AdminRoute><AdminEventForm mode="edit" /></AdminRoute>} />
             <Route path="/programs" element={<Programs />} />
             <Route path="/programs/apply/success" element={<ProgramsApplySuccess />} />
             <Route

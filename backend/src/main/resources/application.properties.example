@@ -38,4 +38,7 @@ openai.api.base=${OPENAI_API_BASE:https://api.openai.com}
 google.client-id=${GOOGLE_CLIENT_ID:}
 google.client-secret=${GOOGLE_CLIENT_SECRET:}
 
+# Optional: bootstrap one existing account to ROLE_ADMIN on startup.
+app.admin.bootstrap-email=${ADMIN_BOOTSTRAP_EMAIL:}
+
 # For local development, create application-local.properties (ignored) overriding sensitive values.

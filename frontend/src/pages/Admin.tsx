@@ -222,6 +222,12 @@ export default function Admin() {
             </div>
             <div className="flex items-center gap-2">
               <Link
+                to="/admin/events"
+                className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-semibold hover:opacity-90"
+              >
+                이벤트 관리
+              </Link>
+              <Link
                 to="/admin/history"
                 className="rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-sm font-semibold hover:opacity-90"
               >
