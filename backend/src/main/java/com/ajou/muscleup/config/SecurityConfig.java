@@ -55,6 +55,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/analytics/events").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/ai/share/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/metrics/lobby").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/events/*/view", "/api/events/*/click").permitAll()
 
                 // Protected APIs (allow USER and ADMIN)
                 .requestMatchers("/uploads/**").hasAnyRole("USER", "ADMIN")
@@ -75,6 +77,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/attendance/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/events/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/lounge/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/admin/events/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()

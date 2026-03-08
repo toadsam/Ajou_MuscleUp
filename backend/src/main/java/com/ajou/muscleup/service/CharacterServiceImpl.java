@@ -179,6 +179,7 @@ public class CharacterServiceImpl implements CharacterService {
         double squat = stats.getSquatKg() == null ? 0.0 : stats.getSquatKg();
         double deadlift = stats.getDeadliftKg() == null ? 0.0 : stats.getDeadliftKg();
         double weight = stats.getWeightKg() == null ? 0.0 : stats.getWeightKg();
+        double heightM = resolveHeightMeters(stats.getHeightCm());
         if (weight < 20 || weight > 300) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "weightKg must be between 20 and 300");
         }
@@ -186,16 +187,35 @@ public class CharacterServiceImpl implements CharacterService {
 
         double threeLiftTotal = bench + squat + deadlift;
         double strengthRatio = weight > 0 ? threeLiftTotal / weight : 0.0;
-        double strengthMultiplier = resolveStrengthMultiplier(gender, strengthRatio);
-        double muscleMultiplier = gender == Gender.FEMALE ? 22.0 : 20.0;
-        double base = clamp(strengthRatio * strengthMultiplier, 0.0, 70.0);
+        double bmi = weight / (heightM * heightM);
+        double bodyFatPercent = stats.getBodyFatPercent() == null
+                ? (gender == Gender.FEMALE ? 27.0 : 18.0)
+                : stats.getBodyFatPercent();
 
-        double muscleBonus = 0.0;
-        if (stats.getSkeletalMuscleKg() != null && weight > 0) {
-            muscleBonus = clamp((stats.getSkeletalMuscleKg() / weight) * muscleMultiplier, 0.0, 30.0);
+        // Priority order:
+        // 1) Absolute 3-lift score (largest impact)
+        // 2) Relative strength score (3-lift / bodyweight)
+        // 3) Height-adjusted muscle quality (SMI)
+        // 4) Body composition fit (BMI + body-fat)
+        double threeLiftAbsoluteScore = scoreThreeLiftAbsolute(gender, threeLiftTotal); // 0..55
+        double strengthRatioScore = scoreStrengthRatio(gender, strengthRatio); // 0..20
+
+        double smi = 0.0;
+        double heightMuscleScore = 0.0; // 0..15
+        if (stats.getSkeletalMuscleKg() != null) {
+            smi = stats.getSkeletalMuscleKg() / (heightM * heightM);
+            heightMuscleScore = scoreHeightAdjustedMuscle(gender, smi);
         }
 
-        double totalScore = clamp(base + muscleBonus + attendanceBonus, 0.0, 100.0);
+        double bmiFitScore = scoreBmiFit(gender, bmi); // 0..6
+        double fatFitScore = scoreBodyFatFit(gender, bodyFatPercent); // 0..4
+        double heightWeightScore = bmiFitScore + fatFitScore; // 0..10
+
+        double totalScore = clamp(
+                threeLiftAbsoluteScore + strengthRatioScore + heightMuscleScore + heightWeightScore + attendanceBonus,
+                0.0,
+                100.0
+        );
         int level = Math.min(100, 1 + (int) Math.floor(totalScore));
         CharacterTier tier = resolveTier(totalScore, threeLiftTotal, gender);
         int stage = resolveStage(level);
@@ -204,6 +224,10 @@ public class CharacterServiceImpl implements CharacterService {
         return CharacterEvaluationResponse.builder()
                 .threeLiftTotal(roundOneDecimal(threeLiftTotal))
                 .strengthRatio(roundTwoDecimals(strengthRatio))
+                .bmi(roundTwoDecimals(bmi))
+                .skeletalMuscleIndex(roundTwoDecimals(smi))
+                .heightWeightScore(roundTwoDecimals(heightWeightScore))
+                .heightMuscleScore(roundTwoDecimals(heightMuscleScore))
                 .totalScore(roundTwoDecimals(totalScore))
                 .level(level)
                 .tier(tier)
@@ -213,26 +237,34 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     private CharacterTier resolveTier(double totalScore, double threeLiftTotal, Gender gender) {
+        CharacterTier scoreTier = resolveTierByScore(totalScore);
         if (threeLiftTotal > 0) {
+            CharacterTier liftTier;
             if (gender == Gender.FEMALE) {
-                if (threeLiftTotal >= 420) return CharacterTier.CHALLENGER;
-                if (threeLiftTotal >= 360) return CharacterTier.GRANDMASTER;
-                if (threeLiftTotal >= 300) return CharacterTier.MASTER;
-                if (threeLiftTotal >= 240) return CharacterTier.DIAMOND;
-                if (threeLiftTotal >= 180) return CharacterTier.PLATINUM;
-                if (threeLiftTotal >= 120) return CharacterTier.GOLD;
-                if (threeLiftTotal >= 70) return CharacterTier.SILVER;
-                return CharacterTier.BRONZE;
+                if (threeLiftTotal >= 420) liftTier = CharacterTier.CHALLENGER;
+                else if (threeLiftTotal >= 360) liftTier = CharacterTier.GRANDMASTER;
+                else if (threeLiftTotal >= 300) liftTier = CharacterTier.MASTER;
+                else if (threeLiftTotal >= 240) liftTier = CharacterTier.DIAMOND;
+                else if (threeLiftTotal >= 180) liftTier = CharacterTier.PLATINUM;
+                else if (threeLiftTotal >= 120) liftTier = CharacterTier.GOLD;
+                else if (threeLiftTotal >= 70) liftTier = CharacterTier.SILVER;
+                else liftTier = CharacterTier.BRONZE;
+            } else {
+                if (threeLiftTotal >= 700) liftTier = CharacterTier.CHALLENGER;
+                else if (threeLiftTotal >= 600) liftTier = CharacterTier.GRANDMASTER;
+                else if (threeLiftTotal >= 500) liftTier = CharacterTier.MASTER;
+                else if (threeLiftTotal >= 420) liftTier = CharacterTier.DIAMOND;
+                else if (threeLiftTotal >= 320) liftTier = CharacterTier.PLATINUM;
+                else if (threeLiftTotal >= 220) liftTier = CharacterTier.GOLD;
+                else if (threeLiftTotal >= 120) liftTier = CharacterTier.SILVER;
+                else liftTier = CharacterTier.BRONZE;
             }
-            if (threeLiftTotal >= 700) return CharacterTier.CHALLENGER;
-            if (threeLiftTotal >= 600) return CharacterTier.GRANDMASTER;
-            if (threeLiftTotal >= 500) return CharacterTier.MASTER;
-            if (threeLiftTotal >= 420) return CharacterTier.DIAMOND;
-            if (threeLiftTotal >= 320) return CharacterTier.PLATINUM;
-            if (threeLiftTotal >= 220) return CharacterTier.GOLD;
-            if (threeLiftTotal >= 120) return CharacterTier.SILVER;
-            return CharacterTier.BRONZE;
+            return blendLiftAndScoreTier(liftTier, scoreTier);
         }
+        return scoreTier;
+    }
+
+    private CharacterTier resolveTierByScore(double totalScore) {
         if (totalScore >= 98.0) return CharacterTier.CHALLENGER;
         if (totalScore >= 94.0) return CharacterTier.GRANDMASTER;
         if (totalScore >= 88.0) return CharacterTier.MASTER;
@@ -243,21 +275,83 @@ public class CharacterServiceImpl implements CharacterService {
         return CharacterTier.BRONZE;
     }
 
-    private double resolveStrengthMultiplier(Gender gender, double ratio) {
-        if (gender == Gender.FEMALE) {
-            if (ratio < 1.0) return 16.0;
-            if (ratio < 1.5) return 20.0;
-            if (ratio < 2.0) return 24.0;
-            if (ratio < 2.5) return 28.0;
-            if (ratio < 3.0) return 32.0;
-            return 36.0;
+    private CharacterTier blendLiftAndScoreTier(CharacterTier liftTier, CharacterTier scoreTier) {
+        int liftIndex = tierIndex(liftTier);
+        int scoreIndex = tierIndex(scoreTier);
+        if (scoreIndex >= liftIndex + 2) {
+            return tierByIndex(Math.min(7, liftIndex + 1));
         }
-        if (ratio < 1.0) return 14.0;
-        if (ratio < 1.5) return 18.0;
-        if (ratio < 2.0) return 22.0;
-        if (ratio < 2.5) return 26.0;
-        if (ratio < 3.0) return 30.0;
-        return 34.0;
+        if (scoreIndex <= liftIndex - 2) {
+            return tierByIndex(Math.max(0, liftIndex - 1));
+        }
+        return liftTier;
+    }
+
+    private int tierIndex(CharacterTier tier) {
+        return switch (tier) {
+            case BRONZE -> 0;
+            case SILVER -> 1;
+            case GOLD -> 2;
+            case PLATINUM -> 3;
+            case DIAMOND -> 4;
+            case MASTER -> 5;
+            case GRANDMASTER -> 6;
+            case CHALLENGER -> 7;
+        };
+    }
+
+    private CharacterTier tierByIndex(int index) {
+        return switch (index) {
+            case 1 -> CharacterTier.SILVER;
+            case 2 -> CharacterTier.GOLD;
+            case 3 -> CharacterTier.PLATINUM;
+            case 4 -> CharacterTier.DIAMOND;
+            case 5 -> CharacterTier.MASTER;
+            case 6 -> CharacterTier.GRANDMASTER;
+            case 7 -> CharacterTier.CHALLENGER;
+            default -> CharacterTier.BRONZE;
+        };
+    }
+
+    private double resolveHeightMeters(Integer heightCm) {
+        if (heightCm == null || heightCm < 120 || heightCm > 230) {
+            return 1.70;
+        }
+        return heightCm / 100.0;
+    }
+
+    private double scoreThreeLiftAbsolute(Gender gender, double threeLiftTotal) {
+        // Match existing tier boundaries and map to 0..55 points.
+        double top = gender == Gender.FEMALE ? 420.0 : 700.0;
+        double normalized = clamp(threeLiftTotal / top, 0.0, 1.0);
+        return normalized * 55.0;
+    }
+
+    private double scoreStrengthRatio(Gender gender, double ratio) {
+        double cap = gender == Gender.FEMALE ? 3.0 : 3.5;
+        double normalized = clamp(ratio / cap, 0.0, 1.0);
+        return normalized * 20.0;
+    }
+
+    private double scoreBmiFit(Gender gender, double bmi) {
+        double target = gender == Gender.FEMALE ? 21.0 : 23.0;
+        double distance = Math.abs(bmi - target);
+        // Max 6 points. Kept lower than 3-lift metrics.
+        return clamp(6.0 - distance * 0.9, 0.0, 6.0);
+    }
+
+    private double scoreBodyFatFit(Gender gender, double bodyFatPercent) {
+        double target = gender == Gender.FEMALE ? 24.0 : 15.0;
+        double distance = Math.abs(bodyFatPercent - target);
+        // Max 4 points. Supportive factor only.
+        return clamp(4.0 - distance * 0.22, 0.0, 4.0);
+    }
+
+    private double scoreHeightAdjustedMuscle(Gender gender, double smi) {
+        double target = gender == Gender.FEMALE ? 8.7 : 10.8;
+        double distance = Math.abs(smi - target);
+        // Max 15 points. Height-adjusted muscle quality.
+        return clamp(15.0 - distance * 2.1, 0.0, 15.0);
     }
 
     private int resolveStage(int level) {
@@ -312,7 +406,8 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     private double calculateAttendanceBonus(int attendancePoints) {
-        return clamp(attendancePoints * 0.5, 0.0, 15.0);
+        // Attendance helps, but should not override physical metrics.
+        return clamp(attendancePoints * 0.4, 0.0, 8.0);
     }
 
     private User getUserOrThrow(String email) {

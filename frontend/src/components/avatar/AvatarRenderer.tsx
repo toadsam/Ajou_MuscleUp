@@ -46,11 +46,22 @@ export default function AvatarRenderer({
   const seedFeatures = resolveSeedFeatures(avatarSeed || "seed");
   const tone = mbtiTone(mbti);
   const tierPreset = TIER_PRESETS[tier];
+  const tierStep = ({
+    BRONZE: 0,
+    SILVER: 1,
+    GOLD: 2,
+    PLATINUM: 3,
+    DIAMOND: 4,
+    MASTER: 5,
+    GRANDMASTER: 6,
+    CHALLENGER: 7,
+  } as const)[tier];
   const motionClass = mbtiMotionClass(mbti);
   const strokeColor = tone.stroke;
-  const boostedStroke = growth.strokeWidth + tierPreset.strokeBoost * 0.35;
-  const tierPopScale = 1 + tierPreset.auraIntensity * 0.035;
-  const dynamicGlow = 8 + tierPreset.glow * 28 + growth.muscularityNormalized * 7;
+  const boostedStroke = growth.strokeWidth + tierPreset.strokeBoost * 0.7;
+  const tierPopScale = 1 + tierStep * 0.028;
+  const dynamicGlow = 7 + tierPreset.glow * 30 + growth.muscularityNormalized * 8 + tierStep * 4;
+  const bodyScale = 1 + tierStep * 0.018;
 
   return (
     <div
@@ -72,7 +83,13 @@ export default function AvatarRenderer({
           </radialGradient>
         </defs>
 
-        <g style={{ filter: `drop-shadow(0 0 ${dynamicGlow}px ${strokeColor}) contrast(${growth.contrastBoost})` }}>
+        <g
+          style={{
+            filter: `drop-shadow(0 0 ${dynamicGlow}px ${strokeColor}) contrast(${growth.contrastBoost})`,
+            transform: `scale(${bodyScale})`,
+            transformOrigin: "72px 96px",
+          }}
+        >
           <Legs growthParams={{ ...growth, strokeWidth: boostedStroke }} seedFeatures={seedFeatures} strokeColor={strokeColor} bodyColor={tone.skin} />
           <Torso growthParams={{ ...growth, strokeWidth: boostedStroke }} seedFeatures={seedFeatures} strokeColor={strokeColor} suitColor={tone.suit} />
           <Arms
@@ -83,7 +100,7 @@ export default function AvatarRenderer({
             skinColor={tone.skin}
           />
           <Head mbti={mbti} seedFeatures={seedFeatures} strokeColor={strokeColor} skinColor={tone.skin} hairColor={tone.hair} />
-          <Effects tier={tier} stage={stage} strokeColor={strokeColor} />
+          <Effects tier={tier} stage={stage} strokeColor={strokeColor} accentColor={strokeColor} />
         </g>
       </svg>
     </div>

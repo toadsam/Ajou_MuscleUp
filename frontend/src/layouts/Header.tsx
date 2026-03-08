@@ -1,8 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState, useRef } from "react";
 import Logo from "./Logo";
 
 export default function Header() {
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<{ email: string; nickname: string; role: string } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,6 +73,10 @@ export default function Header() {
         ],
       },
       {
+        label: "🎉 이벤트",
+        links: [{ to: "/events", label: "이벤트" }],
+      },
+      {
         label: "AI",
         links: [{ to: "/ai", label: "AI근력", highlight: true }],
       },
@@ -84,6 +89,11 @@ export default function Header() {
   );
 
   const textColor = isScrolled || isMenuOpen ? "text-gray-800" : "text-white";
+  const isActiveGroup = (group: (typeof navGroups)[number]) =>
+    group.links.some((link) => {
+      if (link.to === "/") return location.pathname === "/";
+      return location.pathname.startsWith(link.to);
+    });
 
   const renderDropdown = (group: (typeof navGroups)[number]) => (
     <div
@@ -163,7 +173,7 @@ export default function Header() {
             >
               <button
                 className={`rounded-full px-5 py-2.5 text-base font-semibold transition ${
-                  openDropdown === group.label
+                  openDropdown === group.label || isActiveGroup(group)
                     ? "bg-white/90 text-gray-800 shadow-lg"
                     : textColor === "text-white"
                     ? "text-white hover:bg-white/10 hover:shadow-[0_10px_30px_-15px_rgba(255,255,255,0.8)]"
@@ -225,7 +235,9 @@ export default function Header() {
                   <Link
                     key={to}
                     to={to}
-                    className="block rounded-xl px-3 py-2 text-sm font-semibold hover:bg-gray-100"
+                    className={`block rounded-xl px-3 py-2 text-sm font-semibold hover:bg-gray-100 ${
+                      location.pathname.startsWith(to) ? "bg-gray-100" : ""
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {label}

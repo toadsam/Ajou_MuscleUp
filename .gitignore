@@ -21,6 +21,8 @@ backend/build/
 backend/out/
 backend/bin/
 backend/.gradle/
+backend/.gradle-user-home/
+backend/.gradle-local/
 
 # OS/editor noise
 .DS_Store

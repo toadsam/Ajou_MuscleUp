@@ -5,9 +5,11 @@ type Props = {
   tier: CharacterTier;
   stage: number;
   strokeColor: string;
+  accentColor: string;
+  archetype?: string;
 };
 
-export default function Effects({ tier, stage, strokeColor }: Props) {
+export default function Effects({ tier, stage, strokeColor, accentColor, archetype }: Props) {
   const preset = TIER_PRESETS[tier];
   const tierStep = ({
     BRONZE: 0,
@@ -23,6 +25,7 @@ export default function Effects({ tier, stage, strokeColor }: Props) {
   const ringOpacity = 0.12 + preset.auraIntensity * 0.28;
   const ringScale = 1 + tierStep * 0.035;
   const waveBoost = tierStep >= 4 ? 1 + (tierStep - 3) * 0.06 : 1;
+  const followerCount = tierStep >= 5 ? 2 : tierStep >= 2 ? 1 : 0;
 
   return (
     <g className={`${preset.pulse ? "avatar-tier-pulse" : ""}`} transform={`scale(${ringScale}) translate(${72 * (1 - ringScale)}, ${96 * (1 - ringScale)})`}>
@@ -48,6 +51,10 @@ export default function Effects({ tier, stage, strokeColor }: Props) {
       {preset.auraGradient && (
         <ellipse cx={72} cy={96} rx={58} ry={68} fill="url(#tierAuraGradient)" opacity={0.14 + preset.auraIntensity * 0.18} />
       )}
+      {archetype === "strategist" && <rect x={58} y={14} width={28} height={4} rx={2} fill={accentColor} opacity={0.45} />}
+      {archetype === "empath" && <path d="M72 14 C74 10, 80 10, 80 16 C80 20, 76 22, 72 26 C68 22, 64 20, 64 16 C64 10, 70 10, 72 14 Z" fill={accentColor} opacity={0.35} />}
+      {archetype === "guardian" && <circle cx={72} cy={18} r={8} fill="none" stroke={accentColor} strokeWidth={1.5} opacity={0.35} />}
+      {archetype === "adventurer" && <path d="M60 18 L84 18 L72 28 Z" fill={accentColor} opacity={0.35} />}
 
       {preset.lightWave && (
         <ellipse
@@ -91,6 +98,18 @@ export default function Effects({ tier, stage, strokeColor }: Props) {
             className={preset.burst ? "avatar-particle-burst" : "avatar-particle"}
             style={{ animationDelay: `${idx * 40}ms` }}
           />
+        );
+      })}
+
+      {Array.from({ length: followerCount }).map((_, idx) => {
+        const baseX = idx === 0 ? 30 : 114;
+        const baseY = idx === 0 ? 128 : 82;
+        return (
+          <g key={`dumbbell-follower-${idx}`} className="avatar-dumbbell-follower" style={{ animationDelay: `${idx * 180}ms` }}>
+            <rect x={baseX - 7} y={baseY - 1.2} width={14} height={2.4} rx={1.2} fill={accentColor} opacity={0.9} />
+            <rect x={baseX - 10} y={baseY - 4} width={3} height={8} rx={1.2} fill={strokeColor} />
+            <rect x={baseX + 7} y={baseY - 4} width={3} height={8} rx={1.2} fill={strokeColor} />
+          </g>
         );
       })}
     </g>

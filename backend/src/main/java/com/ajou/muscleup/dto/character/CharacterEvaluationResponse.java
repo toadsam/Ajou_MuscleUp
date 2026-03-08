@@ -9,6 +9,10 @@ import lombok.Getter;
 public class CharacterEvaluationResponse {
     private double threeLiftTotal;
     private double strengthRatio;
+    private double bmi;
+    private double skeletalMuscleIndex;
+    private double heightWeightScore;
+    private double heightMuscleScore;
     private double totalScore;
     private int level;
     private CharacterTier tier;
