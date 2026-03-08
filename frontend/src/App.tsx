@@ -33,6 +33,8 @@ import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import AdminEventsList from "./pages/admin/AdminEventsList";
 import AdminEventForm from "./pages/admin/AdminEventForm";
+import Crew from "./pages/Crew";
+import Friends from "./pages/Friends";
 
 function App() {
   return (
@@ -155,6 +157,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Lounge />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crew"
+              element={
+                <ProtectedRoute>
+                  <Crew />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/friends"
+              element={
+                <ProtectedRoute>
+                  <Friends />
                 </ProtectedRoute>
               }
             />

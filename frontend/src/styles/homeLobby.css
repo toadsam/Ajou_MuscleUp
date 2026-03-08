@@ -181,6 +181,97 @@
   font-size: 0.85rem;
 }
 
+.event-banner {
+  border-radius: 24px;
+  border: 1px solid var(--lobby-border);
+  background: var(--lobby-card);
+  padding: 1.3rem;
+  display: grid;
+  gap: 1rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
+}
+
+.event-banner-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.event-slider {
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.event-track {
+  display: flex;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.event-banner-card {
+  min-width: 100%;
+  display: grid;
+  grid-template-columns: minmax(300px, 42%) minmax(0, 1fr);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event-banner-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 20px 34px rgba(255, 59, 141, 0.18);
+}
+
+.event-banner-card img {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+  animation: eventPan 9s ease-in-out infinite alternate;
+}
+
+.event-banner-body {
+  padding: 1.2rem 1.4rem;
+  display: grid;
+  align-content: center;
+  gap: 0.55rem;
+}
+
+.event-banner-body strong {
+  font-size: clamp(1.15rem, 2.8vw, 1.7rem);
+  line-height: 1.3;
+}
+
+.event-banner-body p {
+  color: var(--lobby-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.event-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.event-dots button {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(148, 163, 184, 0.45);
+  cursor: pointer;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.event-dots button.active {
+  width: 32px;
+  background: var(--lobby-accent);
+}
+
 .hero-orbit {
   position: relative;
   display: grid;
@@ -701,9 +792,34 @@
   }
 }
 
+@keyframes eventPan {
+  0% {
+    transform: scale(1.02) translateX(0);
+  }
+  100% {
+    transform: scale(1.08) translateX(-8px);
+  }
+}
+
 @media (max-width: 768px) {
   .hero-text h1 {
     font-size: 2.4rem;
+  }
+
+  .event-banner-card {
+    grid-template-columns: 1fr;
+  }
+
+  .event-banner-card img {
+    height: 200px;
+  }
+
+  .event-banner-body {
+    padding: 1rem 1rem 1.1rem;
+  }
+
+  .event-banner-body p {
+    font-size: 0.88rem;
   }
 
   .action-hub {

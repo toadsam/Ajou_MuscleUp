@@ -30,15 +30,19 @@ public class BragPostController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BragPostResponse>> list(@RequestParam(value = "page", defaultValue = "0") int page,
+    public ResponseEntity<Page<BragPostResponse>> list(@AuthenticationPrincipal String email,
+                                                       @RequestParam(value = "page", defaultValue = "0") int page,
                                                        @RequestParam(value = "size", defaultValue = "10") int size) {
+        requireEmail(email);
         Pageable pageable = PageRequest.of(page, Math.min(size, 30));
-        return ResponseEntity.ok(bragPostService.list(pageable));
+        return ResponseEntity.ok(bragPostService.list(email, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BragPostResponse> get(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(bragPostService.get(id));
+    public ResponseEntity<BragPostResponse> get(@AuthenticationPrincipal String email,
+                                                @PathVariable("id") Long id) {
+        requireEmail(email);
+        return ResponseEntity.ok(bragPostService.get(id, email));
     }
 
     @PutMapping("/{id}")

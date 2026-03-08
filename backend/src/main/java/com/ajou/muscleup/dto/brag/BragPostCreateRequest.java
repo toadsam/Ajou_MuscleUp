@@ -3,6 +3,7 @@ package com.ajou.muscleup.dto.brag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import com.ajou.muscleup.entity.BragVisibility;
 
 import java.util.List;
 
@@ -19,4 +20,5 @@ public class BragPostCreateRequest {
 
     private String movement;
     private String weight;
+    private BragVisibility visibility;
 }

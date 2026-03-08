@@ -13,6 +13,7 @@ type BragPostPayload = {
   movement?: string;
   weight?: string;
   mediaUrls: string[];
+  visibility?: "PUBLIC" | "FRIENDS";
 };
 
 type MediaItem = {
@@ -84,6 +85,7 @@ export default function BragWrite() {
     content: "",
     region: "",
     gym: "",
+    visibility: "PUBLIC",
   });
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -167,6 +169,7 @@ export default function BragWrite() {
       movement: form.movement.trim() || undefined,
       weight: form.weight.trim() || undefined,
       mediaUrls: mediaItems.map((item) => item.url),
+      visibility: form.visibility as "PUBLIC" | "FRIENDS",
     };
 
     try {
@@ -293,6 +296,17 @@ export default function BragWrite() {
                 className="w-full rounded-2xl bg-black/40 border border-white/10 px-4 py-3 focus:outline-none focus:border-orange-400"
                 placeholder="피트존 논현점"
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-white/70">공개 범위</label>
+              <select
+                value={form.visibility}
+                onChange={(e) => setForm({ ...form, visibility: e.target.value })}
+                className="w-full rounded-2xl bg-black/40 border border-white/10 px-4 py-3 focus:outline-none focus:border-orange-400"
+              >
+                <option value="PUBLIC">전체 공개</option>
+                <option value="FRIENDS">친구 공개</option>
+              </select>
             </div>
           </div>
 
@@ -458,6 +472,7 @@ export default function BragWrite() {
                   content: "",
                   region: "",
                   gym: "",
+                  visibility: "PUBLIC",
                 });
                 setTags([]);
                 setMediaItems([]);

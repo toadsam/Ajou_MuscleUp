@@ -7,6 +7,7 @@ import com.ajou.muscleup.dto.brag.BragLikeResponse;
 import com.ajou.muscleup.entity.BragComment;
 import com.ajou.muscleup.entity.BragLike;
 import com.ajou.muscleup.entity.BragPost;
+import com.ajou.muscleup.entity.BragVisibility;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.BragCommentRepository;
 import com.ajou.muscleup.repository.BragLikeRepository;
@@ -28,6 +29,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     private final BragLikeRepository likeRepository;
     private final BragPostRepository postRepository;
     private final UserRepository userRepository;
+    private final FriendService friendService;
 
     private User requireUser(String email) {
         return userRepository.findByEmail(email)
@@ -41,7 +43,10 @@ public class BragInteractionServiceImpl implements BragInteractionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BragCommentResponse> listComments(Long postId) {
+    public List<BragCommentResponse> listComments(String userEmail, Long postId) {
+        User user = requireUser(userEmail);
+        BragPost post = requirePost(postId);
+        ensureCanView(post, user);
         return commentRepository.findByBragPost_IdOrderByCreatedAtAsc(postId)
                 .stream().map(BragCommentResponse::from).toList();
     }
@@ -50,6 +55,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     public BragCommentResponse addComment(String userEmail, Long postId, BragCommentCreateRequest req) {
         User user = requireUser(userEmail);
         BragPost post = requirePost(postId);
+        ensureCanView(post, user);
         BragComment saved = commentRepository.save(BragComment.builder()
                 .bragPost(post)
                 .user(user)
@@ -86,6 +92,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     public BragLikeResponse toggleLike(String userEmail, Long postId) {
         User user = requireUser(userEmail);
         BragPost post = requirePost(postId);
+        ensureCanView(post, user);
         boolean exists = likeRepository.existsByBragPost_IdAndUser_Id(postId, user.getId());
         if (exists) {
             likeRepository.deleteByBragPost_IdAndUser_Id(postId, user.getId());
@@ -104,11 +111,20 @@ public class BragInteractionServiceImpl implements BragInteractionService {
             return new BragLikeResponse(count, false);
         }
         User user = requireUser(userEmail);
+        BragPost post = requirePost(postId);
+        ensureCanView(post, user);
         boolean liked = likeRepository.existsByBragPost_IdAndUser_Id(postId, user.getId());
         return new BragLikeResponse(count, liked);
     }
 
     private boolean isAdmin(User user) {
         return user != null && "ADMIN".equalsIgnoreCase(user.getRole());
+    }
+
+    private void ensureCanView(BragPost post, User viewer) {
+        if (post.getVisibility() == BragVisibility.PUBLIC) return;
+        if (post.getUser().getId().equals(viewer.getId())) return;
+        if (friendService.areFriends(post.getUser().getId(), viewer.getId())) return;
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "친구 공개 게시글입니다.");
     }
 }

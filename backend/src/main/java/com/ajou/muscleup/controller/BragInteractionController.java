@@ -20,8 +20,9 @@ public class BragInteractionController {
     private final BragInteractionService interactionService;
 
     @GetMapping("/{id}/comments")
-    public ResponseEntity<List<BragCommentResponse>> listComments(@PathVariable("id") Long postId) {
-        return ResponseEntity.ok(interactionService.listComments(postId));
+    public ResponseEntity<List<BragCommentResponse>> listComments(@AuthenticationPrincipal String email,
+                                                                  @PathVariable("id") Long postId) {
+        return ResponseEntity.ok(interactionService.listComments(email, postId));
     }
 
     @PostMapping("/{id}/comments")

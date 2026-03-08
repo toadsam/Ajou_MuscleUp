@@ -4,6 +4,8 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { GrowthParams } from "../components/avatar/types";
 import "../styles/homeLobby.css";
 import { logEvent } from "../utils/analytics";
+import { eventApi } from "../services/eventApi";
+import type { EventItem } from "../types/event";
 
 type AttendanceLog = {
   date: string;
@@ -80,6 +82,13 @@ const ACTIONS = [
     icon: "📈",
     to: "/mypage",
   },
+  {
+    id: "crew",
+    label: "운동 모임 가기",
+    desc: "팀 출석률 확인",
+    icon: "👥",
+    to: "/crew",
+  },
 ];
 
 const formatMonthKey = (date: Date) => {
@@ -130,6 +139,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showReaction, setShowReaction] = useState(false);
+  const [activeEvents, setActiveEvents] = useState<EventItem[]>([]);
+  const [eventIndex, setEventIndex] = useState(0);
+  const [isEventPaused, setIsEventPaused] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -194,6 +206,16 @@ export default function Home() {
     }
   }, []);
 
+  const loadActiveEvents = useCallback(async () => {
+    try {
+      const res = await eventApi.getPublicList({ status: "ACTIVE", page: 0, size: 10 });
+      setActiveEvents(res.content ?? []);
+      setEventIndex(0);
+    } catch {
+      setActiveEvents([]);
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     loadLobbyData();
@@ -216,6 +238,10 @@ export default function Home() {
   }, [loadLobbyMetrics]);
 
   useEffect(() => {
+    loadActiveEvents();
+  }, [loadActiveEvents]);
+
+  useEffect(() => {
     const handleFocus = () => {
       if (user) loadLobbyData();
       loadLobbyMetrics();
@@ -231,6 +257,15 @@ export default function Home() {
   useEffect(() => {
     logEvent("home", "page_view");
   }, []);
+
+  useEffect(() => {
+    if (activeEvents.length <= 1) return;
+    if (isEventPaused) return;
+    const interval = window.setInterval(() => {
+      setEventIndex((prev) => (prev + 1) % activeEvents.length);
+    }, 4500);
+    return () => window.clearInterval(interval);
+  }, [activeEvents.length, isEventPaused]);
 
   const logMap = useMemo(() => {
     const map = new Map<string, AttendanceLog>();
@@ -324,6 +359,54 @@ export default function Home() {
           </div>
 
         </header>
+
+        {activeEvents.length > 0 && (
+          <section className="event-banner">
+            <div className="event-banner-head">
+              <span className="eyebrow">진행 중 이벤트</span>
+              <Link to="/events" className="mini-link">
+                전체 이벤트 보기 →
+              </Link>
+            </div>
+            <div
+              className="event-slider"
+              onMouseEnter={() => setIsEventPaused(true)}
+              onMouseLeave={() => setIsEventPaused(false)}
+            >
+              <div
+                className="event-track"
+                style={{ transform: `translateX(-${eventIndex * 100}%)` }}
+              >
+                {activeEvents.map((event) => (
+                  <Link
+                    key={event.id}
+                    to={`/events/${event.id}`}
+                    className="event-banner-card"
+                  >
+                    <img src={event.thumbnailUrl} alt={event.title} />
+                    <div className="event-banner-body">
+                      <strong>{event.title}</strong>
+                      <p>{event.summary}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+            {activeEvents.length > 1 && (
+              <div className="event-dots">
+                {activeEvents.map((event, idx) => (
+                  <button
+                    key={event.id}
+                    type="button"
+                    className={idx === eventIndex ? "active" : ""}
+                    onClick={() => setEventIndex(idx)}
+                    aria-label={`${idx + 1}번 이벤트 보기`}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <div className="lobby-grid">
           <div className="action-preview">

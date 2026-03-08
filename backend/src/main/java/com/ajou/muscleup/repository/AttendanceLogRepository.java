@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Long> {
     Optional<AttendanceLog> findByUserAndDate(User user, LocalDate date);
@@ -15,4 +17,18 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
     long countByUserAndDidWorkoutTrueAndDateBetween(User user, LocalDate start, LocalDate end);
 
     long countByDate(LocalDate date);
+
+    @Query("""
+            select l.user.id, count(l)
+            from AttendanceLog l
+            where l.user.id in :userIds
+              and l.didWorkout = true
+              and l.date between :start and :end
+            group by l.user.id
+            """)
+    List<Object[]> countWorkoutByUserIdsAndDateBetween(
+            @Param("userIds") List<Long> userIds,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
 }

@@ -56,6 +56,8 @@ export default function Header() {
           { to: "/protein", label: "단백질 공동구매" },
           { to: "/reviews", label: "단백질 리뷰" },
           { to: "/programs", label: "식단방/다이어트방" },
+          { to: "/crew", label: "운동 모임" },
+          { to: "/friends", label: "친구/채팅" },
         ],
       },
       {

@@ -120,6 +120,42 @@ const scheduleBroadcast = () => {
 io.on("connection", (socket) => {
   console.log(`[lounge] connected ${socket.id}`);
 
+  const getFriendRoom = (a: string, b: string) => {
+    const [low, high] = [a.trim().toLowerCase(), b.trim().toLowerCase()].sort();
+    return `friend:${low}:${high}`;
+  };
+
+  socket.on("friend:join", (payload) => {
+    if (!payload || typeof payload.userId !== "string") return;
+    const userId = payload.userId.trim().toLowerCase();
+    if (!userId) return;
+    socket.data.friendUserId = userId;
+  });
+
+  socket.on("friend:subscribe", (payload) => {
+    const myId = socket.data.friendUserId;
+    if (!myId || typeof myId !== "string") return;
+    if (!payload || typeof payload.peerId !== "string") return;
+    const peerId = payload.peerId.trim().toLowerCase();
+    if (!peerId) return;
+    socket.join(getFriendRoom(myId, peerId));
+  });
+
+  socket.on("friend:send", (payload) => {
+    const myId = socket.data.friendUserId;
+    if (!myId || typeof myId !== "string") return;
+    if (!payload || typeof payload.peerId !== "string") return;
+    const peerId = payload.peerId.trim().toLowerCase();
+    if (!peerId) return;
+    const message = payload.message;
+    if (!message || typeof message !== "object") return;
+    io.to(getFriendRoom(myId, peerId)).emit("friend:message", {
+      from: myId,
+      to: peerId,
+      message,
+    });
+  });
+
   socket.on("lounge:join", (payload) => {
     // TODO: Verify JWT/access token in realtime server (MVP skips).
     if (!isValidJoinPayload(payload)) {
