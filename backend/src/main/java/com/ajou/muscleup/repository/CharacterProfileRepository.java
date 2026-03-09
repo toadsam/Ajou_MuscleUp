@@ -3,6 +3,8 @@ package com.ajou.muscleup.repository;
 import com.ajou.muscleup.entity.CharacterProfile;
 import com.ajou.muscleup.entity.User;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface CharacterProfileRepository extends JpaRepository<CharacterProfile, Long> {
     Optional<CharacterProfile> findByUser(User user);
+    List<CharacterProfile> findAllByUserIn(Collection<User> users);
 
     Page<CharacterProfile> findByIsPublicTrueOrderByLevelDescUpdatedAtDesc(Pageable pageable);
 

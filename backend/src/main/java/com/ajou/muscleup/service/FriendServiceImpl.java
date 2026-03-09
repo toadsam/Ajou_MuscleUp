@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional
 public class FriendServiceImpl implements FriendService {
     private final UserRepository userRepository;
+    private final CharacterProfileRepository characterProfileRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipRepository friendshipRepository;
     private final FriendChatRoomRepository friendChatRoomRepository;
@@ -43,23 +44,49 @@ public class FriendServiceImpl implements FriendService {
                 .receiver(target)
                 .status(FriendRequestStatus.PENDING)
                 .build());
-        return FriendRequestResponse.from(saved);
+        return FriendRequestResponse.from(
+                saved,
+                toCharacterSnapshot(me),
+                toCharacterSnapshot(target)
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<FriendRequestResponse> listIncoming(String email) {
         User me = requireUser(email);
-        return friendRequestRepository.findAllByReceiverAndStatusOrderByCreatedAtDesc(me, FriendRequestStatus.PENDING)
-                .stream().map(FriendRequestResponse::from).toList();
+        List<FriendRequest> requests = friendRequestRepository.findAllByReceiverAndStatusOrderByCreatedAtDesc(me, FriendRequestStatus.PENDING);
+        Map<Long, FriendCharacterResponse> snapshots = buildCharacterSnapshotMap(
+                requests.stream()
+                        .flatMap(req -> java.util.stream.Stream.of(req.getRequester(), req.getReceiver()))
+                        .toList()
+        );
+        return requests.stream()
+                .map(req -> FriendRequestResponse.from(
+                        req,
+                        snapshots.get(req.getRequester().getId()),
+                        snapshots.get(req.getReceiver().getId())
+                ))
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<FriendRequestResponse> listOutgoing(String email) {
         User me = requireUser(email);
-        return friendRequestRepository.findAllByRequesterAndStatusOrderByCreatedAtDesc(me, FriendRequestStatus.PENDING)
-                .stream().map(FriendRequestResponse::from).toList();
+        List<FriendRequest> requests = friendRequestRepository.findAllByRequesterAndStatusOrderByCreatedAtDesc(me, FriendRequestStatus.PENDING);
+        Map<Long, FriendCharacterResponse> snapshots = buildCharacterSnapshotMap(
+                requests.stream()
+                        .flatMap(req -> java.util.stream.Stream.of(req.getRequester(), req.getReceiver()))
+                        .toList()
+        );
+        return requests.stream()
+                .map(req -> FriendRequestResponse.from(
+                        req,
+                        snapshots.get(req.getRequester().getId()),
+                        snapshots.get(req.getReceiver().getId())
+                ))
+                .toList();
     }
 
     @Override
@@ -75,7 +102,11 @@ public class FriendServiceImpl implements FriendService {
         }
         req.setStatus(FriendRequestStatus.ACCEPTED);
         saveFriendship(req.getRequester(), req.getReceiver());
-        return FriendRequestResponse.from(req);
+        return FriendRequestResponse.from(
+                req,
+                toCharacterSnapshot(req.getRequester()),
+                toCharacterSnapshot(req.getReceiver())
+        );
     }
 
     @Override
@@ -93,13 +124,17 @@ public class FriendServiceImpl implements FriendService {
     @Transactional(readOnly = true)
     public List<FriendSummaryResponse> listFriends(String email) {
         User me = requireUser(email);
-        return friendshipRepository.findAllByUser(me).stream()
+        List<User> friendUsers = friendshipRepository.findAllByUser(me).stream()
                 .map(friendship -> Objects.equals(friendship.getUserLow().getId(), me.getId())
                         ? friendship.getUserHigh() : friendship.getUserLow())
+                .toList();
+        Map<Long, FriendCharacterResponse> snapshots = buildCharacterSnapshotMap(friendUsers);
+        return friendUsers.stream()
                 .map(friend -> FriendSummaryResponse.builder()
                         .userId(friend.getId())
                         .email(friend.getEmail())
                         .nickname(friend.getNickname())
+                        .character(snapshots.get(friend.getId()))
                         .build())
                 .toList();
     }
@@ -228,5 +263,25 @@ public class FriendServiceImpl implements FriendService {
 
     private User pickHigh(User a, User b) {
         return a.getId() < b.getId() ? b : a;
+    }
+
+    private Map<Long, FriendCharacterResponse> buildCharacterSnapshotMap(List<User> users) {
+        if (users == null || users.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, FriendCharacterResponse> result = new HashMap<>();
+        characterProfileRepository.findAllByUserIn(users).forEach(profile ->
+                result.put(profile.getUser().getId(), FriendCharacterResponse.from(profile))
+        );
+        return result;
+    }
+
+    private FriendCharacterResponse toCharacterSnapshot(User user) {
+        if (user == null) {
+            return null;
+        }
+        return characterProfileRepository.findByUser(user)
+                .map(FriendCharacterResponse::from)
+                .orElse(null);
     }
 }

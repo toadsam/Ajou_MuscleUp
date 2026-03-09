@@ -9,4 +9,5 @@ public class FriendSummaryResponse {
     private Long userId;
     private String email;
     private String nickname;
+    private FriendCharacterResponse character;
 }
