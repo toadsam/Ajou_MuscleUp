@@ -1,4 +1,13 @@
 export type CrewMemberRole = "LEADER" | "MEMBER";
+export type CrewCharacterTier =
+  | "BRONZE"
+  | "SILVER"
+  | "GOLD"
+  | "PLATINUM"
+  | "DIAMOND"
+  | "MASTER"
+  | "GRANDMASTER"
+  | "CHALLENGER";
 
 export interface CrewListItem {
   id: number;
@@ -17,6 +26,10 @@ export interface CrewMemberAttendance {
   workoutDays: number;
   targetDays: number;
   attendanceRate: number;
+  characterTier?: CrewCharacterTier | null;
+  characterStage?: number | null;
+  characterLevel?: number | null;
+  avatarSeed?: string | null;
 }
 
 export interface CrewDetail {
@@ -31,6 +44,8 @@ export interface CrewDetail {
   targetDays: number;
   members: CrewMemberAttendance[];
   challenges: CrewChallenge[];
+  kingTitles: CrewKingTitle[];
+  competitionBoard: CrewCompetitionEntry[];
 }
 
 export interface CrewChallengeMemberProgress {
@@ -40,6 +55,10 @@ export interface CrewChallengeMemberProgress {
   targetWorkoutDays: number;
   completionRate: number;
   badge: string;
+  characterTier?: CrewCharacterTier | null;
+  characterStage?: number | null;
+  characterLevel?: number | null;
+  avatarSeed?: string | null;
 }
 
 export interface CrewChallenge {
@@ -48,6 +67,28 @@ export interface CrewChallenge {
   description?: string | null;
   startDate: string;
   endDate: string;
+  status: "UPCOMING" | "ONGOING" | "ENDED";
   targetWorkoutDays: number;
   members: CrewChallengeMemberProgress[];
+}
+
+export interface CrewKingTitle {
+  title: string;
+  userId: number;
+  nickname: string;
+  metric: string;
+}
+
+export interface CrewCompetitionEntry {
+  rank: number;
+  userId: number;
+  nickname: string;
+  score: number;
+  attendanceScore: number;
+  challengeScore: number;
+  recentScore: number;
+  bonusScore: number;
+  attendanceRate: number;
+  recentWorkoutDays: number;
+  challengeAverageCompletion: number;
 }

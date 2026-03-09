@@ -18,4 +18,6 @@ public class CrewDetailResponse {
     private int targetDays;
     private List<CrewMemberAttendanceResponse> members;
     private List<CrewChallengeResponse> challenges;
+    private List<CrewKingTitleResponse> kingTitles;
+    private List<CrewCompetitionEntryResponse> competitionBoard;
 }

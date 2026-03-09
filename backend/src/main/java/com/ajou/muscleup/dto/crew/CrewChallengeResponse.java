@@ -13,6 +13,7 @@ public class CrewChallengeResponse {
     private String description;
     private LocalDate startDate;
     private LocalDate endDate;
+    private String status;
     private int targetWorkoutDays;
     private List<CrewChallengeMemberProgressResponse> members;
 }

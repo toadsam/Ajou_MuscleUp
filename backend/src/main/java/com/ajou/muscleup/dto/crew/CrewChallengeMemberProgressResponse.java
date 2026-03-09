@@ -1,5 +1,6 @@
 package com.ajou.muscleup.dto.crew;
 
+import com.ajou.muscleup.entity.CharacterTier;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,4 +13,8 @@ public class CrewChallengeMemberProgressResponse {
     private int targetWorkoutDays;
     private double completionRate;
     private String badge;
+    private CharacterTier characterTier;
+    private Integer characterStage;
+    private Integer characterLevel;
+    private String avatarSeed;
 }
