@@ -1,11 +1,27 @@
-import { Link, useLocation } from "react-router-dom";
-import { useEffect, useMemo, useState, useRef } from "react";
+﻿import { Link, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Logo from "./Logo";
+
+interface UserState {
+  email: string;
+  nickname: string;
+  role: string;
+}
+
+interface NavLinkItem {
+  to: string;
+  label: string;
+}
+
+interface NavGroup {
+  label: string;
+  links: NavLinkItem[];
+}
 
 export default function Header() {
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState<{ email: string; nickname: string; role: string } | null>(null);
+  const [user, setUser] = useState<UserState | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -18,15 +34,20 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
 
     const savedUser = localStorage.getItem("user");
-    if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedUser) {
+      setUser(JSON.parse(savedUser) as UserState);
+    }
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) setIsMenuOpen(false);
+      if (window.innerWidth >= 1024) {
+        setIsMenuOpen(false);
+      }
     };
+
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -46,16 +67,16 @@ export default function Header() {
     }
   };
 
-  const navGroups = useMemo(
+  const navGroups = useMemo<NavGroup[]>(
     () => [
       {
         label: "커뮤니티",
         links: [
           { to: "/brag", label: "자랑방" },
-          { to: "/brag/write", label: "자랑 올리기" },
+          { to: "/brag/write", label: "자랑 글쓰기" },
           { to: "/protein", label: "단백질 공동구매" },
           { to: "/reviews", label: "단백질 리뷰" },
-          { to: "/programs", label: "식단방/다이어트방" },
+          { to: "/programs", label: "반 추천/신청" },
           { to: "/crew", label: "운동 모임" },
           { to: "/friends", label: "친구/채팅" },
         ],
@@ -75,15 +96,15 @@ export default function Header() {
         ],
       },
       {
-        label: "🎉 이벤트",
+        label: "이벤트",
         links: [{ to: "/events", label: "이벤트" }],
       },
       {
         label: "AI",
-        links: [{ to: "/ai", label: "AI근력", highlight: true }],
+        links: [{ to: "/ai", label: "AI 플래너" }],
       },
       {
-        label: "내정보",
+        label: "내 정보",
         links: [{ to: "/mypage", label: "마이페이지" }],
       },
     ],
@@ -91,13 +112,16 @@ export default function Header() {
   );
 
   const textColor = isScrolled || isMenuOpen ? "text-gray-800" : "text-white";
-  const isActiveGroup = (group: (typeof navGroups)[number]) =>
+
+  const isActiveGroup = (group: NavGroup) =>
     group.links.some((link) => {
-      if (link.to === "/") return location.pathname === "/";
+      if (link.to === "/") {
+        return location.pathname === "/";
+      }
       return location.pathname.startsWith(link.to);
     });
 
-  const renderDropdown = (group: (typeof navGroups)[number]) => (
+  const renderDropdown = (group: NavGroup) => (
     <div
       className="absolute left-1/2 top-full z-40 mt-3 min-w-[260px] -translate-x-1/2 rounded-2xl border border-white/10 bg-slate-900/95 p-4 text-base text-white shadow-2xl backdrop-blur-lg"
       onMouseEnter={() => {
@@ -113,7 +137,7 @@ export default function Header() {
         <Link
           key={to}
           to={to}
-          className="block rounded-xl px-3 py-2 text-base font-semibold text-white/90 transition hover:bg-white/10 whitespace-nowrap"
+          className="block whitespace-nowrap rounded-xl px-3 py-2 text-base font-semibold text-white/90 transition hover:bg-white/10"
           onClick={() => setOpenDropdown(null)}
         >
           {label}
@@ -133,7 +157,7 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 z-50 w-full transition-colors duration-300 ${
+      className={`fixed left-0 top-0 z-50 w-full transition-colors duration-300 ${
         isScrolled || isMenuOpen ? "bg-white/90 shadow-md backdrop-blur" : "bg-transparent"
       }`}
     >
@@ -178,8 +202,8 @@ export default function Header() {
                   openDropdown === group.label || isActiveGroup(group)
                     ? "bg-white/90 text-gray-800 shadow-lg"
                     : textColor === "text-white"
-                    ? "text-white hover:bg-white/10 hover:shadow-[0_10px_30px_-15px_rgba(255,255,255,0.8)]"
-                    : "text-gray-800 hover:bg-gray-100 hover:shadow"
+                      ? "text-white hover:bg-white/10 hover:shadow-[0_10px_30px_-15px_rgba(255,255,255,0.8)]"
+                      : "text-gray-800 hover:bg-gray-100 hover:shadow"
                 }`}
               >
                 {group.label}
@@ -190,7 +214,7 @@ export default function Header() {
 
           {user ? (
             <div className="flex items-center gap-3">
-              <span className={`text-sm font-semibold ${textColor}`}>{user.nickname} 님</span>
+              <span className={`text-sm font-semibold ${textColor}`}>{user.nickname}님</span>
               <button
                 onClick={handleLogout}
                 className="rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
@@ -245,6 +269,15 @@ export default function Header() {
                     {label}
                   </Link>
                 ))}
+                {isAdmin && group.label === "커뮤니티" && (
+                  <Link
+                    to="/admin"
+                    className="block rounded-xl px-3 py-2 text-sm font-semibold text-pink-600 hover:bg-gray-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    관리자
+                  </Link>
+                )}
               </div>
             </div>
           ))}
