@@ -400,9 +400,9 @@ export default function Attendance() {
                 </div>
               </div>
               <div className="streak-tiers">
-                {[7, 14, 30].map((tier) => (
-                  <div key={tier} className={`tier-chip ${currentStreak >= tier ? "active" : ""}`}>
-                    {tier}일 {tier === 7 ? "미세 오라" : tier === 14 ? "포즈 강화" : "특수 이펙트"}
+                {[3, 3, 3].map((tier, idx) => (
+                  <div key={`${tier}-${idx}`} className={`tier-chip ${currentStreak >= tier ? "active" : ""}`}>
+                    {tier}일 {idx === 0 ? "얼굴 커스텀" : idx === 1 ? "몸통 커스텀" : "엠블럼 커스텀"}
                   </div>
                 ))}
               </div>

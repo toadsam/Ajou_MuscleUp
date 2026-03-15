@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import AvatarRenderer from "./avatar/AvatarRenderer";
 import TierUpAnimation from "./avatar/TierUpAnimation";
 import type { CharacterTier, GrowthParams } from "./avatar/types";
+import type { AvatarCustomization } from "../utils/avatarCustomization";
 
 type CharacterProfile = {
   level: number;
@@ -38,14 +40,24 @@ type Props = {
   evaluation: Evaluation | null;
   mbti?: string | null;
   change?: ChangeState | null;
+  customization?: AvatarCustomization | null;
+  rerollBurstNonce?: number;
 };
 
-export default function CharacterCard({ character, evaluation, mbti, change }: Props) {
+export default function CharacterCard({ character, evaluation, mbti, change, customization, rerollBurstNonce = 0 }: Props) {
   const glowClass = change?.evolved ? "card-evolution" : change?.leveledUp ? "card-levelup" : "";
   const tierBadgeClass = change?.tierChanged ? "badge-bounce" : "";
+  const [rerollFx, setRerollFx] = useState(false);
+
+  useEffect(() => {
+    if (!rerollBurstNonce) return;
+    setRerollFx(true);
+    const timer = window.setTimeout(() => setRerollFx(false), 1400);
+    return () => window.clearTimeout(timer);
+  }, [rerollBurstNonce]);
 
   return (
-    <div className={`rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5 ${glowClass}`}>
+    <div className={`rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5 ${glowClass} ${rerollFx ? "avatar-reforge-burst" : ""}`}>
       <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
         <TierUpAnimation active={Boolean(change?.tierChanged)} tier={character.tier}>
           <AvatarRenderer
@@ -55,6 +67,7 @@ export default function CharacterCard({ character, evaluation, mbti, change }: P
             stage={character.evolutionStage}
             mbti={mbti}
             size={156}
+            customization={customization}
           />
         </TierUpAnimation>
         <div className="flex-1 space-y-3">

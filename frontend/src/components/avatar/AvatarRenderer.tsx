@@ -1,3 +1,4 @@
+import { useId } from "react";
 import Arms from "./Arms";
 import Effects from "./Effects";
 import Head from "./Head";
@@ -7,6 +8,7 @@ import { resolveSeedFeatures } from "./seed";
 import { TIER_PRESETS } from "./tierPreset";
 import type { AvatarSeed, CharacterTier, GrowthParams } from "./types";
 import { defaultGrowthParams } from "./types";
+import type { AvatarCustomization } from "../../utils/avatarCustomization";
 import "./avatar.css";
 
 type Props = {
@@ -16,6 +18,7 @@ type Props = {
   stage: number;
   mbti?: string | null;
   size?: number;
+  customization?: AvatarCustomization | null;
 };
 
 const mbtiTone = (mbti?: string | null) => {
@@ -41,6 +44,7 @@ export default function AvatarRenderer({
   stage,
   mbti,
   size = 176,
+  customization,
 }: Props) {
   const growth = growthParams ?? defaultGrowthParams;
   const seedFeatures = resolveSeedFeatures(avatarSeed || "seed");
@@ -62,6 +66,16 @@ export default function AvatarRenderer({
   const tierPopScale = 1 + tierStep * 0.028;
   const dynamicGlow = 7 + tierPreset.glow * 30 + growth.muscularityNormalized * 8 + tierStep * 4;
   const bodyScale = 1 + tierStep * 0.018;
+  const svgId = useId().replace(/[:]/g, "");
+  const faceClipId = `face-custom-clip-${svgId}`;
+  const bodyClipId = `body-custom-clip-${svgId}`;
+  const emblemClipId = `emblem-custom-clip-${svgId}`;
+  const facePatternId = `face-custom-pattern-${svgId}`;
+  const bodyPatternId = `body-custom-pattern-${svgId}`;
+  const emblemPatternId = `emblem-custom-pattern-${svgId}`;
+  const hasFace = Boolean(customization?.face);
+  const hasBody = Boolean(customization?.body);
+  const hasEmblem = Boolean(customization?.emblem);
 
   return (
     <div
@@ -81,6 +95,30 @@ export default function AvatarRenderer({
             <stop offset="0%" stopColor={strokeColor} stopOpacity="0.75" />
             <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
           </radialGradient>
+          <clipPath id={faceClipId}>
+            <ellipse cx={72} cy={42} rx={14} ry={8.5} />
+          </clipPath>
+          <clipPath id={bodyClipId}>
+            <ellipse cx={72} cy={93} rx={22} ry={31} />
+          </clipPath>
+          <clipPath id={emblemClipId}>
+            <circle cx={72} cy={88} r={8} />
+          </clipPath>
+          {hasFace && (
+            <pattern id={facePatternId} patternUnits="objectBoundingBox" width={1} height={1}>
+              <image href={customization?.face ?? ""} width={60} height={36} preserveAspectRatio="xMidYMid slice" />
+            </pattern>
+          )}
+          {hasBody && (
+            <pattern id={bodyPatternId} patternUnits="objectBoundingBox" width={1} height={1}>
+              <image href={customization?.body ?? ""} width={92} height={126} preserveAspectRatio="xMidYMid slice" />
+            </pattern>
+          )}
+          {hasEmblem && (
+            <pattern id={emblemPatternId} patternUnits="objectBoundingBox" width={1} height={1}>
+              <image href={customization?.emblem ?? ""} width={40} height={40} preserveAspectRatio="xMidYMid slice" />
+            </pattern>
+          )}
         </defs>
 
         <g
@@ -100,6 +138,15 @@ export default function AvatarRenderer({
             skinColor={tone.skin}
           />
           <Head mbti={mbti} seedFeatures={seedFeatures} strokeColor={strokeColor} skinColor={tone.skin} hairColor={tone.hair} />
+          {hasBody && (
+            <rect x={48} y={62} width={48} height={62} clipPath={`url(#${bodyClipId})`} fill={`url(#${bodyPatternId})`} opacity={0.45} />
+          )}
+          {hasFace && (
+            <rect x={57} y={32} width={30} height={20} clipPath={`url(#${faceClipId})`} fill={`url(#${facePatternId})`} opacity={0.65} />
+          )}
+          {hasEmblem && (
+            <circle cx={72} cy={88} r={8} clipPath={`url(#${emblemClipId})`} fill={`url(#${emblemPatternId})`} opacity={0.9} />
+          )}
           <Effects tier={tier} stage={stage} strokeColor={strokeColor} accentColor={strokeColor} />
         </g>
       </svg>

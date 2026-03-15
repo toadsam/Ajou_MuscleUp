@@ -1,6 +1,15 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import CharacterCard from "../components/CharacterCard";
 import type { GrowthParams } from "../components/avatar/types";
+import {
+  CUSTOM_PART_LABEL,
+  CUSTOM_UNLOCK_REQUIREMENTS,
+  getUnlockedParts,
+  loadAvatarCustomization,
+  saveAvatarCustomization,
+  type AvatarCustomization,
+  type CustomPart,
+} from "../utils/avatarCustomization";
 
 type BragPost = {
   id: number;
@@ -89,6 +98,12 @@ type StatsCharacterResponse = {
   change: CharacterChange;
 };
 
+type AttendanceSummary = {
+  monthWorkoutCount: number;
+  currentStreak: number;
+  bestStreakInMonth?: number | null;
+};
+
 type Toast = { type: "success" | "error"; message: string };
 
 type EffectBanner = { message: string; kind: "level" | "evolution" | "tier" };
@@ -162,6 +177,7 @@ const stageDescriptions = [
 ];
 
 type StatsForm = typeof emptyForm;
+const formatMonthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
 export default function MyPage() {
   const [data, setData] = useState<MyPageResponse | null>(null);
@@ -179,12 +195,17 @@ export default function MyPage() {
   const [banner, setBanner] = useState<EffectBanner | null>(null);
   const [publicUpdating, setPublicUpdating] = useState(false);
   const [rerolling, setRerolling] = useState(false);
+  const [rerollBurstNonce, setRerollBurstNonce] = useState(0);
+  const [rerollCinematic, setRerollCinematic] = useState(false);
+  const [attendanceCount, setAttendanceCount] = useState(0);
+  const [customization, setCustomization] = useState<AvatarCustomization>({});
 
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         setError(null);
+        const monthKey = formatMonthKey(new Date());
         const [pageRes, statsRes, characterRes] = await Promise.all([
           api<MyPageResponse>("/api/mypage"),
           api<UserBodyStats | null>("/api/mypage/stats"),
@@ -193,6 +214,13 @@ export default function MyPage() {
         setData(pageRes);
         setStats(statsRes);
         setCharacter(characterRes);
+        setCustomization(loadAvatarCustomization(pageRes.email));
+        try {
+          const attendanceSummary = await api<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`);
+          setAttendanceCount(attendanceSummary.monthWorkoutCount ?? 0);
+        } catch (e) {
+          setAttendanceCount(0);
+        }
         try {
           const rankRes = await api<RankSummary>("/api/rankings/characters?type=LEVEL&limit=1");
           setRank(rankRes);
@@ -242,7 +270,7 @@ export default function MyPage() {
     } else {
       return;
     }
-    const timer = window.setTimeout(() => setBanner(null), 2000);
+    const timer = window.setTimeout(() => setBanner(null), 2600);
     return () => window.clearTimeout(timer);
   }, [change]);
 
@@ -326,12 +354,54 @@ export default function MyPage() {
       const res = await api<CharacterProfile>("/api/character/reroll", { method: "POST" });
       setCharacter(res);
       setChange({ leveledUp: false, evolved: false, tierChanged: true });
-      showToast({ type: "success", message: "외형이 새롭게 생성되었습니다." });
+      setRerollCinematic(true);
+      setBanner({ message: "REFORGED!", kind: "tier" });
+      setRerollBurstNonce((prev) => prev + 1);
+      window.setTimeout(() => setRerollCinematic(false), 3200);
+      showToast({ type: "success", message: "강화 연출과 함께 외형이 재생성됐어요." });
     } catch (e: any) {
       showToast({ type: "error", message: e?.message || "리롤에 실패했습니다." });
     } finally {
       setRerolling(false);
     }
+  };
+
+  const unlockedParts = useMemo(() => getUnlockedParts(attendanceCount), [attendanceCount]);
+
+  const updateCustomization = (next: AvatarCustomization) => {
+    setCustomization(next);
+    saveAvatarCustomization(data?.email, next);
+  };
+
+  const onCustomImageChange = (part: CustomPart, file?: File | null) => {
+    if (!file) return;
+    if (!unlockedParts[part]) {
+      showToast({ type: "error", message: `${CUSTOM_UNLOCK_REQUIREMENTS[part]}일 달성 후 열립니다.` });
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      showToast({ type: "error", message: "이미지 파일만 업로드할 수 있어요." });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      showToast({ type: "error", message: "2MB 이하 이미지를 선택해 주세요." });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = typeof reader.result === "string" ? reader.result : "";
+      if (!value) return;
+      updateCustomization({ ...customization, [part]: value });
+      showToast({ type: "success", message: `${CUSTOM_PART_LABEL[part]} 커스텀을 적용했어요.` });
+    };
+    reader.onerror = () => showToast({ type: "error", message: "이미지 읽기에 실패했어요." });
+    reader.readAsDataURL(file);
+  };
+
+  const clearCustomImage = (part: CustomPart) => {
+    const next = { ...customization, [part]: null };
+    updateCustomization(next);
+    showToast({ type: "success", message: `${CUSTOM_PART_LABEL[part]} 커스텀을 해제했어요.` });
   };
 
   const statInputs = useMemo(
@@ -457,7 +527,14 @@ export default function MyPage() {
                   </button>
                 </div>
               </div>
-              <CharacterCard character={character} evaluation={evaluation} mbti={stats?.mbti} change={change} />
+              <CharacterCard
+                character={character}
+                evaluation={evaluation}
+                mbti={stats?.mbti}
+                change={change}
+                customization={customization}
+                rerollBurstNonce={rerollBurstNonce}
+              />
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 grid md:grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Tier Info</div>
@@ -488,6 +565,61 @@ export default function MyPage() {
                 {!character.isPublic && (
                   <div className="text-xs text-gray-400">공개 설정 시 랭킹이 계산됩니다.</div>
                 )}
+              </div>
+              <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4 space-y-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-amber-200/90">Attendance Unlock</p>
+                  <h3 className="text-lg font-bold text-amber-50">사진 커스텀 해금</h3>
+                  <p className="text-xs text-amber-100/80">이번 달 운동 출석 {attendanceCount}일 기준으로 파트가 열립니다.</p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {(["face", "body", "emblem"] as CustomPart[]).map((part) => {
+                    const unlocked = unlockedParts[part];
+                    const image = customization[part];
+                    return (
+                      <div key={part} className={`rounded-xl border p-3 ${unlocked ? "border-emerald-300/50 bg-emerald-500/10" : "border-white/15 bg-black/20"}`}>
+                        <div className="flex items-center justify-between">
+                          <strong className="text-sm text-white">{CUSTOM_PART_LABEL[part]}</strong>
+                          <span className={`text-[11px] ${unlocked ? "text-emerald-200" : "text-gray-400"}`}>
+                            {unlocked ? "해금" : `${CUSTOM_UNLOCK_REQUIREMENTS[part]}일 필요`}
+                          </span>
+                        </div>
+                        <div className="mt-2 h-20 rounded-lg border border-white/10 bg-black/30 overflow-hidden">
+                          {image ? (
+                            <img src={image} alt={`${part} custom`} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-xs text-gray-400">
+                              {unlocked ? "이미지 없음" : "잠김"}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <label className={`flex-1 text-center px-2 py-1.5 rounded-md text-xs font-semibold border ${unlocked ? "border-white/25 text-white hover:bg-white/10 cursor-pointer" : "border-white/10 text-gray-500 cursor-not-allowed"}`}>
+                            업로드
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={!unlocked}
+                              onChange={(e) => {
+                                onCustomImageChange(part, e.target.files?.[0]);
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="px-2 py-1.5 rounded-md text-xs border border-white/20 text-gray-200 disabled:opacity-40"
+                            disabled={!image}
+                            onClick={() => clearCustomImage(part)}
+                          >
+                            해제
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : (
@@ -584,6 +716,16 @@ export default function MyPage() {
           }`}
         >
           {banner.message}
+        </div>
+      )}
+
+      {rerollCinematic && (
+        <div className="reroll-cinematic-overlay" aria-hidden="true">
+          <div className="reroll-cinematic-flash" />
+          <div className="reroll-cinematic-ring ring-1" />
+          <div className="reroll-cinematic-ring ring-2" />
+          <div className="reroll-cinematic-ring ring-3" />
+          <div className="reroll-cinematic-rays" />
         </div>
       )}
     </section>
