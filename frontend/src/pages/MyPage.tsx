@@ -10,6 +10,8 @@ import {
   type AvatarCustomization,
   type CustomPart,
 } from "../utils/avatarCustomization";
+import { resolveEvolutionBranch, resolveSkillUnlocks } from "../utils/evolutionProgress";
+import { saveAppearanceBySeed } from "../utils/avatarAppearanceState";
 
 type BragPost = {
   id: number;
@@ -178,6 +180,18 @@ const stageDescriptions = [
 
 type StatsForm = typeof emptyForm;
 const formatMonthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+const skillToggleStorageKey = (email?: string | null) => `avatar-skill-toggle-v1:${email?.trim().toLowerCase() || "guest"}`;
+
+const loadSkillToggles = (email?: string | null): Record<string, boolean> => {
+  try {
+    const raw = localStorage.getItem(skillToggleStorageKey(email));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, boolean>;
+    return Object.fromEntries(Object.entries(parsed).filter(([, value]) => typeof value === "boolean"));
+  } catch {
+    return {};
+  }
+};
 
 export default function MyPage() {
   const [data, setData] = useState<MyPageResponse | null>(null);
@@ -199,6 +213,7 @@ export default function MyPage() {
   const [rerollCinematic, setRerollCinematic] = useState(false);
   const [attendanceCount, setAttendanceCount] = useState(0);
   const [customization, setCustomization] = useState<AvatarCustomization>({});
+  const [skillEnabledMap, setSkillEnabledMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     (async () => {
@@ -215,6 +230,7 @@ export default function MyPage() {
         setStats(statsRes);
         setCharacter(characterRes);
         setCustomization(loadAvatarCustomization(pageRes.email));
+        setSkillEnabledMap(loadSkillToggles(pageRes.email));
         try {
           const attendanceSummary = await api<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`);
           setAttendanceCount(attendanceSummary.monthWorkoutCount ?? 0);
@@ -279,6 +295,11 @@ export default function MyPage() {
     window.setTimeout(() => setToast(null), 2000);
   };
 
+  const triggerTransformFx = (duration = 2400) => {
+    setRerollCinematic(true);
+    window.setTimeout(() => setRerollCinematic(false), duration);
+  };
+
   const parseNumber = (value: string) => {
     if (!value.trim()) return null;
     const parsed = Number(value);
@@ -317,6 +338,9 @@ export default function MyPage() {
       setCharacter(res.character);
       setEvaluation(res.evaluation);
       setChange(res.change);
+      if (res.change?.leveledUp || res.change?.evolved || res.change?.tierChanged) {
+        triggerTransformFx(2200);
+      }
       try {
         const rankRes = await api<RankSummary>("/api/rankings/characters?type=LEVEL&limit=1");
         setRank(rankRes);
@@ -354,10 +378,9 @@ export default function MyPage() {
       const res = await api<CharacterProfile>("/api/character/reroll", { method: "POST" });
       setCharacter(res);
       setChange({ leveledUp: false, evolved: false, tierChanged: true });
-      setRerollCinematic(true);
+      triggerTransformFx(3200);
       setBanner({ message: "REFORGED!", kind: "tier" });
       setRerollBurstNonce((prev) => prev + 1);
-      window.setTimeout(() => setRerollCinematic(false), 3200);
       showToast({ type: "success", message: "강화 연출과 함께 외형이 재생성됐어요." });
     } catch (e: any) {
       showToast({ type: "error", message: e?.message || "리롤에 실패했습니다." });
@@ -403,6 +426,54 @@ export default function MyPage() {
     updateCustomization(next);
     showToast({ type: "success", message: `${CUSTOM_PART_LABEL[part]} 커스텀을 해제했어요.` });
   };
+
+  const evolutionBranch = useMemo(() => {
+    if (!character) return null;
+    return resolveEvolutionBranch({
+      strengthRatio: evaluation?.strengthRatio,
+      threeLiftTotal: evaluation?.threeLiftTotal,
+      muscularity: character.growthParams?.muscularityNormalized,
+      bodyFat: character.growthParams?.fatNormalized,
+    });
+  }, [character, evaluation]);
+
+  const skillUnlocks = useMemo(() => {
+    if (!character || !evolutionBranch) return [];
+    return resolveSkillUnlocks({
+      level: character.level,
+      stage: character.evolutionStage,
+      tier: character.tier,
+      attendanceCount,
+      branch: evolutionBranch,
+    });
+  }, [character, evolutionBranch, attendanceCount]);
+
+  const activeSkillCount = useMemo(
+    () => skillUnlocks.filter((skill) => skill.unlocked && (skillEnabledMap[skill.id] ?? true)).length,
+    [skillUnlocks, skillEnabledMap]
+  );
+  const activeSkillIds = useMemo(
+    () => skillUnlocks.filter((skill) => skill.unlocked && (skillEnabledMap[skill.id] ?? true)).map((skill) => skill.id),
+    [skillUnlocks, skillEnabledMap]
+  );
+
+  const toggleSkillEnabled = (skillId: string) => {
+    setSkillEnabledMap((prev) => ({ ...prev, [skillId]: !(prev[skillId] ?? true) }));
+  };
+
+  useEffect(() => {
+    if (!data?.email) return;
+    localStorage.setItem(skillToggleStorageKey(data.email), JSON.stringify(skillEnabledMap));
+  }, [data?.email, skillEnabledMap]);
+
+  useEffect(() => {
+    if (!character?.avatarSeed) return;
+    saveAppearanceBySeed(character.avatarSeed, {
+      branch: evolutionBranch ?? null,
+      activeSkillIds,
+      customization,
+    });
+  }, [character?.avatarSeed, evolutionBranch, activeSkillIds, customization]);
 
   const statInputs = useMemo(
     () => [
@@ -534,6 +605,10 @@ export default function MyPage() {
                 change={change}
                 customization={customization}
                 rerollBurstNonce={rerollBurstNonce}
+                evolutionBranch={evolutionBranch}
+                unlockedSkills={skillUnlocks}
+                skillEnabledMap={skillEnabledMap}
+                onToggleSkill={toggleSkillEnabled}
               />
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 grid md:grid-cols-2 gap-3">
                 <div>
@@ -547,6 +622,14 @@ export default function MyPage() {
                   <div className="text-white font-semibold">
                     Stage {character.evolutionStage} · {stageDescriptions[character.evolutionStage] ?? "성장 중"}
                   </div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Evolution Branch</div>
+                  <div className="text-white font-semibold">{evolutionBranch ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Skill Unlock</div>
+                  <div className="text-white font-semibold">{activeSkillCount} / {skillUnlocks.length}</div>
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 flex flex-wrap gap-6">

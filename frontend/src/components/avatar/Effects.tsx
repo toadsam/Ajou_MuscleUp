@@ -1,5 +1,6 @@
 import { TIER_PRESETS } from "./tierPreset";
 import type { CharacterTier } from "./types";
+import type { EvolutionBranch } from "../../utils/evolutionProgress";
 
 type Props = {
   tier: CharacterTier;
@@ -7,9 +8,12 @@ type Props = {
   strokeColor: string;
   accentColor: string;
   archetype?: string;
+  evolutionBranch?: EvolutionBranch;
+  skillLevel?: number;
+  activeSkillIds?: string[];
 };
 
-export default function Effects({ tier, stage, strokeColor, accentColor, archetype }: Props) {
+export default function Effects({ tier, stage, strokeColor, accentColor, archetype, evolutionBranch, skillLevel = 0, activeSkillIds = [] }: Props) {
   const preset = TIER_PRESETS[tier];
   const tierStep = ({
     BRONZE: 0,
@@ -22,10 +26,15 @@ export default function Effects({ tier, stage, strokeColor, accentColor, archety
     CHALLENGER: 7,
   } as const)[tier];
   const particleCount = preset.particles + Math.max(0, Math.floor(stage / 2));
-  const ringOpacity = 0.12 + preset.auraIntensity * 0.28;
+  const ringOpacity = 0.12 + preset.auraIntensity * 0.28 + skillLevel * 0.02;
   const ringScale = 1 + tierStep * 0.035;
   const waveBoost = tierStep >= 4 ? 1 + (tierStep - 3) * 0.06 : 1;
   const followerCount = tierStep >= 5 ? 2 : tierStep >= 2 ? 1 : 0;
+  const activeSkills = new Set(activeSkillIds);
+  const auraOn = activeSkills.has("aura");
+  const waveOn = activeSkills.has("wave");
+  const branchOn = activeSkills.has("branch");
+  const overdriveUnlocked = activeSkills.has("burst");
 
   return (
     <g className={`${preset.pulse ? "avatar-tier-pulse" : ""}`} transform={`scale(${ringScale}) translate(${72 * (1 - ringScale)}, ${96 * (1 - ringScale)})`}>
@@ -55,8 +64,12 @@ export default function Effects({ tier, stage, strokeColor, accentColor, archety
       {archetype === "empath" && <path d="M72 14 C74 10, 80 10, 80 16 C80 20, 76 22, 72 26 C68 22, 64 20, 64 16 C64 10, 70 10, 72 14 Z" fill={accentColor} opacity={0.35} />}
       {archetype === "guardian" && <circle cx={72} cy={18} r={8} fill="none" stroke={accentColor} strokeWidth={1.5} opacity={0.35} />}
       {archetype === "adventurer" && <path d="M60 18 L84 18 L72 28 Z" fill={accentColor} opacity={0.35} />}
+      {branchOn && evolutionBranch === "TITAN" && <rect x={66} y={12} width={12} height={12} rx={2} fill="none" stroke={accentColor} strokeWidth={1.4} opacity={0.32} />}
+      {branchOn && evolutionBranch === "BLAZE" && <path d="M72 12 C76 18, 74 21, 72 24 C70 21, 68 18, 72 12 Z" fill={accentColor} opacity={0.3} />}
+      {branchOn && evolutionBranch === "PHANTOM" && <ellipse cx={72} cy={18} rx={9} ry={4} fill="none" stroke={accentColor} strokeWidth={1.2} opacity={0.3} />}
+      {auraOn && <ellipse cx={72} cy={96} rx={70} ry={80} fill="none" stroke={accentColor} strokeWidth={1.3} opacity={0.2} className="avatar-overdrive-ring" />}
 
-      {preset.lightWave && (
+      {(preset.lightWave || waveOn) && (
         <ellipse
           cx={72}
           cy={96}
@@ -81,6 +94,7 @@ export default function Effects({ tier, stage, strokeColor, accentColor, archety
       )}
 
       {preset.energyRing && <circle cx={72} cy={96} r={63} fill="none" stroke={strokeColor} strokeWidth={2} opacity={0.4} className="avatar-energy-ring" />}
+      {overdriveUnlocked && <circle cx={72} cy={96} r={70} fill="none" stroke={accentColor} strokeWidth={1.2} opacity={0.28} className="avatar-overdrive-ring" />}
 
       {Array.from({ length: particleCount }).map((_, idx) => {
         const angle = (Math.PI * 2 * idx) / particleCount;

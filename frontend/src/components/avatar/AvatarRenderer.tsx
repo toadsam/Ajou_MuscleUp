@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import Arms from "./Arms";
 import Effects from "./Effects";
 import Head from "./Head";
@@ -9,6 +9,8 @@ import { TIER_PRESETS } from "./tierPreset";
 import type { AvatarSeed, CharacterTier, GrowthParams } from "./types";
 import { defaultGrowthParams } from "./types";
 import type { AvatarCustomization } from "../../utils/avatarCustomization";
+import { amplifyGrowthParams, branchTheme, type EvolutionBranch } from "../../utils/evolutionProgress";
+import { loadAppearanceBySeed } from "../../utils/avatarAppearanceState";
 import "./avatar.css";
 
 type Props = {
@@ -19,6 +21,9 @@ type Props = {
   mbti?: string | null;
   size?: number;
   customization?: AvatarCustomization | null;
+  evolutionBranch?: EvolutionBranch | null;
+  unlockedSkillCount?: number;
+  activeSkillIds?: string[];
 };
 
 const mbtiTone = (mbti?: string | null) => {
@@ -45,10 +50,21 @@ export default function AvatarRenderer({
   mbti,
   size = 176,
   customization,
+  evolutionBranch,
+  unlockedSkillCount = 0,
+  activeSkillIds = [],
 }: Props) {
-  const growth = growthParams ?? defaultGrowthParams;
+  const persistedAppearance = useMemo(() => loadAppearanceBySeed(avatarSeed), [avatarSeed]);
+  const resolvedBranch = evolutionBranch ?? persistedAppearance?.branch ?? null;
+  const resolvedSkillIds = activeSkillIds.length > 0 ? activeSkillIds : persistedAppearance?.activeSkillIds ?? [];
+  const resolvedSkillCount = activeSkillIds.length > 0 ? unlockedSkillCount : resolvedSkillIds.length;
+  const resolvedCustomization = customization ?? persistedAppearance?.customization ?? null;
+
+  const rawGrowth = growthParams ?? defaultGrowthParams;
+  const growth = resolvedBranch ? amplifyGrowthParams(rawGrowth, resolvedBranch, resolvedSkillCount) : rawGrowth;
   const seedFeatures = resolveSeedFeatures(avatarSeed || "seed");
   const tone = mbtiTone(mbti);
+  const branch = resolvedBranch ? branchTheme(resolvedBranch) : null;
   const tierPreset = TIER_PRESETS[tier];
   const tierStep = ({
     BRONZE: 0,
@@ -61,11 +77,11 @@ export default function AvatarRenderer({
     CHALLENGER: 7,
   } as const)[tier];
   const motionClass = mbtiMotionClass(mbti);
-  const strokeColor = tone.stroke;
+  const strokeColor = branch?.accent ?? tone.stroke;
   const boostedStroke = growth.strokeWidth + tierPreset.strokeBoost * 0.7;
-  const tierPopScale = 1 + tierStep * 0.028;
-  const dynamicGlow = 7 + tierPreset.glow * 30 + growth.muscularityNormalized * 8 + tierStep * 4;
-  const bodyScale = 1 + tierStep * 0.018;
+  const tierPopScale = 1 + tierStep * 0.03 + resolvedSkillCount * 0.01;
+  const dynamicGlow = 8 + tierPreset.glow * 34 + growth.muscularityNormalized * 10 + tierStep * 4 + resolvedSkillCount * 2;
+  const bodyScale = 1 + tierStep * 0.02 + growth.muscularityNormalized * 0.02;
   const svgId = useId().replace(/[:]/g, "");
   const faceClipId = `face-custom-clip-${svgId}`;
   const bodyClipId = `body-custom-clip-${svgId}`;
@@ -73,9 +89,9 @@ export default function AvatarRenderer({
   const facePatternId = `face-custom-pattern-${svgId}`;
   const bodyPatternId = `body-custom-pattern-${svgId}`;
   const emblemPatternId = `emblem-custom-pattern-${svgId}`;
-  const hasFace = Boolean(customization?.face);
-  const hasBody = Boolean(customization?.body);
-  const hasEmblem = Boolean(customization?.emblem);
+  const hasFace = Boolean(resolvedCustomization?.face);
+  const hasBody = Boolean(resolvedCustomization?.body);
+  const hasEmblem = Boolean(resolvedCustomization?.emblem);
 
   return (
     <div
@@ -106,17 +122,17 @@ export default function AvatarRenderer({
           </clipPath>
           {hasFace && (
             <pattern id={facePatternId} patternUnits="objectBoundingBox" width={1} height={1}>
-              <image href={customization?.face ?? ""} width={60} height={36} preserveAspectRatio="xMidYMid slice" />
+              <image href={resolvedCustomization?.face ?? ""} width={60} height={36} preserveAspectRatio="xMidYMid slice" />
             </pattern>
           )}
           {hasBody && (
             <pattern id={bodyPatternId} patternUnits="objectBoundingBox" width={1} height={1}>
-              <image href={customization?.body ?? ""} width={92} height={126} preserveAspectRatio="xMidYMid slice" />
+              <image href={resolvedCustomization?.body ?? ""} width={92} height={126} preserveAspectRatio="xMidYMid slice" />
             </pattern>
           )}
           {hasEmblem && (
             <pattern id={emblemPatternId} patternUnits="objectBoundingBox" width={1} height={1}>
-              <image href={customization?.emblem ?? ""} width={40} height={40} preserveAspectRatio="xMidYMid slice" />
+              <image href={resolvedCustomization?.emblem ?? ""} width={40} height={40} preserveAspectRatio="xMidYMid slice" />
             </pattern>
           )}
         </defs>
@@ -147,7 +163,16 @@ export default function AvatarRenderer({
           {hasEmblem && (
             <circle cx={72} cy={88} r={8} clipPath={`url(#${emblemClipId})`} fill={`url(#${emblemPatternId})`} opacity={0.9} />
           )}
-          <Effects tier={tier} stage={stage} strokeColor={strokeColor} accentColor={strokeColor} />
+          <Effects
+            tier={tier}
+            stage={stage}
+            strokeColor={strokeColor}
+            accentColor={strokeColor}
+            archetype={branch?.archetype}
+            evolutionBranch={resolvedBranch ?? undefined}
+            skillLevel={resolvedSkillCount}
+            activeSkillIds={resolvedSkillIds}
+          />
         </g>
       </svg>
     </div>

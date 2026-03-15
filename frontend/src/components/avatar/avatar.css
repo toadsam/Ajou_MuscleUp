@@ -49,6 +49,11 @@
   animation: dumbbell-float 1.4s ease-in-out infinite;
 }
 
+.avatar-overdrive-ring {
+  animation: overdrive-expand 1.8s ease-out infinite;
+  transform-origin: 72px 96px;
+}
+
 .avatar-master-burst::after {
   content: "";
   position: absolute;
@@ -145,6 +150,11 @@
 @keyframes dumbbell-float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-4px) rotate(6deg); }
+}
+
+@keyframes overdrive-expand {
+  0% { opacity: 0.5; transform: scale(0.95); }
+  100% { opacity: 0; transform: scale(1.08); }
 }
 
 .avatar-reforge-burst {
