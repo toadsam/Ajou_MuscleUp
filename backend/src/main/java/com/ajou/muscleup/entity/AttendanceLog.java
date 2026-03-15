@@ -2,6 +2,7 @@ package com.ajou.muscleup.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.*;
 
 @Getter
@@ -37,4 +38,33 @@ public class AttendanceLog extends BaseTimeEntity {
 
     @Column(name = "workout_intensity", length = 16)
     private String workoutIntensity;
+
+    @Column(name = "media_urls", length = 4000)
+    private String mediaUrls;
+
+    @Builder.Default
+    @Column(name = "shared", nullable = false)
+    private boolean shared = false;
+
+    @Column(name = "share_slug", length = 64, unique = true)
+    private String shareSlug;
+
+    @Builder.Default
+    @Column(name = "cheer_count", nullable = false)
+    private int cheerCount = 0;
+
+    @Builder.Default
+    @Column(name = "report_count", nullable = false)
+    private int reportCount = 0;
+
+    @Builder.Default
+    @Column(name = "hidden_by_admin", nullable = false)
+    private boolean hiddenByAdmin = false;
+
+    @Builder.Default
+    @Column(name = "edit_count", nullable = false)
+    private int editCount = 0;
+
+    @Column(name = "last_edited_at")
+    private LocalDateTime lastEditedAt;
 }

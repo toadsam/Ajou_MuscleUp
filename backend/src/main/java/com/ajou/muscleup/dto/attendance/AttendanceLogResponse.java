@@ -19,6 +19,12 @@ public class AttendanceLogResponse {
     private String memo;
     private List<String> workoutTypes;
     private String workoutIntensity;
+    private List<String> mediaUrls;
+    private boolean shared;
+    private String shareSlug;
+    private int cheerCount;
+    private int editCount;
+    private LocalDateTime lastEditedAt;
     private LocalDateTime updatedAt;
     private Integer expEarned;
     private List<EventProgressResponse> eventProgress;
@@ -31,6 +37,12 @@ public class AttendanceLogResponse {
                 .memo(log.getMemo())
                 .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))
                 .workoutIntensity(log.getWorkoutIntensity())
+                .mediaUrls(splitMediaUrls(log.getMediaUrls()))
+                .shared(log.isShared())
+                .shareSlug(log.getShareSlug())
+                .cheerCount(log.getCheerCount())
+                .editCount(log.getEditCount())
+                .lastEditedAt(log.getLastEditedAt())
                 .updatedAt(log.getUpdatedAt())
                 .build();
     }
@@ -47,6 +59,12 @@ public class AttendanceLogResponse {
                 .memo(log.getMemo())
                 .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))
                 .workoutIntensity(log.getWorkoutIntensity())
+                .mediaUrls(splitMediaUrls(log.getMediaUrls()))
+                .shared(log.isShared())
+                .shareSlug(log.getShareSlug())
+                .cheerCount(log.getCheerCount())
+                .editCount(log.getEditCount())
+                .lastEditedAt(log.getLastEditedAt())
                 .updatedAt(log.getUpdatedAt())
                 .expEarned(expEarned)
                 .eventProgress(eventProgress)
@@ -59,6 +77,16 @@ public class AttendanceLogResponse {
             return Collections.emptyList();
         }
         return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
+    }
+
+    private static List<String> splitMediaUrls(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(raw.split("\n"))
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
                 .toList();

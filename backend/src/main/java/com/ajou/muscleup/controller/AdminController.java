@@ -8,6 +8,7 @@ import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.ProgramApplicationRepository;
 import com.ajou.muscleup.repository.ReviewRepository;
 import com.ajou.muscleup.service.AnalyticsService;
+import com.ajou.muscleup.service.AttendanceService;
 import com.ajou.muscleup.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ public class AdminController {
     private final AiChatMessageRepository aiChatMessageRepository;
     private final ProgramApplicationRepository programApplicationRepository;
     private final AuditLogService auditLogService;
+    private final AttendanceService attendanceService;
 
     @GetMapping("/ping")
     public ResponseEntity<Map<String, Object>> ping() {
@@ -100,5 +102,20 @@ public class AdminController {
         app.setStatus(status);
         programApplicationRepository.save(app);
         return ResponseEntity.ok(com.ajou.muscleup.dto.program.ApplicationResponse.from(app));
+    }
+
+    @GetMapping("/attendance/shares")
+    public ResponseEntity<List<com.ajou.muscleup.dto.attendance.AttendanceShareResponse>> listAttendanceShares(
+            @RequestParam(value = "limit", defaultValue = "100") int limit
+    ) {
+        return ResponseEntity.ok(attendanceService.listSharedForAdmin(limit));
+    }
+
+    @PatchMapping("/attendance/shares/{id}/hidden")
+    public ResponseEntity<com.ajou.muscleup.dto.attendance.AttendanceShareResponse> setAttendanceShareHidden(
+            @PathVariable("id") Long id,
+            @RequestParam("hidden") boolean hidden
+    ) {
+        return ResponseEntity.ok(attendanceService.setHiddenByAdmin(id, hidden));
     }
 }

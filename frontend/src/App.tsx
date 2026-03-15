@@ -27,6 +27,7 @@ import MyPage from "./pages/MyPage";
 import AiShareView from "./pages/AiShareView";
 import AdminHistory from "./pages/AdminHistory";
 import Attendance from "./pages/Attendance";
+import AttendanceShareView from "./pages/AttendanceShareView";
 import Rankings from "./pages/Rankings";
 import Lounge from "./pages/Lounge";
 import Events from "./pages/Events";
@@ -48,6 +49,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/ai/share/:slug" element={<AiShareView />} />
+            <Route path="/attendance/share/:slug" element={<AttendanceShareView />} />
 
             {/* ??로그???�요 ?�는 공개 ?�우??*/}
             <Route path="/proteins/:id" element={<ProteinDetail />} />

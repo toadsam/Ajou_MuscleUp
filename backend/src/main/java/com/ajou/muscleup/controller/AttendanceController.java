@@ -1,6 +1,8 @@
 package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
+import com.ajou.muscleup.dto.attendance.AttendanceRankingItemResponse;
+import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
 import com.ajou.muscleup.service.AttendanceService;
@@ -59,6 +61,56 @@ public class AttendanceController {
     ) {
         LocalDate parsed = parseDateOrThrow(date);
         return ResponseEntity.ok(attendanceService.upsertByDate(email, parsed, request));
+    }
+
+    @PostMapping("/{date}/share")
+    public ResponseEntity<AttendanceShareResponse> shareByDate(
+            @AuthenticationPrincipal String email,
+            @PathVariable String date
+    ) {
+        LocalDate parsed = parseDateOrThrow(date);
+        return ResponseEntity.ok(attendanceService.shareByDate(email, parsed));
+    }
+
+    @DeleteMapping("/{date}/share")
+    public ResponseEntity<Void> unshareByDate(
+            @AuthenticationPrincipal String email,
+            @PathVariable String date
+    ) {
+        LocalDate parsed = parseDateOrThrow(date);
+        attendanceService.unshareByDate(email, parsed);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/share/{slug}")
+    public ResponseEntity<AttendanceShareResponse> getSharedBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(attendanceService.getSharedBySlug(slug));
+    }
+
+    @PostMapping("/share/{slug}/cheer")
+    public ResponseEntity<AttendanceShareResponse> cheerBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(attendanceService.addCheerBySlug(slug));
+    }
+
+    @PostMapping("/share/{slug}/report")
+    public ResponseEntity<AttendanceShareResponse> reportBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(attendanceService.reportBySlug(slug));
+    }
+
+    @GetMapping("/rankings/weekly-streak")
+    public ResponseEntity<List<AttendanceRankingItemResponse>> weeklyStreakRanking(
+            @RequestParam(value = "limit", defaultValue = "10") int limit
+    ) {
+        return ResponseEntity.ok(attendanceService.getWeeklyStreakRanking(limit));
+    }
+
+    @GetMapping("/rankings/monthly-media")
+    public ResponseEntity<List<AttendanceRankingItemResponse>> monthlyMediaRanking(
+            @RequestParam String month,
+            @RequestParam(value = "limit", defaultValue = "10") int limit
+    ) {
+        YearMonth parsed = parseMonthOrThrow(month);
+        return ResponseEntity.ok(attendanceService.getMonthlyMediaRanking(parsed, limit));
     }
 
     private YearMonth parseMonthOrThrow(String month) {

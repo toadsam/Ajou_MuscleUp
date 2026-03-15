@@ -18,4 +18,7 @@ public class AttendanceUpsertRequest {
 
     @Size(max = 16)
     private String workoutIntensity;
+
+    @Size(max = 10)
+    private List<String> mediaUrls;
 }

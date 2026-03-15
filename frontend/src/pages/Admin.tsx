@@ -21,6 +21,7 @@ type SummaryResponse = {
 };
 
 type ProteinItem = { id: number; name: string };
+type AttendanceShareItem = { id: number; date: string; authorNickname?: string | null; cheerCount: number; reportCount: number; shareSlug?: string | null; hiddenByAdmin?: boolean; };
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -153,6 +154,8 @@ export default function Admin() {
 
   const [brags, setBrags] = useState<{ id: number; title: string }[]>([]);
   const [loadingBrags, setLoadingBrags] = useState(false);
+  const [attendanceShares, setAttendanceShares] = useState<AttendanceShareItem[]>([]);
+  const [loadingAttendanceShares, setLoadingAttendanceShares] = useState(false);
 
   const loadBrags = async () => {
     try {
@@ -187,7 +190,35 @@ export default function Admin() {
     loadGallery();
     loadProteins();
     loadBrags();
+    loadAttendanceShares();
   }, []);
+
+  const loadAttendanceShares = async () => {
+    try {
+      setLoadingAttendanceShares(true);
+      const res = await fetch(`${API_BASE}/api/admin/attendance/shares?limit=100`, { credentials: "include" });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const data: AttendanceShareItem[] = await res.json();
+      setAttendanceShares(data);
+    } catch (e: any) {
+      setError(e?.message || "출석 공유 목록을 불러오지 못했어요.");
+    } finally {
+      setLoadingAttendanceShares(false);
+    }
+  };
+
+  const setAttendanceHidden = async (id: number, hidden: boolean) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/attendance/shares/${id}/hidden?hidden=${hidden}`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      await loadAttendanceShares();
+    } catch (e: any) {
+      alert(e?.message || "처리에 실패했습니다.");
+    }
+  };
 
   const statuses: Application["status"][] = ["PENDING", "REVIEWING", "APPROVED", "REJECTED"];
 
@@ -267,6 +298,14 @@ export default function Admin() {
           <ProteinPanel items={proteins} loading={loadingProteins} onRefresh={loadProteins} onDelete={deleteProtein} />
           <BragPanel items={brags} loading={loadingBrags} onRefresh={loadBrags} onDelete={deleteBrag} />
         </div>
+
+        <AttendanceSharePanel
+          items={attendanceShares}
+          loading={loadingAttendanceShares}
+          onRefresh={loadAttendanceShares}
+          onHide={(id) => setAttendanceHidden(id, true)}
+          onShow={(id) => setAttendanceHidden(id, false)}
+        />
       </div>
     </section>
   );
@@ -494,6 +533,53 @@ function BragPanel({
             >
               삭제
             </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AttendanceSharePanel({
+  items,
+  loading,
+  onRefresh,
+  onHide,
+  onShow,
+}: {
+  items: AttendanceShareItem[];
+  loading: boolean;
+  onRefresh: () => void;
+  onHide: (id: number) => void;
+  onShow: (id: number) => void;
+}) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold">출석 공유 운영</h3>
+          <p className="text-sm text-gray-300">신고 수 확인 및 비공개 처리</p>
+        </div>
+        <button onClick={onRefresh} className="text-sm text-pink-200 hover:text-pink-100" disabled={loading}>
+          새로고침
+        </button>
+      </div>
+      {loading && <p className="text-sm text-gray-300">불러오는 중...</p>}
+      {!loading && items.length === 0 && <p className="text-sm text-gray-400">공유 항목이 없습니다.</p>}
+      <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+        {items.map((it) => (
+          <div key={it.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+            <div className="text-sm text-white">
+              <div>{it.authorNickname || "회원"} · {it.date}</div>
+              <div className="text-xs text-gray-400">응원 {it.cheerCount} · 신고 {it.reportCount}</div>
+            </div>
+            <div className="flex gap-2">
+              {it.hiddenByAdmin ? (
+                <button onClick={() => onShow(it.id)} className="rounded-full bg-emerald-500/80 px-3 py-1 text-xs text-white">공개</button>
+              ) : (
+                <button onClick={() => onHide(it.id)} className="rounded-full bg-red-500/80 px-3 py-1 text-xs text-white">비공개</button>
+              )}
+            </div>
           </div>
         ))}
       </div>

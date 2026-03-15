@@ -1,6 +1,8 @@
 package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
+import com.ajou.muscleup.dto.attendance.AttendanceRankingItemResponse;
+import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
 import com.ajou.muscleup.dto.character.CharacterChangeResponse;
@@ -10,14 +12,17 @@ import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
 import com.ajou.muscleup.repository.UserRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -35,7 +40,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             "normal", 2,
             "hard", 3
     );
-    private static final List<String> MEMO_KEYWORDS = List.of("3대", "갱신", "PR", "데드", "스쿼트");
+    private static final List<String> MEMO_KEYWORDS = List.of("PR", "deadlift", "squat", "bench", "record");
 
     private final AttendanceLogRepository attendanceLogRepository;
     private final UserRepository userRepository;
@@ -96,6 +101,126 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public AttendanceShareResponse shareByDate(String email, LocalDate date) {
+        User user = getUserOrThrow(email);
+        AttendanceLog log = attendanceLogRepository.findByUserAndDate(user, date)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attendance log not found."));
+
+        if (log.getShareSlug() == null || log.getShareSlug().isBlank()) {
+            log.setShareSlug(UUID.randomUUID().toString().replace("-", ""));
+        }
+        log.setShared(true);
+
+        AttendanceLog saved = attendanceLogRepository.save(log);
+        return AttendanceShareResponse.from(saved);
+    }
+
+    @Override
+    @Transactional
+    public void unshareByDate(String email, LocalDate date) {
+        User user = getUserOrThrow(email);
+        AttendanceLog log = attendanceLogRepository.findByUserAndDate(user, date)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attendance log not found."));
+
+        log.setShared(false);
+        log.setShareSlug(null);
+        attendanceLogRepository.save(log);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AttendanceShareResponse getSharedBySlug(String slug) {
+        AttendanceLog log = attendanceLogRepository.findByShareSlugAndSharedTrue(slug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found."));
+        if (log.isHiddenByAdmin()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found.");
+        }
+        return AttendanceShareResponse.from(log);
+    }
+
+    @Override
+    @Transactional
+    public AttendanceShareResponse addCheerBySlug(String slug) {
+        AttendanceLog log = attendanceLogRepository.findByShareSlugAndSharedTrue(slug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found."));
+        if (log.isHiddenByAdmin()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found.");
+        }
+        log.setCheerCount(log.getCheerCount() + 1);
+        return AttendanceShareResponse.from(attendanceLogRepository.save(log));
+    }
+
+    @Override
+    @Transactional
+    public AttendanceShareResponse reportBySlug(String slug) {
+        AttendanceLog log = attendanceLogRepository.findByShareSlugAndSharedTrue(slug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found."));
+        log.setReportCount(log.getReportCount() + 1);
+        return AttendanceShareResponse.from(attendanceLogRepository.save(log));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AttendanceRankingItemResponse> getWeeklyStreakRanking(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        LocalDate today = LocalDate.now(KST);
+        LocalDate weekStart = today.minusDays((today.getDayOfWeek().getValue() + 6) % 7);
+
+        return userRepository.findAll().stream()
+                .map(user -> {
+                    List<AttendanceLog> logs = attendanceLogRepository.findByUserIdAndDateRangeOrderByDateAsc(
+                            user.getId(), weekStart, today);
+                    int streak = calculateCurrentStreakInRange(logs, weekStart, today);
+                    return new AttendanceRankingItemResponse(user.getId(), user.getNickname(), streak);
+                })
+                .filter(item -> item.getScore() > 0)
+                .sorted(Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed())
+                .limit(safeLimit)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AttendanceRankingItemResponse> getMonthlyMediaRanking(YearMonth month, int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        LocalDate start = month.atDay(1);
+        LocalDate end = month.atEndOfMonth();
+        Map<Long, String> nickById = userRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, User::getNickname, (a, b) -> a));
+
+        return attendanceLogRepository.countMediaLogsByUserBetween(start, end).stream()
+                .map(row -> {
+                    Long userId = (Long) row[0];
+                    int score = ((Long) row[1]).intValue();
+                    return new AttendanceRankingItemResponse(userId, nickById.getOrDefault(userId, "회원"), score);
+                })
+                .sorted(Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed())
+                .limit(safeLimit)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AttendanceShareResponse> listSharedForAdmin(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 200));
+        return attendanceLogRepository.findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc().stream()
+                .limit(safeLimit)
+                .map(AttendanceShareResponse::from)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public AttendanceShareResponse setHiddenByAdmin(Long attendanceId, boolean hidden) {
+        AttendanceLog log = attendanceLogRepository.findById(attendanceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attendance log not found."));
+        log.setHiddenByAdmin(hidden);
+        AttendanceLog saved = attendanceLogRepository.save(log);
+        return AttendanceShareResponse.from(saved);
+    }
+
     private UpsertResult upsert(User user, LocalDate date, AttendanceUpsertRequest request) {
         AttendanceInput input = normalizeInput(request);
         AttendanceLog existing = attendanceLogRepository.findByUserAndDate(user, date).orElse(null);
@@ -103,7 +228,17 @@ public class AttendanceServiceImpl implements AttendanceService {
             if (isSame(existing, input, request.getMemo())) {
                 return new UpsertResult(existing, existing.isDidWorkout(), existing.isDidWorkout(), 0);
             }
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Attendance already recorded for this date.");
+            boolean previousDidWorkout = existing.isDidWorkout();
+            existing.setDidWorkout(input.didWorkout());
+            existing.setMemo(normalizeMemo(request.getMemo()));
+            existing.setWorkoutTypes(input.workoutTypesCsv());
+            existing.setWorkoutIntensity(input.workoutIntensity());
+            existing.setMediaUrls(input.mediaUrlsCsv());
+            existing.setEditCount(existing.getEditCount() + 1);
+            existing.setLastEditedAt(LocalDateTime.now(KST));
+            AttendanceLog saved = attendanceLogRepository.save(existing);
+            // Update mode does not grant extra EXP to prevent repeated edit farming.
+            return new UpsertResult(saved, previousDidWorkout, input.didWorkout(), 0);
         }
 
         AttendanceLog log = AttendanceLog.builder()
@@ -113,6 +248,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .memo(normalizeMemo(request.getMemo()))
                 .workoutTypes(input.workoutTypesCsv())
                 .workoutIntensity(input.workoutIntensity())
+                .mediaUrls(input.mediaUrlsCsv())
                 .build();
         AttendanceLog saved = attendanceLogRepository.save(log);
 
@@ -167,8 +303,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     private AttendanceInput normalizeInput(AttendanceUpsertRequest request) {
         boolean didWorkout = Boolean.TRUE.equals(request.getDidWorkout());
+        String mediaUrls = normalizeMediaUrls(request.getMediaUrls());
         if (!didWorkout) {
-            return new AttendanceInput(false, List.of(), null, null);
+            return new AttendanceInput(false, List.of(), null, null, mediaUrls);
         }
 
         List<String> normalizedTypes = new ArrayList<>();
@@ -199,7 +336,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             }
         }
 
-        return new AttendanceInput(true, normalizedTypes, intensity, joinTypes(normalizedTypes));
+        return new AttendanceInput(true, normalizedTypes, intensity, joinTypes(normalizedTypes), mediaUrls);
     }
 
     private boolean isSame(AttendanceLog log, AttendanceInput input, String memo) {
@@ -208,10 +345,13 @@ public class AttendanceServiceImpl implements AttendanceService {
         String existingTypes = log.getWorkoutTypes() == null ? null : log.getWorkoutTypes();
         String inputTypes = input.workoutTypesCsv();
         String existingIntensity = log.getWorkoutIntensity();
+        String existingMedia = normalizeMediaUrls(log.getMediaUrls());
+        String inputMedia = input.mediaUrlsCsv();
         return log.isDidWorkout() == input.didWorkout()
                 && equalsNullable(existingMemo, normalizedMemo)
                 && equalsNullable(existingTypes, inputTypes)
-                && equalsNullable(existingIntensity, input.workoutIntensity());
+                && equalsNullable(existingIntensity, input.workoutIntensity())
+                && equalsNullable(existingMedia, inputMedia);
     }
 
     private String normalizeMemo(String memo) {
@@ -236,6 +376,44 @@ public class AttendanceServiceImpl implements AttendanceService {
         return String.join(",", types);
     }
 
+    private String normalizeMediaUrls(List<String> mediaUrls) {
+        if (mediaUrls == null || mediaUrls.isEmpty()) {
+            return null;
+        }
+
+        List<String> normalized = mediaUrls.stream()
+                .filter(v -> v != null && !v.isBlank())
+                .map(String::trim)
+                .distinct()
+                .limit(10)
+                .toList();
+
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        return String.join("\n", normalized);
+    }
+
+    private String normalizeMediaUrls(String rawMediaUrls) {
+        if (rawMediaUrls == null || rawMediaUrls.isBlank()) {
+            return null;
+        }
+
+        List<String> normalized = List.of(rawMediaUrls.split("\n")).stream()
+                .filter(v -> v != null && !v.isBlank())
+                .map(String::trim)
+                .distinct()
+                .limit(10)
+                .toList();
+
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        return String.join("\n", normalized);
+    }
+
     private int calculatePointsEarned(User user, LocalDate date, AttendanceInput input, String memo) {
         int points = 0;
         points += 5;
@@ -251,6 +429,10 @@ public class AttendanceServiceImpl implements AttendanceService {
             points += countKeywordBonus(normalizedMemo);
         }
 
+        if (input.mediaUrlsCsv() != null) {
+            points += 1;
+        }
+
         int streak = calculateStreakForDate(user, date);
         points += streakBonus(streak);
         return points;
@@ -258,8 +440,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     private int countKeywordBonus(String memo) {
         int bonus = 0;
+        String lower = memo.toLowerCase();
         for (String keyword : MEMO_KEYWORDS) {
-            if (memo.contains(keyword)) {
+            if (lower.contains(keyword.toLowerCase())) {
                 bonus += 1;
             }
         }
@@ -301,6 +484,24 @@ public class AttendanceServiceImpl implements AttendanceService {
         return streak;
     }
 
+    private int calculateCurrentStreakInRange(List<AttendanceLog> logs, LocalDate start, LocalDate end) {
+        Map<LocalDate, Boolean> map = new HashMap<>();
+        for (AttendanceLog log : logs) {
+            map.put(log.getDate(), log.isDidWorkout());
+        }
+        LocalDate cursor = end;
+        int streak = 0;
+        while (!cursor.isBefore(start)) {
+            if (Boolean.TRUE.equals(map.get(cursor))) {
+                streak += 1;
+                cursor = cursor.minusDays(1);
+                continue;
+            }
+            break;
+        }
+        return streak;
+    }
+
     private User getUserOrThrow(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
@@ -310,7 +511,8 @@ public class AttendanceServiceImpl implements AttendanceService {
             boolean didWorkout,
             List<String> workoutTypes,
             String workoutIntensity,
-            String workoutTypesCsv
+            String workoutTypesCsv,
+            String mediaUrlsCsv
     ) {}
 
     private record UpsertResult(
