@@ -1,35 +1,35 @@
 package com.ajou.muscleup.controller;
 
-import com.ajou.muscleup.dto.ai.AiAnalyzeRequest;
-import com.ajou.muscleup.dto.ai.AiAnalyzeResponse;
-import com.ajou.muscleup.dto.ai.AiPlanRequest;
-import com.ajou.muscleup.dto.ai.AiPlanResponse;
-import com.ajou.muscleup.dto.ai.AiChatRequest;
-import com.ajou.muscleup.dto.ai.AiChatResponse;
-import com.ajou.muscleup.dto.ai.AiChatLogItem;
-import com.ajou.muscleup.dto.ai.AiShareResponse;
-import com.ajou.muscleup.dto.ai.AiInbodyConsultResponse;
+import com.ajou.muscleup.dto.ai.*;
 import com.ajou.muscleup.entity.AiMessageType;
-import com.ajou.muscleup.service.AiService;
 import com.ajou.muscleup.service.AiChatHistoryService;
+import com.ajou.muscleup.service.AiService;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
-import java.util.List;
-import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -42,7 +42,12 @@ public class AiController {
     @PostMapping("/analyze")
     public ResponseEntity<AiAnalyzeResponse> analyze(@AuthenticationPrincipal String email, @RequestBody AiAnalyzeRequest req) {
         String userEmail = requireEmail(email);
-        String prompt = buildAnalysisPrompt(req);
+        String prompt = "신체 정보 분석 요청\n" +
+                "- 키(cm): " + nz(req.getHeight()) + "\n" +
+                "- 체중(kg): " + nz(req.getWeight()) + "\n" +
+                "- 체지방률(%): " + nz(req.getBodyFat()) + "\n" +
+                "- 골격근량(kg): " + nz(req.getMuscleMass()) + "\n" +
+                "- 목표: " + nz(req.getGoal());
         String content = aiService.requestCompletion(systemPromptForCoach(), prompt);
         aiChatHistoryService.save(userEmail, AiMessageType.ANALYZE, prompt, content);
         return ResponseEntity.ok(new AiAnalyzeResponse(content));
@@ -51,7 +56,13 @@ public class AiController {
     @PostMapping("/plan")
     public ResponseEntity<AiPlanResponse> buildPlan(@AuthenticationPrincipal String email, @RequestBody AiPlanRequest req) {
         String userEmail = requireEmail(email);
-        String prompt = buildPlanPrompt(req);
+        String prompt = "4주 운동 계획 요청\n" +
+                "- 경험: " + nz(req.getExperienceLevel()) + "\n" +
+                "- 주간 가능 횟수: " + nz(req.getAvailableDays()) + "\n" +
+                "- 목표: " + nz(req.getFocusArea()) + "\n" +
+                "- 장비: " + nz(req.getEquipment()) + "\n" +
+                "- 시간: " + nz(req.getPreferredTime()) + "\n" +
+                "- 메모: " + nz(req.getNotes());
         String content = aiService.requestCompletion(systemPromptForPlanner(), prompt);
         aiChatHistoryService.save(userEmail, AiMessageType.PLAN, prompt, content);
         return ResponseEntity.ok(new AiPlanResponse(content));
@@ -60,7 +71,8 @@ public class AiController {
     @PostMapping("/chat")
     public ResponseEntity<AiChatResponse> chat(@AuthenticationPrincipal String email, @RequestBody AiChatRequest req) {
         String userEmail = requireEmail(email);
-        String prompt = buildChatPrompt(req);
+        String prompt = (req.getContext() == null ? "" : "참고 맥락: " + req.getContext() + "\n\n") +
+                "질문: " + req.getQuestion();
         String content = aiService.requestCompletion(systemPromptForCoach(), prompt);
         aiChatHistoryService.save(userEmail, AiMessageType.CHAT, req.getQuestion(), content);
         return ResponseEntity.ok(new AiChatResponse(content));
@@ -71,7 +83,8 @@ public class AiController {
             @AuthenticationPrincipal String email,
             @RequestPart("file") MultipartFile file,
             @RequestParam(value = "goal", required = false) String goal,
-            @RequestParam(value = "notes", required = false) String notes
+            @RequestParam(value = "notes", required = false) String notes,
+            @RequestParam(value = "goalIntensity", required = false, defaultValue = "standard") String goalIntensity
     ) {
         String userEmail = requireEmail(email);
         if (file == null || file.isEmpty()) {
@@ -87,7 +100,8 @@ public class AiController {
                 processed.imageBytes(),
                 processed.mediaType(),
                 goal,
-                notes
+                notes,
+                goalIntensity
         );
 
         String consultation = String.valueOf(result.getOrDefault("consultation", ""));
@@ -98,20 +112,58 @@ public class AiController {
                 consultation
         );
 
-        @SuppressWarnings("unchecked")
-        Map<String, String> metrics = (Map<String, String>) result.getOrDefault("metrics", Map.of());
-        @SuppressWarnings("unchecked")
-        List<String> warnings = (List<String>) result.getOrDefault("warnings", List.of());
-        int confidence = (int) result.getOrDefault("confidence", 0);
+        String goalSource = (goal == null || goal.isBlank()) ? "AUTO" : "USER";
+        return ResponseEntity.ok(toInbodyResponse(result, goalSource, sourceType));
+    }
 
-        return ResponseEntity.ok(new AiInbodyConsultResponse(
-                consultation,
-                metrics,
-                confidence,
-                confidence < 80,
-                warnings,
-                sourceType
-        ));
+    @PostMapping("/inbody/review-consult")
+    public ResponseEntity<AiInbodyConsultResponse> reviewConsult(
+            @AuthenticationPrincipal String email,
+            @RequestBody AiInbodyReviewRequest req
+    ) {
+        String userEmail = requireEmail(email);
+        if (req.getMetrics() == null || req.getMetrics().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "확정 수치가 필요합니다.");
+        }
+
+        Map<String, Object> result = aiService.requestInbodyConsultationFromMetrics(
+                req.getMetrics(),
+                req.getGoal(),
+                req.getNotes(),
+                req.getGoalIntensity()
+        );
+
+        String consultation = String.valueOf(result.getOrDefault("consultation", ""));
+        aiChatHistoryService.save(
+                userEmail,
+                AiMessageType.ANALYZE,
+                "InBody confirmed metrics review",
+                consultation
+        );
+
+        return ResponseEntity.ok(toInbodyResponse(result, "USER_CONFIRMED", "confirmed-metrics"));
+    }
+
+    @PostMapping("/inbody/report/pdf")
+    public ResponseEntity<byte[]> buildInbodyPdf(
+            @AuthenticationPrincipal String email,
+            @RequestBody AiInbodyPdfRequest req
+    ) {
+        requireEmail(email);
+        if (req == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "요청 본문이 필요합니다.");
+        }
+
+        try {
+            byte[] pdf = renderInbodyPdf(req);
+            String fileName = "inbody-report-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")) + ".pdf";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20"))
+                    .body(pdf);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "PDF 생성에 실패했습니다.", e);
+        }
     }
 
     @GetMapping("/chat/history")
@@ -148,61 +200,12 @@ public class AiController {
         return ResponseEntity.ok(aiChatHistoryService.getSharedBySlug(slug));
     }
 
-    private String buildAnalysisPrompt(AiAnalyzeRequest r) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("다음 사용자의 체성 정보를 바탕으로 개인 맞춤 운동·영양 가이드를 작성하세요.\n");
-        sb.append("- 키(cm): ").append(nz(r.getHeight())).append('\n');
-        sb.append("- 몸무게(kg): ").append(nz(r.getWeight())).append('\n');
-        sb.append("- 체지방률(%): ").append(nz(r.getBodyFat())).append('\n');
-        sb.append("- 골격근량(kg): ").append(nz(r.getMuscleMass())).append('\n');
-        if (r.getGoal() != null && !r.getGoal().isBlank()) {
-            sb.append("- 목표/요청사항: ").append(r.getGoal()).append('\n');
-        }
-        sb.append("\n요구사항:\n");
-        sb.append("1) 현재 상태 분석(BMI/체성 지표 요약).\n");
-        sb.append("2) 주간 운동 계획(빈도, 세트/반복, 유산소·무산소 비율, 강도).\n");
-        sb.append("3) 식단 가이드(권장 영양분, 회복 팁, 피해야 할 것).\n");
-        sb.append("4) 부상 예방 및 주의사항.\n");
-        sb.append("5) 실행 체크리스트 3가지를 bullet로 제시.");
-        return sb.toString();
-    }
-
-    private String buildPlanPrompt(AiPlanRequest r) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("다음 조건을 바탕으로 4주 분량의 맞춤 루틴을 만들어 주세요.\n");
-        sb.append("- 운동 경험: ").append(nz(r.getExperienceLevel())).append('\n');
-        sb.append("- 주간 가능 횟수: ").append(nz(r.getAvailableDays())).append('\n');
-        sb.append("- 집중 부위/목표: ").append(nz(r.getFocusArea())).append('\n');
-        sb.append("- 사용 가능한 장비: ").append(nz(r.getEquipment())).append('\n');
-        sb.append("- 선호 운동 시간: ").append(nz(r.getPreferredTime())).append('\n');
-        sb.append("- 메모: ").append(nz(r.getNotes())).append('\n');
-        sb.append("\n요청사항:\n");
-        sb.append("1) 주차별 핵심 목표 요약.\n");
-        sb.append("2) 주일별/요일별 루틴을 표 형식 없이 텍스트로 제시(운동명, 세트/반복, 세션 시간 등).\n");
-        sb.append("3) 회복/영양 팁과 주의사항을 bullet로 추가.");
-        return sb.toString();
-    }
-
-    private String buildChatPrompt(AiChatRequest r) {
-        StringBuilder sb = new StringBuilder();
-        if (r.getContext() != null && !r.getContext().isBlank()) {
-            sb.append("참고 맥락: ").append(r.getContext()).append("\n\n");
-        }
-        sb.append("사용자 질문: ").append(r.getQuestion()).append("\n");
-        sb.append("친근한 트레이너처럼 간결하고 실행 가능한 조언을 제공하세요.");
-        return sb.toString();
-    }
-
     private String systemPromptForCoach() {
-        return "당신은 과학적인 근거를 바탕으로 한국어로 조언하는 피트니스 코치입니다. " +
-                "초보도 이해하기 쉽게 단계별로 설명하고, 건강과 안전을 최우선으로 안내하세요. " +
-                "마크다운 형식(**, __, ###, ``` 등) 없이 평문으로 답변하고, bullet은 '- '만 사용하라.";
+        return "당신은 안전하고 실용적인 피트니스 코치입니다. 과장 없이 실행 가능한 조언만 제공합니다.";
     }
 
     private String systemPromptForPlanner() {
-        return "당신은 체계적인 운동 루틴을 설계하는 전문가입니다. " +
-                "운동명·세트/반복, 세션 시간 등을 명확하게 정리하고 표 형식 없이 제시하세요. " +
-                "마크다운 형식(**, __, ###, ``` 등) 없이 평문으로 답변하고, bullet은 '- '만 사용하라.";
+        return "당신은 주차별 운동 루틴을 설계하는 코치입니다. 세트, 반복, 강도를 구체적으로 제시합니다.";
     }
 
     private String requireEmail(String email) {
@@ -263,6 +266,159 @@ public class AiController {
         return compact.length() > 120 ? compact.substring(0, 120) : compact;
     }
 
-    private record ProcessedInbodyFile(byte[] imageBytes, String mediaType) {
+    private AiInbodyConsultResponse toInbodyResponse(Map<String, Object> result, String goalSource, String sourceType) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> metrics = (Map<String, String>) result.getOrDefault("metrics", Map.of());
+        @SuppressWarnings("unchecked")
+        Map<String, String> targets = (Map<String, String>) result.getOrDefault("targets", Map.of());
+        @SuppressWarnings("unchecked")
+        Map<String, String> dailyNutrition = (Map<String, String>) result.getOrDefault("dailyNutrition", Map.of());
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> weeklyCheckpoints = (List<Map<String, String>>) result.getOrDefault("weeklyCheckpoints", List.of());
+        @SuppressWarnings("unchecked")
+        List<String> warnings = (List<String>) result.getOrDefault("warnings", List.of());
+        int confidence = (int) result.getOrDefault("confidence", 0);
+        String consultation = String.valueOf(result.getOrDefault("consultation", ""));
+
+        return new AiInbodyConsultResponse(
+                consultation,
+                metrics,
+                targets,
+                dailyNutrition,
+                weeklyCheckpoints,
+                goalSource,
+                confidence,
+                confidence < 80,
+                warnings,
+                sourceType
+        );
+    }
+
+    private byte[] renderInbodyPdf(AiInbodyPdfRequest req) throws Exception {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(document);
+            writer.title("InBody AI Coaching Report");
+            writer.line("Created: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            writer.line("Member: " + nz(req.getMemberName()));
+            writer.line("Goal Source: " + nz(req.getGoalSource()));
+            writer.line("Confidence: " + (req.getConfidence() == null ? "-" : req.getConfidence() + "%"));
+            writer.blank();
+
+            writer.section("Extracted Metrics");
+            writer.mapRows(req.getMetrics());
+            writer.section("Targets");
+            writer.mapRows(req.getTargets());
+            writer.section("Daily Nutrition");
+            writer.mapRows(req.getDailyNutrition());
+
+            writer.section("Weekly Checkpoints");
+            if (req.getWeeklyCheckpoints() == null || req.getWeeklyCheckpoints().isEmpty()) {
+                writer.line("- No checkpoint data");
+            } else {
+                for (Map<String, String> row : req.getWeeklyCheckpoints()) {
+                    writer.line("- Week " + nz(row.get("week"))
+                            + " | Weight " + nz(row.get("target_weight_kg"))
+                            + " | BodyFat " + nz(row.get("target_body_fat_kg"))
+                            + " | Focus " + nz(row.get("focus")));
+                }
+            }
+
+            if (req.getWarnings() != null && !req.getWarnings().isEmpty()) {
+                writer.section("Warnings");
+                for (String warning : req.getWarnings()) {
+                    writer.line("- " + warning);
+                }
+            }
+
+            writer.section("Consultation");
+            writer.paragraph(nz(req.getConsultation()));
+            writer.close();
+
+            document.save(out);
+            return out.toByteArray();
+        }
+    }
+
+    private record ProcessedInbodyFile(byte[] imageBytes, String mediaType) {}
+
+    private static class PdfWriter {
+        private final PDDocument document;
+        private PDPage page;
+        private PDPageContentStream stream;
+        private float y;
+        private final float margin = 52f;
+        private final float lineHeight = 15f;
+        private final PDType1Font base = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        private final PDType1Font bold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+
+        private PdfWriter(PDDocument document) throws Exception {
+            this.document = document;
+            newPage();
+        }
+
+        private void newPage() throws Exception {
+            if (stream != null) stream.close();
+            page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+            stream = new PDPageContentStream(document, page);
+            y = page.getMediaBox().getHeight() - margin;
+        }
+
+        private void title(String text) throws Exception { write(text, bold, 16f); }
+        private void section(String text) throws Exception { blank(); write(text, bold, 12f); }
+        private void line(String text) throws Exception { write(text, base, 10f); }
+        private void blank() throws Exception { y -= lineHeight / 2f; if (y < margin) newPage(); }
+
+        private void paragraph(String text) throws Exception {
+            for (String row : text.split("\\R")) {
+                write(row, base, 10f);
+            }
+        }
+
+        private void mapRows(Map<String, String> map) throws Exception {
+            if (map == null || map.isEmpty()) {
+                line("- No data");
+                return;
+            }
+            for (Map.Entry<String, String> e : map.entrySet()) {
+                line("- " + e.getKey() + ": " + nz(e.getValue()));
+            }
+        }
+
+        private void write(String text, PDType1Font font, float size) throws Exception {
+            float maxWidth = page.getMediaBox().getWidth() - (margin * 2);
+            for (String row : wrap(text, font, size, maxWidth)) {
+                if (y < margin) newPage();
+                stream.beginText();
+                stream.setFont(font, size);
+                stream.newLineAtOffset(margin, y);
+                stream.showText(row == null ? "" : row);
+                stream.endText();
+                y -= lineHeight;
+            }
+        }
+
+        private List<String> wrap(String text, PDType1Font font, float size, float maxWidth) throws Exception {
+            if (text == null || text.isBlank()) return List.of("");
+            List<String> rows = new ArrayList<>();
+            String[] words = text.split(" ");
+            StringBuilder line = new StringBuilder();
+            for (String word : words) {
+                String candidate = line.length() == 0 ? word : line + " " + word;
+                float width = font.getStringWidth(candidate) / 1000 * size;
+                if (width <= maxWidth) {
+                    line = new StringBuilder(candidate);
+                } else {
+                    rows.add(line.toString());
+                    line = new StringBuilder(word);
+                }
+            }
+            if (line.length() > 0) rows.add(line.toString());
+            return rows;
+        }
+
+        private void close() throws Exception {
+            if (stream != null) stream.close();
+        }
     }
 }

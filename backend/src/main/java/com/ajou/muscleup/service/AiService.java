@@ -87,7 +87,13 @@ public class AiService {
         }
     }
 
-    public Map<String, Object> requestInbodyConsultation(byte[] imageBytes, String mediaType, String goal, String notes) {
+    public Map<String, Object> requestInbodyConsultation(
+            byte[] imageBytes,
+            String mediaType,
+            String goal,
+            String notes,
+            String goalIntensity
+    ) {
         String key = resolveApiKey();
         try {
             String imageBase64 = Base64.getEncoder().encodeToString(imageBytes);
@@ -122,12 +128,39 @@ public class AiService {
                                     "    \"visceral_fat_level\": \"\",\n" +
                                     "    \"inbody_score\": \"\"\n" +
                                     "  },\n" +
+                                    "  \"targets\": {\n" +
+                                    "    \"target_weight_kg\": \"\",\n" +
+                                    "    \"target_skeletal_muscle_kg\": \"\",\n" +
+                                    "    \"target_body_fat_kg\": \"\",\n" +
+                                    "    \"target_body_fat_percent\": \"\"\n" +
+                                    "  },\n" +
+                                    "  \"daily_nutrition\": {\n" +
+                                    "    \"calories_kcal\": \"\",\n" +
+                                    "    \"carb_g\": \"\",\n" +
+                                    "    \"protein_g\": \"\",\n" +
+                                    "    \"fat_g\": \"\",\n" +
+                                    "    \"carb_ratio_percent\": \"\",\n" +
+                                    "    \"protein_ratio_percent\": \"\",\n" +
+                                    "    \"fat_ratio_percent\": \"\"\n" +
+                                    "  },\n" +
+                                    "  \"weekly_checkpoints\": [\n" +
+                                    "    {\n" +
+                                    "      \"week\": \"1\",\n" +
+                                    "      \"target_weight_kg\": \"\",\n" +
+                                    "      \"target_body_fat_kg\": \"\",\n" +
+                                    "      \"focus\": \"\"\n" +
+                                    "    }\n" +
+                                    "  ],\n" +
                                     "  \"confidence\": 0,\n" +
                                     "  \"warnings\": [\"\"],\n" +
                                     "  \"consultation\": \"\"\n" +
                                     "}\n" +
                                     "Rules:\n" +
                                     "- Use empty string when a metric cannot be found.\n" +
+                                    "- Populate targets and daily_nutrition with concrete numbers as much as possible.\n" +
+                                    "- weekly_checkpoints should contain at least 4 items (week 1~4).\n" +
+                                    "- If user goal is '-', infer a reasonable default goal from InBody values and clearly explain why.\n" +
+                                    "- In that case, set targets as AI-recommended values rather than leaving them blank.\n" +
                                     "- confidence is integer 0-100.\n" +
                                     "- consultation must be highly detailed and practical for real use.\n" +
                                     "- consultation should include all sections below in Korean:\n" +
@@ -142,6 +175,7 @@ public class AiService {
                                     "- consultation should include concrete numbers whenever possible.\n" +
                                     "- consultation length target: at least 1,200 Korean characters.\n" +
                                     "- Mention this is not medical diagnosis.\n" +
+                                    "- Goal intensity (conservative/standard/aggressive): " + nz(goalIntensity) + "\n" +
                                     "- User goal: " + nz(goal) + "\n" +
                                     "- User notes: " + nz(notes)));
             userContent.add(objectMapper.createObjectNode()
@@ -153,6 +187,7 @@ public class AiService {
                     .put("role", "user")
                     .set("content", userContent));
             root.set("messages", messages);
+            root.set("response_format", buildInbodyJsonSchemaFormat());
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(openAiBase + "/v1/chat/completions"))
@@ -179,6 +214,65 @@ public class AiService {
             throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "InBody AI processing failed.", e);
+        }
+    }
+
+    public Map<String, Object> requestInbodyConsultationFromMetrics(
+            Map<String, String> metrics,
+            String goal,
+            String notes,
+            String goalIntensity
+    ) {
+        String key = resolveApiKey();
+        try {
+            ObjectNode root = objectMapper.createObjectNode();
+            root.put("model", textModel);
+            root.put("temperature", 0.2);
+
+            ArrayNode messages = objectMapper.createArrayNode();
+            messages.add(objectMapper.createObjectNode()
+                    .put("role", "system")
+                    .put("content",
+                            "You are a fitness coach that builds detailed inbody consultation JSON only. " +
+                                    "Never diagnose medically."));
+
+            String metricJson = objectMapper.writeValueAsString(metrics == null ? Map.of() : metrics);
+            String prompt = "Build inbody coaching from confirmed metrics.\n" +
+                    "Use this metrics JSON exactly as trusted user-confirmed values: " + metricJson + "\n" +
+                    "If some fields are missing, infer cautiously and add warnings.\n" +
+                    "Goal intensity: " + nz(goalIntensity) + "\n" +
+                    "User goal: " + nz(goal) + "\n" +
+                    "User notes: " + nz(notes) + "\n" +
+                    "Return only valid JSON with the same schema as requested.";
+            messages.add(objectMapper.createObjectNode()
+                    .put("role", "user")
+                    .put("content", prompt));
+            root.set("messages", messages);
+            root.set("response_format", buildInbodyJsonSchemaFormat());
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(openAiBase + "/v1/chat/completions"))
+                    .header("Authorization", "Bearer " + key)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(root.toString(), StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> resp = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+            if (resp.statusCode() >= 300) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI confirmed-metric analysis failed: " + resp.statusCode());
+            }
+            JsonNode rootNode = objectMapper.readTree(resp.body());
+            String content = rootNode.path("choices").path(0).path("message").path("content").asText("");
+            if (content.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI response was empty.");
+            }
+            return parseInbodyJson(content);
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "InBody confirmed-metric processing failed.", e);
         }
     }
 
@@ -215,6 +309,24 @@ public class AiService {
         metrics.put("visceral_fat_level", metricsNode.path("visceral_fat_level").asText(""));
         metrics.put("inbody_score", metricsNode.path("inbody_score").asText(""));
 
+        Map<String, String> targets = objectNodeToStringMap(node.path("targets"),
+                List.of("target_weight_kg", "target_skeletal_muscle_kg", "target_body_fat_kg", "target_body_fat_percent"));
+        Map<String, String> dailyNutrition = objectNodeToStringMap(node.path("daily_nutrition"),
+                List.of("calories_kcal", "carb_g", "protein_g", "fat_g", "carb_ratio_percent", "protein_ratio_percent", "fat_ratio_percent"));
+
+        List<Map<String, String>> weeklyCheckpoints = new ArrayList<>();
+        JsonNode checkpointNode = node.path("weekly_checkpoints");
+        if (checkpointNode.isArray()) {
+            for (JsonNode item : checkpointNode) {
+                Map<String, String> row = new LinkedHashMap<>();
+                row.put("week", item.path("week").asText(""));
+                row.put("target_weight_kg", item.path("target_weight_kg").asText(""));
+                row.put("target_body_fat_kg", item.path("target_body_fat_kg").asText(""));
+                row.put("focus", item.path("focus").asText(""));
+                weeklyCheckpoints.add(row);
+            }
+        }
+
         int confidence = Math.max(0, Math.min(100, node.path("confidence").asInt(0)));
 
         List<String> warnings = new ArrayList<>();
@@ -235,6 +347,9 @@ public class AiService {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("metrics", metrics);
+        result.put("targets", targets);
+        result.put("dailyNutrition", dailyNutrition);
+        result.put("weeklyCheckpoints", weeklyCheckpoints);
         result.put("confidence", confidence);
         result.put("warnings", warnings);
         result.put("consultation", consultation);
@@ -252,5 +367,83 @@ public class AiService {
 
     private static String nz(String value) {
         return (value == null || value.isBlank()) ? "-" : value;
+    }
+
+    private Map<String, String> objectNodeToStringMap(JsonNode node, List<String> keys) {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (String key : keys) {
+            map.put(key, node.path(key).asText(""));
+        }
+        return map;
+    }
+
+    private ObjectNode buildInbodyJsonSchemaFormat() {
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("type", "json_schema");
+        ObjectNode jsonSchema = root.putObject("json_schema");
+        jsonSchema.put("name", "inbody_consult_result");
+        jsonSchema.put("strict", true);
+
+        ObjectNode schema = jsonSchema.putObject("schema");
+        schema.put("type", "object");
+
+        ObjectNode properties = schema.putObject("properties");
+        properties.set("metrics", buildStringMapSchema(List.of(
+                "height_cm", "weight_kg", "skeletal_muscle_kg", "body_fat_kg",
+                "body_fat_percent", "bmi", "bmr_kcal", "visceral_fat_level", "inbody_score"
+        )));
+        properties.set("targets", buildStringMapSchema(List.of(
+                "target_weight_kg", "target_skeletal_muscle_kg", "target_body_fat_kg", "target_body_fat_percent"
+        )));
+        properties.set("daily_nutrition", buildStringMapSchema(List.of(
+                "calories_kcal", "carb_g", "protein_g", "fat_g",
+                "carb_ratio_percent", "protein_ratio_percent", "fat_ratio_percent"
+        )));
+
+        ObjectNode checkpointArray = properties.putObject("weekly_checkpoints");
+        checkpointArray.put("type", "array");
+        ObjectNode checkpointItem = checkpointArray.putObject("items");
+        checkpointItem.put("type", "object");
+        ObjectNode checkpointProps = checkpointItem.putObject("properties");
+        checkpointProps.putObject("week").put("type", "string");
+        checkpointProps.putObject("target_weight_kg").put("type", "string");
+        checkpointProps.putObject("target_body_fat_kg").put("type", "string");
+        checkpointProps.putObject("focus").put("type", "string");
+        ArrayNode checkpointRequired = checkpointItem.putArray("required");
+        checkpointRequired.add("week");
+        checkpointRequired.add("target_weight_kg");
+        checkpointRequired.add("target_body_fat_kg");
+        checkpointRequired.add("focus");
+        checkpointItem.put("additionalProperties", false);
+
+        properties.putObject("confidence").put("type", "integer");
+        ObjectNode warnings = properties.putObject("warnings");
+        warnings.put("type", "array");
+        warnings.putObject("items").put("type", "string");
+        properties.putObject("consultation").put("type", "string");
+
+        ArrayNode required = schema.putArray("required");
+        required.add("metrics");
+        required.add("targets");
+        required.add("daily_nutrition");
+        required.add("weekly_checkpoints");
+        required.add("confidence");
+        required.add("warnings");
+        required.add("consultation");
+        schema.put("additionalProperties", false);
+        return root;
+    }
+
+    private ObjectNode buildStringMapSchema(List<String> keys) {
+        ObjectNode schema = objectMapper.createObjectNode();
+        schema.put("type", "object");
+        ObjectNode props = schema.putObject("properties");
+        ArrayNode required = schema.putArray("required");
+        for (String key : keys) {
+            props.putObject(key).put("type", "string");
+            required.add(key);
+        }
+        schema.put("additionalProperties", false);
+        return schema;
     }
 }
