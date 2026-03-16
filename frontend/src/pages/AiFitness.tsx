@@ -53,6 +53,9 @@ export default function AiFitness() {
   const [planResult, setPlanResult] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isAnalyzing = loading === "/api/ai/analyze";
+  const isPlanning = loading === "/api/ai/plan";
+  const isChatting = loading === "/api/ai/chat";
 
   const [hasSession] = useState<boolean>(() => !!localStorage.getItem("user"));
   const headers = useMemo(() => ({ "Content-Type": "application/json" }), []);
@@ -197,9 +200,10 @@ export default function AiFitness() {
         <Input label="골격근량(kg)" name="muscleMass" value={analysisForm.muscleMass} onChange={setAnalysisForm} />
       </div>
       <Input label="목표 또는 요청사항" name="goal" value={analysisForm.goal} onChange={setAnalysisForm} textarea />
-      <button className="btn-gradient w-full py-3 text-lg" disabled={loading === "/api/ai/analyze"}>
-        {loading === "/api/ai/analyze" ? "AI가 분석 중..." : "분석 결과 받기"}
+      <button className="btn-gradient w-full py-3 text-lg" disabled={isAnalyzing}>
+        {isAnalyzing ? "AI가 분석 중..." : "분석 결과 받기"}
       </button>
+      {isAnalyzing && <LoadingCard label="AI가 입력 데이터를 분석하고 있어요..." />}
       {analysisResult && <ResultCard title="AI 분석 리포트" content={analysisResult} />}
     </form>
   );
@@ -214,9 +218,10 @@ export default function AiFitness() {
         <Input label="선호 운동 시간" name="preferredTime" value={planForm.preferredTime} onChange={setPlanForm} />
       </div>
       <Input label="추가 메모" name="notes" value={planForm.notes} onChange={setPlanForm} textarea />
-      <button className="btn-gradient w-full py-3 text-lg" disabled={loading === "/api/ai/plan"}>
-        {loading === "/api/ai/plan" ? "AI가 루틴을 설계 중..." : "맞춤 루틴 받기"}
+      <button className="btn-gradient w-full py-3 text-lg" disabled={isPlanning}>
+        {isPlanning ? "AI가 루틴을 설계 중..." : "맞춤 루틴 받기"}
       </button>
+      {isPlanning && <LoadingCard label="AI가 목표와 조건에 맞춰 루틴을 설계하고 있어요..." />}
       {planResult && <ResultCard title="AI 루틴 제안" content={planResult} />}
     </form>
   );
@@ -232,6 +237,17 @@ export default function AiFitness() {
               <p className="mt-1 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
             </div>
           ))}
+          {isChatting && (
+            <div className="rounded-2xl bg-black/30 px-4 py-3 text-sm text-gray-100">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">AI 코치</p>
+              <p className="mt-1">답변 작성 중...</p>
+              <div className="mt-2 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:120ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:240ms]" />
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
           <input
@@ -239,9 +255,10 @@ export default function AiFitness() {
             placeholder="AI 상담에게 궁금한 내용을 입력하세요"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
+            disabled={isChatting}
           />
-          <button type="button" onClick={handleChat} className="btn-gradient px-6" disabled={loading === "/api/ai/chat"}>
-            상담
+          <button type="button" onClick={handleChat} className="btn-gradient px-6" disabled={isChatting}>
+            {isChatting ? "답변 중..." : "상담"}
           </button>
         </div>
       </div>
@@ -456,6 +473,17 @@ interface ResultCardProps {
   title: string;
   content: string;
 }
+
+const LoadingCard = ({ label }: { label: string }) => (
+  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-gray-100">
+    <p>{label}</p>
+    <div className="mt-2 flex items-center gap-1">
+      <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-300 [animation-delay:0ms]" />
+      <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-300 [animation-delay:120ms]" />
+      <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-300 [animation-delay:240ms]" />
+    </div>
+  </div>
+);
 
 const ResultCard = ({ title, content }: ResultCardProps) => (
   <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-5 text-sm text-gray-100">

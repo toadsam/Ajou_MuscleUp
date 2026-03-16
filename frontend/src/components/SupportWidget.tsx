@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 
 type Msg = { id: string; role: "user" | "system"; text: string; at: number };
 
@@ -32,13 +32,13 @@ export default function SupportWidget() {
     if (open && paneRef.current) {
       paneRef.current.scrollTop = paneRef.current.scrollHeight;
     }
-  }, [open, msgs]);
+  }, [open, msgs, sending]);
 
   const greeting = useMemo<Msg>(
     () => ({
       id: "greet",
       role: "system",
-      text: `안녕하세요, ${BOT_NAME}예요.\n궁금한 기능 물어보시면 홈페이지 경로까지 빠르게 안내해드릴게요.`,
+      text: `안녕하세요, ${BOT_NAME}예요.\n궁금한 기능을 물어보시면 경로까지 빠르게 안내해드릴게요.`,
       at: Date.now(),
     }),
     []
@@ -47,7 +47,7 @@ export default function SupportWidget() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text) return;
+    if (!text || sending) return;
 
     setInput("");
     setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", text, at: Date.now() }]);
@@ -98,15 +98,17 @@ export default function SupportWidget() {
 
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-80 overflow-hidden rounded-2xl border border-white/10 bg-gray-900/95 shadow-2xl backdrop-blur md:w-96">
-          <div className="bg-gradient-to-r from-pink-600 to-purple-600 px-4 py-3 font-semibold text-white">{BOT_NAME} | 홈페이지 안내</div>
+          <div className="bg-gradient-to-r from-pink-600 to-purple-600 px-4 py-3 font-semibold text-white">
+            {BOT_NAME} | 홈페이지 안내
+            {sending && <span className="ml-2 text-xs font-medium text-pink-100">답변 준비 중...</span>}
+          </div>
+
           <div className="border-b border-white/10 bg-gradient-to-br from-[#1b2440] to-[#0f172a] p-4">
             <div className="flex items-start gap-3">
               <DeukgeunAvatar />
               <div className="min-w-0">
                 <p className="text-sm font-bold text-white">{BOT_NAME} 캐릭터</p>
-                <p className="mt-1 text-xs text-slate-200">
-                  경로 안내 특화 도우미입니다. 메뉴 위치를 빠르게 찾아드려요.
-                </p>
+                <p className="mt-1 text-xs text-slate-200">경로 안내 특화 도우미입니다. 메뉴 위치를 빠르게 찾아드려요.</p>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -115,13 +117,15 @@ export default function SupportWidget() {
                   key={q}
                   type="button"
                   onClick={() => setInput(q)}
-                  className="rounded-full border border-fuchsia-300/40 bg-fuchsia-500/10 px-3 py-1 text-xs text-fuchsia-100 hover:bg-fuchsia-500/20"
+                  disabled={sending}
+                  className="rounded-full border border-fuchsia-300/40 bg-fuchsia-500/10 px-3 py-1 text-xs text-fuchsia-100 hover:bg-fuchsia-500/20 disabled:opacity-50"
                 >
                   {q}
                 </button>
               ))}
             </div>
           </div>
+
           <div ref={paneRef} className="max-h-80 space-y-3 overflow-y-auto p-4 text-sm">
             {[greeting, ...msgs].map((m) => (
               <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -134,16 +138,34 @@ export default function SupportWidget() {
                 </div>
               </div>
             ))}
+
+            {sending && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-xl bg-white/10 px-3 py-2 text-white">
+                  <p className="text-xs text-slate-200">{BOT_NAME}가 답변 준비 중...</p>
+                  <div className="mt-1 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:0ms]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:120ms]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:240ms]" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
           <form onSubmit={onSubmit} className="flex gap-2 border-t border-white/10 bg-gray-900/95 p-3">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={`예: ${BOT_NAME}, 인바디 분석 어디서 해요?`}
-              className="flex-1 rounded-lg bg-gray-800/70 px-3 py-2 text-white focus:outline-none"
+              disabled={sending}
+              className="flex-1 rounded-lg bg-gray-800/70 px-3 py-2 text-white focus:outline-none disabled:opacity-60"
             />
-            <button disabled={sending || !input.trim()} className="rounded-lg bg-pink-600 px-4 py-2 text-white disabled:opacity-50">
-              전송
+            <button
+              disabled={sending || !input.trim()}
+              className="rounded-lg bg-pink-600 px-4 py-2 text-white disabled:opacity-50"
+            >
+              {sending ? "답변 중" : "전송"}
             </button>
           </form>
         </div>
