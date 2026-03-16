@@ -49,6 +49,7 @@ dependencies {
 
     // Google ID Token 검증
     implementation 'com.google.api-client:google-api-client:2.6.0'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
 }
 
 tasks.named('test') {

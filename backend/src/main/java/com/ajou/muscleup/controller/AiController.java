@@ -8,17 +8,28 @@ import com.ajou.muscleup.dto.ai.AiChatRequest;
 import com.ajou.muscleup.dto.ai.AiChatResponse;
 import com.ajou.muscleup.dto.ai.AiChatLogItem;
 import com.ajou.muscleup.dto.ai.AiShareResponse;
+import com.ajou.muscleup.dto.ai.AiInbodyConsultResponse;
 import com.ajou.muscleup.entity.AiMessageType;
 import com.ajou.muscleup.service.AiService;
 import com.ajou.muscleup.service.AiChatHistoryService;
 import lombok.RequiredArgsConstructor;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.imageio.ImageIO;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -53,6 +64,54 @@ public class AiController {
         String content = aiService.requestCompletion(systemPromptForCoach(), prompt);
         aiChatHistoryService.save(userEmail, AiMessageType.CHAT, req.getQuestion(), content);
         return ResponseEntity.ok(new AiChatResponse(content));
+    }
+
+    @PostMapping(value = "/inbody/consult", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AiInbodyConsultResponse> consultInbody(
+            @AuthenticationPrincipal String email,
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "goal", required = false) String goal,
+            @RequestParam(value = "notes", required = false) String notes
+    ) {
+        String userEmail = requireEmail(email);
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일이 필요합니다.");
+        }
+        if (file.getSize() > 10L * 1024L * 1024L) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일 크기는 10MB 이하여야 합니다.");
+        }
+
+        String sourceType = detectSourceType(file);
+        ProcessedInbodyFile processed = preprocess(file, sourceType);
+        Map<String, Object> result = aiService.requestInbodyConsultation(
+                processed.imageBytes(),
+                processed.mediaType(),
+                goal,
+                notes
+        );
+
+        String consultation = String.valueOf(result.getOrDefault("consultation", ""));
+        aiChatHistoryService.save(
+                userEmail,
+                AiMessageType.ANALYZE,
+                "InBody upload: " + safeFilename(file.getOriginalFilename()),
+                consultation
+        );
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> metrics = (Map<String, String>) result.getOrDefault("metrics", Map.of());
+        @SuppressWarnings("unchecked")
+        List<String> warnings = (List<String>) result.getOrDefault("warnings", List.of());
+        int confidence = (int) result.getOrDefault("confidence", 0);
+
+        return ResponseEntity.ok(new AiInbodyConsultResponse(
+                consultation,
+                metrics,
+                confidence,
+                confidence < 80,
+                warnings,
+                sourceType
+        ));
     }
 
     @GetMapping("/chat/history")
@@ -155,5 +214,55 @@ public class AiController {
 
     private static String nz(String v) {
         return (v == null || v.isBlank()) ? "-" : v;
+    }
+
+    private String detectSourceType(MultipartFile file) {
+        String contentType = file.getContentType();
+        String filename = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
+        if ("application/pdf".equalsIgnoreCase(contentType) || filename.endsWith(".pdf")) {
+            return "pdf";
+        }
+        if (contentType != null && contentType.toLowerCase().startsWith("image/")) {
+            return "image";
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미지 또는 PDF 파일만 업로드할 수 있습니다.");
+    }
+
+    private ProcessedInbodyFile preprocess(MultipartFile file, String sourceType) {
+        try {
+            if ("image".equals(sourceType)) {
+                String mediaType = file.getContentType();
+                if (mediaType == null || mediaType.isBlank()) {
+                    mediaType = "image/jpeg";
+                }
+                return new ProcessedInbodyFile(file.getBytes(), mediaType);
+            }
+
+            try (PDDocument document = Loader.loadPDF(file.getBytes())) {
+                if (document.getNumberOfPages() == 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PDF 페이지가 비어 있습니다.");
+                }
+                PDFRenderer renderer = new PDFRenderer(document);
+                var image = renderer.renderImageWithDPI(0, 220, ImageType.RGB);
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                ImageIO.write(image, "jpg", out);
+                return new ProcessedInbodyFile(out.toByteArray(), "image/jpeg");
+            }
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일 처리 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    private String safeFilename(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return "unknown";
+        }
+        String compact = filename.replaceAll("[\\r\\n]", " ").trim();
+        return compact.length() > 120 ? compact.substring(0, 120) : compact;
+    }
+
+    private record ProcessedInbodyFile(byte[] imageBytes, String mediaType) {
     }
 }

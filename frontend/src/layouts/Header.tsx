@@ -101,7 +101,10 @@ export default function Header() {
       },
       {
         label: "AI",
-        links: [{ to: "/ai", label: "AI 플래너" }],
+        links: [
+          { to: "/ai", label: "AI 플래너" },
+          { to: "/ai/inbody", label: "인바디 분석" },
+        ],
       },
       {
         label: "내 정보",

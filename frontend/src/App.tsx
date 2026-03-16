@@ -25,6 +25,7 @@ import BragWrite from "./pages/BragWrite";
 import BragDetail from "./pages/BragDetail";
 import MyPage from "./pages/MyPage";
 import AiShareView from "./pages/AiShareView";
+import InbodyConsult from "./pages/InbodyConsult";
 import AdminHistory from "./pages/AdminHistory";
 import Attendance from "./pages/Attendance";
 import AttendanceShareView from "./pages/AttendanceShareView";
@@ -112,6 +113,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AiFitness />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ai/inbody"
+              element={
+                <ProtectedRoute>
+                  <InbodyConsult />
                 </ProtectedRoute>
               }
             />

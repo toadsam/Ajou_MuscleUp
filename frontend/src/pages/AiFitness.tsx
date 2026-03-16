@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -338,6 +339,12 @@ export default function AiFitness() {
             ))}
           </div>
           <p className="text-sm text-gray-300">{tabs.find((t) => t.id === activeTab)?.description}</p>
+          <Link
+            to="/ai/inbody"
+            className="inline-flex items-center rounded-full border border-emerald-300/50 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20"
+          >
+            인바디 사진/PDF 분석으로 이동
+          </Link>
           {error && <p className="rounded-xl bg-red-500/20 px-4 py-2 text-sm text-red-200">{error}</p>}
           {renderActiveTab()}
         </div>
