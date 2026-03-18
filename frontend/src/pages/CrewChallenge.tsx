@@ -642,7 +642,7 @@ export default function CrewChallenge() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><p className="text-xs tracking-[0.2em] text-cyan-200">CREW CHALLENGE ARENA</p><h1 className="text-2xl font-black">{detail?.name || "모임 챌린지"}</h1><p className="text-xs text-gray-300">{nextGoal}</p></div>
-            <div className="flex items-center gap-2"><Link to="/crew" className="rounded-lg border border-white/20 px-3 py-2 text-sm text-gray-200 hover:bg-white/10">모임 허브</Link><input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" /></div>
+            <div className="flex items-center gap-2"><Link to="/crew" className="rounded-lg border border-white/20 px-3 py-2 text-sm text-gray-200 hover:bg-white/10">모임 허브</Link><Link to={`/crew/${crewIdNum}/lobby`} className="rounded-lg border border-cyan-300/35 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 hover:bg-cyan-500/20">로비</Link><Link to={`/crew/${crewIdNum}/highlights`} className="rounded-lg border border-amber-300/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-100 hover:bg-amber-500/20">하이라이트</Link><input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" /></div>
           </div>
         </div>
 

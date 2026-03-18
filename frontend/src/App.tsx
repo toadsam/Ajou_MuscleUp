@@ -37,6 +37,8 @@ import AdminEventsList from "./pages/admin/AdminEventsList";
 import AdminEventForm from "./pages/admin/AdminEventForm";
 import CrewHub from "./pages/CrewHub";
 import CrewChallenge from "./pages/CrewChallenge";
+import CrewLobby from "./pages/CrewLobby";
+import CrewHighlights from "./pages/CrewHighlights";
 import Friends from "./pages/Friends";
 
 function App() {
@@ -185,6 +187,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CrewChallenge />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crew/:crewId/lobby"
+              element={
+                <ProtectedRoute>
+                  <CrewLobby />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crew/:crewId/highlights"
+              element={
+                <ProtectedRoute>
+                  <CrewHighlights />
                 </ProtectedRoute>
               }
             />

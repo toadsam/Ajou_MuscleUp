@@ -270,6 +270,20 @@ export default function CrewHub() {
                       >
                         챌린지 보기
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/crew/${crew.id}/lobby`)}
+                        className="rounded-lg border border-cyan-300/40 bg-cyan-500/10 px-2 py-2 text-xs text-cyan-100"
+                      >
+                        로비
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/crew/${crew.id}/highlights`)}
+                        className="rounded-lg border border-amber-300/40 bg-amber-500/10 px-2 py-2 text-xs text-amber-100"
+                      >
+                        하이라이트
+                      </button>
                       {crew.joined ? (
                         <span className="rounded-lg bg-emerald-500/15 px-2 py-1 text-xs text-emerald-200">참여중</span>
                       ) : (

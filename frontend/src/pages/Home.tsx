@@ -114,17 +114,47 @@ const startOfWeek = (date: Date) => {
 
 async function safeFetchJson<T>(path: string): Promise<T | null> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
-  if (res.status === 401) {
+  const request = () =>
+    fetch(url, {
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+  const parseErrorMessage = async (res: Response) => {
+    const raw = await res.text().catch(() => "");
+    if (!raw) return `HTTP ${res.status}`;
+    try {
+      const parsed = JSON.parse(raw) as { message?: string; error?: string };
+      return parsed.message || parsed.error || `HTTP ${res.status}`;
+    } catch {
+      return raw;
+    }
+  };
+
+  let res = await request();
+
+  if (res.status === 401 || res.status === 403) {
+    const refreshUrl = API_BASE ? `${API_BASE}/api/auth/refresh` : "/api/auth/refresh";
+    const refreshed = await fetch(refreshUrl, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    }).catch(() => null);
+
+    if (refreshed?.ok) {
+      res = await request();
+    }
+  }
+
+  if (res.status === 401 || res.status === 403) {
     return null;
   }
+
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
+    const message = await parseErrorMessage(res);
+    throw new Error(message);
   }
+
   return res.json();
 }
 
@@ -172,7 +202,12 @@ export default function Home() {
       if (characterRes) setCharacter(characterRes);
       setMbti(statsRes?.mbti ?? null);
     } catch (err: any) {
-      setError(err?.message ?? "로비 정보를 불러오지 못했어요.");
+      const message = String(err?.message ?? "");
+      if (message.includes("Forbidden") || message.includes("Unauthorized") || message.includes("HTTP 401") || message.includes("HTTP 403")) {
+        setError("로그인 세션을 다시 확인하는 중입니다. 잠시 후 다시 시도해 주세요.");
+      } else {
+        setError("로비 정보를 불러오지 못했어요.");
+      }
     } finally {
       setLoading(false);
     }
