@@ -2,11 +2,11 @@
   --bg-a: #1d1234;
   --bg-b: #4a2b68;
   --bg-c: #f58a43;
-  --line: rgba(255, 255, 255, 0.2);
-  --panel: rgba(9, 13, 30, 0.6);
+  --line: rgba(255, 255, 255, 0.26);
+  --panel: rgba(9, 13, 30, 0.66);
   min-height: 100vh;
   color: #fff;
-  background: radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.15), transparent 35%),
+  background: radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.16), transparent 35%),
     linear-gradient(130deg, var(--bg-a) 0%, var(--bg-b) 50%, var(--bg-c) 100%);
   position: relative;
   overflow: hidden;
@@ -90,7 +90,7 @@
 .share-preview {
   position: relative;
   border-radius: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   overflow: hidden;
   min-height: 560px;
   display: flex;
@@ -118,15 +118,55 @@
 .share-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.16) 60%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.18) 60%);
+}
+
+.share-logo {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  z-index: 3;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .share-sticker {
   position: absolute;
   right: 18px;
-  top: 14px;
+  top: 12px;
   font-size: 40px;
-  z-index: 2;
+  z-index: 3;
+}
+
+.story-safe {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 54px;
+  z-index: 3;
+  border: 1px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.story-safe.top {
+  top: 56px;
+}
+
+.story-safe.bottom {
+  bottom: 16px;
 }
 
 .share-content {
@@ -145,7 +185,8 @@
 
 .share-badge {
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.08);
   padding: 5px 10px;
   font-size: 12px;
 }
@@ -159,27 +200,27 @@
 }
 
 .share-quote.quote-glass {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .share-quote.quote-outline {
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.92);
 }
 
 .share-quote.quote-solid {
-  background: rgba(0, 0, 0, 0.62);
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .share-meta {
   margin-top: 12px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .control-title {
   font-size: 13px;
-  opacity: 0.9;
+  color: #f7f7ff;
   margin-bottom: 8px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -196,29 +237,42 @@
 }
 
 .choice-btn {
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 999px;
   padding: 7px 12px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.86);
-  background: rgba(255, 255, 255, 0.06);
+  color: #f7f7ff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .choice-btn.active {
-  border-color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.22);
   color: #fff;
+}
+
+.choice-btn:focus-visible,
+.action-btn:focus-visible,
+.comment-editor:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .comment-editor {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 12px;
-  background: rgba(3, 8, 21, 0.5);
+  background: rgba(3, 8, 21, 0.58);
   color: #fff;
   padding: 10px 12px;
   min-height: 88px;
   resize: vertical;
+}
+
+.thumb-preview {
+  width: 168px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .action-list {
@@ -230,16 +284,21 @@
 
 .action-btn {
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
   padding: 10px 14px;
   font-size: 14px;
 }
 
 .action-btn.primary {
-  border-color: rgba(101, 255, 217, 0.8);
+  border-color: rgba(101, 255, 217, 0.92);
   color: #cbffef;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 1024px) {

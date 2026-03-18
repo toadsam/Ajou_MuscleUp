@@ -114,7 +114,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         log.setShared(true);
 
         AttendanceLog saved = attendanceLogRepository.save(log);
-        return AttendanceShareResponse.from(saved);
+        return toShareResponse(saved);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         if (log.isHiddenByAdmin()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found.");
         }
-        return AttendanceShareResponse.from(log);
+        return toShareResponse(log);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found.");
         }
         log.setCheerCount(log.getCheerCount() + 1);
-        return AttendanceShareResponse.from(attendanceLogRepository.save(log));
+        return toShareResponse(attendanceLogRepository.save(log));
     }
 
     @Override
@@ -158,7 +158,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         AttendanceLog log = attendanceLogRepository.findByShareSlugAndSharedTrue(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shared attendance not found."));
         log.setReportCount(log.getReportCount() + 1);
-        return AttendanceShareResponse.from(attendanceLogRepository.save(log));
+        return toShareResponse(attendanceLogRepository.save(log));
     }
 
     @Override
@@ -514,6 +514,14 @@ public class AttendanceServiceImpl implements AttendanceService {
             break;
         }
         return streak;
+    }
+
+    private AttendanceShareResponse toShareResponse(AttendanceLog log) {
+        if (log.getUser() == null) {
+            return AttendanceShareResponse.from(log, null);
+        }
+        int streak = calculateStreakForDate(log.getUser(), log.getDate());
+        return AttendanceShareResponse.from(log, streak);
     }
 
     private User getUserOrThrow(String email) {

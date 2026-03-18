@@ -27,8 +27,13 @@ public class AttendanceShareResponse {
     private LocalDateTime lastEditedAt;
     private LocalDateTime updatedAt;
     private String shareSlug;
+    private Integer currentStreak;
 
     public static AttendanceShareResponse from(AttendanceLog log) {
+        return from(log, null);
+    }
+
+    public static AttendanceShareResponse from(AttendanceLog log, Integer currentStreak) {
         return AttendanceShareResponse.builder()
                 .id(log.getId())
                 .date(log.getDate())
@@ -45,6 +50,7 @@ public class AttendanceShareResponse {
                 .lastEditedAt(log.getLastEditedAt())
                 .updatedAt(log.getUpdatedAt())
                 .shareSlug(log.getShareSlug())
+                .currentStreak(currentStreak)
                 .build();
     }
 
