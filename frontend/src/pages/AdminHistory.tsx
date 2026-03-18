@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import AdminTableShell from "../components/admin/AdminTableShell";
+import AdminToast from "../components/admin/AdminToast";
+import { useAdminToast } from "../components/admin/useAdminToast";
 import { logEvent } from "../utils/analytics";
 
 type EventItem = {
@@ -18,17 +21,17 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 export default function AdminHistory() {
   const [items, setItems] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const { toast, showError, clearToast } = useAdminToast();
 
   useEffect(() => {
     logEvent("admin_history", "page_view");
-    fetchEvents();
+    void fetchEvents();
   }, []);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      setError(null);
       const res = await fetch(`${API_BASE}/api/admin/audit?limit=300`, {
         credentials: "include",
       });
@@ -36,87 +39,105 @@ export default function AdminHistory() {
       const data: EventItem[] = await res.json();
       setItems(data);
     } catch (e: any) {
-      setError(e?.message || "내역을 불러오지 못했습니다.");
+      showError(e?.message || "이력 데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleString("ko-KR", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return iso;
-    }
-  };
+  const filtered = items.filter((item) => {
+    if (!query.trim()) return true;
+    const needle = query.trim().toLowerCase();
+    return [item.action, item.resource, item.summary || "", item.userEmail || "", item.userNickname || ""]
+      .join(" ")
+      .toLowerCase()
+      .includes(needle);
+  });
 
   return (
-    <section className="relative min-h-screen bg-slate-950 text-white px-6 pb-20 pt-28 lg:px-10">
+    <section className="relative min-h-screen bg-slate-950 px-6 pb-20 pt-28 text-white lg:px-10">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-pink-500/20 blur-3xl" />
         <div className="absolute right-0 top-20 h-96 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
       </div>
-      <div className="relative mx-auto max-w-6xl space-y-8">
-        <div className="flex items-center justify-between">
+
+      <div className="relative mx-auto max-w-7xl space-y-8">
+        <header className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-pink-200">Admin</p>
-            <h1 className="text-3xl font-extrabold">활동 내역</h1>
-            <p className="text-sm text-gray-300 mt-1">누가 무엇을 생성/수정/삭제/요청했는지 최근 이벤트를 확인합니다.</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-pink-200">Admin History</p>
+            <h1 className="mt-1 text-3xl font-extrabold">활동 이력</h1>
+            <p className="mt-1 text-sm text-gray-300">최근 관리자 활동 로그를 검색하고 확인합니다.</p>
           </div>
           <div className="flex gap-2">
-            <Link
-              to="/admin"
-              className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10"
-            >
-              ← 대시보드
+            <Link to="/admin" className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10">
+              대시보드
             </Link>
-            <button
-              onClick={fetchEvents}
-              className="rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-sm font-semibold hover:opacity-90"
-              disabled={loading}
-            >
-              새로고침
-            </button>
           </div>
-        </div>
+        </header>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {loading && <p className="text-sm text-gray-300">불러오는 중...</p>}
-
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
-          <div className="grid grid-cols-7 gap-3 px-4 py-3 text-xs font-semibold text-gray-300">
-            <div>시간</div>
-            <div>사용자</div>
-            <div>리소스</div>
-            <div>액션</div>
-            <div>요약</div>
-            <div className="col-span-2">메타데이터</div>
+        <AdminTableShell
+          title="감사 로그"
+          description="최대 300건"
+          loading={loading}
+          hasData={filtered.length > 0}
+          emptyMessage="표시할 로그가 없습니다."
+          onRefresh={fetchEvents}
+          actionSlot={
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="사용자/액션/리소스 검색"
+              className="rounded-lg border border-white/20 bg-black/20 px-3 py-1.5 text-sm text-white placeholder:text-gray-400"
+            />
+          }
+        >
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/10 text-left text-gray-200">
+                <tr>
+                  <th className="p-3">시간</th>
+                  <th className="p-3">사용자</th>
+                  <th className="p-3">리소스</th>
+                  <th className="p-3">액션</th>
+                  <th className="p-3">요약</th>
+                  <th className="p-3">메타데이터</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((item) => (
+                  <tr key={item.id} className="border-t border-white/10 align-top">
+                    <td className="p-3 text-gray-300">{formatDate(item.createdAt)}</td>
+                    <td className="p-3">
+                      <p className="font-semibold text-white">{item.userNickname || "익명"}</p>
+                      <p className="text-xs text-gray-400">{item.userEmail || "-"}</p>
+                    </td>
+                    <td className="p-3 break-words text-gray-200">{item.resource}</td>
+                    <td className="p-3 font-semibold text-pink-200">{item.action}</td>
+                    <td className="p-3 text-xs text-gray-300">{item.summary || "-"}</td>
+                    <td className="p-3 text-xs text-gray-300">{item.metadata || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="divide-y divide-white/5">
-            {items.map((e) => (
-              <div key={e.id} className="grid grid-cols-7 gap-3 px-4 py-3 text-sm text-gray-100">
-                <div className="text-gray-300">{formatDate(e.createdAt)}</div>
-                <div>
-                  <div className="font-semibold">{e.userNickname || "익명"}</div>
-                  <div className="text-xs text-gray-400">{e.userEmail || "-"}</div>
-                </div>
-                <div className="break-words text-gray-200">{e.resource}</div>
-                <div className="font-semibold text-pink-200">{e.action}</div>
-                <div className="text-xs text-gray-300 whitespace-pre-wrap break-words">{e.summary || "-"}</div>
-                <div className="col-span-2 text-xs text-gray-300 whitespace-pre-wrap break-words">{e.metadata || "-"}</div>
-              </div>
-            ))}
-            {items.length === 0 && !loading && (
-              <div className="px-4 py-6 text-center text-sm text-gray-400">표시할 내역이 없습니다.</div>
-            )}
-          </div>
-        </div>
+        </AdminTableShell>
       </div>
+
+      <AdminToast toast={toast} onClose={clearToast} />
     </section>
   );
+}
+
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleString("ko-KR", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
 }
