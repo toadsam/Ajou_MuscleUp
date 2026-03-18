@@ -5,13 +5,14 @@ import com.ajou.muscleup.entity.AiMessageType;
 import com.ajou.muscleup.service.AiChatHistoryService;
 import com.ajou.muscleup.service.AiService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.http.HttpHeaders;
@@ -25,8 +26,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -34,6 +39,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor
+@Slf4j
 public class AiController {
 
     private final AiService aiService;
@@ -297,18 +303,20 @@ public class AiController {
     private byte[] renderInbodyPdf(AiInbodyPdfRequest req) throws Exception {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(document);
-            writer.title("InBody AI Coaching Report");
+            writer.title("Deukgeun InBody AI Report");
             writer.line("Created: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
             writer.line("Member: " + nz(req.getMemberName()));
             writer.line("Goal Source: " + nz(req.getGoalSource()));
             writer.line("Confidence: " + (req.getConfidence() == null ? "-" : req.getConfidence() + "%"));
             writer.blank();
+            writer.callout("This report summarizes current status, goals, meal guidance, and workout direction in a beginner-friendly order.");
+            writer.callout("Read the gap between current and target values together with the weekly trend, not just one number.");
 
-            writer.section("Extracted Metrics");
+            writer.section("Key Metrics");
             writer.mapRows(req.getMetrics());
-            writer.section("Targets");
+            writer.section("Target Metrics");
             writer.mapRows(req.getTargets());
-            writer.section("Daily Nutrition");
+            writer.section("Daily Nutrition Guide");
             writer.mapRows(req.getDailyNutrition());
 
             writer.section("Weekly Checkpoints");
@@ -317,8 +325,8 @@ public class AiController {
             } else {
                 for (Map<String, String> row : req.getWeeklyCheckpoints()) {
                     writer.line("- Week " + nz(row.get("week"))
-                            + " | Weight " + nz(row.get("target_weight_kg"))
-                            + " | BodyFat " + nz(row.get("target_body_fat_kg"))
+                            + " | Target Weight " + nz(row.get("target_weight_kg"))
+                            + " | Target Body Fat " + nz(row.get("target_body_fat_kg"))
                             + " | Focus " + nz(row.get("focus")));
                 }
             }
@@ -330,7 +338,7 @@ public class AiController {
                 }
             }
 
-            writer.section("Consultation");
+            writer.section("Detailed Consultation");
             writer.paragraph(nz(req.getConsultation()));
             writer.close();
 
@@ -348,11 +356,13 @@ public class AiController {
         private float y;
         private final float margin = 52f;
         private final float lineHeight = 15f;
-        private final PDType1Font base = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-        private final PDType1Font bold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        private final PDFont base;
+        private final PDFont bold;
 
         private PdfWriter(PDDocument document) throws Exception {
             this.document = document;
+            this.base = loadUnicodeFont(document);
+            this.bold = this.base;
             newPage();
         }
 
@@ -360,13 +370,17 @@ public class AiController {
             if (stream != null) stream.close();
             page = new PDPage(PDRectangle.A4);
             document.addPage(page);
-            stream = new PDPageContentStream(document, page);
+            stream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true);
             y = page.getMediaBox().getHeight() - margin;
         }
 
         private void title(String text) throws Exception { write(text, bold, 16f); }
         private void section(String text) throws Exception { blank(); write(text, bold, 12f); }
         private void line(String text) throws Exception { write(text, base, 10f); }
+        private void callout(String text) throws Exception {
+            blank();
+            write("TIP | " + text, bold, 10f);
+        }
         private void blank() throws Exception { y -= lineHeight / 2f; if (y < margin) newPage(); }
 
         private void paragraph(String text) throws Exception {
@@ -385,36 +399,81 @@ public class AiController {
             }
         }
 
-        private void write(String text, PDType1Font font, float size) throws Exception {
+        private void write(String text, PDFont font, float size) throws Exception {
+            String safeText = sanitizeForPdf(text, font);
             float maxWidth = page.getMediaBox().getWidth() - (margin * 2);
-            for (String row : wrap(text, font, size, maxWidth)) {
+            for (String row : wrap(safeText, font, size, maxWidth)) {
                 if (y < margin) newPage();
                 stream.beginText();
-                stream.setFont(font, size);
-                stream.newLineAtOffset(margin, y);
-                stream.showText(row == null ? "" : row);
-                stream.endText();
+                try {
+                    stream.setFont(font, size);
+                    stream.newLineAtOffset(margin, y);
+                    stream.showText(row == null ? "" : row);
+                } finally {
+                    stream.endText();
+                }
                 y -= lineHeight;
             }
         }
 
-        private List<String> wrap(String text, PDType1Font font, float size, float maxWidth) throws Exception {
+        private List<String> wrap(String text, PDFont font, float size, float maxWidth) throws Exception {
             if (text == null || text.isBlank()) return List.of("");
             List<String> rows = new ArrayList<>();
-            String[] words = text.split(" ");
             StringBuilder line = new StringBuilder();
-            for (String word : words) {
-                String candidate = line.length() == 0 ? word : line + " " + word;
+            for (int i = 0; i < text.length(); i++) {
+                String ch = text.substring(i, i + 1);
+                String candidate = line + ch;
                 float width = font.getStringWidth(candidate) / 1000 * size;
-                if (width <= maxWidth) {
-                    line = new StringBuilder(candidate);
-                } else {
-                    rows.add(line.toString());
-                    line = new StringBuilder(word);
+                if (width <= maxWidth || line.length() == 0) {
+                    line.append(ch);
+                    continue;
                 }
+                rows.add(line.toString());
+                line = new StringBuilder(ch);
             }
             if (line.length() > 0) rows.add(line.toString());
             return rows;
+        }
+
+        private String sanitizeForPdf(String text, PDFont font) {
+            if (text == null || text.isBlank()) {
+                return "";
+            }
+            String normalized = text
+                    .replace('\u00A0', ' ')
+                    .replace('\t', ' ')
+                    .replace('\r', '\n')
+                    .replaceAll("[\\p{Cntrl}&&[^\r\n]]", "");
+            StringBuilder safe = new StringBuilder();
+            for (int i = 0; i < normalized.length(); ) {
+                int codePoint = normalized.codePointAt(i);
+                String ch = new String(Character.toChars(codePoint));
+                try {
+                    font.encode(ch);
+                    safe.append(ch);
+                } catch (Exception ignored) {
+                    safe.append('?');
+                }
+                i += Character.charCount(codePoint);
+            }
+            return safe.toString();
+        }
+
+        private PDFont loadUnicodeFont(PDDocument document) throws IOException {
+            for (String candidate : List.of(
+                    "C:\\Windows\\Fonts\\malgun.ttf",
+                    "C:\\Windows\\Fonts\\malgunbd.ttf",
+                    "C:\\Windows\\Fonts\\gulim.ttc",
+                    "C:\\Windows\\Fonts\\batang.ttc"
+            )) {
+                Path path = Path.of(candidate);
+                if (Files.exists(path)) {
+                    try (InputStream inputStream = Files.newInputStream(path)) {
+                        return PDType0Font.load(document, inputStream, true);
+                    }
+                }
+            }
+            throw new IOException("No usable Unicode font found for PDF rendering.");
         }
 
         private void close() throws Exception {

@@ -16,7 +16,7 @@ import {
   Legend,
 } from "recharts";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 type InbodyResponse = {
   consultation: string;
@@ -72,12 +72,28 @@ const workflowCards = [
   { step: "Step 02", title: "목표/강도 설정", desc: "감량/증량 방향과 난이도를 지정합니다." },
   { step: "Step 03", title: "상담 리포트 확인", desc: "차트 분석과 주차별 가이드를 확인합니다." },
 ] as const;
+const consultModes = [
+  { value: "upload", label: "파일 업로드 상담", desc: "인바디 이미지/PDF로 분석합니다." },
+  { value: "manual", label: "직접 입력 상담", desc: "수치를 직접 넣고 바로 상담합니다." },
+] as const;
 
 export default function InbodyConsult() {
+  const [consultMode, setConsultMode] = useState<(typeof consultModes)[number]["value"]>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [goal, setGoal] = useState("");
   const [notes, setNotes] = useState("");
   const [goalIntensity, setGoalIntensity] = useState<(typeof goalIntensityOptions)[number]["value"]>("standard");
+  const [manualMetrics, setManualMetrics] = useState<Record<string, string>>({
+    height_cm: "",
+    weight_kg: "",
+    skeletal_muscle_kg: "",
+    body_fat_kg: "",
+    body_fat_percent: "",
+    bmi: "",
+    bmr_kcal: "",
+    visceral_fat_level: "",
+    inbody_score: "",
+  });
   const [loading, setLoading] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -129,11 +145,19 @@ export default function InbodyConsult() {
     };
   }, [result]);
 
-  const consultationSections = useMemo(() => {
-    return result ? buildConsultationSections(result.consultation || "") : [];
+  const normalizedConsultation = useMemo(() => {
+    if (!result) return "";
+    return normalizeConsultation(result);
   }, [result]);
 
-  const summaryLines = useMemo(() => buildKeySummaryLines(result?.consultation || "", consultationSections, 3), [result, consultationSections]);
+  const consultationSections = useMemo(() => {
+    return result ? buildConsultationSections(normalizedConsultation) : [];
+  }, [result, normalizedConsultation]);
+
+  const summaryLines = useMemo(() => buildKeySummaryLines(normalizedConsultation, consultationSections, 3), [normalizedConsultation, consultationSections]);
+  const beginnerHighlights = useMemo(() => (result ? buildBeginnerHighlights(result) : []), [result]);
+  const actionChecklist = useMemo(() => (result ? buildActionChecklist(result) : []), [result]);
+  const metricInsightCards = useMemo(() => (result ? buildMetricInsightCards(result.metrics) : []), [result]);
 
   const compositionDomain = useMemo(() => {
     const values = compositionData.flatMap((x) => [x.current, x.target]);
@@ -147,6 +171,10 @@ export default function InbodyConsult() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (consultMode === "manual") {
+      await submitManualConsult();
+      return;
+    }
     if (!file) {
       setError("인바디 사진 또는 PDF 파일을 선택해 주세요.");
       return;
@@ -172,6 +200,45 @@ export default function InbodyConsult() {
       setConfirmedMetrics(extractCoreMetrics(data.metrics));
     } catch (err: any) {
       setError(err?.message ?? "분석 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitManualConsult = async () => {
+    const cleanedMetrics = Object.fromEntries(
+      Object.entries(manualMetrics)
+        .map(([key, value]) => [key, value.trim()])
+        .filter(([, value]) => value.length > 0)
+    );
+
+    const requiredKeys = ["weight_kg", "skeletal_muscle_kg", "body_fat_percent", "visceral_fat_level"];
+    const missingRequired = requiredKeys.filter((key) => !cleanedMetrics[key]);
+    if (missingRequired.length > 0) {
+      setError("직접 입력 상담은 체중, 골격근량, 체지방률, 내장지방 레벨을 먼저 입력해 주세요.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/ai/inbody/review-consult`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          metrics: cleanedMetrics,
+          goal,
+          notes,
+          goalIntensity,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const data = (await res.json()) as InbodyResponse;
+      setResult(data);
+      setConfirmedMetrics(extractCoreMetrics(data.metrics));
+    } catch (err: any) {
+      setError(err?.message ?? "직접 입력 상담 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -268,16 +335,64 @@ export default function InbodyConsult() {
           onSubmit={onSubmit}
           className="grid gap-4 rounded-3xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-[0_20px_70px_-40px_rgba(2,132,199,0.5)] backdrop-blur md:grid-cols-2"
         >
-          <label className="block text-sm">
-            인바디 파일 (이미지/PDF)
-            <input
-              type="file"
-              accept="image/*,.pdf,application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-cyan-400/90 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-slate-950 hover:border-cyan-300/40"
-            />
-            <p className="mt-1 text-xs text-slate-400">{file?.name ? `선택 파일: ${file.name}` : "선택된 파일 없음"}</p>
-          </label>
+          <div className="md:col-span-2">
+            <p className="text-sm">상담 시작 방식</p>
+            <div className="mt-2 grid gap-3 md:grid-cols-2">
+              {consultModes.map((mode) => (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => setConsultMode(mode.value)}
+                  className={`rounded-2xl border px-4 py-4 text-left transition ${
+                    consultMode === mode.value
+                      ? "border-cyan-300/60 bg-cyan-500/10 shadow-[0_0_30px_-18px_rgba(34,211,238,0.9)]"
+                      : "border-slate-700 bg-slate-950/50 hover:border-cyan-300/35"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-slate-100">{mode.label}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-400">{mode.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {consultMode === "upload" ? (
+            <label className="block text-sm">
+              인바디 파일 (이미지/PDF)
+              <input
+                type="file"
+                accept="image/*,.pdf,application/pdf"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-cyan-400/90 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-slate-950 hover:border-cyan-300/40"
+              />
+              <p className="mt-1 text-xs text-slate-400">{file?.name ? `선택 파일: ${file.name}` : "선택된 파일 없음"}</p>
+            </label>
+          ) : (
+            <div className="grid gap-3 md:col-span-2 md:grid-cols-2 xl:grid-cols-3">
+              {[
+                ["height_cm", "키 (cm)"],
+                ["weight_kg", "체중 (kg)"],
+                ["skeletal_muscle_kg", "골격근량 (kg)"],
+                ["body_fat_kg", "체지방량 (kg)"],
+                ["body_fat_percent", "체지방률 (%)"],
+                ["bmi", "BMI"],
+                ["bmr_kcal", "기초대사량 (kcal)"],
+                ["visceral_fat_level", "내장지방 레벨"],
+                ["inbody_score", "인바디 점수"],
+              ].map(([key, label]) => (
+                <label key={key} className="block text-sm">
+                  {label}
+                  <input
+                    type="text"
+                    value={manualMetrics[key] || ""}
+                    onChange={(e) => setManualMetrics((prev) => ({ ...prev, [key]: e.target.value }))}
+                    placeholder={key === "weight_kg" ? "예: 55.2" : "직접 입력"}
+                    className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+                  />
+                </label>
+              ))}
+            </div>
+          )}
 
           <label className="block text-sm">
             목표
@@ -328,7 +443,7 @@ export default function InbodyConsult() {
               disabled={loading}
               className="rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-300 px-5 py-2.5 font-semibold text-slate-950 shadow-[0_0_30px_-14px_rgba(34,197,94,0.85)] transition hover:brightness-105 disabled:opacity-60"
             >
-              {loading ? "AI 분석 중..." : "분석 시작"}
+              {loading ? "AI 상담 중..." : consultMode === "upload" ? "분석 시작" : "직접 입력 상담 시작"}
             </button>
             {result && (
               <button
@@ -370,6 +485,40 @@ export default function InbodyConsult() {
               {result.reviewRequired && <Badge label="수치 확인 필요" warning />}
             </div>
 
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-900 p-6 shadow-[0_18px_50px_-30px_rgba(34,211,238,0.65)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">Beginner Friendly Summary</p>
+                <h2 className="mt-2 text-2xl font-bold text-slate-50">한눈에 보는 현재 상태와 다음 액션</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                  아래 카드만 읽어도 지금 상태, 우선순위, 식단/운동 방향을 빠르게 이해할 수 있게 정리했습니다.
+                </p>
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  {beginnerHighlights.map((item) => (
+                    <div key={item.title} className="rounded-2xl border border-cyan-300/20 bg-slate-950/60 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200/85">{item.eyebrow}</p>
+                      <p className="mt-1 text-base font-semibold text-slate-50">{item.title}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-300">{item.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-900 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">Quick Actions</p>
+                <h3 className="mt-2 text-xl font-bold text-slate-50">초보자용 실행 체크리스트</h3>
+                <div className="mt-4 space-y-3">
+                  {actionChecklist.map((item, idx) => (
+                    <div key={`${item}-${idx}`} className="flex gap-3 rounded-2xl border border-emerald-300/20 bg-slate-950/60 p-4">
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-400 font-bold text-slate-950">
+                        {idx + 1}
+                      </div>
+                      <p className="text-sm leading-relaxed text-slate-200">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5">
               <h3 className="text-sm font-semibold text-amber-100">입력값 재확인 (핵심 4개)</h3>
               <p className="mt-1 text-xs text-amber-50">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
@@ -396,6 +545,22 @@ export default function InbodyConsult() {
               </button>
             </div>
 
+            <div className="grid gap-4 lg:grid-cols-3">
+              {metricInsightCards.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-slate-700/80 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-[0_14px_40px_-28px_rgba(34,211,238,0.65)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-50">{item.value}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.toneClass}`}>{item.badge}</span>
+                  </div>
+                  <p className="mt-3 text-sm font-medium text-slate-100">{item.headline}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300">{item.description}</p>
+                </div>
+              ))}
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(metricLabels).map(([key, label]) => (
                 <MetricCard key={key} label={label} value={result.metrics?.[key] || "-"} />
@@ -404,6 +569,9 @@ export default function InbodyConsult() {
 
             <div className="grid gap-4 lg:grid-cols-2">
               <ChartCard title="현재 vs 목표 (고정 축)">
+                <p className="mb-3 text-sm leading-relaxed text-slate-300">
+                  파란 막대는 현재, 초록 막대는 목표입니다. 두 막대 차이가 클수록 우선적으로 조정해야 할 항목입니다.
+                </p>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={compositionData}>
@@ -420,6 +588,9 @@ export default function InbodyConsult() {
               </ChartCard>
 
               <ChartCard title="탄단지 비율">
+                <p className="mb-3 text-sm leading-relaxed text-slate-300">
+                  식단을 숫자로 보기 어렵다면 이 원형 차트만 보셔도 됩니다. 비율이 너무 한쪽으로 치우치면 식단 균형을 다시 잡는 게 좋습니다.
+                </p>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -451,6 +622,9 @@ export default function InbodyConsult() {
             </div>
 
             <ChartCard title="주차별 목표 추이 (고정 축)">
+              <p className="mb-3 text-sm leading-relaxed text-slate-300">
+                주차별로 체중과 체지방량이 어떻게 변해야 하는지 보여줍니다. 급격한 하락보다 꾸준한 하락이 더 안정적인 계획입니다.
+              </p>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={weeklyData}>
@@ -490,20 +664,42 @@ export default function InbodyConsult() {
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 {consultationSections.map((section) => {
                   const visual = sectionVisual(section.key);
+                  const digest = buildSectionDigest(section.key, section.content, result);
                   return (
-                    <div key={section.key} className={`rounded-xl border p-4 ${visual.cardClass}`}>
+                    <div key={section.key} className={`rounded-2xl border p-5 ${visual.cardClass}`}>
                       <p className={`text-sm font-semibold ${visual.titleClass}`}>[{visual.tag}] {section.title}</p>
-                      <pre className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-slate-100">{section.content}</pre>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-300">{sectionHelper(section.key)}</p>
+                      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/45 p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">한 줄 결론</p>
+                        <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-50">{digest.summary}</p>
+                      </div>
+                      <div className="mt-4 grid gap-3">
+                        {digest.items.map((item, idx) => (
+                          <div key={`${section.key}-${idx}`} className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/35 p-3">
+                            <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${visual.badgeClass}`}>
+                              {idx + 1}
+                            </div>
+                            <p className="text-sm leading-relaxed text-slate-100">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <details className="mt-4 rounded-xl border border-white/10 bg-slate-950/30 p-3">
+                        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">
+                          원문 보기
+                        </summary>
+                        <pre className="mt-3 whitespace-pre-wrap text-xs leading-relaxed text-slate-200">{section.content}</pre>
+                      </details>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6">
-              <h3 className="text-lg font-semibold text-slate-200">원문 전체</h3>
-              <pre className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.consultation}</pre>
-            </div>
+            <details className="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6">
+              <summary className="cursor-pointer text-lg font-semibold text-slate-200">원문 전체 펼쳐보기</summary>
+              <p className="mt-2 text-sm text-slate-400">필요할 때만 전체 상담 문장을 확인하세요.</p>
+              <pre className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-100">{normalizedConsultation}</pre>
+            </details>
           </div>
         )}
       </div>
@@ -518,6 +714,25 @@ function goalSourceLabel(source?: string) {
   return "기타";
 }
 
+function sectionHelper(key: string) {
+  switch (key) {
+    case "current":
+      return "현재 체형과 건강 상태를 쉬운 말로 풀어 읽는 구간입니다.";
+    case "goal":
+      return "몇 주 동안 어떤 수치를 어디까지 바꾸는지 보는 구간입니다.";
+    case "nutrition":
+      return "하루 식사량과 탄단지 균형을 이해하는 구간입니다.";
+    case "exercise":
+      return "실제로 어떤 운동을 어느 정도 할지 보는 구간입니다.";
+    case "checkpoint":
+      return "주차별로 무엇을 점검해야 하는지 정리한 구간입니다.";
+    case "caution":
+      return "무리하지 않기 위해 꼭 확인해야 하는 주의점입니다.";
+    default:
+      return "상담 내용을 순서대로 읽어 내려가면 됩니다.";
+  }
+}
+
 function extractCoreMetrics(metrics: Record<string, string>): Record<string, string> {
   return {
     weight_kg: metrics.weight_kg || "",
@@ -530,20 +745,51 @@ function extractCoreMetrics(metrics: Record<string, string>): Record<string, str
 function sectionVisual(key: string) {
   switch (key) {
     case "current":
-      return { tag: "현재", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200" };
+      return { tag: "현재", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200", badgeClass: "bg-sky-300 text-slate-950" };
     case "goal":
-      return { tag: "목표", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200" };
+      return { tag: "목표", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200", badgeClass: "bg-cyan-300 text-slate-950" };
     case "nutrition":
-      return { tag: "식단", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200" };
+      return { tag: "식단", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
     case "exercise":
-      return { tag: "운동", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200" };
+      return { tag: "운동", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200", badgeClass: "bg-rose-300 text-slate-950" };
     case "checkpoint":
-      return { tag: "체크", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200" };
+      return { tag: "체크", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200", badgeClass: "bg-amber-300 text-slate-950" };
     case "caution":
-      return { tag: "주의", cardClass: "border-orange-500/40 bg-orange-500/10", titleClass: "text-orange-200" };
+      return { tag: "주의", cardClass: "border-orange-500/40 bg-orange-500/10", titleClass: "text-orange-200", badgeClass: "bg-orange-300 text-slate-950" };
     default:
-      return { tag: "상담", cardClass: "border-slate-600 bg-slate-950", titleClass: "text-slate-200" };
+      return { tag: "상담", cardClass: "border-slate-600 bg-slate-950", titleClass: "text-slate-200", badgeClass: "bg-slate-300 text-slate-950" };
   }
+}
+
+function buildSectionDigest(sectionKey: string, text: string, result: InbodyResponse) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^[-*•\d.)\s]+/, "").trim())
+    .filter((line) => Boolean(line) && !isMostlyEnglish(line));
+
+  const items = lines.flatMap((line) => splitReadableSentences(line)).filter((line) => line.length >= 12);
+  const uniqueItems: string[] = [];
+  for (const item of items) {
+    if (!uniqueItems.includes(item)) uniqueItems.push(item);
+    if (uniqueItems.length >= 4) break;
+  }
+
+  if (uniqueItems.length === 0) {
+    return sectionFallbackDigest(sectionKey, result);
+  }
+
+  return {
+    summary: uniqueItems[0],
+    items: uniqueItems,
+  };
+}
+
+function splitReadableSentences(text: string) {
+  return text
+    .split(/(?<=[.!?。])\s+|(?<=다\.)\s+|(?<=요\.)\s+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => (line.length > 110 ? `${line.slice(0, 107)}...` : line));
 }
 
 function buildConsultationSections(text: string): ConsultationSection[] {
@@ -580,7 +826,7 @@ function buildKeySummaryLines(text: string, sections: ConsultationSection[], cou
     const first = section.content
       .split(/\r?\n/)
       .map((line) => line.replace(/^[-*•\d.)\s]+/, "").trim())
-      .find((line) => line.length >= 8);
+      .find((line) => line.length >= 8 && !isMostlyEnglish(line));
     if (first) candidates.push(first);
   }
 
@@ -588,7 +834,7 @@ function buildKeySummaryLines(text: string, sections: ConsultationSection[], cou
     const fallback = text
       .split(/\r?\n/)
       .map((line) => line.replace(/^[-*•\d.)\s]+/, "").trim())
-      .filter((line) => line.length >= 8);
+      .filter((line) => line.length >= 8 && !isMostlyEnglish(line));
     candidates.push(...fallback);
   }
 
@@ -599,6 +845,266 @@ function buildKeySummaryLines(text: string, sections: ConsultationSection[], cou
   }
   while (unique.length < count) unique.push("핵심 요약을 위해 추가 상담 정보를 확인해 주세요.");
   return unique.slice(0, count);
+}
+
+function normalizeConsultation(result: InbodyResponse) {
+  const raw = (result.consultation || "").trim();
+  if (!raw) {
+    return buildFallbackConsultation(result);
+  }
+
+  const meaningfulKoreanLines = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 8 && !isMostlyEnglish(line));
+
+  if (meaningfulKoreanLines.length >= 2) {
+    return raw;
+  }
+
+  return buildFallbackConsultation(result);
+}
+
+function buildFallbackConsultation(result: InbodyResponse) {
+  const weight = result.metrics.weight_kg || "-";
+  const muscle = result.metrics.skeletal_muscle_kg || "-";
+  const bodyFat = result.metrics.body_fat_percent || "-";
+  const visceralFat = result.metrics.visceral_fat_level || "-";
+  const calories = result.dailyNutrition.calories_kcal || "-";
+  const protein = result.dailyNutrition.protein_g || "-";
+  const carb = result.dailyNutrition.carb_g || "-";
+  const fat = result.dailyNutrition.fat_g || "-";
+  const firstWeek = result.weeklyCheckpoints?.[0];
+
+  return [
+    "현재 상태",
+    `현재 체중은 ${weight}kg, 골격근량은 ${muscle}kg, 체지방률은 ${bodyFat}%, 내장지방 레벨은 ${visceralFat}입니다.`,
+    "체중 숫자 하나보다 체지방과 근육량의 균형을 함께 보는 것이 더 중요합니다.",
+    "",
+    "목표 설정",
+    "확정한 수치를 기준으로 보면 극단적인 감량보다 체성분을 천천히 개선하는 방향이 이해하기 쉽습니다.",
+    "1~4주 단위의 짧은 목표와 12주 단위의 중간 목표를 함께 관리하면 부담이 줄어듭니다.",
+    "",
+    "식단/영양",
+    `하루 식단은 약 ${calories}kcal 기준으로 보고, 탄수화물 ${carb}g, 단백질 ${protein}g, 지방 ${fat}g 수준으로 나눠 이해하면 됩니다.`,
+    "초보자는 끼니마다 단백질을 일정하게 나눠 먹는 것부터 시작하는 것이 가장 쉽습니다.",
+    "",
+    "운동 계획",
+    "주 2~4회 정도의 꾸준한 근력운동과 쉬운 유산소부터 시작하면 충분합니다.",
+    "처음에는 강도보다 꾸준함, 자세, 회복을 우선하는 편이 좋습니다.",
+    "",
+    "체크포인트",
+    firstWeek?.focus
+      ? `첫 체크포인트는 '${firstWeek.focus}'입니다. 이 항목을 이번 주 우선순위로 두고 기록을 남기세요.`
+      : "첫 1~2주는 몸이 적응하는 기간으로 보고 체중, 식사, 컨디션을 함께 기록하세요.",
+    "주 1회 같은 시간에 체중과 컨디션을 기록하면 변화 추세를 읽기 쉽습니다.",
+    "",
+    "주의사항",
+    "무리한 감량과 과도한 운동보다 지속 가능한 루틴을 만드는 것이 더 중요합니다.",
+    "피로감이나 통증이 크면 강도를 낮추고 수면과 식사를 먼저 점검하세요.",
+  ].join("\n");
+}
+
+function sectionFallbackDigest(sectionKey: string, result: InbodyResponse) {
+  const weight = result.metrics.weight_kg || "-";
+  const bodyFat = result.metrics.body_fat_percent || "-";
+  const muscle = result.metrics.skeletal_muscle_kg || "-";
+  const calories = result.dailyNutrition.calories_kcal || "-";
+  const protein = result.dailyNutrition.protein_g || "-";
+  const firstWeek = result.weeklyCheckpoints?.[0];
+
+  switch (sectionKey) {
+    case "current":
+      return {
+        summary: `현재 체중 ${weight}kg, 골격근량 ${muscle}kg, 체지방률 ${bodyFat}%를 기준으로 현재 상태를 이해하면 됩니다.`,
+        items: [
+          "현재는 체중 숫자 하나보다 체지방과 근육량 균형을 함께 보는 것이 더 중요합니다.",
+          "극단적인 감량보다 체성분을 천천히 개선하는 방향으로 해석하면 이해가 쉽습니다.",
+        ],
+      };
+    case "goal":
+      return {
+        summary: "목표는 짧은 기간과 중간 기간으로 나눠서 보면 훨씬 부담이 적습니다.",
+        items: [
+          "1~4주 목표와 12주 목표를 따로 보면 진행 상황을 확인하기 쉽습니다.",
+          "체중 변화와 함께 체지방, 근육량 변화도 같이 체크하세요.",
+        ],
+      };
+    case "nutrition":
+      return {
+        summary: `하루 식단은 약 ${calories}kcal, 단백질은 ${protein}g 기준으로 이해하면 됩니다.`,
+        items: [
+          "초보자는 끼니마다 단백질을 나눠 챙기는 것부터 시작하는 편이 쉽습니다.",
+          "탄단지 비율은 완벽함보다 꾸준하게 유지하는 것이 더 중요합니다.",
+        ],
+      };
+    case "exercise":
+      return {
+        summary: "운동은 주 2~4회 정도의 꾸준한 근력운동과 쉬운 유산소부터 시작하면 충분합니다.",
+        items: [
+          "처음에는 강도보다 꾸준함과 자세를 우선하세요.",
+          "전신 근력운동과 걷기, 실내 자전거 같은 쉬운 유산소를 함께 가져가세요.",
+        ],
+      };
+    case "checkpoint":
+      return {
+        summary: firstWeek?.focus ? `첫 체크포인트는 '${firstWeek.focus}'입니다.` : "첫 1~2주는 몸이 적응하는 기간으로 보면 됩니다.",
+        items: [
+          "주 1회 같은 시간에 체중과 컨디션을 기록해 보세요.",
+          "급격한 변화보다 천천히 좋아지는 추세를 확인하는 것이 좋습니다.",
+        ],
+      };
+    case "caution":
+      return {
+        summary: "무리한 감량과 과도한 운동보다 지속 가능한 루틴이 더 중요합니다.",
+        items: [
+          "피로가 크면 강도를 낮추고 수면과 식사를 먼저 점검하세요.",
+          "통증이 있으면 해당 운동을 멈추고 다른 동작으로 대체하세요.",
+        ],
+      };
+    default:
+      return {
+        summary: "핵심 내용을 먼저 읽고 필요할 때만 원문을 펼쳐서 확인해 주세요.",
+        items: ["이 화면은 초보자도 빠르게 이해할 수 있도록 핵심만 먼저 보여줍니다."],
+      };
+  }
+}
+
+function isMostlyEnglish(text: string) {
+  const english = (text.match(/[A-Za-z]/g) || []).length;
+  const korean = (text.match(/[가-힣]/g) || []).length;
+  return english >= 8 && english > korean * 2;
+}
+
+function buildBeginnerHighlights(result: InbodyResponse) {
+  const weight = toNumber(result.metrics.weight_kg);
+  const muscle = toNumber(result.metrics.skeletal_muscle_kg);
+  const bodyFatPercent = toNumber(result.metrics.body_fat_percent);
+  const bmi = toNumber(result.metrics.bmi);
+  const calories = toNumber(result.dailyNutrition.calories_kcal);
+  const weekly = result.weeklyCheckpoints?.[0];
+
+  return [
+    {
+      eyebrow: "현재 상태",
+      title: beginnerStateTitle(bodyFatPercent, bmi),
+      description: `체중 ${weight || "-"}kg, 골격근량 ${muscle || "-"}kg, 체지방률 ${bodyFatPercent || "-"}% 기준으로 보면 ${beginnerStateDescription(bodyFatPercent, bmi)}`,
+    },
+    {
+      eyebrow: "우선순위",
+      title: primaryFocusTitle(bodyFatPercent, muscle),
+      description: primaryFocusDescription(bodyFatPercent, muscle),
+    },
+    {
+      eyebrow: "식단 방향",
+      title: calories > 0 ? `하루 약 ${calories}kcal 가이드` : "하루 식단 가이드 확인",
+      description: "탄수화물, 단백질, 지방을 한 번에 크게 바꾸기보다 1~2주 간격으로 조금씩 조정하는 것이 초보자에게 더 쉽습니다.",
+    },
+    {
+      eyebrow: "첫 체크포인트",
+      title: weekly?.focus ? `1주차 포커스: ${weekly.focus}` : "첫 1~2주 적응 구간",
+      description: "처음부터 강도를 높이기보다 기록을 남기고, 몸 상태와 피로도를 확인하면서 루틴을 안정적으로 굳히는 것이 중요합니다.",
+    },
+  ];
+}
+
+function buildActionChecklist(result: InbodyResponse) {
+  const protein = toNumber(result.dailyNutrition.protein_g);
+  const cardioFocus = toNumber(result.metrics.body_fat_percent) >= 28;
+  return [
+    "인바디 핵심 수치 4개를 다시 확인하고 오인식이 있으면 먼저 수정하세요.",
+    cardioFocus
+      ? "체지방 감량이 우선으로 보여 유산소와 하체·전신 근력운동을 함께 가져가는 편이 좋습니다."
+      : "체지방을 유지하면서 근육량을 챙기는 방향으로 근력운동 비중을 높게 가져가세요.",
+    protein > 0
+      ? `단백질은 하루 약 ${protein}g를 기준으로 끼니마다 나눠 섭취하면 관리가 쉬워집니다.`
+      : "단백질은 매 끼니마다 일정하게 넣는 방식이 초보자에게 가장 관리하기 쉽습니다.",
+    "주 1회 같은 시간대에 체중과 컨디션을 기록해 변화 추세를 보세요.",
+  ];
+}
+
+function buildMetricInsightCards(metrics: Record<string, string>) {
+  return [
+    metricInsight("BMI", metrics.bmi, interpretBmi(toNumber(metrics.bmi))),
+    metricInsight("체지방률", metrics.body_fat_percent ? `${metrics.body_fat_percent}%` : "-", interpretBodyFat(toNumber(metrics.body_fat_percent))),
+    metricInsight("내장지방 레벨", metrics.visceral_fat_level, interpretVisceralFat(toNumber(metrics.visceral_fat_level))),
+  ];
+}
+
+function metricInsight(label: string, value: string, insight: MetricInsight) {
+  return {
+    label,
+    value,
+    badge: insight.badge,
+    headline: insight.headline,
+    description: insight.description,
+    toneClass: insight.toneClass,
+  };
+}
+
+type MetricInsight = {
+  badge: string;
+  headline: string;
+  description: string;
+  toneClass: string;
+};
+
+function interpretBmi(value: number): MetricInsight {
+  if (!value) return neutralInsight("데이터 확인", "BMI 수치가 비어 있어 체중 범위 해석을 생략했습니다.");
+  if (value < 18.5) return positiveInsight("낮은 편", "체중이 비교적 낮은 편입니다.", "무리한 감량보다 근육과 식사량을 안정적으로 확보하는 쪽이 더 중요합니다.");
+  if (value < 23) return positiveInsight("표준", "체중 범위는 비교적 안정적입니다.", "현재 체중 유지 또는 체지방/근육 구성 개선에 집중하면 됩니다.");
+  if (value < 25) return cautionInsight("주의", "체중 관리가 조금 필요한 구간입니다.", "식단 균형과 활동량을 조정하면 충분히 개선 가능한 범위입니다.");
+  return cautionInsight("관리 필요", "체중 감량 우선순위가 높아 보입니다.", "급하게 줄이기보다 주차별 목표를 나눠 꾸준히 내려가는 것이 좋습니다.");
+}
+
+function interpretBodyFat(value: number): MetricInsight {
+  if (!value) return neutralInsight("데이터 확인", "체지방률 수치가 비어 있어 해석을 생략했습니다.");
+  if (value < 20) return positiveInsight("양호", "체지방률은 비교적 안정적입니다.", "지금은 감량보다 근력 향상과 체형 보정 쪽 설명을 더 중요하게 보면 됩니다.");
+  if (value < 28) return cautionInsight("보통", "체지방 관리가 필요한 시작 구간입니다.", "식단과 운동을 함께 조정하면 눈에 띄는 변화를 만들기 좋습니다.");
+  return cautionInsight("우선 관리", "체지방 감량이 가장 중요한 과제로 보입니다.", "유산소만 하기보다 근력운동을 함께 해야 체형 변화와 유지가 더 잘 됩니다.");
+}
+
+function interpretVisceralFat(value: number): MetricInsight {
+  if (!value) return neutralInsight("데이터 확인", "내장지방 수치가 비어 있어 해석을 생략했습니다.");
+  if (value <= 9) return positiveInsight("안정", "내장지방은 비교적 안정 범위입니다.", "현재 습관을 유지하면서 전체 체성분 균형을 잡으면 됩니다.");
+  if (value <= 12) return cautionInsight("주의", "내장지방 관리가 필요한 구간입니다.", "수면, 식사 시간, 유산소 습관도 함께 점검하는 것이 좋습니다.");
+  return cautionInsight("관리 필요", "생활습관 교정 우선순위가 높습니다.", "식단과 활동량을 동시에 조정하면서 장기적으로 줄여야 하는 수치입니다.");
+}
+
+function positiveInsight(badge: string, headline: string, description: string): MetricInsight {
+  return { badge, headline, description, toneClass: "bg-emerald-400/15 text-emerald-200 border border-emerald-300/30" };
+}
+
+function cautionInsight(badge: string, headline: string, description: string): MetricInsight {
+  return { badge, headline, description, toneClass: "bg-amber-400/15 text-amber-100 border border-amber-300/30" };
+}
+
+function neutralInsight(headline: string, description: string): MetricInsight {
+  return { badge: "확인 필요", headline, description, toneClass: "bg-slate-400/15 text-slate-100 border border-slate-300/30" };
+}
+
+function beginnerStateTitle(bodyFatPercent: number, bmi: number) {
+  if (bodyFatPercent >= 28 || bmi >= 25) return "감량 중심으로 보면 이해하기 쉬운 상태";
+  if (bodyFatPercent >= 20) return "체형 개선과 감량을 함께 보기 좋은 상태";
+  return "체중 유지보다 체성분 개선을 보기 좋은 상태";
+}
+
+function beginnerStateDescription(bodyFatPercent: number, bmi: number) {
+  if (bodyFatPercent >= 28 || bmi >= 25) return "체중 자체보다 체지방을 꾸준히 낮추는 방향으로 읽는 것이 좋습니다.";
+  if (bodyFatPercent >= 20) return "지방을 조금씩 줄이면서 근육량을 지키는 방향이 이해하기 쉽습니다.";
+  return "숫자를 크게 줄이기보다 근육량과 라인 개선에 더 집중하면 됩니다.";
+}
+
+function primaryFocusTitle(bodyFatPercent: number, muscle: number) {
+  if (bodyFatPercent >= 28) return "체지방 감량을 먼저 보는 것이 좋습니다.";
+  if (muscle > 0 && muscle < 18) return "근육량 확보를 같이 보는 것이 좋습니다.";
+  return "현재 루틴을 안정적으로 유지하며 미세 조정하면 됩니다.";
+}
+
+function primaryFocusDescription(bodyFatPercent: number, muscle: number) {
+  if (bodyFatPercent >= 28) return "지방 감량이 우선이지만, 근력운동을 함께 해야 몸매 변화와 요요 방지에 도움이 됩니다.";
+  if (muscle > 0 && muscle < 18) return "먹는 양을 너무 줄이지 말고, 하체·등·전신 위주 근력운동으로 기본 근육량을 올리는 쪽이 좋습니다.";
+  return "극단적인 감량보다는 주차별 목표를 지키면서 컨디션과 자세를 꾸준히 점검하는 것이 효율적입니다.";
 }
 
 function buildDomain(values: number[], padding: number): [number, number] {
