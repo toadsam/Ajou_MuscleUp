@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import PlayerAvatar from "../components/PlayerAvatar";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
@@ -86,9 +86,35 @@ const ACCEL = 1400;
 const FRICTION = 0.82;
 const MAX_SPEED = 420;
 const GAMEPAD_DEADZONE = 0.2;
+const PLAYER_SYNC_THROTTLE_MS = 90;
+const CHAT_RENDER_LIMIT = 70;
+
+const LOUNGE_STORAGE_KEYS = {
+  zoom: "lounge_zoom_v1",
+  sidebarTab: "lounge_sidebar_tab_v1",
+  mutedUsers: "lounge_muted_users_v1",
+} as const;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
+
+const parseChatTimestamp = (value: string) => {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) return numeric;
+  const parsed = Date.parse(value);
+  if (Number.isFinite(parsed)) return parsed;
+  return Date.now();
+};
+
+const isSystemMessage = (nickname: string, message: string) => {
+  const normalized = nickname.trim().toLowerCase();
+  return (
+    normalized === "system" ||
+    normalized === "notice" ||
+    normalized === "admin" ||
+    message.trim().startsWith("[SYSTEM]")
+  );
+};
 
 export default function Lounge() {
   const [loading, setLoading] = useState(true);
@@ -125,6 +151,11 @@ export default function Lounge() {
   const [showHelp, setShowHelp] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mutedUsers, setMutedUsers] = useState<Record<string, boolean>>({});
+  const [sidebarTab, setSidebarTab] = useState<"players" | "profile" | "equipment" | "chat">("players");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [tabEntering, setTabEntering] = useState(false);
+  const [minimapPing, setMinimapPing] = useState<{ x: number; y: number; ts: number } | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const positionRef = useRef({ x: 200, y: 200 });
@@ -142,21 +173,78 @@ export default function Lounge() {
   const typingTimersRef = useRef<Map<string, number>>(new Map());
   const typingStateRef = useRef(false);
   const typingIdleRef = useRef<number | null>(null);
+  const minimapInnerRef = useRef<HTMLDivElement | null>(null);
+  const minimapPingTimerRef = useRef<number | null>(null);
+  const playersFlushTimerRef = useRef<number | null>(null);
+  const queuedPlayersRef = useRef<PlayerState[] | null>(null);
+  const hasStoredSidebarTabRef = useRef(false);
+
+  const onboardingSteps = [
+    { title: "Move Around", desc: "Use WASD or arrow keys to move. On mobile, use the on-screen controls." },
+    { title: "Interact", desc: "Click gym equipment to view details. Teleport pads move you between zones instantly." },
+    { title: "Chat", desc: "See who is online and start chatting from the chat tab in the right panel." },
+  ] as const;
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (!stored) {
-      setError("로그인이 필요합니다.");
+      setError("Login is required.");
       setLoading(false);
       return;
     }
     try {
       setUser(JSON.parse(stored));
     } catch {
-      setError("세션 정보가 올바르지 않습니다.");
+      setError("Session data is invalid.");
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const seen = localStorage.getItem("lounge_onboarding_seen_v1");
+    if (!seen) {
+      setShowOnboarding(true);
+      setOnboardingStep(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    const savedZoom = localStorage.getItem(LOUNGE_STORAGE_KEYS.zoom);
+    if (savedZoom) {
+      const parsed = Number(savedZoom);
+      if (Number.isFinite(parsed)) {
+        setZoom(clamp(parsed, 0.7, 1.4));
+      }
+    }
+    const savedMutedUsers = localStorage.getItem(LOUNGE_STORAGE_KEYS.mutedUsers);
+    if (savedMutedUsers) {
+      try {
+        const parsed = JSON.parse(savedMutedUsers);
+        if (parsed && typeof parsed === "object") {
+          setMutedUsers(parsed as Record<string, boolean>);
+        }
+      } catch {
+        localStorage.removeItem(LOUNGE_STORAGE_KEYS.mutedUsers);
+      }
+    }
+    const savedSidebar = localStorage.getItem(LOUNGE_STORAGE_KEYS.sidebarTab);
+    if (savedSidebar === "players" || savedSidebar === "profile" || savedSidebar === "equipment" || savedSidebar === "chat") {
+      hasStoredSidebarTabRef.current = true;
+      setSidebarTab(savedSidebar);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(LOUNGE_STORAGE_KEYS.zoom, String(zoom));
+  }, [zoom]);
+
+  useEffect(() => {
+    localStorage.setItem(LOUNGE_STORAGE_KEYS.mutedUsers, JSON.stringify(mutedUsers));
+  }, [mutedUsers]);
+
+  useEffect(() => {
+    localStorage.setItem(LOUNGE_STORAGE_KEYS.sidebarTab, sidebarTab);
+  }, [sidebarTab]);
 
   useEffect(() => {
     if (!user) return;
@@ -175,7 +263,7 @@ export default function Lounge() {
         }
         if (!loungeRes.ok) {
           const text = await loungeRes.text().catch(() => "");
-          throw new Error(text || "캐릭터 정보를 불러오지 못했습니다.");
+          throw new Error(text || "Failed to load character data.");
         }
         const loungePayload = (await loungeRes.json()) as LoungeProfileResponse;
         setCharacter(loungePayload.character);
@@ -199,7 +287,7 @@ export default function Lounge() {
           setMbti(statsPayload?.mbti ?? null);
         }
       } catch (err: any) {
-        setError(err?.message ?? "캐릭터 정보를 불러오지 못했습니다.");
+        setError(err?.message ?? "Failed to load character data.");
       } finally {
         setLoading(false);
       }
@@ -248,7 +336,16 @@ export default function Lounge() {
 
     socket.on("lounge:players", (payload: LoungePlayersPayload) => {
       const nextPlayers = payload?.players ?? [];
-      setPlayers(nextPlayers);
+      queuedPlayersRef.current = nextPlayers;
+      if (playersFlushTimerRef.current === null) {
+        playersFlushTimerRef.current = window.setTimeout(() => {
+          playersFlushTimerRef.current = null;
+          if (queuedPlayersRef.current) {
+            setPlayers(queuedPlayersRef.current);
+            queuedPlayersRef.current = null;
+          }
+        }, PLAYER_SYNC_THROTTLE_MS);
+      }
       nextPlayers.forEach((player) => {
         const prev = lastPositionsRef.current.get(player.socketId);
         const dx = prev ? player.x - prev.x : 0;
@@ -337,10 +434,14 @@ export default function Lounge() {
     });
 
     socket.on("lounge:error", (payload) => {
-      setError(payload?.message ?? "라운지 연결에 실패했습니다.");
+      setError(payload?.message ?? "Failed to connect to lounge.");
     });
 
     return () => {
+      if (playersFlushTimerRef.current !== null) {
+        window.clearTimeout(playersFlushTimerRef.current);
+        playersFlushTimerRef.current = null;
+      }
       socket.disconnect();
       socketRef.current = null;
     };
@@ -373,6 +474,26 @@ export default function Lounge() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  useEffect(() => {
+    if (isMobile && sidebarTab === "players" && !hasStoredSidebarTabRef.current) {
+      setSidebarTab("chat");
+    }
+  }, [isMobile, sidebarTab]);
+
+  useEffect(() => {
+    return () => {
+      if (minimapPingTimerRef.current !== null) {
+        window.clearTimeout(minimapPingTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setTabEntering(true);
+    const raf = window.requestAnimationFrame(() => setTabEntering(false));
+    return () => window.cancelAnimationFrame(raf);
+  }, [sidebarTab]);
 
   useEffect(() => {
     if (!connected) return;
@@ -556,7 +677,7 @@ export default function Lounge() {
   };
 
   const filterMessage = (message: string) => {
-    const banned = ["욕설", "비속어"];
+    const banned = ["badword1", "badword2"];
     let result = message;
     banned.forEach((word) => {
       if (!word) return;
@@ -572,6 +693,52 @@ export default function Lounge() {
   };
 
   const clampZoom = (value: number) => clamp(value, 0.7, 1.4);
+  const timeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    []
+  );
+
+  const placeMinimapPing = (x: number, y: number) => {
+    setMinimapPing({ x, y, ts: Date.now() });
+    if (minimapPingTimerRef.current !== null) {
+      window.clearTimeout(minimapPingTimerRef.current);
+    }
+    minimapPingTimerRef.current = window.setTimeout(() => {
+      setMinimapPing(null);
+      minimapPingTimerRef.current = null;
+    }, 2200);
+  };
+
+  const moveToMapPoint = (x: number, y: number) => {
+    const clampedX = clamp(x, PLAYER_RADIUS, mapSize.width - PLAYER_RADIUS);
+    const clampedY = clamp(y, PLAYER_RADIUS, mapSize.height - PLAYER_RADIUS);
+    const resolved = resolveCollision(clampedX, clampedY, positionRef.current.x, positionRef.current.y);
+    positionRef.current = resolved;
+    renderPositionRef.current = resolved;
+    localPositionRef.current = resolved;
+    setLocalPosition(resolved);
+    socketRef.current?.emit("player:move", resolved);
+  };
+
+  const handleMinimapPoint = (clientX: number, clientY: number, mode: "move" | "ping") => {
+    const minimapElement = minimapInnerRef.current;
+    if (!minimapElement) return;
+    const rect = minimapElement.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const ratioX = clamp((clientX - rect.left) / rect.width, 0, 1);
+    const ratioY = clamp((clientY - rect.top) / rect.height, 0, 1);
+    const mapX = ratioX * mapSize.width;
+    const mapY = ratioY * mapSize.height;
+
+    if (mode === "move" && connected) {
+      moveToMapPoint(mapX, mapY);
+    }
+    placeMinimapPing(mapX, mapY);
+  };
 
   const sortedPlayers = useMemo(() => {
     return [...players].sort((a, b) => a.nickname.localeCompare(b.nickname));
@@ -590,6 +757,31 @@ export default function Lounge() {
     () => Object.keys(typingUsers).filter((name) => !mutedUsers[name]),
     [typingUsers, mutedUsers]
   );
+
+  const chatRows = useMemo(() => {
+    const visible = messages.filter((msg) => !mutedUsers[msg.nickname]).slice(-CHAT_RENDER_LIMIT);
+    return visible.map((msg, idx) => {
+      const tsMs = parseChatTimestamp(msg.ts);
+      const prev = visible[idx - 1];
+      const prevTs = prev ? parseChatTimestamp(prev.ts) : 0;
+      const system = isSystemMessage(msg.nickname, msg.message);
+      const groupStart =
+        idx === 0 ||
+        system ||
+        !prev ||
+        prev.nickname !== msg.nickname ||
+        tsMs - prevTs > 90_000;
+      return {
+        ...msg,
+        id: `${msg.ts}-${idx}`,
+        system,
+        tsMs,
+        timeLabel: timeFormatter.format(new Date(tsMs)),
+        groupStart,
+        filteredMessage: filterMessage(msg.message),
+      };
+    });
+  }, [messages, mutedUsers, timeFormatter]);
 
   const handleChatSend = () => {
     const message = chatInput.trim();
@@ -616,8 +808,8 @@ export default function Lounge() {
         y: 160,
         w: 260,
         h: 120,
-        name: "파워랙 존",
-        description: "스쿼트/벤치/오버헤드 프레스를 위한 핵심 구역.",
+        name: "Power Rack Zone",
+        description: "Compound lift area for squat and overhead movements.",
       },
       {
         id: "rack-2",
@@ -626,8 +818,8 @@ export default function Lounge() {
         y: 170,
         w: 260,
         h: 120,
-        name: "파워랙 존",
-        description: "바벨을 안전하게 세팅하고 고중량 훈련 가능.",
+        name: "Power Rack Zone",
+        description: "Warm up with control, then increase load progressively.",
       },
       {
         id: "bench-1",
@@ -636,8 +828,8 @@ export default function Lounge() {
         y: 420,
         w: 220,
         h: 80,
-        name: "벤치 프레스",
-        description: "가슴/삼두 집중 구간. 오늘 기록을 체크해봐.",
+        name: "Bench Press",
+        description: "Upper-body focus zone. Track your best set today.",
       },
       {
         id: "bench-2",
@@ -646,8 +838,8 @@ export default function Lounge() {
         y: 380,
         w: 220,
         h: 80,
-        name: "벤치 존",
-        description: "상체 파워 향상을 위한 핵심 운동.",
+        name: "Bench Zone",
+        description: "Support work to improve pressing power.",
       },
       {
         id: "tread-1",
@@ -656,8 +848,8 @@ export default function Lounge() {
         y: 180,
         w: 240,
         h: 120,
-        name: "러닝머신",
-        description: "가볍게 워밍업하고 심박을 올려보자.",
+        name: "Treadmill",
+        description: "Light cardio to warm up and raise heart rate.",
       },
       {
         id: "tread-2",
@@ -666,8 +858,8 @@ export default function Lounge() {
         y: 330,
         w: 240,
         h: 120,
-        name: "러닝머신",
-        description: "유산소 구간, 페이스 조절 필수.",
+        name: "Treadmill",
+        description: "Steady pace cardio block. Control your intensity.",
       },
       {
         id: "dumbbell",
@@ -676,8 +868,8 @@ export default function Lounge() {
         y: 650,
         w: 360,
         h: 80,
-        name: "덤벨 존",
-        description: "다양한 각도로 근육을 자극하는 공간.",
+        name: "Dumbbell Zone",
+        description: "Train with varied loads to build muscle balance.",
       },
       {
         id: "mirrors",
@@ -686,8 +878,8 @@ export default function Lounge() {
         y: 120,
         w: 620,
         h: 110,
-        name: "미러 월",
-        description: "폼 체크 필수! 자세를 확인하자.",
+        name: "Mirror Wall",
+        description: "Check your form and posture in real time.",
       },
       {
         id: "plates",
@@ -696,8 +888,8 @@ export default function Lounge() {
         y: 700,
         w: 160,
         h: 140,
-        name: "플레이트 존",
-        description: "중량 세팅 구역. 오늘 목표 중량은?",
+        name: "Plate Storage",
+        description: "Weight setup area for your target working set.",
       },
       {
         id: "teleport-cardio",
@@ -706,8 +898,8 @@ export default function Lounge() {
         y: 260,
         w: 120,
         h: 120,
-        name: "텔레포트: 유산소존",
-        description: "클릭 시 메인 프리웨이트 존으로 이동합니다.",
+        name: "Teleport: Cardio",
+        description: "Click to jump directly to the cardio zone.",
         target: { x: 320, y: 520 },
       },
       {
@@ -717,8 +909,8 @@ export default function Lounge() {
         y: 820,
         w: 120,
         h: 120,
-        name: "텔레포트: 프리웨이트",
-        description: "클릭 시 유산소 존으로 이동합니다.",
+        name: "Teleport: Main",
+        description: "Click to jump back to the main floor.",
         target: { x: 1680, y: 320 },
       },
     ],
@@ -756,6 +948,8 @@ export default function Lounge() {
     [gymEquipment]
   );
 
+  const tabPanelAnimClass = `transform transition-all duration-200 ${tabEntering ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`;
+
   return (
     <section className="pt-28 pb-16 px-5 md:px-10 bg-gradient-to-br from-slate-950 via-gray-950 to-black min-h-screen text-white">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -764,21 +958,21 @@ export default function Lounge() {
             Lounge
           </p>
           <h1 className="text-3xl md:text-4xl font-extrabold">
-            2D 라운지
+            2D Lounge
           </h1>
           <p className="text-gray-300">
-            이동하며 대화할 수 있는 실시간 소셜 공간입니다.
+            A real-time social fitness space where you can move and chat.
           </p>
         </header>
 
-        {loading && <div className="text-gray-300">연결 준비 중...</div>}
+        {loading && <div className="text-gray-300">Preparing lounge connection...</div>}
         {error && <div className="text-rose-300">{error}</div>}
 
         <div className="grid lg:grid-cols-[1.4fr,0.6fr] gap-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm text-gray-300">
               <span>
-                상태:{" "}
+                Status:{" "}
                 <span
                   className={`font-semibold ${
                     connected ? "text-emerald-300" : "text-rose-300"
@@ -790,30 +984,33 @@ export default function Lounge() {
               <div className="flex items-center gap-3 text-xs text-gray-400">
                 <span>
                   {character
-                    ? `Lv.${character.level} ${character.tier} · Stage ${character.evolutionStage}`
-                    : "캐릭터 로딩 중"}
+                    ? `Lv.${character.level} ${character.tier} 쨌 Stage ${character.evolutionStage}`
+                    : "Loading character..."}
                 </span>
                 <span className="text-[10px] text-white/60">
-                  {pingMs !== null ? `핑 ${pingMs}ms` : "핑 측정중"}
+                  {pingMs !== null ? `Ping ${pingMs}ms` : "Checking ping..."}
                 </span>
                 <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1">
                   <button
                     onClick={() => setZoom((prev) => clampZoom(prev - 0.1))}
-                    className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white"
+                    aria-label="Zoom out"
+                    className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
                   >
                     -
                   </button>
                   <span className="text-[10px] text-white/70">{Math.round(zoom * 100)}%</span>
                   <button
                     onClick={() => setZoom((prev) => clampZoom(prev + 0.1))}
-                    className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white"
+                    aria-label="Zoom in"
+                    className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
                   >
                     +
                   </button>
                 </div>
                 <button
                   onClick={() => setShowHelp((prev) => !prev)}
-                  className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white"
+                  aria-label="Toggle help"
+                  className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
                 >
                   ?
                 </button>
@@ -909,7 +1106,7 @@ export default function Lounge() {
                         )}
                         {showProximity && (
                           <div className="proximity-badge">
-                            {player.nickname} · Lv.{player.level} · {player.tier} · S{player.evolutionStage}
+                            {player.nickname} | Lv.{player.level} | {player.tier} | S{player.evolutionStage}
                           </div>
                         )}
                         {isTyping && !speech && (
@@ -931,10 +1128,40 @@ export default function Lounge() {
                       </div>
                     );
                   })}
+                  {minimapPing && (
+                    <div
+                      className="ping-marker"
+                      style={{
+                        left: minimapPing.x,
+                        top: minimapPing.y,
+                      }}
+                    />
+                  )}
                 </div>
 
                 <div className="minimap">
-                  <div className="minimap-inner">
+                  <div
+                    ref={minimapInnerRef}
+                    className="minimap-inner"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Mini map navigation"
+                    onClick={(event) => {
+                      const mode = event.shiftKey || event.altKey ? "ping" : "move";
+                      handleMinimapPoint(event.clientX, event.clientY, mode);
+                    }}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      handleMinimapPoint(event.clientX, event.clientY, "ping");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== " ") return;
+                      event.preventDefault();
+                      const rect = minimapInnerRef.current?.getBoundingClientRect();
+                      if (!rect) return;
+                      handleMinimapPoint(rect.left + rect.width / 2, rect.top + rect.height / 2, "move");
+                    }}
+                  >
                     {gymEquipment.map((item) => (
                       <span
                         key={`mini-${item.id}`}
@@ -957,6 +1184,15 @@ export default function Lounge() {
                         }}
                       />
                     ))}
+                    {minimapPing && (
+                      <span
+                        className="minimap-ping"
+                        style={{
+                          left: `${(minimapPing.x / mapSize.width) * 100}%`,
+                          top: `${(minimapPing.y / mapSize.height) * 100}%`,
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -965,31 +1201,39 @@ export default function Lounge() {
                     <button
                       onTouchStart={() => setKeyState("up", true)}
                       onTouchEnd={() => setKeyState("up", false)}
+                      onTouchCancel={() => setKeyState("up", false)}
                       className="ctrl-btn"
+                      aria-label="Move up"
                     >
-                      ▲
+                      U
                     </button>
                     <div className="ctrl-row">
                       <button
                         onTouchStart={() => setKeyState("left", true)}
                         onTouchEnd={() => setKeyState("left", false)}
+                        onTouchCancel={() => setKeyState("left", false)}
                         className="ctrl-btn"
+                        aria-label="Move left"
                       >
-                        ◀
+                        L
                       </button>
                       <button
                         onTouchStart={() => setKeyState("down", true)}
                         onTouchEnd={() => setKeyState("down", false)}
+                        onTouchCancel={() => setKeyState("down", false)}
                         className="ctrl-btn"
+                        aria-label="Move down"
                       >
-                        ▼
+                        D
                       </button>
                       <button
                         onTouchStart={() => setKeyState("right", true)}
                         onTouchEnd={() => setKeyState("right", false)}
+                        onTouchCancel={() => setKeyState("right", false)}
                         className="ctrl-btn"
+                        aria-label="Move right"
                       >
-                        ▶
+                        R
                       </button>
                     </div>
                   </div>
@@ -997,7 +1241,7 @@ export default function Lounge() {
 
                 {!connected && (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-300 bg-black/40">
-                    연결을 기다리는 중입니다...
+                    Waiting for connection...
                   </div>
                 )}
               </div>
@@ -1005,220 +1249,289 @@ export default function Lounge() {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">접속자</h2>
-                <span className="text-xs text-gray-400">
-                  {players.length}명 접속 중
-                </span>
-              </div>
-              <div className="space-y-2 max-h-[35vh] overflow-y-auto pr-1">
-                {sortedPlayers.map((player) => (
-                  <div
-                    key={`list-${player.socketId}`}
-                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                      player.socketId === mySocketId
-                        ? "bg-emerald-500/20 border border-emerald-400/40"
-                        : "bg-white/5 border border-white/5"
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+              <div className="grid grid-cols-4 gap-1 text-xs">
+                {[
+                  { key: "players", label: "Players" },
+                  { key: "profile", label: "Profile" },
+                  { key: "equipment", label: "Equipment" },
+                  { key: "chat", label: "Chat" },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setSidebarTab(tab.key as "players" | "profile" | "equipment" | "chat")}
+                    className={`rounded-lg px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 ${
+                      sidebarTab === tab.key
+                        ? "bg-emerald-400 text-black font-semibold"
+                        : "text-gray-300 hover:bg-white/10"
                     }`}
                   >
-                    <div className="font-semibold">{player.nickname}</div>
-                    <div className="flex items-center gap-2 text-xs text-gray-300">
-                      <span>
-                        Lv.{player.level} · {player.tier}
-                      </span>
-                      {player.socketId !== mySocketId && (
-                        <button
-                          onClick={() => toggleMute(player.nickname)}
-                          className="text-[10px] text-gray-400 hover:text-white"
-                        >
-                          {mutedUsers[player.nickname] ? "언뮤트" : "뮤트"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    {tab.label}
+                  </button>
                 ))}
-                {players.length === 0 && (
-                  <div className="text-xs text-gray-400">
-                    아직 접속자가 없습니다.
-                  </div>
-                )}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">프로필 카드</h2>
-                {selectedPlayer && (
-                  <button
-                    onClick={() => setSelectedPlayer(null)}
-                    className="text-xs text-gray-400 hover:text-gray-200"
-                  >
-                    닫기
-                  </button>
-                )}
-              </div>
-              {selectedPlayer ? (
-                <div className="space-y-3 text-sm text-gray-300">
-                  <div className="flex items-center gap-3">
-                    <AvatarRenderer
-                      avatarSeed={selectedPlayer.avatarSeed ?? `${selectedPlayer.nickname}-seed`}
-                      growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
-                      tier={selectedPlayer.tier}
-                      stage={selectedPlayer.evolutionStage}
-                      mbti={selectedPlayer.mbti}
-                      size={90}
-                    />
-                    <div>
-                      <div className="text-white font-semibold">{selectedPlayer.nickname}</div>
-                      <div className="text-xs text-gray-400">
-                        Lv.{selectedPlayer.level} · {selectedPlayer.tier} · Stage {selectedPlayer.evolutionStage}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="profile-line">
-                    <span>최근 출석</span>
-                    <span className="text-white font-semibold">
-                      {selectedPlayer.recentAttendanceCount ?? 0}회
-                    </span>
-                  </div>
-                  <div className="profile-line">
-                    <span>참여 이벤트</span>
-                    <span className="text-white font-semibold">
-                      {selectedPlayer.activeEventTitle ?? "없음"}
-                    </span>
-                  </div>
-                  {selectedPlayer.activeEventProgress && (
-                    <div className="profile-line">
-                      <span>진행률</span>
-                      <span className="text-white font-semibold">{selectedPlayer.activeEventProgress}</span>
-                    </div>
-                  )}
+            {sidebarTab === "players" && (
+              <div className={`${tabPanelAnimClass} rounded-2xl border border-white/10 bg-white/5 p-4`}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Players</h2>
+                  <span className="text-xs text-gray-400">{players.length} online</span>
                 </div>
-              ) : (
-                <div className="text-sm text-gray-400">
-                  라운지에서 캐릭터를 클릭하면 상세 정보가 표시됩니다.
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">장비 정보</h2>
-                {selectedEquipment && (
-                  <button
-                    onClick={() => setSelectedEquipment(null)}
-                    className="text-xs text-gray-400 hover:text-gray-200"
-                  >
-                    닫기
-                  </button>
-                )}
-              </div>
-              {selectedEquipment ? (
-                <div className="space-y-2 text-sm text-gray-300">
-                  <div className="text-white font-semibold">{selectedEquipment.name}</div>
-                  <p className="text-gray-300">{selectedEquipment.description}</p>
-                  <div className="text-xs text-gray-500">장비를 다시 클릭하면 강조됩니다.</div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-400">
-                  맵의 기구를 클릭하면 설명이 표시됩니다.
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col h-[35vh]">
-              <h2 className="text-lg font-semibold mb-3">전체 채팅</h2>
-              <div className="flex-1 overflow-y-auto space-y-2 pr-2 text-sm">
-                {messages
-                  .filter((msg) => !mutedUsers[msg.nickname])
-                  .map((msg, idx) => (
-                    <div key={`${msg.ts}-${idx}`} className="text-gray-200 flex items-start gap-2">
-                      <div>
-                        <span className="text-emerald-300 font-semibold">
-                          {msg.nickname}
-                        </span>
-                        <span className="text-gray-500 mx-2">·</span>
-                        <span>{filterMessage(msg.message)}</span>
-                      </div>
-                      <div className="ml-auto flex items-center gap-2 text-[10px] text-gray-400">
-                        <button
-                          onClick={() => toggleMute(msg.nickname)}
-                          className="hover:text-white"
-                        >
-                          {mutedUsers[msg.nickname] ? "언뮤트" : "뮤트"}
-                        </button>
-                        <button
-                          onClick={() => alert(`신고가 접수되었습니다: ${msg.nickname}`)}
-                          className="hover:text-white"
-                        >
-                          신고
-                        </button>
+                <div className="max-h-[35vh] space-y-2 overflow-y-auto pr-1">
+                  {sortedPlayers.map((player) => (
+                    <div
+                      key={`list-${player.socketId}`}
+                      className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
+                        player.socketId === mySocketId
+                          ? "border border-emerald-400/40 bg-emerald-500/20"
+                          : "border border-white/5 bg-white/5"
+                      }`}
+                    >
+                      <div className="font-semibold">{player.nickname}</div>
+                      <div className="flex items-center gap-2 text-xs text-gray-300">
+                        <span>Lv.{player.level} {player.tier}</span>
+                        {player.socketId !== mySocketId && (
+                          <button
+                            onClick={() => toggleMute(player.nickname)}
+                            className="rounded text-[10px] text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                          >
+                            {mutedUsers[player.nickname] ? "Unmute" : "Mute"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
-                {messages.length === 0 && (
-                  <div className="text-xs text-gray-400">
-                    첫 메시지를 남겨보세요.
+                  {players.length === 0 && <div className="text-xs text-gray-400">No players connected yet.</div>}
+                </div>
+              </div>
+            )}
+
+            {sidebarTab === "profile" && (
+              <div className={`${tabPanelAnimClass} rounded-2xl border border-white/10 bg-white/5 p-4`}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Profile Card</h2>
+                  {selectedPlayer && (
+                    <button
+                      onClick={() => setSelectedPlayer(null)}
+                      className="rounded text-xs text-gray-400 hover:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                    >
+                      Close
+                    </button>
+                  )}
+                </div>
+                {selectedPlayer ? (
+                  <div className="space-y-3 text-sm text-gray-300">
+                    <div className="flex items-center gap-3">
+                      <AvatarRenderer
+                        avatarSeed={selectedPlayer.avatarSeed ?? `${selectedPlayer.nickname}-seed`}
+                        growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
+                        tier={selectedPlayer.tier}
+                        stage={selectedPlayer.evolutionStage}
+                        mbti={selectedPlayer.mbti}
+                        size={90}
+                      />
+                      <div>
+                        <div className="font-semibold text-white">{selectedPlayer.nickname}</div>
+                        <div className="text-xs text-gray-400">
+                          Lv.{selectedPlayer.level} {selectedPlayer.tier} Stage {selectedPlayer.evolutionStage}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="profile-line">
+                      <span>Recent Attendance</span>
+                      <span className="font-semibold text-white">{selectedPlayer.recentAttendanceCount ?? 0}</span>
+                    </div>
+                    <div className="profile-line">
+                      <span>Active Event</span>
+                      <span className="font-semibold text-white">{selectedPlayer.activeEventTitle ?? "None"}</span>
+                    </div>
+                    {selectedPlayer.activeEventProgress && (
+                      <div className="profile-line">
+                        <span>Progress</span>
+                        <span className="font-semibold text-white">{selectedPlayer.activeEventProgress}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400">Click any avatar in the lounge to inspect details.</div>
+                )}
+              </div>
+            )}
+
+            {sidebarTab === "equipment" && (
+              <div className={`${tabPanelAnimClass} rounded-2xl border border-white/10 bg-white/5 p-4`}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Equipment Info</h2>
+                  {selectedEquipment && (
+                    <button
+                      onClick={() => setSelectedEquipment(null)}
+                      className="rounded text-xs text-gray-400 hover:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                    >
+                      Close
+                    </button>
+                  )}
+                </div>
+                {selectedEquipment ? (
+                  <div className="space-y-2 text-sm text-gray-300">
+                    <div className="font-semibold text-white">{selectedEquipment.name}</div>
+                    <p className="text-gray-300">{selectedEquipment.description}</p>
+                    <div className="text-xs text-gray-500">Click an item again to highlight it.</div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400">Click equipment on the map to see its details.</div>
+                )}
+              </div>
+            )}
+
+            {sidebarTab === "chat" && (
+              <div className={`${tabPanelAnimClass} flex h-[35vh] flex-col rounded-2xl border border-white/10 bg-white/5 p-4`}>
+                <h2 className="mb-3 text-lg font-semibold">Live Chat</h2>
+                <div className="flex-1 space-y-2 overflow-y-auto pr-2 text-sm">
+                  {chatRows.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`rounded-xl border px-3 py-2 ${
+                        msg.system
+                          ? "border-sky-300/30 bg-sky-500/10 text-sky-100"
+                          : "border-white/10 bg-black/20 text-gray-100"
+                      }`}
+                    >
+                      {msg.system ? (
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200">SYSTEM</span>
+                          <span className="text-[10px] text-sky-200/80">{msg.timeLabel}</span>
+                        </div>
+                      ) : (
+                        msg.groupStart && (
+                          <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
+                            <span className="font-semibold text-emerald-300">{msg.nickname}</span>
+                            <span className="text-gray-400">{msg.timeLabel}</span>
+                          </div>
+                        )
+                      )}
+                      <div className="break-words">{msg.filteredMessage}</div>
+                      {!msg.system && (
+                        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-gray-400">
+                          <button
+                            onClick={() => toggleMute(msg.nickname)}
+                            className="rounded hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                          >
+                            {mutedUsers[msg.nickname] ? "Unmute" : "Mute"}
+                          </button>
+                          <button
+                            onClick={() => alert(`Report submitted: ${msg.nickname}`)}
+                            className="rounded hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                          >
+                            Report
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {chatRows.length === 0 && <div className="text-xs text-gray-400">Start the conversation.</div>}
+                  <div ref={chatEndRef} />
+                </div>
+                {typingNames.length > 0 && (
+                  <div className="mt-2 text-xs text-gray-400">
+                    {typingNames.slice(0, 3).join(", ")}
+                    {typingNames.length > 3 ? " and others" : ""} typing...
                   </div>
                 )}
-                <div ref={chatEndRef} />
-              </div>
-              {typingNames.length > 0 && (
-                <div className="mt-2 text-xs text-gray-400">
-                  {typingNames.slice(0, 3).join(", ")}
-                  {typingNames.length > 3 ? " 외" : ""} 입력 중...
+                <div className="mt-3 flex gap-2">
+                  <input
+                    aria-label="Chat message input"
+                    value={chatInput}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setChatInput(next);
+                      if (next.trim().length > 0) {
+                        setTypingState(true);
+                        scheduleTypingIdle();
+                      } else {
+                        setTypingState(false);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        handleChatSend();
+                      }
+                    }}
+                    onBlur={() => setTypingState(false)}
+                    maxLength={200}
+                    placeholder="Type a message (max 200 chars)"
+                    className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                  />
+                  <button
+                    onClick={handleChatSend}
+                    disabled={!connected}
+                    className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-300 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/80"
+                  >
+                    Send
+                  </button>
                 </div>
-              )}
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={chatInput}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setChatInput(next);
-                    if (next.trim().length > 0) {
-                      setTypingState(true);
-                      scheduleTypingIdle();
-                    } else {
-                      setTypingState(false);
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      handleChatSend();
-                    }
-                  }}
-                  onBlur={() => setTypingState(false)}
-                  maxLength={200}
-                  placeholder="메시지를 입력하세요 (최대 200자)"
-                  className="flex-1 rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
-                />
-                <button
-                  onClick={handleChatSend}
-                  disabled={!connected}
-                  className="px-4 py-2 rounded-xl bg-emerald-400 text-black text-sm font-semibold hover:bg-emerald-300 transition disabled:opacity-60"
-                >
-                  전송
-                </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
+      {showOnboarding && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-emerald-300/30 bg-slate-900 p-6 shadow-2xl">
+            <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Lounge Guide</p>
+            <h3 className="mt-2 text-xl font-bold text-white">{onboardingSteps[onboardingStep].title}</h3>
+            <p className="mt-3 text-sm leading-relaxed text-gray-300">{onboardingSteps[onboardingStep].desc}</p>
+            <div className="mt-5 flex items-center justify-between">
+              <span className="text-xs text-gray-400">{onboardingStep + 1} / {onboardingSteps.length}</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOnboardingStep((prev) => Math.max(0, prev - 1))}
+                  disabled={onboardingStep === 0}
+                  className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-gray-200 disabled:opacity-40"
+                >
+                  Back
+                </button>
+                {onboardingStep < onboardingSteps.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setOnboardingStep((prev) => Math.min(onboardingSteps.length - 1, prev + 1))}
+                    className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-black"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem("lounge_onboarding_seen_v1", "1");
+                      setShowOnboarding(false);
+                    }}
+                    className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-black"
+                  >
+                    Start
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showHelp && (
         <div className="help-overlay">
           <div className="help-card">
-            <div className="help-title">라운지 조작 가이드</div>
+            <div className="help-title">Lounge Controls</div>
             <ul className="help-list">
-              <li>이동: WASD / 방향키 / 게임패드 왼쪽 스틱</li>
-              <li>줌: 상단 +/- 버튼 또는 Ctrl + 휠</li>
-              <li>채팅: Enter로 전송, 말풍선 자동 표시</li>
-              <li>장비: 클릭 시 설명 표시, 텔레포트 장비 클릭 시 이동</li>
-              <li>뮤트: 접속자/채팅 목록에서 토글</li>
+              <li>Move with `WASD`, arrow keys, or gamepad stick.</li>
+              <li>Zoom with `Ctrl + Mouse Wheel` or top +/- buttons.</li>
+              <li>Send chat with Enter and see typing indicators in real time.</li>
+              <li>Click equipment to view details, and use teleport pads to jump zones.</li>
+              <li>Mute or report users from player list and chat panel.</li>
             </ul>
             <button className="help-close" onClick={() => setShowHelp(false)}>
-              닫기
+              Close
             </button>
           </div>
         </div>
@@ -1246,3 +1559,4 @@ type LoungeProfileResponse = {
     success?: boolean | null;
   }>;
 };
+
