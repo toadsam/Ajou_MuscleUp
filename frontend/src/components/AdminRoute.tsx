@@ -1,11 +1,10 @@
 ﻿import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { adminApi } from "../services/adminApi";
 
 type AuthUser = {
   role?: string;
 };
-
-const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 function isAdminRole(role?: string) {
   const normalized = (role || "").toUpperCase();
@@ -27,12 +26,7 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
       }
 
       try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const me = (await res.json()) as AuthUser;
+        const me = await adminApi.getMe();
         if (!cancelled) setAllowed(isAdminRole(me.role));
       } catch {
         if (!cancelled) setAllowed(false);
@@ -57,7 +51,13 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
   }
 
   if (!allowed) {
-    return <Navigate to="/" replace />;
+    return (
+      <Navigate
+        to="/forbidden"
+        replace
+        state={{ reason: "관리자 권한이 필요하거나 세션이 만료되었습니다." }}
+      />
+    );
   }
 
   return <>{children}</>;

@@ -5,6 +5,7 @@ import com.ajou.muscleup.dto.attendance.AttendanceRankingItemResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
+import org.springframework.data.domain.Page;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -33,6 +34,7 @@ public interface AttendanceService {
     List<AttendanceRankingItemResponse> getMonthlyMediaRanking(YearMonth month, int limit);
 
     List<AttendanceShareResponse> listSharedForAdmin(int limit);
+    Page<AttendanceShareResponse> listSharedForAdmin(int page, int size);
 
     AttendanceShareResponse setHiddenByAdmin(Long attendanceId, boolean hidden);
 }

@@ -5,6 +5,8 @@ import com.ajou.muscleup.entity.User;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +17,7 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
     Optional<AttendanceLog> findByShareSlugAndSharedTrue(String shareSlug);
 
     List<AttendanceLog> findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc();
+    Page<AttendanceLog> findBySharedTrueOrderByReportCountDescUpdatedAtDesc(Pageable pageable);
 
     List<AttendanceLog> findAllByUserAndDateBetweenOrderByDateAsc(User user, LocalDate start, LocalDate end);
 

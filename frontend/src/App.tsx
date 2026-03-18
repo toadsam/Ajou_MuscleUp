@@ -40,6 +40,7 @@ import CrewChallenge from "./pages/CrewChallenge";
 import CrewLobby from "./pages/CrewLobby";
 import CrewHighlights from "./pages/CrewHighlights";
 import Friends from "./pages/Friends";
+import Forbidden from "./pages/Forbidden";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/ai/share/:slug" element={<AiShareView />} />
             <Route path="/attendance/share/:slug" element={<AttendanceShareView />} />
+            <Route path="/forbidden" element={<Forbidden />} />
 
             {/* ??로그???�요 ?�는 공개 ?�우??*/}
             <Route path="/proteins/:id" element={<ProteinDetail />} />

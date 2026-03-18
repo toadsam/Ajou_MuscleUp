@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -209,6 +211,16 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .limit(safeLimit)
                 .map(AttendanceShareResponse::from)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AttendanceShareResponse> listSharedForAdmin(int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        return attendanceLogRepository
+                .findBySharedTrueOrderByReportCountDescUpdatedAtDesc(PageRequest.of(safePage, safeSize))
+                .map(AttendanceShareResponse::from);
     }
 
     @Override

@@ -1,8 +1,10 @@
 ﻿import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import AdminTableShell from "../components/admin/AdminTableShell";
 import AdminToast from "../components/admin/AdminToast";
 import { useAdminToast } from "../components/admin/useAdminToast";
+import { adminApi, adminQueryKeys } from "../services/adminApi";
 import { logEvent } from "../utils/analytics";
 
 type EventItem = {
@@ -16,35 +18,24 @@ type EventItem = {
   createdAt: string;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "";
-
 export default function AdminHistory() {
-  const [items, setItems] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const { toast, showError, clearToast } = useAdminToast();
 
+  const auditQuery = useQuery<EventItem[]>({
+    queryKey: adminQueryKeys.audit(300),
+    queryFn: () => adminApi.getAudit(300),
+  });
+
   useEffect(() => {
     logEvent("admin_history", "page_view");
-    void fetchEvents();
   }, []);
 
-  const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/api/admin/audit?limit=300`, {
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
-      const data: EventItem[] = await res.json();
-      setItems(data);
-    } catch (e: any) {
-      showError(e?.message || "이력 데이터를 불러오지 못했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (auditQuery.isError) showError("이력 데이터를 불러오지 못했습니다.");
+  }, [auditQuery.isError, showError]);
 
+  const items = auditQuery.data ?? [];
   const filtered = items.filter((item) => {
     if (!query.trim()) return true;
     const needle = query.trim().toLowerCase();
@@ -68,20 +59,16 @@ export default function AdminHistory() {
             <h1 className="mt-1 text-3xl font-extrabold">활동 이력</h1>
             <p className="mt-1 text-sm text-gray-300">최근 관리자 활동 로그를 검색하고 확인합니다.</p>
           </div>
-          <div className="flex gap-2">
-            <Link to="/admin" className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10">
-              대시보드
-            </Link>
-          </div>
+          <Link to="/admin" className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10">대시보드</Link>
         </header>
 
         <AdminTableShell
           title="감사 로그"
           description="최대 300건"
-          loading={loading}
+          loading={auditQuery.isLoading}
           hasData={filtered.length > 0}
           emptyMessage="표시할 로그가 없습니다."
-          onRefresh={fetchEvents}
+          onRefresh={() => void auditQuery.refetch()}
           actionSlot={
             <input
               value={query}
@@ -141,3 +128,6 @@ function formatDate(iso: string) {
     return iso;
   }
 }
+
+
+
