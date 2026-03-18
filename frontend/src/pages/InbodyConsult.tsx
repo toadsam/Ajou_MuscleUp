@@ -67,6 +67,11 @@ const sectionRules: Array<{ key: string; title: string; keywords: string[] }> = 
 ];
 
 const nutritionColors = ["#38bdf8", "#22c55e", "#f59e0b"];
+const workflowCards = [
+  { step: "Step 01", title: "인바디 업로드", desc: "사진/PDF를 올리고 OCR 추출을 시작합니다." },
+  { step: "Step 02", title: "목표/강도 설정", desc: "감량/증량 방향과 난이도를 지정합니다." },
+  { step: "Step 03", title: "상담 리포트 확인", desc: "차트 분석과 주차별 가이드를 확인합니다." },
+] as const;
 
 export default function InbodyConsult() {
   const [file, setFile] = useState<File | null>(null);
@@ -233,22 +238,45 @@ export default function InbodyConsult() {
   };
 
   return (
-    <section className="min-h-screen bg-slate-950 px-6 pb-20 pt-28 text-slate-100 lg:px-10">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">인바디 AI 상담 대시보드</h1>
-          <p className="mt-2 text-sm text-slate-300">OCR 추출 → 핵심 수치 재확인 → 맞춤 상담/차트/PDF까지 한 번에 처리합니다.</p>
+    <section className="relative min-h-screen overflow-hidden bg-slate-950 px-6 pb-20 pt-28 text-slate-100 lg:px-10">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="absolute -right-16 top-48 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute bottom-8 left-1/3 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
+      </div>
+      <div className="relative mx-auto max-w-6xl space-y-6">
+        <div className="relative overflow-hidden rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-cyan-950/40 p-6 shadow-[0_20px_70px_-30px_rgba(34,211,238,0.55)] backdrop-blur md:p-8">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-cyan-300/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-emerald-300/15 blur-3xl" />
+          <p className="relative inline-flex rounded-full border border-cyan-300/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">
+            AI InBody Studio
+          </p>
+          <h1 className="relative mt-3 text-3xl font-bold leading-tight md:text-4xl">인바디 AI 상담 대시보드</h1>
+          <p className="relative mt-3 max-w-3xl text-sm text-slate-200 md:text-base">OCR 추출, 핵심 수치 재확인, 맞춤 상담과 차트, PDF 보고서까지 한 화면에서 빠르게 처리합니다.</p>
+          <div className="relative mt-5 grid gap-3 md:grid-cols-3">
+            {workflowCards.map((card) => (
+              <div key={card.step} className="rounded-2xl border border-cyan-300/20 bg-slate-950/45 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/90">{card.step}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-100">{card.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">{card.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <form onSubmit={onSubmit} className="grid gap-4 rounded-2xl border border-slate-700 bg-slate-900 p-6 md:grid-cols-2">
+        <form
+          onSubmit={onSubmit}
+          className="grid gap-4 rounded-3xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-[0_20px_70px_-40px_rgba(2,132,199,0.5)] backdrop-blur md:grid-cols-2"
+        >
           <label className="block text-sm">
             인바디 파일 (이미지/PDF)
             <input
               type="file"
               accept="image/*,.pdf,application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-cyan-400/90 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-slate-950 hover:border-cyan-300/40"
             />
+            <p className="mt-1 text-xs text-slate-400">{file?.name ? `선택 파일: ${file.name}` : "선택된 파일 없음"}</p>
           </label>
 
           <label className="block text-sm">
@@ -258,7 +286,7 @@ export default function InbodyConsult() {
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               placeholder="예: 12주 동안 체지방 8kg 감량"
-              className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
             />
             <p className="mt-1 text-xs text-slate-400">비워두면 AI가 자동 목표를 추천합니다.</p>
           </label>
@@ -271,7 +299,11 @@ export default function InbodyConsult() {
                   key={opt.value}
                   type="button"
                   onClick={() => setGoalIntensity(opt.value)}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${goalIntensity === opt.value ? "bg-emerald-500 text-slate-900" : "border border-slate-600 text-slate-200"}`}
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                    goalIntensity === opt.value
+                      ? "bg-gradient-to-r from-emerald-400 to-cyan-300 text-slate-900 shadow-[0_0_24px_-12px_rgba(16,185,129,0.95)]"
+                      : "border border-slate-600 text-slate-200 hover:border-cyan-300/50 hover:text-cyan-100"
+                  }`}
                 >
                   {opt.label}
                 </button>
@@ -286,16 +318,25 @@ export default function InbodyConsult() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="예: 주 4회 운동 가능, 무릎 부담 운동은 피하고 싶음"
-              className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
             />
           </label>
 
           <div className="md:col-span-2 flex items-center gap-3">
-            <button type="submit" disabled={loading} className="rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-300 px-5 py-2.5 font-semibold text-slate-950 shadow-[0_0_30px_-14px_rgba(34,197,94,0.85)] transition hover:brightness-105 disabled:opacity-60"
+            >
               {loading ? "AI 분석 중..." : "분석 시작"}
             </button>
             {result && (
-              <button type="button" onClick={exportPdf} disabled={pdfLoading} className="rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold hover:bg-slate-800 disabled:opacity-60">
+              <button
+                type="button"
+                onClick={exportPdf}
+                disabled={pdfLoading}
+                className="rounded-xl border border-cyan-300/35 bg-cyan-500/5 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:opacity-60"
+              >
                 {pdfLoading ? "PDF 생성 중..." : "PDF 다운로드"}
               </button>
             )}
@@ -304,6 +345,21 @@ export default function InbodyConsult() {
         </form>
 
         {error && <div className="rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
+
+        {!result && (
+          <div className="relative overflow-hidden rounded-3xl border border-slate-700/80 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-6 md:p-8">
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_30%,rgba(56,189,248,0.22),rgba(15,23,42,0)_58%)]" />
+            <h3 className="text-xl font-semibold text-slate-100">상담 시작 전 안내</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              인바디 원본 수치가 잘 보이는 이미지나 PDF를 올리면 정확도가 올라갑니다. 목표를 구체적으로 작성할수록 상담 카드 품질이 좋아집니다.
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">파일 권장: 정면 촬영, 그림자 최소화</div>
+              <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">목표 예시: 8주 체지방률 3%p 감량</div>
+              <div className="rounded-xl border border-amber-300/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">결과 제공: 차트 + 주차별 목표 + PDF</div>
+            </div>
+          </div>
+        )}
 
         {result && (
           <div className="space-y-5">
@@ -314,7 +370,7 @@ export default function InbodyConsult() {
               {result.reviewRequired && <Badge label="수치 확인 필요" warning />}
             </div>
 
-            <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5">
+            <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5">
               <h3 className="text-sm font-semibold text-amber-100">입력값 재확인 (핵심 4개)</h3>
               <p className="mt-1 text-xs text-amber-50">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -325,7 +381,7 @@ export default function InbodyConsult() {
                       type="text"
                       value={confirmedMetrics[key] || ""}
                       onChange={(e) => setConfirmedMetrics((prev) => ({ ...prev, [key]: e.target.value }))}
-                      className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-2 py-2 text-sm"
+                      className="mt-1 w-full rounded-lg border border-amber-200/20 bg-slate-900/90 px-2 py-2 text-sm focus:border-amber-300/60 focus:outline-none"
                     />
                   </label>
                 ))}
@@ -334,7 +390,7 @@ export default function InbodyConsult() {
                 type="button"
                 onClick={rerunWithConfirmedMetrics}
                 disabled={reviewLoading}
-                className="mt-3 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-60"
+                className="mt-3 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-amber-200 disabled:opacity-60"
               >
                 {reviewLoading ? "재상담 중..." : "확정값으로 재상담"}
               </button>
@@ -342,10 +398,7 @@ export default function InbodyConsult() {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(metricLabels).map(([key, label]) => (
-                <div key={key} className="rounded-xl border border-slate-700 bg-slate-900 p-4">
-                  <p className="text-xs text-slate-400">{label}</p>
-                  <p className="mt-1 text-lg font-semibold">{result.metrics?.[key] || "-"}</p>
-                </div>
+                <MetricCard key={key} label={label} value={result.metrics?.[key] || "-"} />
               ))}
             </div>
 
@@ -424,9 +477,9 @@ export default function InbodyConsult() {
               </div>
             )}
 
-            <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+            <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-slate-900 to-slate-900/70 p-6 shadow-[0_16px_50px_-30px_rgba(6,182,212,0.8)]">
               <h3 className="text-xl font-semibold">AI 상세 상담 카드</h3>
-              <div className="mt-4 rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-4">
+              <div className="mt-4 rounded-xl border border-cyan-500/40 bg-gradient-to-br from-cyan-500/20 to-sky-500/10 p-4">
                 <p className="text-sm font-semibold text-cyan-200">핵심 3줄 요약</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-cyan-50">
                   {summaryLines.map((line, idx) => (
@@ -447,7 +500,7 @@ export default function InbodyConsult() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+            <div className="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6">
               <h3 className="text-lg font-semibold text-slate-200">원문 전체</h3>
               <pre className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.consultation}</pre>
             </div>
@@ -479,7 +532,7 @@ function sectionVisual(key: string) {
     case "current":
       return { tag: "현재", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200" };
     case "goal":
-      return { tag: "목표", cardClass: "border-violet-500/40 bg-violet-500/10", titleClass: "text-violet-200" };
+      return { tag: "목표", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200" };
     case "nutrition":
       return { tag: "식단", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200" };
     case "exercise":
@@ -570,7 +623,11 @@ function safeGetUser(): { email?: string; nickname?: string } | null {
 
 function Badge({ label, warning }: { label: string; warning?: boolean }) {
   return (
-    <span className={`rounded-full border px-3 py-1 text-xs ${warning ? "border-amber-400 text-amber-200" : "border-slate-500 text-slate-200"}`}>
+    <span
+      className={`rounded-full border px-3 py-1 text-xs ${
+        warning ? "border-amber-300/60 bg-amber-300/10 text-amber-100" : "border-cyan-300/35 bg-cyan-500/5 text-cyan-100"
+      }`}
+    >
       {label}
     </span>
   );
@@ -578,9 +635,18 @@ function Badge({ label, warning }: { label: string; warning?: boolean }) {
 
 function ChartCard({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
-      <h3 className="text-lg font-semibold">{title}</h3>
+    <div className="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-5 shadow-[0_12px_40px_-25px_rgba(56,189,248,0.55)]">
+      <h3 className="text-lg font-semibold text-slate-100">{title}</h3>
       <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-700/80 bg-gradient-to-b from-slate-900 to-slate-900/70 p-4 shadow-[inset_0_1px_0_0_rgba(148,163,184,0.15)]">
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-slate-100">{value}</p>
     </div>
   );
 }
