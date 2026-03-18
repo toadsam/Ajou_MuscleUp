@@ -1,5 +1,7 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import {
   ResponsiveContainer,
   BarChart,
@@ -67,6 +69,8 @@ const sectionRules: Array<{ key: string; title: string; keywords: string[] }> = 
 ];
 
 const nutritionColors = ["#38bdf8", "#22c55e", "#f59e0b"];
+const MIN_SECTION_DIGEST_ITEMS = 3;
+const MAX_SECTION_DIGEST_ITEMS = 4;
 const workflowCards = [
   { step: "Step 01", title: "인바디 업로드", desc: "사진/PDF를 올리고 OCR 추출을 시작합니다." },
   { step: "Step 02", title: "목표/강도 설정", desc: "감량/증량 방향과 난이도를 지정합니다." },
@@ -100,6 +104,9 @@ export default function InbodyConsult() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<InbodyResponse | null>(null);
   const [confirmedMetrics, setConfirmedMetrics] = useState<Record<string, string>>({});
+  const [reviewGoal, setReviewGoal] = useState("");
+  const [reviewNotes, setReviewNotes] = useState("");
+  const captureRef = useRef<HTMLDivElement | null>(null);
 
   const compositionData = useMemo(() => {
     if (!result) return [];
@@ -249,14 +256,16 @@ export default function InbodyConsult() {
     setReviewLoading(true);
     setError(null);
     try {
+      const nextGoal = reviewGoal.trim() || goal.trim();
+      const nextNotes = reviewNotes.trim() || notes.trim();
       const res = await fetch(`${API_BASE}/api/ai/inbody/review-consult`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           metrics: { ...result.metrics, ...confirmedMetrics },
-          goal,
-          notes,
+          goal: nextGoal,
+          notes: nextNotes,
           goalIntensity,
         }),
       });
@@ -275,31 +284,132 @@ export default function InbodyConsult() {
     if (!result) return;
     setPdfLoading(true);
     setError(null);
+    let exportTarget: HTMLDivElement | null = null;
+    let exportStyleEl: HTMLStyleElement | null = null;
+    let fullRawPrevState: boolean[] = [];
     try {
-      const user = safeGetUser();
-      const res = await fetch(`${API_BASE}/api/ai/inbody/report/pdf`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          memberName: user?.nickname || user?.email || "User",
-          ...result,
-        }),
-      });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const target = captureRef.current;
+      if (!target) throw new Error("PDF 캡처 대상을 찾지 못했습니다.");
+      exportTarget = target;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
+      let cursorY = margin;
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `inbody-report-${new Date().toISOString().slice(0, 10)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      const styleEl = document.createElement("style");
+      styleEl.innerHTML = `
+        [data-pdf-capture="true"][data-pdf-exporting="1"] {
+          max-width: 920px !important;
+          margin: 0 auto !important;
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+          background: #020617 !important;
+        }
+        [data-pdf-capture="true"][data-pdf-exporting="1"] [class*="sm:grid-cols-2"],
+        [data-pdf-capture="true"][data-pdf-exporting="1"] [class*="sm:grid-cols-3"],
+        [data-pdf-capture="true"][data-pdf-exporting="1"] [class*="md:grid-cols-2"],
+        [data-pdf-capture="true"][data-pdf-exporting="1"] [class*="md:grid-cols-3"],
+        [data-pdf-capture="true"][data-pdf-exporting="1"] [class*="lg:grid-cols-"] {
+          grid-template-columns: minmax(0, 1fr) !important;
+        }
+        [data-pdf-capture="true"][data-pdf-exporting="1"] details.ai-raw-snippet {
+          display: none !important;
+        }
+        [data-pdf-capture="true"][data-pdf-exporting="1"] details.ai-full-raw > summary {
+          display: none !important;
+        }
+        [data-pdf-capture="true"][data-pdf-exporting="1"] details.ai-full-raw {
+          display: block !important;
+        }
+        [data-pdf-capture="true"][data-pdf-exporting="1"] details.ai-full-raw pre {
+          margin-top: 0 !important;
+          white-space: pre-wrap !important;
+          word-break: keep-all !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+      exportStyleEl = styleEl;
+      target.setAttribute("data-pdf-exporting", "1");
+      const fullRawDetails = Array.from(target.querySelectorAll<HTMLDetailsElement>("details.ai-full-raw"));
+      fullRawPrevState = fullRawDetails.map((d) => d.open);
+      fullRawDetails.forEach((d) => {
+        d.open = true;
+      });
+      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(null)));
+
+      const blocks = Array.from(
+        target.querySelectorAll<HTMLElement>('[data-pdf-block="1"]')
+      ).filter((el) => !el.parentElement?.closest('[data-pdf-block="1"]'));
+
+      const captureNodes = blocks.length > 0 ? blocks : [target];
+
+      for (const node of captureNodes) {
+        const canvas = await html2canvas(node, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#020617",
+          logging: false,
+        });
+
+        const blockHeightMm = (canvas.height * contentWidth) / canvas.width;
+        const gap = 3;
+
+        if (blockHeightMm <= contentHeight) {
+          if (cursorY + blockHeightMm > margin + contentHeight) {
+            pdf.addPage();
+            cursorY = margin;
+          }
+          const imgData = canvas.toDataURL("image/png");
+          pdf.addImage(imgData, "PNG", margin, cursorY, contentWidth, blockHeightMm, undefined, "FAST");
+          cursorY += blockHeightMm + gap;
+          continue;
+        }
+
+        // Oversized blocks are sliced as a fallback.
+        const remainingMm = margin + contentHeight - cursorY;
+        const remainingSlicePx = Math.floor((remainingMm * canvas.width) / contentWidth);
+        const fullSlicePx = Math.floor((contentHeight * canvas.width) / contentWidth);
+        let offset = 0;
+        let firstSlice = true;
+        while (offset < canvas.height) {
+          const targetSlicePx = firstSlice && remainingSlicePx > 120 ? remainingSlicePx : fullSlicePx;
+          const sliceHeight = Math.min(targetSlicePx, canvas.height - offset);
+          const pageCanvas = document.createElement("canvas");
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeight;
+          const ctx = pageCanvas.getContext("2d");
+          if (!ctx) throw new Error("PDF 캔버스 렌더링에 실패했습니다.");
+          ctx.drawImage(canvas, 0, offset, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+
+          const imgData = pageCanvas.toDataURL("image/png");
+          const imgHeightMm = (sliceHeight * contentWidth) / canvas.width;
+
+          if (!firstSlice || cursorY + imgHeightMm > margin + contentHeight) {
+            pdf.addPage();
+            cursorY = margin;
+          }
+          pdf.addImage(imgData, "PNG", margin, cursorY, contentWidth, imgHeightMm, undefined, "FAST");
+          cursorY += imgHeightMm + 1.5;
+          offset += sliceHeight;
+          firstSlice = false;
+        }
+      }
+
+      pdf.save(`inbody-report-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (err: any) {
       setError(err?.message ?? "PDF 생성 중 오류가 발생했습니다.");
     } finally {
+      if (exportTarget) {
+        const fullRawDetails = Array.from(exportTarget.querySelectorAll<HTMLDetailsElement>("details.ai-full-raw"));
+        fullRawDetails.forEach((d, idx) => {
+          d.open = fullRawPrevState[idx] ?? false;
+        });
+      }
+      if (exportTarget) exportTarget.removeAttribute("data-pdf-exporting");
+      if (exportStyleEl) exportStyleEl.remove();
       setPdfLoading(false);
     }
   };
@@ -311,8 +421,8 @@ export default function InbodyConsult() {
         <div className="absolute -right-16 top-48 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="absolute bottom-8 left-1/3 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
       </div>
-      <div className="relative mx-auto max-w-6xl space-y-6">
-        <div className="relative overflow-hidden rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-cyan-950/40 p-6 shadow-[0_20px_70px_-30px_rgba(34,211,238,0.55)] backdrop-blur md:p-8">
+      <div ref={captureRef} data-pdf-capture="true" className="relative mx-auto max-w-6xl space-y-6">
+        <div data-pdf-block="1" className="relative overflow-hidden rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-cyan-950/40 p-6 shadow-[0_20px_70px_-30px_rgba(34,211,238,0.55)] backdrop-blur md:p-8">
           <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-cyan-300/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-emerald-300/15 blur-3xl" />
           <p className="relative inline-flex rounded-full border border-cyan-300/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">
@@ -332,6 +442,7 @@ export default function InbodyConsult() {
         </div>
 
         <form
+          data-pdf-block="1"
           onSubmit={onSubmit}
           className="grid gap-4 rounded-3xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-[0_20px_70px_-40px_rgba(2,132,199,0.5)] backdrop-blur md:grid-cols-2"
         >
@@ -459,10 +570,10 @@ export default function InbodyConsult() {
           <p className="md:col-span-2 text-xs text-slate-400">의료 진단이 아닌 운동/영양 코칭 참고 자료입니다.</p>
         </form>
 
-        {error && <div className="rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
+        {error && <div data-pdf-block="1" className="rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
 
         {!result && (
-          <div className="relative overflow-hidden rounded-3xl border border-slate-700/80 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-6 md:p-8">
+          <div data-pdf-block="1" className="relative overflow-hidden rounded-3xl border border-slate-700/80 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-6 md:p-8">
             <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_30%,rgba(56,189,248,0.22),rgba(15,23,42,0)_58%)]" />
             <h3 className="text-xl font-semibold text-slate-100">상담 시작 전 안내</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-300">
@@ -478,14 +589,14 @@ export default function InbodyConsult() {
 
         {result && (
           <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-3">
+            <div data-pdf-block="1" className="flex flex-wrap items-center gap-3">
               <Badge label={`신뢰도 ${result.confidence}%`} />
               <Badge label={`입력 형식: ${result.sourceType}`} />
               <Badge label={`목표 출처: ${goalSourceLabel(result.goalSource)}`} />
               {result.reviewRequired && <Badge label="수치 확인 필요" warning />}
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+            <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-900 p-6 shadow-[0_18px_50px_-30px_rgba(34,211,238,0.65)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">Beginner Friendly Summary</p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-50">한눈에 보는 현재 상태와 다음 액션</h2>
@@ -519,7 +630,7 @@ export default function InbodyConsult() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5">
+            <div data-pdf-block="1" className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5">
               <h3 className="text-sm font-semibold text-amber-100">입력값 재확인 (핵심 4개)</h3>
               <p className="mt-1 text-xs text-amber-50">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -535,6 +646,28 @@ export default function InbodyConsult() {
                   </label>
                 ))}
               </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="text-xs text-amber-50">
+                  재상담 목표 (선택)
+                  <input
+                    type="text"
+                    value={reviewGoal}
+                    onChange={(e) => setReviewGoal(e.target.value)}
+                    placeholder={goal || "예: 체지방 감량 + 근육량 유지"}
+                    className="mt-1 w-full rounded-lg border border-amber-200/20 bg-slate-900/90 px-2 py-2 text-sm focus:border-amber-300/60 focus:outline-none"
+                  />
+                </label>
+                <label className="text-xs text-amber-50">
+                  재상담 추가 메모 (선택)
+                  <input
+                    type="text"
+                    value={reviewNotes}
+                    onChange={(e) => setReviewNotes(e.target.value)}
+                    placeholder={notes || "예: 식단은 현실적으로 간단하게"}
+                    className="mt-1 w-full rounded-lg border border-amber-200/20 bg-slate-900/90 px-2 py-2 text-sm focus:border-amber-300/60 focus:outline-none"
+                  />
+                </label>
+              </div>
               <button
                 type="button"
                 onClick={rerunWithConfirmedMetrics}
@@ -545,7 +678,7 @@ export default function InbodyConsult() {
               </button>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-3">
               {metricInsightCards.map((item) => (
                 <div key={item.label} className="rounded-2xl border border-slate-700/80 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-[0_14px_40px_-28px_rgba(34,211,238,0.65)]">
                   <div className="flex items-start justify-between gap-3">
@@ -561,13 +694,13 @@ export default function InbodyConsult() {
               ))}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div data-pdf-block="1" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(metricLabels).map(([key, label]) => (
                 <MetricCard key={key} label={label} value={result.metrics?.[key] || "-"} />
               ))}
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-2">
               <ChartCard title="현재 vs 목표 (고정 축)">
                 <p className="mb-3 text-sm leading-relaxed text-slate-300">
                   파란 막대는 현재, 초록 막대는 목표입니다. 두 막대 차이가 클수록 우선적으로 조정해야 할 항목입니다.
@@ -621,6 +754,7 @@ export default function InbodyConsult() {
               </ChartCard>
             </div>
 
+            <div data-pdf-block="1">
             <ChartCard title="주차별 목표 추이 (고정 축)">
               <p className="mb-3 text-sm leading-relaxed text-slate-300">
                 주차별로 체중과 체지방량이 어떻게 변해야 하는지 보여줍니다. 급격한 하락보다 꾸준한 하락이 더 안정적인 계획입니다.
@@ -639,9 +773,10 @@ export default function InbodyConsult() {
                 </ResponsiveContainer>
               </div>
             </ChartCard>
+            </div>
 
             {result.warnings?.length > 0 && (
-              <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5">
+              <div data-pdf-block="1" className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5">
                 <h3 className="font-semibold text-amber-100">검토 알림</h3>
                 <ul className="mt-2 list-disc pl-5 text-sm text-amber-50">
                   {result.warnings.map((warning, idx) => (
@@ -651,7 +786,7 @@ export default function InbodyConsult() {
               </div>
             )}
 
-            <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-slate-900 to-slate-900/70 p-6 shadow-[0_16px_50px_-30px_rgba(6,182,212,0.8)]">
+            <div data-pdf-block="1" className="rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-slate-900 to-slate-900/70 p-6 shadow-[0_16px_50px_-30px_rgba(6,182,212,0.8)]">
               <h3 className="text-xl font-semibold">AI 상세 상담 카드</h3>
               <div className="mt-4 rounded-xl border border-cyan-500/40 bg-gradient-to-br from-cyan-500/20 to-sky-500/10 p-4">
                 <p className="text-sm font-semibold text-cyan-200">핵심 3줄 요약</p>
@@ -666,7 +801,7 @@ export default function InbodyConsult() {
                   const visual = sectionVisual(section.key);
                   const digest = buildSectionDigest(section.key, section.content, result);
                   return (
-                    <div key={section.key} className={`rounded-2xl border p-5 ${visual.cardClass}`}>
+                    <div data-pdf-block="1" key={section.key} className={`rounded-2xl border p-5 ${visual.cardClass}`}>
                       <p className={`text-sm font-semibold ${visual.titleClass}`}>[{visual.tag}] {section.title}</p>
                       <p className="mt-2 text-xs leading-relaxed text-slate-300">{sectionHelper(section.key)}</p>
                       <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/45 p-4">
@@ -683,7 +818,7 @@ export default function InbodyConsult() {
                           </div>
                         ))}
                       </div>
-                      <details className="mt-4 rounded-xl border border-white/10 bg-slate-950/30 p-3">
+                      <details className="ai-raw-snippet mt-4 rounded-xl border border-white/10 bg-slate-950/30 p-3">
                         <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">
                           원문 보기
                         </summary>
@@ -695,7 +830,7 @@ export default function InbodyConsult() {
               </div>
             </div>
 
-            <details className="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6">
+            <details data-pdf-block="1" className="ai-full-raw rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6">
               <summary className="cursor-pointer text-lg font-semibold text-slate-200">원문 전체 펼쳐보기</summary>
               <p className="mt-2 text-sm text-slate-400">필요할 때만 전체 상담 문장을 확인하세요.</p>
               <pre className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-100">{normalizedConsultation}</pre>
@@ -767,21 +902,33 @@ function buildSectionDigest(sectionKey: string, text: string, result: InbodyResp
     .map((line) => line.replace(/^[-*•\d.)\s]+/, "").trim())
     .filter((line) => Boolean(line) && !isMostlyEnglish(line));
 
-  const items = lines.flatMap((line) => splitReadableSentences(line)).filter((line) => line.length >= 12);
+  const parsedItems = lines.flatMap((line) => splitReadableSentences(line)).filter((line) => line.length >= 12);
   const uniqueItems: string[] = [];
-  for (const item of items) {
+  for (const item of parsedItems) {
     if (!uniqueItems.includes(item)) uniqueItems.push(item);
     if (uniqueItems.length >= 4) break;
   }
 
-  if (uniqueItems.length === 0) {
-    return sectionFallbackDigest(sectionKey, result);
+  const fallback = sectionFallbackDigest(sectionKey, result);
+  const merged = dedupeLines([...uniqueItems, fallback.summary, ...fallback.items]);
+  const summary = merged[0] || fallback.summary;
+  const items = merged.slice(0, Math.max(MIN_SECTION_DIGEST_ITEMS, Math.min(MAX_SECTION_DIGEST_ITEMS, merged.length)));
+
+  while (items.length < MIN_SECTION_DIGEST_ITEMS) {
+    items.push("핵심 수치와 이번 주 실행 항목을 함께 기록해 진행 상황을 점검하세요.");
   }
 
-  return {
-    summary: uniqueItems[0],
-    items: uniqueItems,
-  };
+  return { summary, items };
+}
+
+function dedupeLines(lines: string[]) {
+  const unique: string[] = [];
+  for (const line of lines) {
+    const normalized = line.trim();
+    if (!normalized) continue;
+    if (!unique.includes(normalized)) unique.push(normalized);
+  }
+  return unique;
 }
 
 function splitReadableSentences(text: string) {
@@ -803,9 +950,9 @@ function buildConsultationSections(text: string): ConsultationSection[] {
 
   let currentKey = "current";
   for (const line of lines) {
-    const matched = sectionRules.find((rule) => rule.keywords.some((k) => line.includes(k)));
-    if (matched && line.length <= 80) {
-      currentKey = matched.key;
+    const headingKey = detectSectionHeadingKey(line);
+    if (headingKey) {
+      currentKey = headingKey;
       continue;
     }
     bucket.get(currentKey)?.push(line);
@@ -817,6 +964,30 @@ function buildConsultationSections(text: string): ConsultationSection[] {
 
   if (sections.length === 0) return [{ key: "full", title: "상담 내용", content: text || "-" }];
   return sections;
+}
+
+function detectSectionHeadingKey(line: string) {
+  const normalized = line
+    .toLowerCase()
+    .replace(/^[\[\(]?[0-9]+[.)\]]?\s*/, "")
+    .replace(/[：:]/g, "")
+    .replace(/\s+/g, "");
+
+  const headingMap: Array<{ key: string; aliases: string[] }> = [
+    { key: "current", aliases: ["현재상태", "상태요약", "현재"] },
+    { key: "goal", aliases: ["목표설정", "목표", "목표수정", "목표계획"] },
+    { key: "nutrition", aliases: ["식단영양", "식단/영양", "식단", "영양"] },
+    { key: "exercise", aliases: ["운동계획", "운동루틴", "운동"] },
+    { key: "checkpoint", aliases: ["체크포인트", "체크", "주차체크"] },
+    { key: "caution", aliases: ["주의사항", "주의", "리스크", "위험신호"] },
+  ];
+
+  for (const group of headingMap) {
+    if (group.aliases.some((alias) => normalized === alias)) {
+      return group.key;
+    }
+  }
+  return null;
 }
 
 function buildKeySummaryLines(text: string, sections: ConsultationSection[], count: number): string[] {
@@ -858,7 +1029,7 @@ function normalizeConsultation(result: InbodyResponse) {
     .map((line) => line.trim())
     .filter((line) => line.length >= 8 && !isMostlyEnglish(line));
 
-  if (meaningfulKoreanLines.length >= 2) {
+  if (meaningfulKoreanLines.length >= 8 && raw.length >= 700) {
     return raw;
   }
 
@@ -870,38 +1041,62 @@ function buildFallbackConsultation(result: InbodyResponse) {
   const muscle = result.metrics.skeletal_muscle_kg || "-";
   const bodyFat = result.metrics.body_fat_percent || "-";
   const visceralFat = result.metrics.visceral_fat_level || "-";
+  const bmi = result.metrics.bmi || "-";
+  const bmr = result.metrics.bmr_kcal || "-";
   const calories = result.dailyNutrition.calories_kcal || "-";
   const protein = result.dailyNutrition.protein_g || "-";
   const carb = result.dailyNutrition.carb_g || "-";
   const fat = result.dailyNutrition.fat_g || "-";
+  const carbRatio = result.dailyNutrition.carb_ratio_percent || "-";
+  const proteinRatio = result.dailyNutrition.protein_ratio_percent || "-";
+  const fatRatio = result.dailyNutrition.fat_ratio_percent || "-";
+  const targetWeight = result.targets.target_weight_kg || "-";
+  const targetMuscle = result.targets.target_skeletal_muscle_kg || "-";
+  const targetBodyFat = result.targets.target_body_fat_percent || "-";
   const firstWeek = result.weeklyCheckpoints?.[0];
+  const secondWeek = result.weeklyCheckpoints?.[1];
+  const thirdWeek = result.weeklyCheckpoints?.[2];
+  const fourthWeek = result.weeklyCheckpoints?.[3];
 
   return [
     "현재 상태",
-    `현재 체중은 ${weight}kg, 골격근량은 ${muscle}kg, 체지방률은 ${bodyFat}%, 내장지방 레벨은 ${visceralFat}입니다.`,
-    "체중 숫자 하나보다 체지방과 근육량의 균형을 함께 보는 것이 더 중요합니다.",
+    `현재 체중은 ${weight}kg, 골격근량은 ${muscle}kg, 체지방률은 ${bodyFat}%, BMI는 ${bmi}, 내장지방 레벨은 ${visceralFat}입니다.`,
+    `기초대사량은 ${bmr}kcal로 확인되며, 같은 체중이라도 체지방률과 근육량 조합에 따라 체형 변화 속도는 크게 달라질 수 있습니다.`,
+    "지금 단계에서는 체중 숫자 하나만 보는 것보다 체지방 감소와 근육 유지(또는 소폭 증가)를 동시에 확인하는 해석이 더 정확합니다.",
+    "특히 체지방률이 상대적으로 높은 편이라면 급격한 체중 감량보다, 식단·운동·회복을 묶어 체성분을 개선하는 접근이 장기적으로 유리합니다.",
     "",
     "목표 설정",
-    "확정한 수치를 기준으로 보면 극단적인 감량보다 체성분을 천천히 개선하는 방향이 이해하기 쉽습니다.",
-    "1~4주 단위의 짧은 목표와 12주 단위의 중간 목표를 함께 관리하면 부담이 줄어듭니다.",
+    `중간 목표(약 12주)는 체중 ${targetWeight}kg, 골격근량 ${targetMuscle}kg, 체지방률 ${targetBodyFat}%를 기준으로 관리하는 것을 권장합니다.`,
+    "목표는 한 번에 크게 내리기보다 1~4주 단위의 짧은 체크포인트로 쪼개서 진행해야 실패 확률이 낮아집니다.",
+    "체중은 완만하게 하향 추세를 만들고, 골격근량은 유지 또는 소폭 증가를 목표로 두면 외형 변화와 기초대사 유지에 도움이 됩니다.",
+    "컨디션이 나쁜 주차에는 목표 속도를 낮춰도 괜찮고, 대신 루틴 지속률(식사 기록/운동 출석/수면)을 우선 지표로 관리하세요.",
     "",
     "식단/영양",
-    `하루 식단은 약 ${calories}kcal 기준으로 보고, 탄수화물 ${carb}g, 단백질 ${protein}g, 지방 ${fat}g 수준으로 나눠 이해하면 됩니다.`,
-    "초보자는 끼니마다 단백질을 일정하게 나눠 먹는 것부터 시작하는 것이 가장 쉽습니다.",
+    `하루 총 섭취는 약 ${calories}kcal를 기준으로, 탄수화물 ${carb}g(${carbRatio}%), 단백질 ${protein}g(${proteinRatio}%), 지방 ${fat}g(${fatRatio}%) 수준으로 구성합니다.`,
+    "초보자는 세부 식단표를 완벽하게 맞추기보다, 매 끼니 단백질을 우선 배치하고 나머지를 탄수화물/지방으로 채우는 방식이 실천이 쉽습니다.",
+    "예시로는 아침(단백질+복합탄수), 점심(일반식에서 튀김·당류 조절), 저녁(단백질+채소 중심), 간식(요거트/계란/두유) 패턴이 안정적입니다.",
+    "외식 시에는 '단백질 포함 메뉴 선택 + 음료 당류 최소화 + 과식 회피' 3가지만 지켜도 체지방 관리 효율이 크게 올라갑니다.",
     "",
     "운동 계획",
-    "주 2~4회 정도의 꾸준한 근력운동과 쉬운 유산소부터 시작하면 충분합니다.",
-    "처음에는 강도보다 꾸준함, 자세, 회복을 우선하는 편이 좋습니다.",
+    "운동은 주 3~5회 기준으로, 근력운동(하체/등/전신 중심) 2~4회 + 유산소 2~4회를 병행하는 구성이 좋습니다.",
+    "근력운동은 각 동작 3~4세트, 8~15회 반복 범위에서 시작하고, 매주 1개 항목(무게/반복/세트)을 소폭 올리는 방식으로 진행하세요.",
+    "유산소는 걷기·사이클·경사 걷기 같은 저충격 종목을 20~40분, 대화 가능한 강도(RPE 5~7)로 유지하는 것이 회복에 유리합니다.",
+    "초반 2주는 강도보다 자세·호흡·통증 여부를 기준으로 루틴을 고정하고, 이후 컨디션이 안정되면 점진적으로 볼륨을 높이세요.",
     "",
     "체크포인트",
     firstWeek?.focus
-      ? `첫 체크포인트는 '${firstWeek.focus}'입니다. 이 항목을 이번 주 우선순위로 두고 기록을 남기세요.`
-      : "첫 1~2주는 몸이 적응하는 기간으로 보고 체중, 식사, 컨디션을 함께 기록하세요.",
-    "주 1회 같은 시간에 체중과 컨디션을 기록하면 변화 추세를 읽기 쉽습니다.",
+      ? `1주차 포커스는 '${firstWeek.focus}'입니다. 이 항목을 우선순위로 두고 체중/식단/운동 이행률을 함께 기록하세요.`
+      : "첫 1~2주는 적응 구간으로 보고, 체중·식사·수면·피로도를 함께 기록하세요.",
+    secondWeek?.focus ? `2주차에는 '${secondWeek.focus}'를 기준으로 식단 편차(주말 포함)를 줄이세요.` : "2주차에는 식단 편차를 줄이고 단백질 분배를 안정화하세요.",
+    thirdWeek?.focus ? `3주차에는 '${thirdWeek.focus}'를 중심으로 운동 볼륨 또는 유산소 시간을 소폭 상향하세요.` : "3주차에는 운동 볼륨 또는 유산소 시간을 소폭 상향하세요.",
+    fourthWeek?.focus ? `4주차에는 '${fourthWeek.focus}'를 확인하며 다음 4주 목표를 다시 설정하세요.` : "4주차에는 변화 추세를 점검하고 다음 4주 계획을 재설정하세요.",
+    "체중은 주 1회 같은 시간대에 측정하고, 가능하면 허리둘레·주관적 피로도·운동 수행기록을 함께 관리해야 해석 정확도가 올라갑니다.",
     "",
     "주의사항",
-    "무리한 감량과 과도한 운동보다 지속 가능한 루틴을 만드는 것이 더 중요합니다.",
-    "피로감이나 통증이 크면 강도를 낮추고 수면과 식사를 먼저 점검하세요.",
+    "무리한 감량(과도한 저열량)과 고강도 운동을 동시에 밀어붙이면 근손실·피로누적·중도 포기 위험이 높아집니다.",
+    "피로감, 어지럼, 수면질 저하, 생리적 스트레스 신호가 반복되면 운동 강도를 1~2단계 낮추고 식사/수면을 먼저 복구하세요.",
+    "통증이 관절 중심으로 지속되면 해당 동작은 즉시 중단하고, 가동범위가 편한 대체 동작으로 전환하는 것이 안전합니다.",
+    "이 상담은 의학적 진단이 아니며, 기존 질환·복용약·통증 이력이 있으면 전문가 상담과 함께 진행하는 것을 권장합니다.",
   ].join("\n");
 }
 
@@ -1116,15 +1311,6 @@ function buildDomain(values: number[], padding: number): [number, number] {
   const end = Math.ceil(max + padding);
   if (start === end) return [Math.max(0, start - 1), end + 1];
   return [start, end];
-}
-
-function safeGetUser(): { email?: string; nickname?: string } | null {
-  try {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
 }
 
 function Badge({ label, warning }: { label: string; warning?: boolean }) {

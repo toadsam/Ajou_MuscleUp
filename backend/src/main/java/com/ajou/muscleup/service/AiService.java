@@ -71,19 +71,19 @@ public class AiService {
                     .send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
             if (resp.statusCode() >= 300) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?�답???�패?�습?�다: " + resp.statusCode());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?占쎈떟???占쏀뙣?占쎌뒿?占쎈떎: " + resp.statusCode());
             }
 
             JsonNode rootNode = objectMapper.readTree(resp.body());
             String content = rootNode.path("choices").path(0).path("message").path("content").asText("");
             if (content.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?�답 ?�식???�바르�? ?�습?�다.");
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?占쎈떟 ?占쎌떇???占쎈컮瑜댐옙? ?占쎌뒿?占쎈떎.");
             }
             return sanitizeMarkdown(content);
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?�출 �??�류가 발생?�습?�다.", e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI ?占쎌텧 占??占쎈쪟媛 諛쒖깮?占쎌뒿?占쎈떎.", e);
         }
     }
 
@@ -163,15 +163,16 @@ public class AiService {
                                     "- In that case, set targets as AI-recommended values rather than leaving them blank.\n" +
                                     "- confidence is integer 0-100.\n" +
                                     "- consultation must be highly detailed and practical for real use.\n" +
-                                    "- consultation should include all sections below in Korean:\n" +
-                                    "  1) 현재 상태 요약(체중/체지방/골격근/대사 관점)\n" +
-                                    "  2) 목표 설정(단기 4주, 중기 12주 수치 목표)\n" +
-                                    "  3) 하루 섭취 칼로리 및 탄단지(g, %) 제안 근거\n" +
-                                    "  4) 식단 가이드(아침/점심/저녁/간식 예시, 외식 대안, 회식 대응)\n" +
-                                    "  5) 운동 계획(주간 빈도, 요일 분할, 세트/반복수, 유산소 시간/강도, 진행 원칙)\n" +
-                                    "  6) 회복/수면/스트레스 관리 체크리스트\n" +
-                                    "  7) 주차별 체크포인트와 측정 항목\n" +
-                                    "  8) 위험 신호/주의사항(무리한 감량, 통증, 어지럼 등)\n" +
+                                    "- consultation must be written in Korean and include these explicit sections:\n" +
+                                    "  1) current status summary (weight/body-fat/skeletal-muscle/metabolism)\n" +
+                                    "  2) goal setting (4-week short-term + 12-week mid-term)\n" +
+                                    "  3) daily calories and macro ratio plan (g and %)\n" +
+                                    "  4) meal guide (meal examples, snack guidance, dining-out tips)\n" +
+                                    "  5) exercise plan (weekly frequency, split, set/rep, cardio intensity/time, progression)\n" +
+                                    "  6) recovery and stress/sleep checklist\n" +
+                                    "  7) weekly checkpoint metrics and what to verify\n" +
+                                    "  8) risk signals and cautions\n" +
+                                    "- each section must contain at least 2 concrete sentences.\n" +
                                     "- consultation should include concrete numbers whenever possible.\n" +
                                     "- consultation length target: at least 1,200 Korean characters.\n" +
                                     "- Mention this is not medical diagnosis.\n" +
@@ -240,6 +241,13 @@ public class AiService {
             String prompt = "Build inbody coaching from confirmed metrics.\n" +
                     "Use this metrics JSON exactly as trusted user-confirmed values: " + metricJson + "\n" +
                     "If some fields are missing, infer cautiously and add warnings.\n" +
+                    "Consultation requirements:\n" +
+                    "- Write consultation in Korean.\n" +
+                    "- Include these sections explicitly: current status, goal setting, nutrition, exercise, checkpoint, caution.\n" +
+                    "- For each section, write at least 2 concrete sentences.\n" +
+                    "- Include concrete numbers whenever possible.\n" +
+                    "- consultation length target: at least 1,200 Korean characters.\n" +
+                    "- Mention this is not medical diagnosis.\n" +
                     "Goal intensity: " + nz(goalIntensity) + "\n" +
                     "User goal: " + nz(goal) + "\n" +
                     "User notes: " + nz(notes) + "\n" +
@@ -279,7 +287,7 @@ public class AiService {
     private String resolveApiKey() {
         String key = (openAiKeyProp != null && !openAiKeyProp.isBlank()) ? openAiKeyProp : System.getenv("OPENAI_API_KEY");
         if (key == null || key.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "OPENAI_API_KEY가 ?�정?��? ?�았?�니??");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "OPENAI_API_KEY媛 ?占쎌젙?占쏙옙? ?占쎌븯?占쎈땲??");
         }
         return key;
     }
@@ -342,7 +350,7 @@ public class AiService {
 
         String consultation = sanitizeMarkdown(node.path("consultation").asText(""));
         if (consultation.isBlank()) {
-            consultation = "분석 결과를 충분히 생성하지 못했습니다. 사진 선명도와 문서 정면 촬영 여부를 확인해 다시 시도해 주세요.";
+            consultation = "遺꾩꽍 寃곌낵瑜?異⑸텇???앹꽦?섏? 紐삵뻽?듬땲?? ?ъ쭊 ?좊챸?꾩? 臾몄꽌 ?뺣㈃ 珥ъ쁺 ?щ?瑜??뺤씤???ㅼ떆 ?쒕룄??二쇱꽭??";
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -447,3 +455,4 @@ public class AiService {
         return schema;
     }
 }
+
