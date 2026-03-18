@@ -33,6 +33,9 @@ public class AttendanceLog extends BaseTimeEntity {
     @Column(length = 200)
     private String memo;
 
+    @Column(name = "share_comment", length = 280)
+    private String shareComment;
+
     @Column(name = "workout_types", length = 80)
     private String workoutTypes;
 

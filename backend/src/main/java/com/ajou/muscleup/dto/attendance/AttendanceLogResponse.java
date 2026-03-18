@@ -17,6 +17,7 @@ public class AttendanceLogResponse {
     private LocalDate date;
     private boolean didWorkout;
     private String memo;
+    private String shareComment;
     private List<String> workoutTypes;
     private String workoutIntensity;
     private List<String> mediaUrls;
@@ -35,6 +36,7 @@ public class AttendanceLogResponse {
                 .date(log.getDate())
                 .didWorkout(log.isDidWorkout())
                 .memo(log.getMemo())
+                .shareComment(log.getShareComment())
                 .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))
                 .workoutIntensity(log.getWorkoutIntensity())
                 .mediaUrls(splitMediaUrls(log.getMediaUrls()))
@@ -57,6 +59,7 @@ public class AttendanceLogResponse {
                 .date(log.getDate())
                 .didWorkout(log.isDidWorkout())
                 .memo(log.getMemo())
+                .shareComment(log.getShareComment())
                 .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))
                 .workoutIntensity(log.getWorkoutIntensity())
                 .mediaUrls(splitMediaUrls(log.getMediaUrls()))

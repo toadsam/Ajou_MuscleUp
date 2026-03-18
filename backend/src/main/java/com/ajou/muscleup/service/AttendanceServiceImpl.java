@@ -231,6 +231,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             boolean previousDidWorkout = existing.isDidWorkout();
             existing.setDidWorkout(input.didWorkout());
             existing.setMemo(normalizeMemo(request.getMemo()));
+            existing.setShareComment(input.shareComment());
             existing.setWorkoutTypes(input.workoutTypesCsv());
             existing.setWorkoutIntensity(input.workoutIntensity());
             existing.setMediaUrls(input.mediaUrlsCsv());
@@ -246,6 +247,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .date(date)
                 .didWorkout(input.didWorkout())
                 .memo(normalizeMemo(request.getMemo()))
+                .shareComment(input.shareComment())
                 .workoutTypes(input.workoutTypesCsv())
                 .workoutIntensity(input.workoutIntensity())
                 .mediaUrls(input.mediaUrlsCsv())
@@ -304,8 +306,9 @@ public class AttendanceServiceImpl implements AttendanceService {
     private AttendanceInput normalizeInput(AttendanceUpsertRequest request) {
         boolean didWorkout = Boolean.TRUE.equals(request.getDidWorkout());
         String mediaUrls = normalizeMediaUrls(request.getMediaUrls());
+        String shareComment = normalizeShareComment(request.getShareComment());
         if (!didWorkout) {
-            return new AttendanceInput(false, List.of(), null, null, mediaUrls);
+            return new AttendanceInput(false, List.of(), null, null, mediaUrls, shareComment);
         }
 
         List<String> normalizedTypes = new ArrayList<>();
@@ -336,7 +339,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             }
         }
 
-        return new AttendanceInput(true, normalizedTypes, intensity, joinTypes(normalizedTypes), mediaUrls);
+        return new AttendanceInput(true, normalizedTypes, intensity, joinTypes(normalizedTypes), mediaUrls, shareComment);
     }
 
     private boolean isSame(AttendanceLog log, AttendanceInput input, String memo) {
@@ -347,8 +350,11 @@ public class AttendanceServiceImpl implements AttendanceService {
         String existingIntensity = log.getWorkoutIntensity();
         String existingMedia = normalizeMediaUrls(log.getMediaUrls());
         String inputMedia = input.mediaUrlsCsv();
+        String existingShareComment = normalizeShareComment(log.getShareComment());
+        String inputShareComment = input.shareComment();
         return log.isDidWorkout() == input.didWorkout()
                 && equalsNullable(existingMemo, normalizedMemo)
+                && equalsNullable(existingShareComment, inputShareComment)
                 && equalsNullable(existingTypes, inputTypes)
                 && equalsNullable(existingIntensity, input.workoutIntensity())
                 && equalsNullable(existingMedia, inputMedia);
@@ -367,6 +373,14 @@ public class AttendanceServiceImpl implements AttendanceService {
             return b == null;
         }
         return a.equals(b);
+    }
+
+    private String normalizeShareComment(String comment) {
+        if (comment == null) {
+            return null;
+        }
+        String trimmed = comment.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String joinTypes(List<String> types) {
@@ -512,7 +526,8 @@ public class AttendanceServiceImpl implements AttendanceService {
             List<String> workoutTypes,
             String workoutIntensity,
             String workoutTypesCsv,
-            String mediaUrlsCsv
+            String mediaUrlsCsv,
+            String shareComment
     ) {}
 
     private record UpsertResult(

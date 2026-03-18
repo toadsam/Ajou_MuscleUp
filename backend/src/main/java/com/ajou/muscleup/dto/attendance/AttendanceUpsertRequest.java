@@ -13,6 +13,9 @@ public class AttendanceUpsertRequest {
     @Size(max = 200)
     private String memo;
 
+    @Size(max = 280)
+    private String shareComment;
+
     @Size(max = 3)
     private List<String> workoutTypes;
 

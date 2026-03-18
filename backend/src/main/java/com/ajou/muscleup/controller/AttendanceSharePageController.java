@@ -29,8 +29,8 @@ public class AttendanceSharePageController {
         String targetUrl = frontendBaseUrl + "/attendance/share/" + slug;
 
         String title = (data.getAuthorNickname() == null || data.getAuthorNickname().isBlank()
-                ? "출석 자랑"
-                : data.getAuthorNickname() + "님의 출석 자랑")
+                ? "Attendance Brag"
+                : data.getAuthorNickname() + "'s Attendance Brag")
                 + " - MuscleUp";
         String description = buildDescription(data);
 
@@ -67,7 +67,7 @@ public class AttendanceSharePageController {
                   <script>window.location.replace(%s);</script>
                 </head>
                 <body>
-                  <p><a href="%s">출석 자랑 페이지로 이동</a></p>
+                  <p><a href="%s">Open shared attendance page</a></p>
                 </body>
                 </html>
                 """
@@ -89,11 +89,15 @@ public class AttendanceSharePageController {
     }
 
     private String buildDescription(AttendanceShareResponse data) {
-        String base = data.isDidWorkout() ? "오늘 운동 완료" : "오늘은 휴식";
-        if (data.getMemo() == null || data.getMemo().isBlank()) {
-            return base + " 기록을 공유했어요.";
+        String base = data.isDidWorkout() ? "Workout completed today" : "Rest day logged today";
+        String source = data.getShareComment();
+        if (source == null || source.isBlank()) {
+            source = data.getMemo();
         }
-        String trimmed = data.getMemo().trim();
+        if (source == null || source.isBlank()) {
+            return base + " on MuscleUp.";
+        }
+        String trimmed = source.trim();
         return base + " - " + (trimmed.length() > 120 ? trimmed.substring(0, 120) + "..." : trimmed);
     }
 

@@ -1,0 +1,253 @@
+﻿.attendance-share-page {
+  --bg-a: #1d1234;
+  --bg-b: #4a2b68;
+  --bg-c: #f58a43;
+  --line: rgba(255, 255, 255, 0.2);
+  --panel: rgba(9, 13, 30, 0.6);
+  min-height: 100vh;
+  color: #fff;
+  background: radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.15), transparent 35%),
+    linear-gradient(130deg, var(--bg-a) 0%, var(--bg-b) 50%, var(--bg-c) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.attendance-share-page.theme-sunset {
+  --bg-a: #1d1234;
+  --bg-b: #5a2a67;
+  --bg-c: #ff8846;
+}
+
+.attendance-share-page.theme-mint {
+  --bg-a: #062521;
+  --bg-b: #0f5f56;
+  --bg-c: #2cd5aa;
+}
+
+.attendance-share-page.theme-midnight {
+  --bg-a: #070d1d;
+  --bg-b: #1b2d59;
+  --bg-c: #5d84ff;
+}
+
+.share-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(8px);
+  opacity: 0.42;
+  animation: share-float 8s ease-in-out infinite;
+}
+
+.share-orb.one {
+  width: 380px;
+  height: 380px;
+  top: 70px;
+  left: -70px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.share-orb.two {
+  width: 320px;
+  height: 320px;
+  right: -80px;
+  top: 190px;
+  background: rgba(18, 255, 245, 0.25);
+  animation-delay: 1.2s;
+}
+
+@keyframes share-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+.share-shell {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 112px 20px 56px;
+}
+
+.share-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.share-panel {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+}
+
+.share-preview {
+  position: relative;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+  min-height: 560px;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(160deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.62));
+}
+
+.share-preview.ratio-square {
+  min-height: 500px;
+}
+
+.share-preview.ratio-story {
+  min-height: 700px;
+}
+
+.share-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.88;
+}
+
+.share-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.16) 60%);
+}
+
+.share-sticker {
+  position: absolute;
+  right: 18px;
+  top: 14px;
+  font-size: 40px;
+  z-index: 2;
+}
+
+.share-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 22px;
+}
+
+.share-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.share-badge {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.share-quote {
+  margin-top: 10px;
+  border-radius: 16px;
+  padding: 14px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.share-quote.quote-glass {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.share-quote.quote-outline {
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.share-quote.quote-solid {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.share-meta {
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.control-title {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.control-row {
+  margin-bottom: 16px;
+}
+
+.choice-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice-btn {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.choice-btn.active {
+  border-color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.comment-editor {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 12px;
+  background: rgba(3, 8, 21, 0.5);
+  color: #fff;
+  padding: 10px 12px;
+  min-height: 88px;
+  resize: vertical;
+}
+
+.action-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.action-btn {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.action-btn.primary {
+  border-color: rgba(101, 255, 217, 0.8);
+  color: #cbffef;
+}
+
+@media (max-width: 1024px) {
+  .share-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .share-shell {
+    padding-top: 100px;
+  }
+}

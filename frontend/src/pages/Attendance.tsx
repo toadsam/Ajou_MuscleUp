@@ -1,11 +1,13 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import UploadDropzone from "../components/UploadDropzone";
 import "../styles/attendance.css";
+import { renderAttendanceShareCard } from "../utils/attendanceShareCard";
 
 type AttendanceLog = {
   date: string;
   didWorkout: boolean;
   memo?: string | null;
+  shareComment?: string | null;
   workoutTypes?: string[] | null;
   workoutIntensity?: string | null;
   mediaUrls?: string[] | null;
@@ -51,6 +53,11 @@ const INTENSITIES: IntensityOption[] = [
 
 const MEMO_KEYWORDS = ["3대", "갱신", "PR", "데드", "스쿼트"] as const;
 const STREAK_MILESTONES = [3, 7, 14, 30];
+const SHARE_COMMENT_TEMPLATES = [
+  "오늘도 루틴 완료. 내일도 간다.",
+  "기록이 쌓이면 결과가 된다.",
+  "작은 출석이 큰 변화를 만든다.",
+];
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
@@ -116,6 +123,7 @@ export default function Attendance() {
   const [workoutTypes, setWorkoutTypes] = useState<string[]>([]);
   const [workoutIntensity, setWorkoutIntensity] = useState<string | null>(null);
   const [memo, setMemo] = useState("");
+  const [shareComment, setShareComment] = useState("");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<RankingItem[]>([]);
@@ -170,6 +178,7 @@ export default function Attendance() {
     if (todayLog) {
       setDidWorkout(todayLog.didWorkout);
       setMemo(todayLog.memo ?? "");
+      setShareComment(todayLog.shareComment ?? "");
       setWorkoutTypes(todayLog.workoutTypes ?? []);
       setWorkoutIntensity(todayLog.workoutIntensity ?? null);
       setMediaUrls(todayLog.mediaUrls ?? []);
@@ -177,6 +186,7 @@ export default function Attendance() {
     }
     setDidWorkout(true);
     setMemo("");
+    setShareComment("");
     setWorkoutTypes([]);
     setWorkoutIntensity(null);
     setMediaUrls([]);
@@ -262,6 +272,7 @@ export default function Attendance() {
         body: JSON.stringify({
           didWorkout,
           memo: memo.trim() || null,
+          shareComment: shareComment.trim() || null,
           workoutTypes: didWorkout ? workoutTypes : [],
           workoutIntensity: didWorkout ? workoutIntensity : null,
           mediaUrls,
@@ -281,19 +292,26 @@ export default function Attendance() {
     }
   };
 
-  const copyShareLink = async () => {
-    if (!todayLog) {
-      showToast({ type: "error", message: "먼저 오늘 출석을 저장해 주세요." });
-      return;
-    }
+  const composeShareText = (link: string) => {
+    const base = shareComment.trim() || memo.trim() || "오늘 출석 완료!";
+    return `${base}\n${link}`;
+  };
 
+  const ensureShareSlug = async () => {
+    if (!todayLog) {
+      throw new Error("먼저 오늘 출석을 저장해 주세요.");
+    }
+    if (todayLog.shareSlug) {
+      return todayLog.shareSlug;
+    }
+    const res = await api<AttendanceShareResponse>(`/api/attendance/${todayLog.date}/share`, { method: "POST" });
+    return res.shareSlug;
+  };
+
+  const copyShareLink = async () => {
     try {
       setSharing(true);
-      let slug = todayLog.shareSlug ?? "";
-      if (!slug) {
-        const res = await api<AttendanceShareResponse>(`/api/attendance/${todayLog.date}/share`, { method: "POST" });
-        slug = res.shareSlug;
-      }
+      const slug = await ensureShareSlug();
       const link = shareLinkForSlug(slug);
       await navigator.clipboard.writeText(link);
       showToast({ type: "success", message: "자랑 링크를 복사했어요." });
@@ -306,26 +324,64 @@ export default function Attendance() {
   };
 
   const kakaoShare = async () => {
-    if (!todayLog?.shareSlug) {
-      await copyShareLink();
-      return;
+    try {
+      setSharing(true);
+      const slug = await ensureShareSlug();
+      const link = shareLinkForSlug(slug);
+      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(link)}`, "_blank", "noopener,noreferrer");
+      await reloadMonth();
+    } catch (e: any) {
+      showToast({ type: "error", message: e?.message || "카카오 공유에 실패했어요." });
+    } finally {
+      setSharing(false);
     }
-    const link = shareLinkForSlug(todayLog.shareSlug);
-    window.open(`https://story.kakao.com/share?url=${encodeURIComponent(link)}`, "_blank", "noopener,noreferrer");
   };
 
-  const saveInstaImage = () => {
-    const firstImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
-    if (!firstImage) {
-      alert("저장할 이미지가 없어요. 영상은 캡처해서 사용해 주세요.");
-      return;
+  const quickShare = async () => {
+    try {
+      setSharing(true);
+      const slug = await ensureShareSlug();
+      const link = shareLinkForSlug(slug);
+      const text = composeShareText(link);
+      if (navigator.share) {
+        await navigator.share({ title: "출석 자랑", text, url: link });
+        showToast({ type: "success", message: "공유 창을 열었어요." });
+      } else {
+        await navigator.clipboard.writeText(text);
+        showToast({ type: "success", message: "멘트+링크를 복사했어요." });
+      }
+      await reloadMonth();
+    } catch (e: any) {
+      showToast({ type: "error", message: e?.message || "공유에 실패했어요." });
+    } finally {
+      setSharing(false);
     }
-    const a = document.createElement("a");
-    a.href = firstImage;
-    a.download = `attendance-${todayKey}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  };
+
+  const saveInstaImage = async () => {
+    try {
+      const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
+      const blob = await renderAttendanceShareCard({
+        date: todayKey,
+        didWorkout,
+        workoutTypes: workoutTypes.map((type) => WORKOUT_TYPES.find((item) => item.id === type)?.label ?? type),
+        workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
+        memo,
+        shareComment,
+        mediaUrl: mediaImage ?? null,
+      });
+      const fileUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = fileUrl;
+      a.download = `attendance-card-${todayKey}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(fileUrl);
+      showToast({ type: "success", message: "자랑 카드 이미지를 저장했어요." });
+    } catch (e: any) {
+      showToast({ type: "error", message: e?.message || "이미지 저장에 실패했어요." });
+    }
   };
 
   const unshareToday = async () => {
@@ -596,6 +652,25 @@ export default function Attendance() {
             </div>
           </div>
 
+          <div className="memo-block">
+            <textarea value={shareComment} onChange={(e) => setShareComment(e.target.value)} maxLength={280} rows={2} placeholder="공유할 자랑 멘트 (선택)" />
+            <div className="memo-meta">
+              <span>{shareComment.length}/280</span>
+              <div className="flex flex-wrap gap-2">
+                {SHARE_COMMENT_TEMPLATES.map((template) => (
+                  <button
+                    key={template}
+                    type="button"
+                    onClick={() => setShareComment(template)}
+                    className="rounded-full border border-white/20 px-2 py-1 text-xs text-white/70 hover:border-white/40"
+                  >
+                    {template}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-3">
             <p className="text-sm text-white/70">사진/영상 첨부 (최대 10개)</p>
             <UploadDropzone
@@ -634,6 +709,9 @@ export default function Attendance() {
 
           {todayLog && (
             <div className="mt-4 flex flex-wrap gap-3">
+              <button onClick={quickShare} disabled={sharing} className="rounded-xl border border-emerald-400/60 px-4 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10">
+                {sharing ? "공유 중..." : "원클릭 자랑하기"}
+              </button>
               <button onClick={copyShareLink} disabled={sharing} className="rounded-xl border border-orange-400/60 px-4 py-2 text-sm text-orange-200 hover:bg-orange-500/10">
                 {sharing ? "생성 중..." : todayLog.shareSlug ? "자랑 링크 복사" : "자랑 링크 만들기"}
               </button>
