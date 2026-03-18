@@ -62,6 +62,7 @@ const tierFromAttendance = (rate: number): CharacterTier => {
 };
 
 type ViewTab = "dashboard" | "challenges" | "leaderboard" | "members";
+const TAB_ORDER: ViewTab[] = ["dashboard", "challenges", "leaderboard", "members"];
 
 type LocalUser = { nickname?: string };
 
@@ -94,6 +95,13 @@ function EnhancedAvatar({ seed, tier, stage, size, rank, badge }: { seed: string
   );
 }
 
+const quickMissionLabel = (rate: number, rank: number | null) => {
+  if (rank && rank <= 3) return "상위권 방어: 오늘 운동 기록 1회";
+  if (rate >= 90) return "만점 도전: 출석률 100% 채우기";
+  if (rate >= 60) return "중위권 돌파: 연속 2일 출석";
+  return "기본기 미션: 오늘 출석 먼저 완료";
+};
+
 export default function CrewChallenge() {
   const { crewId } = useParams<{ crewId: string }>();
   const navigate = useNavigate();
@@ -104,6 +112,12 @@ export default function CrewChallenge() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<ViewTab>("dashboard");
   const [expandedChallengeId, setExpandedChallengeId] = useState<number | null>(null);
+  const [manageMode, setManageMode] = useState(false);
+  const [tabMotion, setTabMotion] = useState<"left" | "right">("right");
+  const [tabMotionTick, setTabMotionTick] = useState(0);
+  const [challengeDragX, setChallengeDragX] = useState(0);
+  const [isChallengeDragging, setIsChallengeDragging] = useState(false);
+  const [isChallengeAnimating, setIsChallengeAnimating] = useState(false);
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [challengeTitle, setChallengeTitle] = useState("");
@@ -123,6 +137,8 @@ export default function CrewChallenge() {
   const [rankDeltaByUser, setRankDeltaByUser] = useState<Record<number, number>>({});
   const [animatedRows, setAnimatedRows] = useState<number[]>([]);
   const previousRanksRef = useRef<Record<number, number>>({});
+  const tabSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const challengeSwipeStartRef = useRef<number | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -168,6 +184,19 @@ export default function CrewChallenge() {
     const gap = Math.max(0, Number((target.score - myBoardRow.score).toFixed(1)));
     return `다음 순위까지 ${gap}점 차이입니다.`;
   }, [detail?.competitionBoard, myBoardRow]);
+
+  const myAvatar = useMemo(() => resolveAvatarConfig(myAttendanceRow as any, myAttendanceRow?.attendanceRate ?? 0), [myAttendanceRow]);
+  const ongoingChallengeCount = detail?.challenges.filter((c) => c.status === "ONGOING").length ?? 0;
+  const missionLabel = quickMissionLabel(myAttendanceRow?.attendanceRate ?? 0, myBoardRow?.rank ?? null);
+
+  const switchTab = (nextTab: ViewTab) => {
+    if (nextTab === activeTab) return;
+    const prevIndex = TAB_ORDER.indexOf(activeTab);
+    const nextIndex = TAB_ORDER.indexOf(nextTab);
+    setTabMotion(nextIndex >= prevIndex ? "right" : "left");
+    setActiveTab(nextTab);
+    setTabMotionTick((v) => v + 1);
+  };
 
   const loadDetail = async (targetCrewId: number, monthKey: string) => {
     if (!targetCrewId) return;
@@ -364,12 +393,11 @@ export default function CrewChallenge() {
     const top3 = detail.competitionBoard.slice(0, 3);
     return (
       <div className="space-y-4">
-        <div className="overflow-x-auto pb-1">
-          <div className="grid min-w-[560px] grid-cols-3 gap-3 md:min-w-0">
+        <div className="grid gap-3 md:grid-cols-3">
             {top3.map((row) => {
               const avatar = resolveAvatarConfig(detail.members.find((m) => m.userId === row.userId) ?? null, row.attendanceRate);
               return (
-                <article key={row.userId} className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4">
+                <article key={row.userId} className={`rounded-2xl border border-white/15 bg-gradient-to-b ${row.rank === 1 ? "from-amber-400/25" : "from-cyan-400/20"} to-slate-900 p-4`}>
                   <div className="flex items-center justify-between">
                     <span className="rounded-full bg-amber-300 px-2 py-1 text-xs font-bold text-slate-900">#{row.rank}</span>
                     <span className="text-xs text-amber-100">{row.score}점</span>
@@ -378,22 +406,21 @@ export default function CrewChallenge() {
                     <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} size={78} rank={row.rank} />
                   </div>
                   <p className="mt-2 text-center font-bold">{row.nickname}{renderRankDelta(row.userId)}</p>
-                  <p className="text-center text-xs text-amber-100/80">출석 {row.attendanceRate}%</p>
+                  <p className="text-center text-xs text-gray-300">출석 {row.attendanceRate}%</p>
                 </article>
               );
             })}
-          </div>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="grid grid-cols-[56px_1fr_90px_96px] rounded-lg bg-white/5 px-3 py-2 text-[11px] text-gray-300">
+          <div className="grid grid-cols-[48px_1fr_74px_72px] rounded-lg bg-white/5 px-3 py-2 text-[11px] text-gray-300 sm:grid-cols-[56px_1fr_90px_96px]">
             <span>순위</span><span>닉네임</span><span>출석률</span><span>점수</span>
           </div>
           <div className="mt-1 max-h-80 space-y-1 overflow-y-auto">
             {detail.competitionBoard.map((row) => {
               const animated = animatedRows.includes(row.userId);
               return (
-                <div key={row.userId} className={`grid grid-cols-[56px_1fr_90px_96px] rounded-lg px-3 py-2 text-sm transition-all ${row.rank <= 3 ? "bg-amber-500/5" : "bg-black/15"} ${animated ? "ring-1 ring-cyan-300/60" : ""}`}>
+                <div key={row.userId} className={`grid grid-cols-[48px_1fr_74px_72px] rounded-lg px-3 py-2 text-sm transition-all sm:grid-cols-[56px_1fr_90px_96px] ${row.rank <= 3 ? "bg-amber-500/5" : "bg-black/15"} ${animated ? "ring-1 ring-cyan-300/60" : ""}`}>
                   <span className="text-cyan-200">#{row.rank}{renderRankDelta(row.userId)}</span>
                   <div>
                     <p className="font-semibold">{row.nickname}</p>
@@ -412,9 +439,108 @@ export default function CrewChallenge() {
 
   const renderChallenges = () => {
     if (!detail) return null;
+    const challenges = detail.challenges;
+    const activeChallengeIndex = Math.max(
+      0,
+      challenges.findIndex((c) => c.id === expandedChallengeId)
+    );
+    const activeChallenge = challenges[activeChallengeIndex] ?? challenges[0] ?? null;
+
+    const moveChallengeFocus = (direction: "prev" | "next") => {
+      if (challenges.length <= 1) return;
+      const currentIndex = Math.max(
+        0,
+        challenges.findIndex((c) => c.id === expandedChallengeId)
+      );
+      const targetIndex =
+        direction === "next"
+          ? Math.min(challenges.length - 1, currentIndex + 1)
+          : Math.max(0, currentIndex - 1);
+      setExpandedChallengeId(challenges[targetIndex].id);
+    };
+
+    const onChallengeSwipeStart = (x: number) => {
+      if (isChallengeAnimating) return;
+      challengeSwipeStartRef.current = x;
+      setIsChallengeDragging(true);
+    };
+
+    const onChallengeSwipeMove = (x: number) => {
+      if (challengeSwipeStartRef.current == null) return;
+      const delta = x - challengeSwipeStartRef.current;
+      const clamped = Math.max(-120, Math.min(120, delta));
+      setChallengeDragX(clamped);
+    };
+
+    const onChallengeSwipeEnd = (x: number) => {
+      if (challengeSwipeStartRef.current == null) return;
+      const delta = x - challengeSwipeStartRef.current;
+      const triggerHaptic = () => {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate(12);
+        }
+      };
+      if (Math.abs(delta) > 55) {
+        const toNext = delta < 0;
+        setIsChallengeAnimating(true);
+        setChallengeDragX(toNext ? -92 : 92);
+        triggerHaptic();
+        window.setTimeout(() => {
+          moveChallengeFocus(toNext ? "next" : "prev");
+          setChallengeDragX(toNext ? 78 : -78);
+          window.requestAnimationFrame(() => {
+            setChallengeDragX(0);
+          });
+          window.setTimeout(() => {
+            setIsChallengeAnimating(false);
+          }, 280);
+        }, 130);
+      } else {
+        setChallengeDragX(0);
+      }
+      challengeSwipeStartRef.current = null;
+      setIsChallengeDragging(false);
+    };
+
     return (
       <div className="space-y-4">
-        {detail.leader && (
+        {activeChallenge && (
+          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-3 md:hidden">
+            <p className="mb-2 text-[11px] font-semibold tracking-wide text-cyan-200">스와이프 챌린지 카드</p>
+            <div
+              className="select-none rounded-xl border border-white/15 bg-black/25 p-3 transition-transform duration-200 ease-out"
+              style={{
+                transform: `translateX(${challengeDragX}px) rotate(${challengeDragX / 38}deg) scale(${1 - Math.min(0.05, Math.abs(challengeDragX) / 720)})`,
+                transition: isChallengeDragging
+                  ? "none"
+                  : isChallengeAnimating
+                  ? "transform 340ms cubic-bezier(0.18, 0.8, 0.24, 1.15)"
+                  : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
+                boxShadow: isChallengeAnimating
+                  ? "0 0 0 1px rgba(103,232,249,0.35), 0 10px 30px rgba(6,182,212,0.22)"
+                  : "none",
+              }}
+              onTouchStart={(e) => onChallengeSwipeStart(e.touches[0].clientX)}
+              onTouchMove={(e) => onChallengeSwipeMove(e.touches[0].clientX)}
+              onTouchEnd={(e) => onChallengeSwipeEnd(e.changedTouches[0].clientX)}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-semibold">{activeChallenge.title}</p>
+                <span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[activeChallenge.status]}`}>
+                  {challengeStatusText[activeChallenge.status]}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-gray-400">{activeChallenge.startDate} ~ {activeChallenge.endDate}</p>
+              <p className="mt-1 text-xs text-emerald-200">목표 {activeChallenge.targetWorkoutDays}일</p>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <button type="button" onClick={() => moveChallengeFocus("prev")} className="rounded-lg border border-white/20 px-2 py-1 text-[11px] text-gray-200">이전</button>
+              <p className="text-[11px] text-gray-400">{activeChallengeIndex + 1} / {challenges.length}</p>
+              <button type="button" onClick={() => moveChallengeFocus("next")} className="rounded-lg border border-white/20 px-2 py-1 text-[11px] text-gray-200">다음</button>
+            </div>
+          </div>
+        )}
+        {detail.leader && manageMode && (
           <form onSubmit={onCreateChallenge} className="space-y-3 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-4">
             <h3 className="text-lg font-bold">챌린지 만들기</h3>
             <input value={challengeTitle} onChange={(e) => setChallengeTitle(e.target.value)} placeholder="챌린지 제목" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
@@ -445,7 +571,7 @@ export default function CrewChallenge() {
                     <p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate} · 목표 {challenge.targetWorkoutDays}일</p>
                   </button>
                   <div className="flex items-center gap-2">
-                    {detail.leader && <><button type="button" onClick={() => startEditChallenge(challenge)} className="rounded-lg border border-cyan-300/40 px-2 py-1 text-xs text-cyan-200">수정</button><button type="button" onClick={() => void onDeleteChallenge(challenge.id)} className="rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">삭제</button></>}
+                    {detail.leader && manageMode && <><button type="button" onClick={() => startEditChallenge(challenge)} className="rounded-lg border border-cyan-300/40 px-2 py-1 text-xs text-cyan-200">수정</button><button type="button" onClick={() => void onDeleteChallenge(challenge.id)} className="rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">삭제</button></>}
                     <button type="button" onClick={() => setExpandedChallengeId(isExpanded ? null : challenge.id)} className="rounded-lg border border-white/20 px-2 py-1 text-xs text-gray-200">{isExpanded ? "접기" : "펼치기"}</button>
                   </div>
                 </div>
@@ -454,7 +580,7 @@ export default function CrewChallenge() {
 
                 {isExpanded && (
                   <div className="mt-3 space-y-3">
-                    {isEditing && detail.leader && (
+                    {isEditing && detail.leader && manageMode && (
                       <form onSubmit={submitEditChallenge} className="space-y-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 p-3">
                         <p className="text-sm font-semibold text-cyan-200">챌린지 수정</p>
                         <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="챌린지 제목" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
@@ -497,7 +623,7 @@ export default function CrewChallenge() {
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${Math.min(member.attendanceRate, 100)}%` }} /></div>
               <p className="mt-2 text-xs text-gray-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
-              {detail.leader && member.role !== "LEADER" && <button type="button" onClick={() => void onKickMember(member.userId)} className="mt-3 rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">강퇴</button>}
+              {detail.leader && manageMode && member.role !== "LEADER" && <button type="button" onClick={() => void onKickMember(member.userId)} className="mt-3 rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">강퇴</button>}
             </article>
           );
         })}
@@ -506,30 +632,106 @@ export default function CrewChallenge() {
   };
 
   return (
-    <section className="min-h-screen bg-slate-950 pb-28 pt-28 text-white">
+    <section className="relative min-h-screen overflow-hidden bg-slate-950 pb-28 pt-24 text-white">
+      <div className="pointer-events-none absolute -left-32 top-16 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 top-20 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
       <div className="mx-auto max-w-6xl space-y-4 px-4 sm:px-6 lg:px-10">
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-cyan-900/35 via-slate-900/60 to-emerald-900/20 p-4">
+        <div className="relative rounded-2xl border border-white/10 bg-gradient-to-r from-cyan-900/35 via-slate-900/60 to-emerald-900/20 p-4">
+          <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[11px] font-black tracking-[0.14em] text-cyan-100">
+            MuscleUp
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><p className="text-xs tracking-[0.2em] text-cyan-200">CREW CHALLENGE ARENA</p><h1 className="text-2xl font-black">{detail?.name || "모임 챌린지"}</h1><p className="text-xs text-gray-300">{nextGoal}</p></div>
             <div className="flex items-center gap-2"><Link to="/crew" className="rounded-lg border border-white/20 px-3 py-2 text-sm text-gray-200 hover:bg-white/10">모임 허브</Link><input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" /></div>
           </div>
         </div>
 
-        <div className="sticky top-20 z-30 rounded-2xl border border-cyan-300/25 bg-slate-900/90 p-3 backdrop-blur"><div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="rounded-xl border border-white/10 bg-black/20 p-3"><p className="text-[11px] text-gray-400">내 캐릭터</p><p className="text-sm font-semibold">{myAttendanceRow?.nickname ?? "-"}</p><p className="text-xs text-cyan-200">출석 {myAttendanceRow?.attendanceRate ?? 0}%</p></div><div className="rounded-xl border border-white/10 bg-black/20 p-3"><p className="text-[11px] text-gray-400">현재 순위</p><p className="text-xl font-black text-amber-200">#{myBoardRow?.rank ?? "-"}</p></div><div className="rounded-xl border border-white/10 bg-black/20 p-3"><p className="text-[11px] text-gray-400">활성 챌린지</p><p className="text-xl font-black">{detail?.challenges.filter((c) => c.status === "ONGOING").length ?? 0}</p></div><div className="rounded-xl border border-white/10 bg-black/20 p-3"><p className="text-[11px] text-gray-400">오늘 할 일</p><p className="text-xs text-emerald-200">출석 + 챌린지 1개 확인</p></div></div></div>
+        <div className="sticky top-20 z-30 rounded-2xl border border-cyan-300/25 bg-slate-900/90 p-3 backdrop-blur">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[11px] text-gray-400">내 캐릭터</p>
+              <div className="mt-1 flex items-center gap-2">
+                <EnhancedAvatar seed={myAvatar.seed} tier={myAvatar.tier} stage={myAvatar.stage} size={38} />
+                <p className="text-sm font-semibold">{myAttendanceRow?.nickname ?? "-"}</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[11px] text-gray-400">현재 순위</p>
+              <p className="text-xl font-black text-amber-200">#{myBoardRow?.rank ?? "-"}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[11px] text-gray-400">활성 챌린지</p>
+              <p className="text-xl font-black">{ongoingChallengeCount}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[11px] text-gray-400">오늘 미션</p>
+              <p className="text-xs text-emerald-200">{missionLabel}</p>
+            </div>
+          </div>
+        </div>
 
-        <div className="hidden flex-wrap gap-2 md:flex">{[{ key: "dashboard", label: "대시보드" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "리더보드" }, { key: "members", label: "멤버" }].map((tab) => <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key as ViewTab)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "border border-white/20 bg-black/20 text-gray-200 hover:bg-white/10"}`}>{tab.label}</button>)}</div>
+        <div className="hidden flex-wrap gap-2 md:flex">
+          {[{ key: "dashboard", label: "대시보드" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "리더보드" }, { key: "members", label: "멤버" }].map((tab) => (
+            <button key={tab.key} type="button" onClick={() => switchTab(tab.key as ViewTab)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "border border-white/20 bg-black/20 text-gray-200 hover:bg-white/10"}`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         {error && <p className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
         {!detail && <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-gray-300">불러오는 중...</div>}
 
-        {detail && (<><div className="rounded-2xl border border-white/10 bg-white/5 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div className="space-y-2"><input value={detail.name} onChange={(e) => setDetail((prev) => (prev ? { ...prev, name: e.target.value } : prev))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-xl font-extrabold" /><textarea value={detail.description ?? ""} onChange={(e) => setDetail((prev) => (prev ? { ...prev, description: e.target.value } : prev))} rows={2} className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-gray-300" /><div className="flex items-center gap-2 text-xs text-cyan-300"><span>초대코드: <span className="font-bold">{detail.inviteCode}</span></span><button type="button" onClick={() => void copyInviteLink()} className="rounded-md border border-cyan-300/40 px-2 py-1 text-cyan-200 hover:bg-cyan-500/10">{copiedLink ? "복사됨" : "링크 복사"}</button></div></div><div className="flex items-center gap-2">{detail.joined ? <button type="button" onClick={() => void onLeave()} className="rounded-lg border border-red-300/40 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">모임 탈퇴</button> : <button type="button" onClick={() => void onJoin()} className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">모임 참여</button>}{detail.leader && <><button type="button" onClick={() => void onUpdateCrew()} className="rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-200">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">모임 삭제</button></>}</div></div></div>
-          {activeTab === "dashboard" && <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr]"><div className="rounded-2xl border border-white/10 bg-white/5 p-5"><h3 className="text-lg font-bold">왕 타이틀</h3><div className="mt-3 grid gap-2 sm:grid-cols-3">{detail.kingTitles?.map((king) => <div key={king.title} className={`rounded-xl border p-3 ${kingStyleByTitle[king.title]?.className ?? "border-white/20 bg-white/10 text-white"} animate-pulse`}><div className="flex items-center gap-2"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 text-xs font-bold">{kingStyleByTitle[king.title]?.icon ?? "K"}</span><p className="text-xs">{king.title}</p></div><p className="mt-2 text-sm font-bold text-white">{king.nickname}</p><p className="text-xs opacity-90">{king.metric}</p></div>)}</div></div><div className="rounded-2xl border border-white/10 bg-white/5 p-5"><h3 className="text-lg font-bold">빠른 챌린지 현황</h3><div className="mt-3 space-y-2">{detail.challenges.slice(0, 3).map((challenge) => <button key={challenge.id} type="button" onClick={() => { setActiveTab("challenges"); setExpandedChallengeId(challenge.id); }} className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-left"><div className="flex items-center justify-between gap-2"><p className="font-semibold">{challenge.title}</p><span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span></div><p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate}</p></button>)}</div></div></div>}
-          {activeTab === "challenges" && renderChallenges()}
-          {activeTab === "leaderboard" && renderLeaderboard()}
-          {activeTab === "members" && renderMembers()}</>)}
+        {detail && (
+          <>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-2">
+                  <input value={detail.name} onChange={(e) => setDetail((prev) => (prev ? { ...prev, name: e.target.value } : prev))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-xl font-extrabold" />
+                  <textarea value={detail.description ?? ""} onChange={(e) => setDetail((prev) => (prev ? { ...prev, description: e.target.value } : prev))} rows={2} className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-gray-300" />
+                  <div className="flex items-center gap-2 text-xs text-cyan-300"><span>초대코드: <span className="font-bold">{detail.inviteCode}</span></span><button type="button" onClick={() => void copyInviteLink()} className="rounded-md border border-cyan-300/40 px-2 py-1 text-cyan-200 hover:bg-cyan-500/10">{copiedLink ? "복사됨" : "링크 복사"}</button></div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {detail.joined ? <button type="button" onClick={() => void onLeave()} className="rounded-lg border border-red-300/40 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">모임 탈퇴</button> : <button type="button" onClick={() => void onJoin()} className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">모임 참여</button>}
+                  {detail.leader && <><button type="button" onClick={() => setManageMode((prev) => !prev)} className={`rounded-lg border px-3 py-2 text-sm ${manageMode ? "border-cyan-300/50 bg-cyan-500/20 text-cyan-100" : "border-white/25 bg-black/25 text-gray-200"}`}>{manageMode ? "관리 모드 ON" : "관리 모드"}</button>{manageMode && <><button type="button" onClick={() => void onUpdateCrew()} className="rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-200">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">모임 삭제</button></>}</>}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="touch-pan-y"
+              onTouchStart={(e) => {
+                tabSwipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+              }}
+              onTouchEnd={(e) => {
+                const start = tabSwipeStartRef.current;
+                if (!start) return;
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const dx = endX - start.x;
+                const dy = endY - start.y;
+                tabSwipeStartRef.current = null;
+                if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+                const currentIndex = TAB_ORDER.indexOf(activeTab);
+                if (dx < 0 && currentIndex < TAB_ORDER.length - 1) switchTab(TAB_ORDER[currentIndex + 1]);
+                if (dx > 0 && currentIndex > 0) switchTab(TAB_ORDER[currentIndex - 1]);
+              }}
+            >
+              <div
+                key={`${activeTab}-${tabMotionTick}`}
+                style={{ animation: `${tabMotion === "right" ? "crewTabSlideInRight" : "crewTabSlideInLeft"} 240ms ease-out` }}
+              >
+                {activeTab === "dashboard" && <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr]"><div className="rounded-2xl border border-white/10 bg-white/5 p-5"><h3 className="text-lg font-bold">왕 타이틀</h3><div className="mt-3 grid gap-2 sm:grid-cols-3">{detail.kingTitles?.map((king) => <div key={king.title} className={`rounded-xl border p-3 ${kingStyleByTitle[king.title]?.className ?? "border-white/20 bg-white/10 text-white"} animate-pulse`}><div className="flex items-center gap-2"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 text-xs font-bold">{kingStyleByTitle[king.title]?.icon ?? "K"}</span><p className="text-xs">{king.title}</p></div><p className="mt-2 text-sm font-bold text-white">{king.nickname}</p><p className="text-xs opacity-90">{king.metric}</p></div>)}</div></div><div className="rounded-2xl border border-white/10 bg-white/5 p-5"><h3 className="text-lg font-bold">빠른 챌린지 현황</h3><div className="mt-3 space-y-2">{detail.challenges.slice(0, 3).map((challenge) => <button key={challenge.id} type="button" onClick={() => { switchTab("challenges"); setExpandedChallengeId(challenge.id); }} className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-left"><div className="flex items-center justify-between gap-2"><p className="font-semibold">{challenge.title}</p><span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span></div><p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate}</p></button>)}</div></div></div>}
+                {activeTab === "challenges" && renderChallenges()}
+                {activeTab === "leaderboard" && renderLeaderboard()}
+                {activeTab === "members" && renderMembers()}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="fixed inset-x-4 bottom-4 z-40 md:hidden"><div className="grid grid-cols-4 gap-2 rounded-2xl border border-white/15 bg-slate-900/95 p-2 backdrop-blur">{[{ key: "dashboard", label: "대시" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "랭킹" }, { key: "members", label: "멤버" }].map((tab) => <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key as ViewTab)} className={`rounded-xl py-2 text-xs font-semibold ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "text-gray-200"}`}>{tab.label}</button>)}</div></div>
+      <div className="fixed inset-x-4 bottom-4 z-40 md:hidden"><div className="grid grid-cols-4 gap-2 rounded-2xl border border-white/15 bg-slate-900/95 p-2 backdrop-blur">{[{ key: "dashboard", label: "대시" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "랭킹" }, { key: "members", label: "멤버" }].map((tab) => <button key={tab.key} type="button" onClick={() => switchTab(tab.key as ViewTab)} className={`rounded-xl py-2 text-xs font-semibold ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "text-gray-200"}`}>{tab.label}</button>)}</div></div>
+      <style>{`@keyframes crewTabSlideInRight{from{opacity:.35;transform:translate3d(22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}@keyframes crewTabSlideInLeft{from{opacity:.35;transform:translate3d(-22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}`}</style>
     </section>
   );
 }
