@@ -1,7 +1,7 @@
 ﻿
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, RefObject } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 
 type TrackId = "starter" | "cut" | "growth" | "balance";
@@ -74,6 +74,13 @@ interface Recommendation {
   readiness: string;
   coachingPoint: string;
 }
+
+type InbodyPresetState = {
+  inbodyPreset?: {
+    goalHint?: string;
+    recommendedTrack?: TrackId;
+  };
+};
 
 const programs: ProgramDefinition[] = [
   {
@@ -380,6 +387,7 @@ function buildRecommendation(answers: SurveyAnswers): Recommendation | null {
 
 export default function Programs() {
   const navigate = useNavigate();
+  const location = useLocation();
   const surveyRef = useRef<HTMLElement | null>(null);
   const applyRef = useRef<HTMLElement | null>(null);
 
@@ -392,6 +400,19 @@ export default function Programs() {
   useEffect(() => {
     logEvent("programs", "page_view");
   }, []);
+
+  useEffect(() => {
+    const state = location.state as InbodyPresetState | null;
+    const preset = state?.inbodyPreset;
+    if (!preset) return;
+
+    if (preset.recommendedTrack) {
+      setSelectedTrack(preset.recommendedTrack);
+    }
+    if (preset.goalHint) {
+      setForm((prev) => ({ ...prev, personalGoal: prev.personalGoal || preset.goalHint || "" }));
+    }
+  }, [location.state]);
 
   const recommendation = useMemo(() => buildRecommendation(answers), [answers]);
 

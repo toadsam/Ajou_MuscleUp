@@ -10,4 +10,7 @@ public class AiInbodyReviewRequest {
     private String goal;
     private String notes;
     private String goalIntensity;
+    private String gender;
+    private Integer age;
+    private Integer heightCm;
 }

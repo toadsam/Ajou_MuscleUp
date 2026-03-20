@@ -33,6 +33,8 @@ type InbodyResponse = {
   sourceType: string;
 };
 
+type ProfileGender = "MALE" | "FEMALE";
+
 type ConsultationSection = {
   key: string;
   title: string;
@@ -87,6 +89,9 @@ export default function InbodyConsult() {
   const [goal, setGoal] = useState("");
   const [notes, setNotes] = useState("");
   const [goalIntensity, setGoalIntensity] = useState<(typeof goalIntensityOptions)[number]["value"]>("standard");
+  const [profileGender, setProfileGender] = useState<ProfileGender | "">("");
+  const [profileAge, setProfileAge] = useState("");
+  const [profileHeightCm, setProfileHeightCm] = useState("");
   const [manualMetrics, setManualMetrics] = useState<Record<string, string>>({
     height_cm: "",
     weight_kg: "",
@@ -164,7 +169,28 @@ export default function InbodyConsult() {
   const summaryLines = useMemo(() => buildKeySummaryLines(normalizedConsultation, consultationSections, 3), [normalizedConsultation, consultationSections]);
   const beginnerHighlights = useMemo(() => (result ? buildBeginnerHighlights(result) : []), [result]);
   const actionChecklist = useMemo(() => (result ? buildActionChecklist(result) : []), [result]);
-  const metricInsightCards = useMemo(() => (result ? buildMetricInsightCards(result.metrics) : []), [result]);
+  const metricInsightCards = useMemo(
+    () =>
+      result
+        ? buildMetricInsightCards(result.metrics, {
+            gender: profileGender,
+            age: toNumber(profileAge),
+            heightCm: toNumber(profileHeightCm),
+          })
+        : [],
+    [result, profileGender, profileAge, profileHeightCm]
+  );
+  const personalInterpretation = useMemo(
+    () =>
+      result
+        ? buildPersonalMetricSummaries(result.metrics, {
+            gender: profileGender,
+            age: toNumber(profileAge),
+            heightCm: toNumber(profileHeightCm),
+          })
+        : [],
+    [result, profileGender, profileAge, profileHeightCm]
+  );
 
   const compositionDomain = useMemo(() => {
     const values = compositionData.flatMap((x) => [x.current, x.target]);
@@ -195,6 +221,9 @@ export default function InbodyConsult() {
       if (goal.trim()) formData.append("goal", goal.trim());
       if (notes.trim()) formData.append("notes", notes.trim());
       formData.append("goalIntensity", goalIntensity);
+      if (profileGender) formData.append("gender", profileGender);
+      if (profileAge.trim()) formData.append("age", profileAge.trim());
+      if (profileHeightCm.trim()) formData.append("heightCm", profileHeightCm.trim());
 
       const res = await fetch(`${API_BASE}/api/ai/inbody/consult`, {
         method: "POST",
@@ -238,6 +267,9 @@ export default function InbodyConsult() {
           goal,
           notes,
           goalIntensity,
+          gender: profileGender || null,
+          age: parseOptionalInt(profileAge),
+          heightCm: parseOptionalInt(profileHeightCm),
         }),
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
@@ -267,6 +299,9 @@ export default function InbodyConsult() {
           goal: nextGoal,
           notes: nextNotes,
           goalIntensity,
+          gender: profileGender || null,
+          age: parseOptionalInt(profileAge),
+          heightCm: parseOptionalInt(profileHeightCm),
         }),
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
@@ -465,6 +500,45 @@ export default function InbodyConsult() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="grid gap-3 md:col-span-2 md:grid-cols-3">
+            <label className="block text-sm">
+              성별(선택)
+              <select
+                value={profileGender}
+                onChange={(e) => setProfileGender(e.target.value as ProfileGender | "")}
+                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm focus:border-cyan-300/60 focus:outline-none"
+              >
+                <option value="">선택 안 함</option>
+                <option value="MALE">남성</option>
+                <option value="FEMALE">여성</option>
+              </select>
+            </label>
+            <label className="block text-sm">
+              나이(선택)
+              <input
+                type="number"
+                min={0}
+                max={120}
+                value={profileAge}
+                onChange={(e) => setProfileAge(e.target.value)}
+                placeholder="예: 29"
+                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+              />
+            </label>
+            <label className="block text-sm">
+              키(cm, 선택)
+              <input
+                type="number"
+                min={0}
+                max={250}
+                value={profileHeightCm}
+                onChange={(e) => setProfileHeightCm(e.target.value)}
+                placeholder="예: 170"
+                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+              />
+            </label>
           </div>
 
           {consultMode === "upload" ? (
@@ -693,6 +767,17 @@ export default function InbodyConsult() {
                 </div>
               ))}
             </div>
+
+            {personalInterpretation.length > 0 && (
+              <div data-pdf-block="1" className="rounded-2xl border border-cyan-300/30 bg-cyan-500/5 p-5">
+                <h3 className="text-sm font-semibold text-cyan-100">개인 기준 해석 요약</h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-cyan-50">
+                  {personalInterpretation.map((line, idx) => (
+                    <li key={`${line}-${idx}`}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div data-pdf-block="1" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(metricLabels).map(([key, label]) => (
@@ -1218,11 +1303,18 @@ function buildActionChecklist(result: InbodyResponse) {
   ];
 }
 
-function buildMetricInsightCards(metrics: Record<string, string>) {
+type PersonalContext = {
+  gender: ProfileGender | "";
+  age: number;
+  heightCm: number;
+};
+
+function buildMetricInsightCards(metrics: Record<string, string>, context: PersonalContext) {
   return [
-    metricInsight("BMI", metrics.bmi, interpretBmi(toNumber(metrics.bmi))),
-    metricInsight("체지방률", metrics.body_fat_percent ? `${metrics.body_fat_percent}%` : "-", interpretBodyFat(toNumber(metrics.body_fat_percent))),
-    metricInsight("내장지방 레벨", metrics.visceral_fat_level, interpretVisceralFat(toNumber(metrics.visceral_fat_level))),
+    metricInsight("골격근량", metrics.skeletal_muscle_kg ? `${metrics.skeletal_muscle_kg}kg` : "-", interpretSkeletalMuscleWithContext(toNumber(metrics.skeletal_muscle_kg), context)),
+    metricInsight("BMI", metrics.bmi, interpretBmiWithContext(toNumber(metrics.bmi), context)),
+    metricInsight("체지방률", metrics.body_fat_percent ? `${metrics.body_fat_percent}%` : "-", interpretBodyFatWithContext(toNumber(metrics.body_fat_percent), context)),
+    metricInsight("내장지방 레벨", metrics.visceral_fat_level, interpretVisceralFatWithContext(toNumber(metrics.visceral_fat_level), context)),
   ];
 }
 
@@ -1264,6 +1356,133 @@ function interpretVisceralFat(value: number): MetricInsight {
   if (value <= 9) return positiveInsight("안정", "내장지방은 비교적 안정 범위입니다.", "현재 습관을 유지하면서 전체 체성분 균형을 잡으면 됩니다.");
   if (value <= 12) return cautionInsight("주의", "내장지방 관리가 필요한 구간입니다.", "수면, 식사 시간, 유산소 습관도 함께 점검하는 것이 좋습니다.");
   return cautionInsight("관리 필요", "생활습관 교정 우선순위가 높습니다.", "식단과 활동량을 동시에 조정하면서 장기적으로 줄여야 하는 수치입니다.");
+}
+
+function buildPersonalMetricSummaries(metrics: Record<string, string>, context: PersonalContext): string[] {
+  const bodyFat = toNumber(metrics.body_fat_percent);
+  const skeletalMuscle = toNumber(metrics.skeletal_muscle_kg);
+  const bmi = toNumber(metrics.bmi);
+  const visceralFat = toNumber(metrics.visceral_fat_level);
+
+  const lines: string[] = [];
+  if (bodyFat > 0) {
+    const insight = interpretBodyFatWithContext(bodyFat, context);
+    lines.push(`체지방률 ${bodyFat}%: ${insight.headline} ${insight.description}`);
+  }
+  if (skeletalMuscle > 0) {
+    const insight = interpretSkeletalMuscleWithContext(skeletalMuscle, context);
+    lines.push(`골격근량 ${skeletalMuscle}kg: ${insight.headline} ${insight.description}`);
+  }
+  if (bmi > 0) {
+    const insight = interpretBmiWithContext(bmi, context);
+    lines.push(`BMI ${bmi}: ${insight.headline} ${insight.description}`);
+  }
+  if (visceralFat > 0) {
+    const insight = interpretVisceralFatWithContext(visceralFat, context);
+    lines.push(`내장지방 레벨 ${visceralFat}: ${insight.headline} ${insight.description}`);
+  }
+  return lines;
+}
+
+function getBodyFatThreshold(gender: PersonalContext["gender"], age: number) {
+  let good = gender === "FEMALE" ? 28 : 20;
+  let caution = gender === "FEMALE" ? 33 : 25;
+  if (age >= 40 && age < 60) {
+    good += 1;
+    caution += 1;
+  } else if (age >= 60) {
+    good += 2;
+    caution += 2;
+  }
+  return { good, caution };
+}
+
+function getBmiThreshold(age: number) {
+  const normalHigh = age >= 60 ? 24 : 23;
+  const cautionHigh = age >= 60 ? 26 : 25;
+  return { normalLow: 18.5, normalHigh, cautionHigh };
+}
+
+function getVisceralFatThreshold(gender: PersonalContext["gender"], age: number) {
+  let stableMax = gender === "FEMALE" ? 8 : 9;
+  let cautionMax = gender === "FEMALE" ? 11 : 12;
+  if (age >= 60) {
+    stableMax += 1;
+    cautionMax += 1;
+  }
+  return { stableMax, cautionMax };
+}
+
+function getSkeletalMuscleThreshold(gender: PersonalContext["gender"], age: number) {
+  const isFemale = gender === "FEMALE";
+  const low = isFemale ? (age >= 60 ? 6 : 6.4) : age >= 60 ? 7.3 : 7.8;
+  const good = isFemale ? (age >= 60 ? 7.1 : 7.6) : age >= 60 ? 8.6 : 9.2;
+  return { low, good };
+}
+
+function interpretSkeletalMuscleWithContext(value: number, context: PersonalContext): MetricInsight {
+  if (!value) return neutralInsight("데이터 확인", "골격근량 수치가 없어 개인 기준 해석을 생략했습니다.");
+  if (context.heightCm <= 0) {
+    if (value < 18) return cautionInsight("주의", "골격근량이 낮은 편입니다.", "주 2~3회 근력운동과 단백질 섭취를 먼저 고정하세요.");
+    if (value < 24) return cautionInsight("보완", "골격근량이 보통 범위입니다.", "전신 근력 루틴 강도를 조금씩 높이면 개선 효과가 큽니다.");
+    return positiveInsight("좋음", "골격근량이 양호한 편입니다.", "현재 근력 루틴을 유지하며 체지방 관리에 집중하세요.");
+  }
+
+  const heightM = context.heightCm / 100;
+  const smi = value / (heightM * heightM);
+  const threshold = getSkeletalMuscleThreshold(context.gender, context.age);
+  if (smi < threshold.low) {
+    return cautionInsight("주의", `키 대비 골격근량이 낮은 편입니다 (SMI ${round1(smi)}).`, "하체·등 중심 근력운동과 단백질 섭취를 우선 강화하세요.");
+  }
+  if (smi < threshold.good) {
+    return cautionInsight("보완", `키 대비 골격근량이 보통 범위입니다 (SMI ${round1(smi)}).`, "주 2~3회 전신 근력 루틴으로 근육량을 소폭 올리면 좋습니다.");
+  }
+  return positiveInsight("좋음", `키 대비 골격근량이 양호합니다 (SMI ${round1(smi)}).`, "현재 루틴을 유지하고 체지방·근육 균형 조정에 집중하세요.");
+}
+
+function interpretBmiWithContext(value: number, context: PersonalContext): MetricInsight {
+  if (!value) return neutralInsight("데이터 확인", "BMI 수치가 없어 개인 기준 해석을 생략했습니다.");
+  if (!context.age) return interpretBmi(value);
+
+  const threshold = getBmiThreshold(context.age);
+  if (value < threshold.normalLow) {
+    return cautionInsight("주의", "BMI가 낮은 편입니다.", "감량보다 근력운동과 충분한 영양 섭취를 우선하세요.");
+  }
+  if (value < threshold.normalHigh) {
+    return positiveInsight("좋음", "BMI가 개인 기준 정상 범위입니다.", "현재 생활 패턴을 유지하며 체지방률·근육량을 함께 관리하세요.");
+  }
+  if (value < threshold.cautionHigh) {
+    return cautionInsight("주의", "BMI가 경계 범위입니다.", "간식·야식 조정과 주간 유산소 증가로 개선할 수 있습니다.");
+  }
+  return cautionInsight("관리 필요", "BMI가 높은 범위입니다.", "급격한 감량보다 4~8주 단위 체지방 감량 루틴을 유지하세요.");
+}
+
+function interpretBodyFatWithContext(value: number, context: PersonalContext): MetricInsight {
+  if (!value) return neutralInsight("데이터 확인", "체지방률 수치가 없어 개인 기준 해석을 생략했습니다.");
+  if (!context.gender && !context.age) return interpretBodyFat(value);
+
+  const threshold = getBodyFatThreshold(context.gender, context.age);
+  if (value <= threshold.good) {
+    return positiveInsight("좋음", "체지방률이 개인 기준 양호합니다.", "근력운동 비중을 유지하고 식단 균형 점검에 집중하세요.");
+  }
+  if (value <= threshold.caution) {
+    return cautionInsight("주의", "체지방률이 경계 범위입니다.", "탄수화물 섭취 타이밍과 주간 활동량 조정이 필요합니다.");
+  }
+  return cautionInsight("관리 필요", "체지방률이 높은 범위입니다.", "유산소+근력 병행 루틴과 칼로리 적자를 함께 유지하세요.");
+}
+
+function interpretVisceralFatWithContext(value: number, context: PersonalContext): MetricInsight {
+  if (!value) return neutralInsight("데이터 확인", "내장지방 수치가 없어 개인 기준 해석을 생략했습니다.");
+  if (!context.gender && !context.age) return interpretVisceralFat(value);
+
+  const threshold = getVisceralFatThreshold(context.gender, context.age);
+  if (value <= threshold.stableMax) {
+    return positiveInsight("안정", "내장지방이 개인 기준 안정 범위입니다.", "현재 수면/식습관 리듬을 유지하면 장기 관리에 유리합니다.");
+  }
+  if (value <= threshold.cautionMax) {
+    return cautionInsight("주의", "내장지방 관리가 필요한 구간입니다.", "야식/음주 빈도 조정과 식후 유산소를 추가하세요.");
+  }
+  return cautionInsight("관리 필요", "내장지방이 높은 범위입니다.", "식단과 운동을 동시에 조정해 4주 단위로 추적 관리하세요.");
 }
 
 function positiveInsight(badge: string, headline: string, description: string): MetricInsight {
@@ -1341,6 +1560,14 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-lg font-semibold text-slate-100">{value}</p>
     </div>
   );
+}
+
+function parseOptionalInt(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n);
 }
 
 const toNumber = (value?: string) => {

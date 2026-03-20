@@ -90,7 +90,10 @@ public class AiController {
             @RequestPart("file") MultipartFile file,
             @RequestParam(value = "goal", required = false) String goal,
             @RequestParam(value = "notes", required = false) String notes,
-            @RequestParam(value = "goalIntensity", required = false, defaultValue = "standard") String goalIntensity
+            @RequestParam(value = "goalIntensity", required = false, defaultValue = "standard") String goalIntensity,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "age", required = false) Integer age,
+            @RequestParam(value = "heightCm", required = false) Integer heightCm
     ) {
         String userEmail = requireEmail(email);
         if (file == null || file.isEmpty()) {
@@ -107,7 +110,10 @@ public class AiController {
                 processed.mediaType(),
                 goal,
                 notes,
-                goalIntensity
+                goalIntensity,
+                gender,
+                age,
+                heightCm
         );
 
         String consultation = String.valueOf(result.getOrDefault("consultation", ""));
@@ -136,7 +142,10 @@ public class AiController {
                 req.getMetrics(),
                 req.getGoal(),
                 req.getNotes(),
-                req.getGoalIntensity()
+                req.getGoalIntensity(),
+                req.getGender(),
+                req.getAge(),
+                req.getHeightCm()
         );
 
         String consultation = String.valueOf(result.getOrDefault("consultation", ""));
