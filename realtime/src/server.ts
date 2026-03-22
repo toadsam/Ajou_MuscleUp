@@ -208,6 +208,101 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("social:emote", (payload) => {
+    if (!payload || typeof payload.emote !== "string") return;
+    const emote = payload.emote.trim().slice(0, 40);
+    if (!emote) return;
+    const nickname =
+      (socket.data.profile && socket.data.profile.nickname) || "Unknown";
+    io.to(roomName).emit("social:emote", {
+      fromSocketId: socket.id,
+      nickname,
+      emote,
+      ts: Date.now(),
+    });
+  });
+
+  socket.on("social:sticker", (payload) => {
+    if (!payload || typeof payload.sticker !== "string") return;
+    const sticker = payload.sticker.trim().slice(0, 40);
+    if (!sticker) return;
+    const nickname =
+      (socket.data.profile && socket.data.profile.nickname) || "Unknown";
+    io.to(roomName).emit("social:sticker", {
+      fromSocketId: socket.id,
+      nickname,
+      sticker,
+      ts: Date.now(),
+    });
+  });
+
+  socket.on("voice:chunk", (payload) => {
+    if (!payload || typeof payload.audioBase64 !== "string") return;
+    if (payload.audioBase64.length > 180_000) return;
+    const nickname =
+      (socket.data.profile && socket.data.profile.nickname) || "Unknown";
+    socket.to(roomName).emit("voice:chunk", {
+      fromSocketId: socket.id,
+      nickname,
+      audioBase64: payload.audioBase64,
+      mimeType:
+        typeof payload.mimeType === "string" ? payload.mimeType.slice(0, 50) : "audio/webm",
+      ts: Date.now(),
+    });
+  });
+
+  socket.on("party:follow-request", (payload) => {
+    if (!payload || typeof payload.toSocketId !== "string") return;
+    const toSocketId = payload.toSocketId.trim();
+    if (!toSocketId) return;
+    const nickname =
+      (socket.data.profile && socket.data.profile.nickname) || "Unknown";
+    io.to(toSocketId).emit("party:follow-request", {
+      fromSocketId: socket.id,
+      nickname,
+      ts: Date.now(),
+    });
+  });
+
+  socket.on("party:follow-response", (payload) => {
+    if (!payload || typeof payload.toSocketId !== "string") return;
+    const toSocketId = payload.toSocketId.trim();
+    if (!toSocketId) return;
+    io.to(toSocketId).emit("party:follow-response", {
+      fromSocketId: socket.id,
+      accepted: Boolean(payload.accepted),
+      ts: Date.now(),
+    });
+  });
+
+  socket.on("party:teleport-request", (payload) => {
+    if (!payload || typeof payload.toSocketId !== "string") return;
+    const toSocketId = payload.toSocketId.trim();
+    if (!toSocketId) return;
+    const nickname =
+      (socket.data.profile && socket.data.profile.nickname) || "Unknown";
+    io.to(toSocketId).emit("party:teleport-request", {
+      fromSocketId: socket.id,
+      nickname,
+      ts: Date.now(),
+    });
+  });
+
+  socket.on("party:teleport-response", (payload) => {
+    if (!payload || typeof payload.toSocketId !== "string") return;
+    const toSocketId = payload.toSocketId.trim();
+    if (!toSocketId) return;
+    const x = Number(payload.x);
+    const y = Number(payload.y);
+    io.to(toSocketId).emit("party:teleport-response", {
+      fromSocketId: socket.id,
+      accepted: Boolean(payload.accepted),
+      x: Number.isFinite(x) ? x : undefined,
+      y: Number.isFinite(y) ? y : undefined,
+      ts: Date.now(),
+    });
+  });
+
   socket.on("ping:check", (payload: PingPayload) => {
     if (!payload || !Number.isFinite(payload.clientTs)) return;
     socket.emit("ping:result", { clientTs: payload.clientTs, serverTs: Date.now() });
