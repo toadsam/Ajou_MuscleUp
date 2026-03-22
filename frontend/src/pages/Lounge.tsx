@@ -286,6 +286,7 @@ export default function Lounge() {
   const [sidebarTab, setSidebarTab] = useState<"players" | "profile" | "equipment" | "chat">("players");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
+  const [showMobileOrientationPrompt, setShowMobileOrientationPrompt] = useState(false);
   const [tabEntering, setTabEntering] = useState(false);
   const [minimapPing, setMinimapPing] = useState<{ x: number; y: number; ts: number } | null>(null);
   const [hoveredEquipment, setHoveredEquipment] = useState<GymItem | null>(null);
@@ -293,6 +294,7 @@ export default function Lounge() {
   const [isSprinting, setIsSprinting] = useState(false);
   const [movementPreset, setMovementPreset] = useState<MovementPresetKey>("classic");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPortraitMobile, setIsPortraitMobile] = useState(false);
   const [selectedNpc, setSelectedNpc] = useState<Npc | null>(null);
   const [hoveredNpc, setHoveredNpc] = useState<Npc | null>(null);
   const [emoteMap, setEmoteMap] = useState<Record<string, EmoteEvent>>({});
@@ -370,6 +372,28 @@ export default function Lounge() {
     if (movementQuality === "balanced") return 1000 / 45;
     return 1000 / 30;
   }, [movementQuality]);
+
+  const requestImmersiveLandscape = async () => {
+    const shell = loungeViewportShellRef.current;
+    if (!shell) return;
+
+    if (!document.fullscreenElement) {
+      try {
+        await shell.requestFullscreen();
+      } catch {
+        // Some mobile browsers do not allow fullscreen on arbitrary elements.
+      }
+    }
+
+    try {
+      const orientation = screen.orientation as ScreenOrientation & {
+        lock?: (orientation: "portrait" | "landscape") => Promise<void>;
+      };
+      await orientation.lock?.("landscape");
+    } catch {
+      // Orientation lock is not supported on all mobile browsers, especially iOS Safari.
+    }
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -788,7 +812,9 @@ export default function Lounge() {
 
   useEffect(() => {
     const onResize = () => {
-      setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+      const mobile = window.matchMedia("(max-width: 768px)").matches;
+      setIsMobile(mobile);
+      setIsPortraitMobile(mobile && window.innerHeight > window.innerWidth);
     };
     onResize();
     window.addEventListener("resize", onResize);
@@ -802,6 +828,10 @@ export default function Lounge() {
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
+
+  useEffect(() => {
+    setShowMobileOrientationPrompt(isPortraitMobile);
+  }, [isPortraitMobile]);
 
   useEffect(() => {
       const tickMs = movementQuality === "high" ? 50 : movementQuality === "balanced" ? 100 : 180;
@@ -1920,109 +1950,131 @@ export default function Lounge() {
     [recentAttendanceCount]
   );
 
+  const isImmersiveFullscreen = isFullscreen;
+  const interactionSubject = selectedNpc
+    ? {
+        kind: "npc" as const,
+        title: `${selectedNpc.name} | ${selectedNpc.title}`,
+        body: selectedNpc.lines[0],
+        detail: selectedNpc.lines[1] ?? "NPC 기본 상호작용 모드입니다. 이후 추가 액션을 연결할 수 있습니다.",
+      }
+    : selectedEquipment
+      ? {
+          kind: "equipment" as const,
+          title: selectedEquipment.name,
+          body: selectedEquipment.description,
+          detail: "장비와 상호작용 중입니다. 다시 클릭하면 위치 강조를 볼 수 있습니다.",
+        }
+      : null;
+
   const tabPanelAnimClass = `transform transition-all duration-200 ${tabEntering ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`;
 
   return (
     <section
-      className="pt-28 pb-16 px-5 md:px-10 bg-gradient-to-br from-slate-950 via-gray-950 to-black min-h-screen text-white lounge-root"
+      className={`${isImmersiveFullscreen ? "p-0" : "pt-28 pb-16 px-5 md:px-10"} bg-gradient-to-br from-slate-950 via-gray-950 to-black min-h-screen text-white lounge-root`}
       data-quality={movementQuality}
     >
       <div
         ref={loungeViewportShellRef}
-        className="max-w-6xl mx-auto space-y-8 lounge-shell"
+        className={`${isImmersiveFullscreen ? "w-screen h-screen max-w-none space-y-0" : "max-w-6xl mx-auto space-y-8"} lounge-shell`}
       >
-        <header className="flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-[0.4em] text-emerald-300">
-            라운지
-          </p>
-          <h1 className="text-3xl md:text-4xl font-extrabold">
-            2D 운동 라운지
-          </h1>
-          <p className="text-gray-300">
-            실시간으로 이동하고 대화할 수 있는 소셜 피트니스 공간입니다.
-          </p>
-        </header>
+        {!isImmersiveFullscreen && (
+          <header className="flex flex-col gap-3">
+            <p className="text-xs uppercase tracking-[0.4em] text-emerald-300">
+              라운지
+            </p>
+            <h1 className="text-3xl md:text-4xl font-extrabold">
+              2D 운동 라운지
+            </h1>
+            <p className="text-gray-300">
+              실시간으로 이동하고 대화할 수 있는 소셜 피트니스 공간입니다.
+            </p>
+          </header>
+        )}
 
         {loading && <div className="text-gray-300">라운지 연결을 준비 중입니다...</div>}
         {error && <div className="text-rose-300">{error}</div>}
 
-        <div className="grid lg:grid-cols-[1.4fr,0.6fr] gap-6 lounge-main-grid">
+        <div className={`grid ${isImmersiveFullscreen ? "grid-cols-1 gap-0 h-full" : "lg:grid-cols-[1.4fr,0.6fr] gap-6"} lounge-main-grid`}>
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm text-gray-300">
-              <span>
-                상태:{" "}
-                <span
-                  className={`font-semibold ${
-                    connected ? "text-emerald-300" : "text-rose-300"
-                  }`}
-                >
-                  {connected ? "연결됨" : "연결 끊김"}
-                </span>
-              </span>
-              <div className="flex items-center gap-3 text-xs text-gray-400">
+            {!isImmersiveFullscreen && (
+              <div className="flex items-center justify-between text-sm text-gray-300">
                 <span>
-                  {character
-                    ? `Lv.${character.level} ${character.tier} | 단계 ${character.evolutionStage}`
-                    : "캐릭터 로딩 중..."}
-                </span>
-                <span className="text-[10px] text-white/60">
-                  {pingMs !== null ? `핑 ${pingMs}ms` : "핑 확인 중..."}
-                </span>
-                <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1">
-                  <button
-                    onClick={() => setZoom((prev) => clampZoom(prev - 0.1))}
-                    aria-label="축소"
-                    className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
+                  상태:{" "}
+                  <span
+                    className={`font-semibold ${
+                      connected ? "text-emerald-300" : "text-rose-300"
+                    }`}
                   >
-                    -
+                    {connected ? "연결됨" : "연결 끊김"}
+                  </span>
+                </span>
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <span>
+                    {character
+                      ? `Lv.${character.level} ${character.tier} | 단계 ${character.evolutionStage}`
+                      : "캐릭터 로딩 중..."}
+                  </span>
+                  <span className="text-[10px] text-white/60">
+                    {pingMs !== null ? `핑 ${pingMs}ms` : "핑 확인 중..."}
+                  </span>
+                  <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1">
+                    <button
+                      onClick={() => setZoom((prev) => clampZoom(prev - 0.1))}
+                      aria-label="축소"
+                      className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
+                    >
+                      -
+                    </button>
+                    <span className="text-[10px] text-white/70">{Math.round(zoom * 100)}%</span>
+                    <button
+                      onClick={() => setZoom((prev) => clampZoom(prev + 0.1))}
+                      aria-label="확대"
+                      className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowHelp((prev) => !prev)}
+                    aria-label="도움말 토글"
+                    className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                  >
+                    ?
                   </button>
-                  <span className="text-[10px] text-white/70">{Math.round(zoom * 100)}%</span>
+                    <label className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/70">
+                    물리
+                    <select
+                      value={movementPreset}
+                      onChange={(event) => setMovementPreset(event.target.value as MovementPresetKey)}
+                      className="ml-2 rounded bg-slate-900/90 px-1 py-0.5 text-[10px] text-white focus-visible:outline-none"
+                      aria-label="이동 프리셋"
+                    >
+                      <option value="classic">클래식</option>
+                      <option value="hardcore">하드코어</option>
+                      <option value="casual">캐주얼</option>
+                    </select>
+                  </label>
                   <button
-                    onClick={() => setZoom((prev) => clampZoom(prev + 0.1))}
-                    aria-label="확대"
-                    className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
+                    onClick={() => {
+                      const shell = loungeViewportShellRef.current;
+                      if (!shell) return;
+                      if (document.fullscreenElement) {
+                        void document.exitFullscreen().catch(() => {});
+                      } else {
+                        void shell.requestFullscreen().catch(() => {});
+                      }
+                    }}
+                    aria-label="전체화면 토글"
+                    className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
                   >
-                    +
+                    {isFullscreen ? "전체화면 종료" : "전체화면"}
                   </button>
                 </div>
-                <button
-                  onClick={() => setShowHelp((prev) => !prev)}
-                  aria-label="도움말 토글"
-                  className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
-                >
-                  ?
-                </button>
-                  <label className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/70">
-                  물리
-                  <select
-                    value={movementPreset}
-                    onChange={(event) => setMovementPreset(event.target.value as MovementPresetKey)}
-                    className="ml-2 rounded bg-slate-900/90 px-1 py-0.5 text-[10px] text-white focus-visible:outline-none"
-                    aria-label="이동 프리셋"
-                  >
-                    <option value="classic">클래식</option>
-                    <option value="hardcore">하드코어</option>
-                    <option value="casual">캐주얼</option>
-                  </select>
-                </label>
-                <button
-                  onClick={() => {
-                    const shell = loungeViewportShellRef.current;
-                    if (!shell) return;
-                    if (document.fullscreenElement) {
-                      void document.exitFullscreen().catch(() => {});
-                    } else {
-                      void shell.requestFullscreen().catch(() => {});
-                    }
-                  }}
-                  aria-label="전체화면 토글"
-                  className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
-                >
-                  {isFullscreen ? "전체화면 종료" : "전체화면"}
-                </button>
               </div>
-            </div>
+            )}
 
+            {!isImmersiveFullscreen && (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-3">
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="text-white/70">소셜</span>
@@ -2167,13 +2219,14 @@ export default function Lounge() {
                 </div>
               )}
             </div>
+            )}
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+            <div className={`${isImmersiveFullscreen ? "rounded-none border-0 bg-transparent p-0 shadow-none h-full" : "rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_0_30px_rgba(16,185,129,0.1)]"}`}>
               <div
                 ref={(element) => {
                   viewportRef.current = element;
                 }}
-                className="relative h-[78vh] w-full overflow-hidden rounded-2xl border border-white/10 lounge-viewport"
+                className={`relative w-full overflow-hidden ${isImmersiveFullscreen ? "h-screen rounded-none border-0" : "h-[78vh] rounded-2xl border border-white/10"} lounge-viewport`}
                 style={mapBackground}
                 onWheel={(event) => {
                   if (!event.ctrlKey) return;
@@ -2221,6 +2274,216 @@ export default function Lounge() {
                     <strong>{nearestInteractableLabel}</strong>
                   </div>
                 </div>
+                {isImmersiveFullscreen && (
+                  <>
+                    <div className="immersive-toolbar">
+                      {[
+                        { key: "players", label: "플레이어" },
+                        { key: "profile", label: "프로필" },
+                        { key: "chat", label: "채팅" },
+                      ].map((tab) => (
+                        <button
+                          key={`immersive-${tab.key}`}
+                          type="button"
+                          onClick={() => setSidebarTab(tab.key as "players" | "profile" | "equipment" | "chat")}
+                          className={`immersive-tab ${sidebarTab === tab.key ? "immersive-tab-active" : ""}`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setShowHelp((prev) => !prev)}
+                        className="immersive-tab"
+                      >
+                        도움말
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (document.fullscreenElement) {
+                            void document.exitFullscreen().catch(() => {});
+                          }
+                        }}
+                        className="immersive-tab"
+                      >
+                        종료
+                      </button>
+                    </div>
+
+                    {sidebarTab === "players" && (
+                      <div className="immersive-panel immersive-panel-right">
+                        <div className="immersive-panel-title">접속 {players.length}명</div>
+                        <div className="immersive-scroll">
+                          {sortedPlayers.map((player) => (
+                            <div key={`immersive-list-${player.socketId}`} className="immersive-row">
+                              <div>
+                                <div className="font-semibold text-white">{player.nickname}</div>
+                                <div className="text-[11px] text-white/55">Lv.{player.level} {player.tier}</div>
+                              </div>
+                              <div className="flex gap-1 text-[10px]">
+                                {player.socketId !== mySocketId && (
+                                  <button
+                                    onClick={() => toggleMute(player.nickname)}
+                                    className="immersive-inline-btn"
+                                  >
+                                    {mutedUsers[player.nickname] ? "해제" : "음소거"}
+                                  </button>
+                                )}
+                                {player.socketId !== mySocketId && (
+                                  <button
+                                    onClick={() => socketRef.current?.emit("party:follow-request", { toSocketId: player.socketId })}
+                                    className="immersive-inline-btn"
+                                  >
+                                    따라가기
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {sidebarTab === "profile" && (
+                      <div className="immersive-panel immersive-panel-right">
+                        <div className="immersive-panel-title">프로필 카드</div>
+                        {selectedPlayer ? (
+                          <div className="space-y-3 text-sm text-gray-300">
+                            <div className="flex items-center gap-3">
+                              <AvatarRenderer
+                                avatarSeed={selectedPlayer.avatarSeed ?? `${selectedPlayer.nickname}-seed`}
+                                growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
+                                tier={selectedPlayer.tier}
+                                stage={selectedPlayer.evolutionStage}
+                                mbti={selectedPlayer.mbti}
+                                size={84}
+                              />
+                              <div>
+                                <div className="font-semibold text-white">{selectedPlayer.nickname}</div>
+                                <div className="text-xs text-gray-400">
+                                  Lv.{selectedPlayer.level} {selectedPlayer.tier} 단계 {selectedPlayer.evolutionStage}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="profile-line">
+                              <span>최근 출석</span>
+                              <span className="font-semibold text-white">{selectedPlayer.recentAttendanceCount ?? 0}</span>
+                            </div>
+                            <div className="profile-line">
+                              <span>진행 이벤트</span>
+                              <span className="font-semibold text-white">{selectedPlayer.activeEventTitle ?? "없음"}</span>
+                            </div>
+                            {selectedPlayer.activeEventProgress && (
+                              <div className="profile-line">
+                                <span>진행도</span>
+                                <span className="font-semibold text-white">{selectedPlayer.activeEventProgress}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400">아바타를 누르면 프로필이 여기 표시됩니다.</div>
+                        )}
+                      </div>
+                    )}
+
+                    {sidebarTab === "chat" && (
+                      <div className="immersive-panel immersive-panel-bottom">
+                        <div className="immersive-panel-title">실시간 채팅</div>
+                        <div className="immersive-chat-log">
+                          {chatRows.slice(-8).map((msg) => (
+                            <div key={`immersive-chat-${msg.id}`} className={`immersive-chat-row ${msg.system ? "immersive-chat-system" : ""}`}>
+                              <span className="immersive-chat-name">{msg.system ? "시스템" : msg.nickname}</span>
+                              <span className="immersive-chat-text">{msg.filteredMessage}</span>
+                            </div>
+                          ))}
+                          {chatRows.length === 0 && <div className="text-xs text-white/45">대화를 시작해보세요.</div>}
+                        </div>
+                        <div className="mt-2 flex gap-2">
+                          <input
+                            aria-label="채팅 메시지 입력"
+                            value={chatInput}
+                            onChange={(event) => {
+                              const next = event.target.value;
+                              setChatInput(next);
+                              if (next.trim().length > 0) {
+                                setTypingState(true);
+                                scheduleTypingIdle();
+                              } else {
+                                setTypingState(false);
+                              }
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                handleChatSend();
+                              }
+                            }}
+                            onBlur={() => setTypingState(false)}
+                            maxLength={200}
+                            placeholder="메시지를 입력하세요"
+                            className="flex-1 rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                          />
+                          <button
+                            onClick={handleChatSend}
+                            disabled={!connected}
+                            className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
+                          >
+                            전송
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {partyInvites.length > 0 && (
+                      <div className="immersive-invites">
+                        {partyInvites.slice(-2).map((invite) => (
+                          <div key={`immersive-invite-${invite.type}-${invite.fromSocketId}-${invite.ts}`} className="immersive-invite-card">
+                            <span className="text-white/80">
+                              {invite.nickname} | {invite.type === "follow" ? "따라가기 요청" : "순간이동 요청"}
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  if (invite.type === "follow") {
+                                    socketRef.current?.emit("party:follow-response", { toSocketId: invite.fromSocketId, accepted: true });
+                                  } else {
+                                    const me = players.find((player) => player.socketId === mySocketId);
+                                    socketRef.current?.emit("party:teleport-response", {
+                                      toSocketId: invite.fromSocketId,
+                                      accepted: true,
+                                      x: me?.x,
+                                      y: me?.y,
+                                    });
+                                  }
+                                  setPartyInvites((prev) => prev.filter((item) => item.ts !== invite.ts));
+                                }}
+                                className="rounded bg-emerald-400/20 px-2 py-0.5 text-emerald-100"
+                              >
+                                수락
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (invite.type === "follow") {
+                                    socketRef.current?.emit("party:follow-response", { toSocketId: invite.fromSocketId, accepted: false });
+                                  } else {
+                                    socketRef.current?.emit("party:teleport-response", {
+                                      toSocketId: invite.fromSocketId,
+                                      accepted: false,
+                                    });
+                                  }
+                                  setPartyInvites((prev) => prev.filter((item) => item.ts !== invite.ts));
+                                }}
+                                className="rounded bg-rose-400/20 px-2 py-0.5 text-rose-100"
+                              >
+                                거절
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
                 <div
                   className="absolute inset-0 will-change-transform"
                   style={{ ...cameraStyle, width: mapSize.width, height: mapSize.height }}
@@ -2413,7 +2676,10 @@ export default function Lounge() {
                           left: player.x,
                           top: player.y,
                         }}
-                        onClick={() => setSelectedPlayer(player)}
+                        onClick={() => {
+                          setSelectedPlayer(player);
+                          setSidebarTab("profile");
+                        }}
                       >
                         {speech && (
                           <div className="speech-bubble">
@@ -2603,11 +2869,32 @@ export default function Lounge() {
                     연결 대기 중...
                   </div>
                 )}
+
+                {interactionSubject && (
+                  <div className={`interaction-dialog ${isImmersiveFullscreen ? "interaction-dialog-immersive" : ""}`}>
+                    <div className={`interaction-dialog-accent ${interactionSubject.kind === "npc" ? "interaction-dialog-npc" : "interaction-dialog-equipment"}`} />
+                    <div className="interaction-dialog-body">
+                      <div className="interaction-dialog-title">{interactionSubject.title}</div>
+                      <p className="interaction-dialog-main">{interactionSubject.body}</p>
+                      <p className="interaction-dialog-sub">{interactionSubject.detail}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedEquipment(null);
+                        setSelectedNpc(null);
+                      }}
+                      className="interaction-dialog-close"
+                    >
+                      닫기
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="space-y-4">
+          {!isImmersiveFullscreen && <div className="space-y-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
               <div className="grid grid-cols-4 gap-1 text-xs">
                 {[
@@ -2861,9 +3148,40 @@ export default function Lounge() {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
         </div>
       </div>
+
+      {showMobileOrientationPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-emerald-300/30 bg-slate-950 p-6 shadow-2xl">
+            <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">모바일 안내</p>
+            <h3 className="mt-2 text-lg font-bold text-white">가로 화면으로 전환이 필요합니다</h3>
+            <p className="mt-3 text-sm leading-relaxed text-gray-300">
+              라운지는 모바일에서 가로 모드와 전체화면으로 보는 편이 훨씬 편합니다. 계속 진행할까요?
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowMobileOrientationPrompt(false)}
+                className="flex-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-gray-200"
+              >
+                나중에
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void requestImmersiveLandscape();
+                  setShowMobileOrientationPrompt(false);
+                }}
+                className="flex-1 rounded-lg bg-emerald-400 px-3 py-2 text-sm font-semibold text-black"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showOnboarding && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4">
