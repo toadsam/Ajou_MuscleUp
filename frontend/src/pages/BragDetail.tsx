@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
+import html2canvas from "html2canvas";
 import UploadDropzone from "../components/UploadDropzone";
 import { logEvent } from "../utils/analytics";
 
@@ -189,13 +190,16 @@ export default function BragDetail() {
   const [editingCommentText, setEditingCommentText] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState("");
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [localReactions, setLocalReactionsState] = useState<Record<number, LocalReactions>>(getLocalReactions());
   const [blockedAuthors, setBlockedAuthorsState] = useState<string[]>(getBlockedAuthors());
+  const shareCardRef = useRef<HTMLDivElement | null>(null);
 
   const userRaw = localStorage.getItem("user");
   const user = userRaw ? (JSON.parse(userRaw) as { email?: string; role?: string; nickname?: string }) : null;
   const isAdmin = (user?.role || "").toUpperCase().includes("ADMIN");
   const isOwner = post && user?.email && post.authorEmail === user.email;
+  const shareUrl = useMemo(() => `${window.location.origin}/brag/${postId}`, [postId]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -232,6 +236,12 @@ export default function BragDetail() {
   useEffect(() => {
     logEvent("brag_detail", "page_view", { postId });
   }, [postId]);
+
+  useEffect(() => {
+    if (!shareFeedback) return;
+    const timer = window.setTimeout(() => setShareFeedback(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [shareFeedback]);
 
   const submitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,6 +310,49 @@ export default function BragDetail() {
     }
   };
 
+  const handleCopyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareFeedback("공유 링크를 복사했습니다.");
+    } catch {
+      setShareFeedback("링크 복사에 실패했습니다.");
+    }
+  };
+
+  const handleNativeShare = async () => {
+    try {
+      if (!navigator.share) {
+        await handleCopyShareLink();
+        return;
+      }
+      await navigator.share({
+        title: post?.title ?? "운동 자랑",
+        text: cleanContent || post?.title || "운동 자랑 기록",
+        url: shareUrl,
+      });
+    } catch {
+      // user cancelled or browser blocked
+    }
+  };
+
+  const handleSaveShareCard = async () => {
+    const node = shareCardRef.current;
+    if (!node || !post) return;
+    try {
+      const canvas = await html2canvas(node, {
+        backgroundColor: "#0f1118",
+        scale: Math.min(window.devicePixelRatio || 1, 2),
+      });
+      const link = document.createElement("a");
+      link.download = `brag-${post.id}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      setShareFeedback("공유 카드 이미지를 저장했습니다.");
+    } catch {
+      setShareFeedback("공유 카드 저장에 실패했습니다.");
+    }
+  };
+
   const local = localReactions[postId] || {};
 
   if (loading) {
@@ -347,7 +400,25 @@ export default function BragDetail() {
           <Link to="/brag" className="text-sm text-white/60 hover:text-white underline">
             목록으로
           </Link>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <button
+              onClick={() => void handleNativeShare()}
+              className="rounded-full border border-emerald-400/40 px-3 py-1 text-emerald-200 hover:bg-emerald-500/10"
+            >
+              공유하기
+            </button>
+            <button
+              onClick={() => void handleCopyShareLink()}
+              className="rounded-full border border-white/10 px-3 py-1 text-white/70 hover:border-white/30"
+            >
+              링크 복사
+            </button>
+            <button
+              onClick={() => void handleSaveShareCard()}
+              className="rounded-full border border-sky-400/40 px-3 py-1 text-sky-200 hover:bg-sky-500/10"
+            >
+              카드 저장
+            </button>
             <button
               onClick={toggleLike}
               className="flex items-center gap-2 rounded-full border border-orange-400/50 px-3 py-1 text-orange-200 hover:bg-orange-500/10 transition"
@@ -388,6 +459,12 @@ export default function BragDetail() {
             </button>
           </div>
         </div>
+
+        {shareFeedback && (
+          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {shareFeedback}
+          </div>
+        )}
 
         <header className="space-y-3">
           <div className="flex items-center justify-between">
@@ -538,6 +615,41 @@ export default function BragDetail() {
         </header>
 
         {!editingPost && <p className="text-white/80 leading-relaxed whitespace-pre-line">{cleanContent}</p>}
+
+        <div
+          ref={shareCardRef}
+          className="overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-orange-500/18 via-[#151a29] to-[#0f1118]"
+        >
+          <div className="grid gap-4 p-6 md:grid-cols-[1fr,0.9fr]">
+            <div className="space-y-4">
+              <div className="text-xs uppercase tracking-[0.28em] text-orange-200">Workout Brag</div>
+              <h2 className="text-2xl font-extrabold text-white">{post.title}</h2>
+              <p className="text-sm text-white/70">{cleanContent.slice(0, 140) || "오늘의 운동 기록을 공유합니다."}</p>
+              <div className="flex flex-wrap gap-2 text-xs text-white/75">
+                <span className="rounded-full bg-white/10 px-3 py-1">{post.authorNickname || "익명 회원"}</span>
+                {post.movement && <span className="rounded-full bg-white/10 px-3 py-1">{post.movement}</span>}
+                {post.weight && <span className="rounded-full bg-white/10 px-3 py-1">{post.weight}</span>}
+                {meta.duration && <span className="rounded-full bg-white/10 px-3 py-1">{meta.duration}</span>}
+              </div>
+              <div className="text-xs text-white/45">{shareUrl}</div>
+            </div>
+            <div className="overflow-hidden rounded-3xl border border-white/10 bg-black/20">
+              {post.mediaUrls?.[0] ? (
+                isVideo(withBase(post.mediaUrls[0])) ? (
+                  <div className="flex min-h-[220px] items-center justify-center bg-black/20 text-sm text-white/55">
+                    영상이 포함된 자랑글입니다
+                  </div>
+                ) : (
+                  <img src={withBase(post.mediaUrls[0])} alt={post.title} className="h-full min-h-[220px] w-full object-cover" />
+                )
+              ) : (
+                <div className="flex min-h-[220px] items-center justify-center bg-black/20 text-sm text-white/55">
+                  대표 미디어 없이도 공유할 수 있습니다
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {(post.movement || post.weight || meta.duration || meta.routine || meta.mood) && (
           <div className="glass-panel p-6 grid gap-4 md:grid-cols-2">
