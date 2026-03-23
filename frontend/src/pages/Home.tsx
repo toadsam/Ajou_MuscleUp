@@ -38,13 +38,11 @@ type CharacterProfile = {
   title?: string;
   avatarSeed: string;
   stylePreset: string;
+  gender?: "MALE" | "FEMALE" | null;
+  isResting?: boolean;
   growthParams?: GrowthParams | null;
 };
-
-type StatsResponse = {
-  gender?: "MALE" | "FEMALE";
-  mbti?: string | null;
-};
+type StatsResponse = { mbti?: string | null };
 
 type LocalUser = {
   email?: string;
@@ -520,7 +518,9 @@ export default function Home() {
                     growthParams={character.growthParams}
                     tier={character.tier}
                     stage={character.evolutionStage}
+                    gender={character.gender}
                     mbti={mbti}
+                    isResting={character.isResting ?? false}
                     size={180}
                   />
                 </div>

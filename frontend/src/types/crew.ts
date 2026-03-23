@@ -30,6 +30,8 @@ export interface CrewMemberAttendance {
   characterStage?: number | null;
   characterLevel?: number | null;
   avatarSeed?: string | null;
+  gender?: "MALE" | "FEMALE" | null;
+  isResting?: boolean;
 }
 
 export interface CrewDetail {
@@ -59,6 +61,8 @@ export interface CrewChallengeMemberProgress {
   characterStage?: number | null;
   characterLevel?: number | null;
   avatarSeed?: string | null;
+  gender?: "MALE" | "FEMALE" | null;
+  isResting?: boolean;
 }
 
 export interface CrewChallenge {

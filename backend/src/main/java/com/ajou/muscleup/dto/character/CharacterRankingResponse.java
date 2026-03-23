@@ -1,6 +1,8 @@
 package com.ajou.muscleup.dto.character;
 
 import com.ajou.muscleup.entity.CharacterTier;
+import com.ajou.muscleup.entity.Gender;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +15,10 @@ public class CharacterRankingResponse {
     private CharacterTier tier;
     private int evolutionStage;
     private String title;
+    private String avatarSeed;
+    private Gender gender;
+    @JsonProperty("isResting")
+    private boolean isResting;
     private Double threeLiftTotal;
     private LocalDateTime updatedAt;
 }

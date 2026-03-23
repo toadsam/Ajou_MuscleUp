@@ -2,6 +2,7 @@ package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.character.CharacterProfileResponse;
 import com.ajou.muscleup.dto.character.CharacterPublicUpdateRequest;
+import com.ajou.muscleup.dto.character.CharacterRestUpdateRequest;
 import com.ajou.muscleup.dto.character.StatsCharacterResponse;
 import com.ajou.muscleup.entity.CharacterEvolutionTriggerType;
 import com.ajou.muscleup.service.CharacterService;
@@ -38,6 +39,14 @@ public class CharacterController {
             @Valid @RequestBody CharacterPublicUpdateRequest request
     ) {
         return ResponseEntity.ok(characterService.updatePublic(email, request));
+    }
+
+    @PutMapping("/me/resting")
+    public ResponseEntity<CharacterProfileResponse> updateResting(
+            @AuthenticationPrincipal String email,
+            @Valid @RequestBody CharacterRestUpdateRequest request
+    ) {
+        return ResponseEntity.ok(characterService.updateResting(email, request));
     }
 
     @PostMapping("/reroll")

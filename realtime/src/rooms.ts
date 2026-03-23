@@ -33,6 +33,7 @@ export const addPlayer = (socketId: string, payload: JoinPayload) => {
     avatarSeed: payload.avatarSeed,
     stylePreset: payload.stylePreset,
     mbti: payload.mbti,
+    isResting: payload.isResting,
     growthParams: payload.growthParams,
     recentAttendanceCount: payload.recentAttendanceCount,
     activeEventTitle: payload.activeEventTitle,

@@ -23,6 +23,8 @@ type CharacterResponse = {
   evolutionStage: number;
   avatarSeed: string;
   stylePreset: string;
+  gender?: Gender | null;
+  isResting?: boolean;
   growthParams?: GrowthParams | null;
 };
 
@@ -37,6 +39,7 @@ type PlayerState = {
   avatarSeed?: string;
   stylePreset?: string;
   mbti?: string;
+  isResting?: boolean;
   growthParams?: GrowthParams;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
@@ -260,7 +263,6 @@ export default function Lounge() {
   const [mapSize, setMapSize] = useState(DEFAULT_MAP);
   const [mySocketId, setMySocketId] = useState<string | null>(null);
   const [localPosition, setLocalPosition] = useState<{ x: number; y: number } | null>(null);
-  const [gender, setGender] = useState<Gender | null>(null);
   const [mbti, setMbti] = useState<string | null>(null);
   const [viewportSize, setViewportSize] = useState({ width: 1, height: 1 });
   const [speechMap, setSpeechMap] = useState<Record<string, { message: string; ts: number }>>({});
@@ -506,10 +508,6 @@ export default function Lounge() {
 
         if (statsRes.ok) {
           const statsPayload = await statsRes.json().catch(() => null);
-          const nextGender = statsPayload?.gender ?? null;
-          if (nextGender === "MALE" || nextGender === "FEMALE") {
-            setGender(nextGender);
-          }
           setMbti(statsPayload?.mbti ?? null);
         }
       } catch (err: any) {
@@ -536,9 +534,10 @@ export default function Lounge() {
         level: character.level,
         tier: character.tier,
         evolutionStage: character.evolutionStage,
-        gender: gender ?? undefined,
+        gender: character.gender ?? undefined,
         avatarSeed: character.avatarSeed,
         stylePreset: character.stylePreset,
+        isResting: character.isResting ?? false,
         growthParams: character.growthParams ?? undefined,
         mbti: mbti ?? undefined,
         recentAttendanceCount,
@@ -771,7 +770,7 @@ export default function Lounge() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [user, character, gender, mbti, recentAttendanceCount, activeEventSummary]);
+  }, [user, character, mbti, recentAttendanceCount, activeEventSummary]);
 
   useEffect(() => {
     const handleKey = (down: boolean) => (event: KeyboardEvent) => {
@@ -2356,7 +2355,9 @@ export default function Lounge() {
                                 growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
                                 tier={selectedPlayer.tier}
                                 stage={selectedPlayer.evolutionStage}
+                                gender={selectedPlayer.gender}
                                 mbti={selectedPlayer.mbti}
+                                isResting={selectedPlayer.isResting ?? false}
                                 size={84}
                               />
                               <div>
@@ -2707,8 +2708,10 @@ export default function Lounge() {
                             tier={player.tier}
                             evolutionStage={player.evolutionStage}
                             avatarSeed={player.avatarSeed}
+                            gender={player.gender}
                             growthParams={player.growthParams}
                             mbti={player.mbti}
+                            isResting={player.isResting ?? false}
                             facing={facingMap[player.socketId] ?? "right"}
                             isMe={isMe}
                           />
@@ -2990,7 +2993,9 @@ export default function Lounge() {
                         growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
                         tier={selectedPlayer.tier}
                         stage={selectedPlayer.evolutionStage}
+                        gender={selectedPlayer.gender}
                         mbti={selectedPlayer.mbti}
+                        isResting={selectedPlayer.isResting ?? false}
                         size={90}
                       />
                       <div>
@@ -3261,6 +3266,8 @@ type LoungeProfileResponse = {
     evolutionStage: number;
     avatarSeed: string;
     stylePreset: string;
+    gender?: Gender | null;
+    isResting?: boolean;
     growthParams?: GrowthParams | null;
   };
   recentAttendanceCount: number;

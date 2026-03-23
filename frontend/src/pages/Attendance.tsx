@@ -128,8 +128,10 @@ export default function Attendance() {
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<RankingItem[]>([]);
   const [mediaRank, setMediaRank] = useState<RankingItem[]>([]);
-  const shareOrigin = API_BASE || window.location.origin;
-  const shareLinkForSlug = (slug: string) => `${shareOrigin}/share/attendance/${slug}`;
+  const appOrigin = window.location.origin;
+  const publicShareOrigin = API_BASE || window.location.origin;
+  const appShareLinkForSlug = (slug: string) => `${appOrigin}/attendance/share/${slug}`;
+  const publicShareLinkForSlug = (slug: string) => `${publicShareOrigin}/share/attendance/${slug}`;
 
   const monthKey = formatMonthKey(month);
   const todayKey = formatDateKey(new Date());
@@ -312,7 +314,7 @@ export default function Attendance() {
     try {
       setSharing(true);
       const slug = await ensureShareSlug();
-      const link = shareLinkForSlug(slug);
+      const link = publicShareLinkForSlug(slug);
       await navigator.clipboard.writeText(link);
       showToast({ type: "success", message: "자랑 링크를 복사했어요." });
       await reloadMonth();
@@ -327,7 +329,7 @@ export default function Attendance() {
     try {
       setSharing(true);
       const slug = await ensureShareSlug();
-      const link = shareLinkForSlug(slug);
+      const link = publicShareLinkForSlug(slug);
       window.open(`https://story.kakao.com/share?url=${encodeURIComponent(link)}`, "_blank", "noopener,noreferrer");
       await reloadMonth();
     } catch (e: any) {
@@ -341,7 +343,7 @@ export default function Attendance() {
     try {
       setSharing(true);
       const slug = await ensureShareSlug();
-      const link = shareLinkForSlug(slug);
+      const link = publicShareLinkForSlug(slug);
       const text = composeShareText(link);
       if (navigator.share) {
         await navigator.share({ title: "출석 자랑", text, url: link });
@@ -728,7 +730,7 @@ export default function Attendance() {
               )}
               {todayLog.shareSlug && (
                 <a
-                  href={shareLinkForSlug(todayLog.shareSlug)}
+                  href={appShareLinkForSlug(todayLog.shareSlug)}
                   target="_blank"
                   rel="noreferrer"
                   className="rounded-xl border border-sky-400/60 px-4 py-2 text-sm text-sky-200 hover:bg-sky-500/10"

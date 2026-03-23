@@ -74,6 +74,8 @@ const isValidJoinPayload = (payload) => {
         return false;
     if (payload.mbti !== undefined && typeof payload.mbti !== "string")
         return false;
+    if (payload.isResting !== undefined && typeof payload.isResting !== "boolean")
+        return false;
     if (payload.growthParams !== undefined && typeof payload.growthParams !== "object")
         return false;
     if (payload.recentAttendanceCount !== undefined &&

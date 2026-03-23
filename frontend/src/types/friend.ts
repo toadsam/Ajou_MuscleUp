@@ -14,6 +14,8 @@ export interface FriendCharacterSnapshot {
   evolutionStage: number;
   level: number;
   avatarSeed: string | null;
+  gender?: "MALE" | "FEMALE" | null;
+  isResting?: boolean;
 }
 
 export interface FriendRequestItem {

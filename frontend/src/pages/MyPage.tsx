@@ -61,6 +61,8 @@ type CharacterProfile = {
   evolutionStage: number;
   title: string;
   isPublic: boolean;
+  gender?: "MALE" | "FEMALE" | null;
+  isResting?: boolean;
   avatarSeed: string;
   stylePreset: string;
   growthParams?: GrowthParams | null;
@@ -214,6 +216,7 @@ export default function MyPage() {
   const [attendanceCount, setAttendanceCount] = useState(0);
   const [customization, setCustomization] = useState<AvatarCustomization>({});
   const [skillEnabledMap, setSkillEnabledMap] = useState<Record<string, boolean>>({});
+  const [isResting, setIsResting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -231,6 +234,7 @@ export default function MyPage() {
         setCharacter(characterRes);
         setCustomization(loadAvatarCustomization(pageRes.email));
         setSkillEnabledMap(loadSkillToggles(pageRes.email));
+        setIsResting(Boolean(characterRes.isResting));
         try {
           const attendanceSummary = await api<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`);
           setAttendanceCount(attendanceSummary.monthWorkoutCount ?? 0);
@@ -336,6 +340,7 @@ export default function MyPage() {
       });
       setStats(res.stats);
       setCharacter(res.character);
+      setIsResting(Boolean(res.character.isResting));
       setEvaluation(res.evaluation);
       setChange(res.change);
       if (res.change?.leveledUp || res.change?.evolved || res.change?.tierChanged) {
@@ -364,6 +369,7 @@ export default function MyPage() {
         body: JSON.stringify({ isPublic: !character.isPublic }),
       });
       setCharacter(res);
+      setIsResting(Boolean(res.isResting));
       showToast({ type: "success", message: res.isPublic ? "공개로 전환했어요." : "비공개로 전환했어요." });
     } catch (e: any) {
       showToast({ type: "error", message: e?.message || "설정 변경에 실패했습니다." });
@@ -377,6 +383,7 @@ export default function MyPage() {
       setRerolling(true);
       const res = await api<CharacterProfile>("/api/character/reroll", { method: "POST" });
       setCharacter(res);
+      setIsResting(Boolean(res.isResting));
       setChange({ leveledUp: false, evolved: false, tierChanged: true });
       triggerTransformFx(3200);
       setBanner({ message: "REFORGED!", kind: "tier" });
@@ -472,8 +479,26 @@ export default function MyPage() {
       branch: evolutionBranch ?? null,
       activeSkillIds,
       customization,
+      gender: character.gender ?? stats?.gender ?? null,
+      isResting,
     });
-  }, [character?.avatarSeed, evolutionBranch, activeSkillIds, customization]);
+  }, [character?.avatarSeed, character?.gender, evolutionBranch, activeSkillIds, customization, stats?.gender, isResting]);
+
+  const toggleResting = async () => {
+    if (!character) return;
+    const nextResting = !isResting;
+    try {
+      const res = await api<CharacterProfile>("/api/character/me/resting", {
+        method: "PUT",
+        body: JSON.stringify({ isResting: nextResting }),
+      });
+      setCharacter(res);
+      setIsResting(Boolean(res.isResting));
+      showToast({ type: "success", message: nextResting ? "휴식 모드로 전환했어요." : "활동 모드로 전환했어요." });
+    } catch (e: any) {
+      showToast({ type: "error", message: e?.message || "휴식 모드 변경에 실패했습니다." });
+    }
+  };
 
   const statInputs = useMemo(
     () => [
@@ -579,6 +604,16 @@ export default function MyPage() {
                 <h2 className="text-xl font-bold">내 캐릭터</h2>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => void toggleResting()}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold border transition ${
+                      isResting
+                        ? "border-sky-300/80 bg-sky-400/15 text-sky-100"
+                        : "border-white/20 text-gray-200 hover:border-sky-300/50"
+                    }`}
+                  >
+                    {isResting ? "휴식중" : "휴식 모드"}
+                  </button>
+                  <button
                     onClick={rerollAvatar}
                     disabled={rerolling}
                     className="px-4 py-2 rounded-full text-xs font-semibold border border-amber-300/60 text-amber-100 hover:bg-amber-400/15 transition disabled:opacity-60"
@@ -601,7 +636,9 @@ export default function MyPage() {
               <CharacterCard
                 character={character}
                 evaluation={evaluation}
+                gender={character.gender ?? stats?.gender}
                 mbti={stats?.mbti}
+                isResting={isResting}
                 change={change}
                 customization={customization}
                 rerollBurstNonce={rerollBurstNonce}
@@ -630,6 +667,10 @@ export default function MyPage() {
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Skill Unlock</div>
                   <div className="text-white font-semibold">{activeSkillCount} / {skillUnlocks.length}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Condition</div>
+                  <div className={`font-semibold ${isResting ? "text-sky-200" : "text-white"}`}>{isResting ? "회복/휴식 중" : "활동 가능"}</div>
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 flex flex-wrap gap-6">

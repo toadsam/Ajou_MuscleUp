@@ -39,7 +39,9 @@ type ChangeState = {
 type Props = {
   character: CharacterProfile;
   evaluation: Evaluation | null;
+  gender?: "MALE" | "FEMALE" | null;
   mbti?: string | null;
+  isResting?: boolean;
   change?: ChangeState | null;
   customization?: AvatarCustomization | null;
   rerollBurstNonce?: number;
@@ -52,7 +54,9 @@ type Props = {
 export default function CharacterCard({
   character,
   evaluation,
+  gender,
   mbti,
+  isResting = false,
   change,
   customization,
   rerollBurstNonce = 0,
@@ -85,7 +89,9 @@ export default function CharacterCard({
             growthParams={character.growthParams}
             tier={character.tier}
             stage={character.evolutionStage}
+            gender={gender}
             mbti={mbti}
+            isResting={isResting}
             size={156}
             customization={customization}
             evolutionBranch={evolutionBranch}

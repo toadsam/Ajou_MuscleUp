@@ -86,6 +86,7 @@ const isValidJoinPayload = (payload: any): payload is JoinPayload => {
   if (payload.avatarSeed !== undefined && typeof payload.avatarSeed !== "string") return false;
   if (payload.stylePreset !== undefined && typeof payload.stylePreset !== "string") return false;
   if (payload.mbti !== undefined && typeof payload.mbti !== "string") return false;
+  if (payload.isResting !== undefined && typeof payload.isResting !== "boolean") return false;
   if (payload.growthParams !== undefined && typeof payload.growthParams !== "object") return false;
   if (
     payload.recentAttendanceCount !== undefined &&

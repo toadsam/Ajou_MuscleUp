@@ -1,0 +1,3 @@
+ALTER TABLE character_profiles
+    ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NULL,
+    ADD COLUMN IF NOT EXISTS is_resting BIT(1) NOT NULL DEFAULT b'0';

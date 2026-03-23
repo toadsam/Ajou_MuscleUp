@@ -51,6 +51,13 @@ public class CharacterProfile extends BaseTimeEntity {
     @Column(name = "style_preset", length = 32)
     private String stylePreset;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private Gender gender;
+
+    @Column(name = "is_resting", nullable = false)
+    private boolean isResting;
+
     @Column(name = "reroll_count", nullable = false)
     private int rerollCount;
 }

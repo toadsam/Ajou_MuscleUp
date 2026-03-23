@@ -178,8 +178,10 @@ export default function AttendanceShareView() {
 
   const templatePool = useMemo(() => buildTemplatePool(data), [data]);
 
-  const shareOrigin = API_BASE || window.location.origin;
-  const shareLink = data ? `${shareOrigin}/share/attendance/${data.shareSlug}` : "";
+  const appOrigin = window.location.origin;
+  const publicShareOrigin = API_BASE || window.location.origin;
+  const appShareLink = data ? `${appOrigin}/attendance/share/${data.shareSlug}` : "";
+  const publicShareLink = data ? `${publicShareOrigin}/share/attendance/${data.shareSlug}` : "";
 
   const firstImage = useMemo(() => {
     if (!data?.mediaUrls?.length) return null;
@@ -220,7 +222,7 @@ export default function AttendanceShareView() {
 
   const composeShareText = () => {
     const message = customMessage.trim() || data?.memo?.trim() || "오늘 출석 완료!";
-    return `${message}\n${shareLink}`;
+    return `${message}\n${publicShareLink}`;
   };
 
   const savePreset = () => {
@@ -236,11 +238,11 @@ export default function AttendanceShareView() {
   };
 
   const quickShare = async () => {
-    if (!shareLink) return;
+    if (!publicShareLink) return;
     const text = composeShareText();
     try {
       if (navigator.share) {
-        await navigator.share({ title: "출석 자랑", text, url: shareLink });
+        await navigator.share({ title: "출석 자랑", text, url: publicShareLink });
       } else {
         await navigator.clipboard.writeText(text);
         alert("멘트와 링크를 복사했어요.");
@@ -251,8 +253,8 @@ export default function AttendanceShareView() {
   };
 
   const kakaoShare = () => {
-    if (!shareLink) return;
-    const storyUrl = `https://story.kakao.com/share?url=${encodeURIComponent(shareLink)}`;
+    if (!publicShareLink) return;
+    const storyUrl = `https://story.kakao.com/share?url=${encodeURIComponent(publicShareLink)}`;
     window.open(storyUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -548,6 +550,7 @@ export default function AttendanceShareView() {
               >
                 신고하기
               </button>
+              <a href={appShareLink} className="action-btn" aria-label="refresh current share page">현재 페이지 링크</a>
               <Link to="/" className="action-btn" aria-label="go home">홈으로</Link>
             </div>
           </div>

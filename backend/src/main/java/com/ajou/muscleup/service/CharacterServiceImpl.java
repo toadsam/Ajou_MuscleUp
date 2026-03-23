@@ -4,6 +4,7 @@ import com.ajou.muscleup.dto.character.CharacterChangeResponse;
 import com.ajou.muscleup.dto.character.CharacterEvaluationResponse;
 import com.ajou.muscleup.dto.character.CharacterProfileResponse;
 import com.ajou.muscleup.dto.character.CharacterPublicUpdateRequest;
+import com.ajou.muscleup.dto.character.CharacterRestUpdateRequest;
 import com.ajou.muscleup.dto.character.CharacterSnapshotResponse;
 import com.ajou.muscleup.dto.character.GrowthParamsResponse;
 import com.ajou.muscleup.dto.character.StatsCharacterResponse;
@@ -73,6 +74,19 @@ public class CharacterServiceImpl implements CharacterService {
                 .orElseGet(() -> profileRepository.save(defaultProfile(user, stats)));
         ensureIdentity(profile, stats);
         profile.setPublic(Boolean.TRUE.equals(request.getIsPublic()));
+        CharacterProfile saved = profileRepository.save(profile);
+        return toProfileResponse(saved, stats);
+    }
+
+    @Override
+    @Transactional
+    public CharacterProfileResponse updateResting(String email, CharacterRestUpdateRequest request) {
+        User user = getUserOrThrow(email);
+        UserBodyStats stats = statsRepository.findByUser(user).orElse(null);
+        CharacterProfile profile = profileRepository.findByUser(user)
+                .orElseGet(() -> profileRepository.save(defaultProfile(user, stats)));
+        ensureIdentity(profile, stats);
+        profile.setResting(Boolean.TRUE.equals(request.getIsResting()));
         CharacterProfile saved = profileRepository.save(profile);
         return toProfileResponse(saved, stats);
     }
@@ -167,6 +181,11 @@ public class CharacterServiceImpl implements CharacterService {
         }
         if (profile.getStylePreset() == null || profile.getStylePreset().isBlank()) {
             profile.setStylePreset(pickStylePreset(stats == null ? null : stats.getMbti()));
+            dirty = true;
+        }
+        Gender nextGender = stats == null ? profile.getGender() : stats.getGender();
+        if (profile.getGender() != nextGender) {
+            profile.setGender(nextGender);
             dirty = true;
         }
         if (dirty) {
@@ -401,6 +420,8 @@ public class CharacterServiceImpl implements CharacterService {
                 .attendancePoints(0)
                 .avatarSeed(generateAvatarSeed())
                 .stylePreset(pickStylePreset(mbti))
+                .gender(null)
+                .isResting(false)
                 .rerollCount(0)
                 .build();
     }

@@ -8,8 +8,10 @@ type PlayerAvatarProps = {
   tier: CharacterTier;
   evolutionStage: number;
   avatarSeed?: string;
+  gender?: "MALE" | "FEMALE";
   growthParams?: GrowthParams;
   mbti?: string;
+  isResting?: boolean;
   facing?: "left" | "right";
   isMe?: boolean;
 };
@@ -37,8 +39,10 @@ export default function PlayerAvatar({
   tier,
   evolutionStage,
   avatarSeed,
+  gender,
   growthParams,
   mbti,
+  isResting = false,
   facing = "right",
   isMe = false,
 }: PlayerAvatarProps) {
@@ -55,7 +59,9 @@ export default function PlayerAvatar({
           growthParams={growthParams ?? defaultGrowthParams}
           tier={tier}
           stage={evolutionStage}
+          gender={gender}
           mbti={mbti}
+          isResting={isResting}
           size={76}
         />
       </div>

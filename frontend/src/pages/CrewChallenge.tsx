@@ -73,22 +73,24 @@ type AvatarRow = {
   characterTier?: CharacterTier | null;
   characterStage?: number | null;
   avatarSeed?: string | null;
+  gender?: "MALE" | "FEMALE" | null;
+  isResting?: boolean;
 };
 
 const resolveAvatarConfig = (row: AvatarRow | null | undefined, fallbackRate = 0) => {
   const tier = (row?.characterTier ?? tierFromAttendance(row?.attendanceRate ?? fallbackRate)) as CharacterTier;
   const stage = row?.characterStage ?? Math.max(1, Math.min(9, Math.floor((row?.attendanceRate ?? fallbackRate) / 12)));
   const seed = row?.avatarSeed ?? `crew-avatar-${row?.userId ?? "x"}-${row?.nickname ?? "unknown"}`;
-  return { tier, stage, seed };
+  return { tier, stage, seed, gender: row?.gender, isResting: row?.isResting ?? false };
 };
 
-function EnhancedAvatar({ seed, tier, stage, size, rank, badge }: { seed: string; tier: CharacterTier; stage: number; size: number; rank?: number; badge?: string }) {
+function EnhancedAvatar({ seed, tier, stage, size, gender, isResting, rank, badge }: { seed: string; tier: CharacterTier; stage: number; size: number; gender?: "MALE" | "FEMALE" | null; isResting?: boolean; rank?: number; badge?: string }) {
   return (
     <div className="relative inline-flex items-center justify-center">
       <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${tierAuraClass[tier]} blur-md`} />
       {rank && rank <= 3 && <span className="absolute -top-3 z-20 rounded-full border border-yellow-200/70 bg-yellow-300 px-1.5 py-0.5 text-[10px] font-black text-slate-900">{rank === 1 ? "CROWN" : `TOP${rank}`}</span>}
       <div className="relative z-10 rounded-xl border border-white/15 bg-slate-900/70 p-1">
-        <AvatarRenderer avatarSeed={seed} tier={tier} stage={stage} size={size} />
+        <AvatarRenderer avatarSeed={seed} tier={tier} stage={stage} gender={gender} isResting={isResting ?? false} size={size} />
       </div>
       {badge && <span className="absolute -bottom-2 z-20 rounded-full border border-white/30 bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-cyan-100">{badge}</span>}
     </div>
@@ -403,7 +405,7 @@ export default function CrewChallenge() {
                     <span className="text-xs text-amber-100">{row.score}점</span>
                   </div>
                   <div className="mt-2 flex justify-center">
-                    <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} size={78} rank={row.rank} />
+                    <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={78} rank={row.rank} />
                   </div>
                   <p className="mt-2 text-center font-bold">{row.nickname}{renderRankDelta(row.userId)}</p>
                   <p className="text-center text-xs text-gray-300">출석 {row.attendanceRate}%</p>
@@ -592,7 +594,7 @@ export default function CrewChallenge() {
                     <div className="grid gap-2 md:grid-cols-2">
                       {challenge.members.map((member, index) => {
                         const avatar = resolveAvatarConfig(member as any, member.completionRate);
-                        return <div key={`${challenge.id}-${member.userId}`} className="rounded-lg border border-white/10 bg-black/25 p-3 text-sm"><div className="flex items-center gap-2"><EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} size={48} rank={index + 1} badge={member.badge} /><div className="flex-1"><div className="flex items-center justify-between"><span>{member.nickname}</span><span className="text-cyan-300">{member.completionRate}%</span></div><p className="mt-1 text-xs text-gray-400">{member.workoutDays}/{member.targetWorkoutDays}</p></div></div></div>;
+                        return <div key={`${challenge.id}-${member.userId}`} className="rounded-lg border border-white/10 bg-black/25 p-3 text-sm"><div className="flex items-center gap-2"><EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={48} rank={index + 1} badge={member.badge} /><div className="flex-1"><div className="flex items-center justify-between"><span>{member.nickname}</span><span className="text-cyan-300">{member.completionRate}%</span></div><p className="mt-1 text-xs text-gray-400">{member.workoutDays}/{member.targetWorkoutDays}</p></div></div></div>;
                       })}
                     </div>
                   </div>
@@ -614,7 +616,7 @@ export default function CrewChallenge() {
           return (
             <article key={member.userId} className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="flex items-center gap-3">
-                <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} size={60} rank={idx + 1} />
+                <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={60} rank={idx + 1} />
                 <div>
                   <p className="font-semibold">{member.nickname}</p>
                   <p className="text-xs text-gray-400">#{idx + 1} · {member.role}</p>
@@ -651,7 +653,7 @@ export default function CrewChallenge() {
             <div className="rounded-xl border border-white/10 bg-black/20 p-3">
               <p className="text-[11px] text-gray-400">내 캐릭터</p>
               <div className="mt-1 flex items-center gap-2">
-                <EnhancedAvatar seed={myAvatar.seed} tier={myAvatar.tier} stage={myAvatar.stage} size={38} />
+                <EnhancedAvatar seed={myAvatar.seed} tier={myAvatar.tier} stage={myAvatar.stage} gender={myAvatar.gender} isResting={myAvatar.isResting} size={38} />
                 <p className="text-sm font-semibold">{myAttendanceRow?.nickname ?? "-"}</p>
               </div>
             </div>

@@ -3,6 +3,74 @@
   transform-origin: center;
 }
 
+.avatar-gender-female {
+  filter: saturate(1.08) brightness(1.04);
+}
+
+.avatar-resting {
+  filter: grayscale(0.22) saturate(0.78) brightness(0.92);
+}
+
+.avatar-rest-banner {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-5deg);
+  z-index: 2;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(71, 85, 105, 0.9));
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+}
+
+.avatar-rest-cloud {
+  position: absolute;
+  top: 10px;
+  width: 42px;
+  height: 22px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.8), rgba(148, 163, 184, 0.18) 70%);
+  opacity: 0.72;
+  filter: blur(1px);
+  animation: avatar-rest-cloud 3.4s ease-in-out infinite;
+}
+
+.avatar-rest-cloud::before,
+.avatar-rest-cloud::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: inherit;
+}
+
+.avatar-rest-cloud::before {
+  width: 18px;
+  height: 18px;
+  left: 4px;
+  top: -8px;
+}
+
+.avatar-rest-cloud::after {
+  width: 20px;
+  height: 20px;
+  right: 5px;
+  top: -10px;
+}
+
+.avatar-rest-cloud.cloud-left {
+  left: -2px;
+}
+
+.avatar-rest-cloud.cloud-right {
+  right: -2px;
+  animation-delay: 1.2s;
+}
+
 .avatar-motion-energetic {
   animation: avatar-energetic 1.8s ease-in-out infinite;
 }
@@ -91,6 +159,11 @@
 @keyframes avatar-calm {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-1px); }
+}
+
+@keyframes avatar-rest-cloud {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50% { transform: translateY(4px); opacity: 0.9; }
 }
 
 @keyframes aura-expand {

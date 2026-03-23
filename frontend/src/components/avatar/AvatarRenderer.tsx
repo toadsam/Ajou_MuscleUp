@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react";
+import { useEffect, useId, useState } from "react";
 import Arms from "./Arms";
 import Effects from "./Effects";
 import Head from "./Head";
@@ -10,7 +10,7 @@ import type { AvatarSeed, CharacterTier, GrowthParams } from "./types";
 import { defaultGrowthParams } from "./types";
 import type { AvatarCustomization } from "../../utils/avatarCustomization";
 import { amplifyGrowthParams, branchTheme, type EvolutionBranch } from "../../utils/evolutionProgress";
-import { loadAppearanceBySeed } from "../../utils/avatarAppearanceState";
+import { AVATAR_APPEARANCE_EVENT, loadAppearanceBySeed } from "../../utils/avatarAppearanceState";
 import "./avatar.css";
 
 type Props = {
@@ -18,7 +18,9 @@ type Props = {
   growthParams?: GrowthParams | null;
   tier: CharacterTier;
   stage: number;
+  gender?: "MALE" | "FEMALE" | null;
   mbti?: string | null;
+  isResting?: boolean;
   size?: number;
   customization?: AvatarCustomization | null;
   evolutionBranch?: EvolutionBranch | null;
@@ -47,18 +49,41 @@ export default function AvatarRenderer({
   growthParams,
   tier,
   stage,
+  gender,
   mbti,
+  isResting = false,
   size = 176,
   customization,
   evolutionBranch,
   unlockedSkillCount = 0,
   activeSkillIds = [],
 }: Props) {
-  const persistedAppearance = useMemo(() => loadAppearanceBySeed(avatarSeed), [avatarSeed]);
+  const [persistedAppearance, setPersistedAppearance] = useState(() => loadAppearanceBySeed(avatarSeed));
+
+  useEffect(() => {
+    setPersistedAppearance(loadAppearanceBySeed(avatarSeed));
+  }, [avatarSeed]);
+
+  useEffect(() => {
+    const syncAppearance = (event: Event) => {
+      const detail = (event as CustomEvent<{ seed?: string }>).detail;
+      if (detail?.seed && detail.seed !== avatarSeed) return;
+      setPersistedAppearance(loadAppearanceBySeed(avatarSeed));
+    };
+    window.addEventListener(AVATAR_APPEARANCE_EVENT, syncAppearance as EventListener);
+    window.addEventListener("storage", syncAppearance as EventListener);
+    return () => {
+      window.removeEventListener(AVATAR_APPEARANCE_EVENT, syncAppearance as EventListener);
+      window.removeEventListener("storage", syncAppearance as EventListener);
+    };
+  }, [avatarSeed]);
+
   const resolvedBranch = evolutionBranch ?? persistedAppearance?.branch ?? null;
   const resolvedSkillIds = activeSkillIds.length > 0 ? activeSkillIds : persistedAppearance?.activeSkillIds ?? [];
   const resolvedSkillCount = activeSkillIds.length > 0 ? unlockedSkillCount : resolvedSkillIds.length;
   const resolvedCustomization = customization ?? persistedAppearance?.customization ?? null;
+  const resolvedGender = gender ?? persistedAppearance?.gender ?? "MALE";
+  const resolvedResting = isResting ?? persistedAppearance?.isResting ?? false;
 
   const rawGrowth = growthParams ?? defaultGrowthParams;
   const growth = resolvedBranch ? amplifyGrowthParams(rawGrowth, resolvedBranch, resolvedSkillCount) : rawGrowth;
@@ -95,9 +120,16 @@ export default function AvatarRenderer({
 
   return (
     <div
-      className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${tierPreset.burst ? "avatar-master-burst" : ""}`}
+      className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${resolvedGender === "FEMALE" ? "avatar-gender-female" : "avatar-gender-male"} ${resolvedResting ? "avatar-resting" : ""} ${tierPreset.burst ? "avatar-master-burst" : ""}`}
       style={{ width: size, height: size }}
     >
+      {resolvedResting && (
+        <>
+          <div className="avatar-rest-banner">휴식 중</div>
+          <div className="avatar-rest-cloud cloud-left" aria-hidden="true" />
+          <div className="avatar-rest-cloud cloud-right" aria-hidden="true" />
+        </>
+      )}
       <svg
         viewBox="0 0 144 192"
         width={size}
@@ -153,7 +185,39 @@ export default function AvatarRenderer({
             strokeColor={strokeColor}
             skinColor={tone.skin}
           />
-          <Head mbti={mbti} seedFeatures={seedFeatures} strokeColor={strokeColor} skinColor={tone.skin} hairColor={tone.hair} />
+          <Head
+            gender={resolvedGender}
+            mbti={mbti}
+            isResting={resolvedResting}
+            seedFeatures={seedFeatures}
+            strokeColor={strokeColor}
+            skinColor={tone.skin}
+            hairColor={tone.hair}
+          />
+          {resolvedGender === "FEMALE" && (
+            <>
+              <path
+                d="M 54 66 Q 72 55 90 66 L 97 86 Q 90 106 72 111 Q 54 106 47 86 Z"
+                fill="rgba(255,255,255,0.15)"
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="1.2"
+              />
+              <path
+                d="M 72 62 C 68 70, 66 78, 66 92"
+                stroke="rgba(255,255,255,0.45)"
+                strokeWidth="1.3"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 72 62 C 76 70, 78 78, 78 92"
+                stroke="rgba(255,255,255,0.45)"
+                strokeWidth="1.3"
+                fill="none"
+                strokeLinecap="round"
+              />
+            </>
+          )}
           {hasBody && (
             <rect x={48} y={62} width={48} height={62} clipPath={`url(#${bodyClipId})`} fill={`url(#${bodyPatternId})`} opacity={0.45} />
           )}
@@ -173,6 +237,16 @@ export default function AvatarRenderer({
             skillLevel={resolvedSkillCount}
             activeSkillIds={resolvedSkillIds}
           />
+          {resolvedResting && (
+            <>
+              <rect x={56} y={18} width={32} height={10} rx={4} fill="#dbeafe" stroke="#60a5fa" strokeWidth={1.6} opacity={0.96} transform="rotate(-8 72 23)" />
+              <path d="M 57 24 L 87 19" stroke="#93c5fd" strokeWidth={1.3} opacity={0.9} />
+              <path d="M 84 30 Q 94 28 99 38" stroke="#60a5fa" strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.9} />
+              <path d="M 98 39 Q 92 44 98 49" stroke="#38bdf8" strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.82} />
+              <path d="M 72 186 Q 68 189 64 186" stroke="#64748b" strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.85} />
+              <ellipse cx={72} cy={187} rx={28} ry={4} fill="#0f172a" opacity={0.22} />
+            </>
+          )}
         </g>
       </svg>
     </div>

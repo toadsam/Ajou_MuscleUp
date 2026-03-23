@@ -231,6 +231,8 @@ public class CrewServiceImpl implements CrewService {
                             .characterStage(profile != null ? profile.getEvolutionStage() : null)
                             .characterLevel(profile != null ? profile.getLevel() : null)
                             .avatarSeed(profile != null ? profile.getAvatarSeed() : null)
+                            .gender(profile != null ? profile.getGender() : null)
+                            .isResting(profile != null && profile.isResting())
                             .build();
                 })
                 .sorted(Comparator.comparing(CrewMemberAttendanceResponse::getAttendanceRate).reversed())
@@ -281,6 +283,8 @@ public class CrewServiceImpl implements CrewService {
                             .characterStage(profile != null ? profile.getEvolutionStage() : null)
                             .characterLevel(profile != null ? profile.getLevel() : null)
                             .avatarSeed(profile != null ? profile.getAvatarSeed() : null)
+                            .gender(profile != null ? profile.getGender() : null)
+                            .isResting(profile != null && profile.isResting())
                             .build();
                 })
                 .sorted(Comparator.comparing(CrewChallengeMemberProgressResponse::getCompletionRate).reversed())

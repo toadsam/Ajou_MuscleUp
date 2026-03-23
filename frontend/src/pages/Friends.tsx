@@ -32,6 +32,8 @@ function FriendAvatar({
         avatarSeed={character?.avatarSeed ?? "friend-avatar"}
         tier={(character?.tier ?? DEFAULT_TIER) as CharacterTier}
         stage={character?.evolutionStage ?? 0}
+        gender={character?.gender}
+        isResting={character?.isResting ?? false}
         size={size}
       />
     </div>

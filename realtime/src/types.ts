@@ -43,6 +43,7 @@ export type PlayerState = {
   avatarSeed?: string;
   stylePreset?: string;
   mbti?: string;
+  isResting?: boolean;
   growthParams?: GrowthParams;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
@@ -62,6 +63,7 @@ export type JoinPayload = {
   avatarSeed?: string;
   stylePreset?: string;
   mbti?: string;
+  isResting?: boolean;
   growthParams?: GrowthParams;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
