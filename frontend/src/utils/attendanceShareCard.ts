@@ -1,6 +1,9 @@
 ﻿export type ShareCardTheme = "sunset" | "mint" | "midnight";
 export type ShareCardRatio = "feed" | "square" | "story";
 export type ShareCardQuoteStyle = "glass" | "outline" | "solid";
+export type ShareCardMediaFit = "cover" | "contain";
+export type ShareCardCharacter = "none" | "me" | "deukgeun";
+export type ShareCardCharacterPose = "flex" | "wave" | "heart" | "victory" | "fire" | "squat" | "jump" | "run";
 
 type ShareCardInput = {
   date: string;
@@ -17,6 +20,14 @@ type ShareCardInput = {
   sticker?: string;
   showMeta?: boolean;
   cheerCount?: number;
+  mediaFit?: ShareCardMediaFit;
+  mediaPositionX?: number;
+  mediaPositionY?: number;
+  character?: ShareCardCharacter;
+  characterPose?: ShareCardCharacterPose;
+  characterLabel?: string | null;
+  characterSize?: number;
+  watermarkText?: string;
   scale?: number;
 };
 
@@ -31,6 +42,21 @@ const RATIO_SIZE: Record<ShareCardRatio, { width: number; height: number }> = {
   square: { width: 1080, height: 1080 },
   story: { width: 1080, height: 1920 },
 };
+
+const POSE_TEXT: Record<ShareCardCharacterPose, string> = {
+  flex: "FLEX",
+  wave: "WAVE",
+  heart: "HEART",
+  victory: "V",
+  fire: "FIRE",
+  squat: "SQUAT",
+  jump: "JUMP",
+  run: "RUN",
+};
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -109,6 +135,108 @@ function drawQuoteBox(
   }
 }
 
+function drawDeukgeunAvatar(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, pose: ShareCardCharacterPose) {
+  const half = size / 2;
+
+  ctx.save();
+  drawRoundedRect(ctx, x, y, size, size, Math.round(size * 0.33));
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  ctx.fill();
+
+  const cx = x + half;
+  const cy = y + half;
+  const face = size * 0.34;
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, face, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffe29a";
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(cx - face * 0.7, cy - face * 0.7, face * 0.28, 0, Math.PI * 2);
+  ctx.arc(cx + face * 0.7, cy - face * 0.7, face * 0.28, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffd66f";
+  ctx.fill();
+
+  ctx.fillStyle = "#3c2d0f";
+  ctx.beginPath();
+  ctx.arc(cx - face * 0.35, cy - face * 0.1, face * 0.08, 0, Math.PI * 2);
+  ctx.arc(cx + face * 0.35, cy - face * 0.1, face * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#3c2d0f";
+  ctx.lineWidth = Math.max(2, Math.round(size * 0.02));
+  ctx.beginPath();
+  ctx.arc(cx, cy + face * 0.08, face * 0.24, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+
+  ctx.fillStyle = "#fff";
+  ctx.font = `700 ${Math.round(size * 0.18)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(POSE_TEXT[pose], x + size / 2, y + size - 8);
+  ctx.restore();
+}
+
+function drawCharacterBadge(
+  ctx: CanvasRenderingContext2D,
+  input: ShareCardInput,
+  width: number,
+  height: number,
+  horizontalPad: number
+) {
+  const character = input.character ?? "none";
+  if (character === "none") return;
+
+  const pose = input.characterPose ?? "flex";
+  const label = (input.characterLabel || (character === "deukgeun" ? "Deukgeun" : "My Character")).trim();
+  const characterSize = clamp(input.characterSize ?? 1, 0.65, 1.8);
+  const boxW = Math.round(width * 0.34 * characterSize);
+  const boxH = Math.round(height * 0.108 * characterSize);
+  const boxX = width - horizontalPad - boxW;
+  const boxY = Math.round(height * 0.74);
+
+  drawRoundedRect(ctx, boxX, boxY, boxW, boxH, 22);
+  ctx.fillStyle = "rgba(7, 12, 28, 0.72)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.42)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const avatarSize = Math.round(boxH * 0.72);
+  const avatarX = boxX + 14;
+  const avatarY = boxY + Math.round((boxH - avatarSize) / 2);
+
+  if (character === "deukgeun") {
+    drawDeukgeunAvatar(ctx, avatarX, avatarY, avatarSize, pose);
+  } else {
+    drawRoundedRect(ctx, avatarX, avatarY, avatarSize, avatarSize, Math.round(avatarSize * 0.32));
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fill();
+    const initial = (input.nickname?.trim()?.[0] ?? "M").toUpperCase();
+    ctx.fillStyle = "#fff";
+    ctx.font = `800 ${Math.round(avatarSize * 0.46)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initial, avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 1);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = `700 ${Math.round(avatarSize * 0.18)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(POSE_TEXT[pose], avatarX + avatarSize / 2, avatarY + avatarSize - 5);
+  }
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.font = `700 ${Math.round(width * 0.023)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+  ctx.fillText(label, avatarX + avatarSize + 12, boxY + Math.round(boxH * 0.5));
+  ctx.font = `500 ${Math.round(width * 0.019)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+  ctx.fillStyle = "rgba(255,255,255,0.84)";
+  ctx.fillText(`Pose ${POSE_TEXT[pose]}`, avatarX + avatarSize + 12, boxY + Math.round(boxH * 0.77));
+}
+
 function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
   return new Promise(async (resolve, reject) => {
     try {
@@ -118,6 +246,10 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
       const quoteStyle = input.quoteStyle ?? "glass";
       const showMeta = input.showMeta ?? true;
       const scale = Math.max(1, Math.min(3, Math.round(input.scale ?? 1)));
+      const mediaFit = input.mediaFit ?? "cover";
+      const mediaPosX = clamp(input.mediaPositionX ?? 50, 0, 100);
+      const mediaPosY = clamp(input.mediaPositionY ?? 50, 0, 100);
+      const watermarkText = (input.watermarkText || "DEUKGEUN").trim() || "DEUKGEUN";
 
       const canvas = document.createElement("canvas");
       canvas.width = width * scale;
@@ -145,12 +277,26 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
           drawRoundedRect(ctx, horizontalPad, mediaTop, mediaWidth, mediaHeight, 36);
           ctx.save();
           ctx.clip();
-          const ratioValue = Math.max(mediaWidth / img.width, mediaHeight / img.height);
-          const drawW = img.width * ratioValue;
-          const drawH = img.height * ratioValue;
-          const drawX = horizontalPad + (mediaWidth - drawW) / 2;
-          const drawY = mediaTop + (mediaHeight - drawH) / 2;
-          ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+          if (mediaFit === "contain") {
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(horizontalPad, mediaTop, mediaWidth, mediaHeight);
+            const ratioValue = Math.min(mediaWidth / img.width, mediaHeight / img.height);
+            const drawW = img.width * ratioValue;
+            const drawH = img.height * ratioValue;
+            const drawX = horizontalPad + (mediaWidth - drawW) / 2;
+            const drawY = mediaTop + (mediaHeight - drawH) / 2;
+            ctx.drawImage(img, drawX, drawY, drawW, drawH);
+          } else {
+            const ratioValue = Math.max(mediaWidth / img.width, mediaHeight / img.height);
+            const drawW = img.width * ratioValue;
+            const drawH = img.height * ratioValue;
+            const overflowX = Math.max(0, drawW - mediaWidth);
+            const overflowY = Math.max(0, drawH - mediaHeight);
+            const drawX = horizontalPad - overflowX * (mediaPosX / 100);
+            const drawY = mediaTop - overflowY * (mediaPosY / 100);
+            ctx.drawImage(img, drawX, drawY, drawW, drawH);
+          }
           ctx.restore();
 
           const overlay = ctx.createLinearGradient(0, mediaTop + mediaHeight - 200, 0, mediaTop + mediaHeight);
@@ -167,7 +313,7 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
       ctx.fillStyle = "rgba(255,255,255,0.95)";
       ctx.font = `700 ${Math.round(width * 0.033)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
       ctx.textBaseline = "alphabetic";
-      ctx.fillText("MUSCLEUP", horizontalPad, Math.round(height * 0.07));
+      ctx.fillText(watermarkText, horizontalPad, Math.round(height * 0.07));
 
       if (input.sticker?.trim()) {
         ctx.font = `${Math.round(width * 0.07)}px 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif`;
@@ -208,6 +354,8 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
         ctx.fillText(line, horizontalPad + 34, quoteTop + 60 + idx * Math.round(height * 0.04));
       });
 
+      drawCharacterBadge(ctx, input, width, height, horizontalPad);
+
       if (showMeta) {
         const metaY = quoteTop + quoteHeight + Math.round(height * 0.05);
         drawRoundedRect(ctx, horizontalPad, metaY, mediaWidth, Math.round(height * 0.07), 20);
@@ -216,7 +364,7 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
         ctx.fillStyle = "rgba(255,255,255,0.92)";
         ctx.font = `600 ${Math.round(width * 0.028)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
         const cheer = input.cheerCount ?? 0;
-        ctx.fillText(`Cheers ${cheer}  •  Shared via MUSCLEUP`, horizontalPad + 28, metaY + Math.round(height * 0.045));
+        ctx.fillText(`Cheers ${cheer}  -  Shared via DEUKGEUN`, horizontalPad + 28, metaY + Math.round(height * 0.045));
       }
 
       resolve(canvas);

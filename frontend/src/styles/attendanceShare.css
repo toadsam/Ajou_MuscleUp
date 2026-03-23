@@ -144,6 +144,77 @@
   z-index: 3;
 }
 
+.share-character {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  border-radius: 14px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(5, 9, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(4px);
+  transform-origin: bottom right;
+  transition: transform 0.2s ease;
+}
+
+.share-character-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.share-character-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.share-character-meta strong {
+  font-size: 12px;
+}
+
+.share-character-meta span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.share-character.pose-wave { animation: pose-wave 1.25s ease-in-out infinite; }
+.share-character.pose-jump { animation: pose-jump 0.95s ease-in-out infinite; }
+.share-character.pose-run { animation: pose-run 0.7s linear infinite; }
+.share-character.pose-squat { animation: pose-squat 1s ease-in-out infinite; }
+
+@keyframes pose-wave {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12); }
+}
+
+@keyframes pose-jump {
+  0%, 100% { filter: brightness(1); }
+  45% { filter: brightness(1.18); }
+}
+
+@keyframes pose-run {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.82; }
+}
+
+@keyframes pose-squat {
+  0%, 100% { filter: saturate(1); }
+  50% { filter: saturate(1.35); }
+}
+
 .story-safe {
   position: absolute;
   left: 12px;
@@ -267,6 +338,23 @@
   padding: 10px 12px;
   min-height: 88px;
   resize: vertical;
+}
+
+.range-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.range-label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.range-label input[type="range"] {
+  width: 100%;
+  accent-color: #8dffd8;
 }
 
 .thumb-preview {

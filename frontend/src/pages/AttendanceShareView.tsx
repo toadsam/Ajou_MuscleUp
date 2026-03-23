@@ -1,6 +1,12 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import { defaultGrowthParams, type GrowthParams } from "../components/avatar/types";
 import { Link, useParams } from "react-router-dom";
 import {
+  type ShareCardCharacter,
+  type ShareCardCharacterPose,
+  type ShareCardMediaFit,
   renderAttendanceShareCard,
   renderAttendanceShareCardPreviewDataUrl,
   type ShareCardQuoteStyle,
@@ -26,6 +32,16 @@ type ShareData = {
   updatedAt?: string | null;
   shareSlug: string;
 };
+type MyCharacterProfile = {
+  level: number;
+  tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "GRANDMASTER" | "CHALLENGER";
+  evolutionStage: number;
+  title: string;
+  gender?: "MALE" | "FEMALE" | null;
+  avatarSeed: string;
+  stylePreset: string;
+  growthParams?: GrowthParams | null;
+};
 
 type SharePreset = {
   theme: ShareCardTheme;
@@ -33,6 +49,12 @@ type SharePreset = {
   quoteStyle: ShareCardQuoteStyle;
   sticker: string;
   showMeta: boolean;
+  mediaFit: ShareCardMediaFit;
+  mediaPositionX: number;
+  mediaPositionY: number;
+  character: ShareCardCharacter;
+  characterPose: ShareCardCharacterPose;
+  characterSize: number;
   exportScale: 1 | 2 | 3;
 };
 
@@ -63,6 +85,28 @@ const QUOTE_OPTIONS: Array<{ id: ShareCardQuoteStyle; label: string }> = [
   { id: "solid", label: "Solid" },
 ];
 
+const MEDIA_FIT_OPTIONS: Array<{ id: ShareCardMediaFit; label: string }> = [
+  { id: "cover", label: "꽉 채우기" },
+  { id: "contain", label: "비율 맞추기" },
+];
+
+const CHARACTER_OPTIONS: Array<{ id: ShareCardCharacter; label: string }> = [
+  { id: "none", label: "없음" },
+  { id: "me", label: "내 캐릭터" },
+  { id: "deukgeun", label: "득근이" },
+];
+
+const CHARACTER_POSE_OPTIONS: Array<{ id: ShareCardCharacterPose; label: string; emoji: string }> = [
+  { id: "flex", label: "근육", emoji: "💪" },
+  { id: "wave", label: "인사", emoji: "👋" },
+  { id: "heart", label: "하트", emoji: "🫶" },
+  { id: "victory", label: "브이", emoji: "✌️" },
+  { id: "fire", label: "파워", emoji: "🔥" },
+  { id: "squat", label: "스쿼트", emoji: "🏋️" },
+  { id: "jump", label: "점프", emoji: "🕺" },
+  { id: "run", label: "러닝", emoji: "🏃" },
+];
+
 const STICKERS = ["", "🔥", "💪", "✨", "🚀", "🏆", "⚡", "🎯"];
 
 const DEFAULT_PRESET: SharePreset = {
@@ -71,6 +115,12 @@ const DEFAULT_PRESET: SharePreset = {
   quoteStyle: "glass",
   sticker: "🔥",
   showMeta: true,
+  mediaFit: "cover",
+  mediaPositionX: 50,
+  mediaPositionY: 50,
+  character: "deukgeun",
+  characterPose: "flex",
+  characterSize: 1,
   exportScale: 2,
 };
 
@@ -85,11 +135,48 @@ function loadPreset(): SharePreset {
       quoteStyle: parsed.quoteStyle ?? DEFAULT_PRESET.quoteStyle,
       sticker: parsed.sticker ?? DEFAULT_PRESET.sticker,
       showMeta: parsed.showMeta ?? DEFAULT_PRESET.showMeta,
+      mediaFit: parsed.mediaFit ?? DEFAULT_PRESET.mediaFit,
+      mediaPositionX: parsed.mediaPositionX ?? DEFAULT_PRESET.mediaPositionX,
+      mediaPositionY: parsed.mediaPositionY ?? DEFAULT_PRESET.mediaPositionY,
+      character: parsed.character ?? DEFAULT_PRESET.character,
+      characterPose: parsed.characterPose ?? DEFAULT_PRESET.characterPose,
+      characterSize: parsed.characterSize ?? DEFAULT_PRESET.characterSize,
       exportScale: parsed.exportScale ?? DEFAULT_PRESET.exportScale,
     };
   } catch {
     return DEFAULT_PRESET;
   }
+}
+
+function DeukgeunPoseAvatar({ pose }: { pose: ShareCardCharacterPose }) {
+  const poseLabel =
+    pose === "squat" ? "SQ" :
+    pose === "jump" ? "JP" :
+    pose === "run" ? "RN" :
+    pose === "fire" ? "PW" :
+    pose === "victory" ? "V" :
+    pose === "heart" ? "HT" :
+    pose === "wave" ? "HI" : "FX";
+
+  return (
+    <svg viewBox="0 0 64 64" className="h-full w-full">
+      <defs>
+        <linearGradient id={`dg-bg-${pose}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ec4899" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="64" height="64" fill={`url(#dg-bg-${pose})`} />
+      <circle cx="32" cy="26" r="13" fill="#fde68a" />
+      <rect x="19" y="40" width="26" height="12" rx="6" fill="#111827" />
+      <circle cx="27" cy="25" r="2" fill="#0f172a" />
+      <circle cx="37" cy="25" r="2" fill="#0f172a" />
+      <path d="M27 30c1.4 1.6 3 2.3 5 2.3s3.6-.7 5-2.3" stroke="#0f172a" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <rect x="8" y="42" width="8" height="8" rx="2" fill="#cbd5e1" />
+      <rect x="48" y="42" width="8" height="8" rx="2" fill="#cbd5e1" />
+      <text x="32" y="58" textAnchor="middle" fontSize="8" fill="#f8fafc" fontWeight="700">{poseLabel}</text>
+    </svg>
+  );
 }
 
 function loadReactionStore(): ReactionStore {
@@ -141,8 +228,19 @@ export default function AttendanceShareView() {
   const [quoteStyle, setQuoteStyle] = useState<ShareCardQuoteStyle>(preset.quoteStyle);
   const [sticker, setSticker] = useState<string>(preset.sticker);
   const [showMeta, setShowMeta] = useState(preset.showMeta);
+  const [mediaFit, setMediaFit] = useState<ShareCardMediaFit>(preset.mediaFit);
+  const [mediaPositionX, setMediaPositionX] = useState<number>(preset.mediaPositionX);
+  const [mediaPositionY, setMediaPositionY] = useState<number>(preset.mediaPositionY);
+  const [character, setCharacter] = useState<ShareCardCharacter>(preset.character);
+  const [characterPose, setCharacterPose] = useState<ShareCardCharacterPose>(preset.characterPose);
+  const [characterSize, setCharacterSize] = useState<number>(preset.characterSize);
   const [exportScale, setExportScale] = useState<1 | 2 | 3>(preset.exportScale);
   const [customMessage, setCustomMessage] = useState("");
+  const [simpleMode, setSimpleMode] = useState(true);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [myCharacter, setMyCharacter] = useState<MyCharacterProfile | null>(null);
+  const [myCharacterLoading, setMyCharacterLoading] = useState(false);
+  const previewCaptureRef = useRef<HTMLDivElement | null>(null);
 
   const [reactionStore, setReactionStore] = useState<ReactionStore>(() => loadReactionStore());
 
@@ -165,6 +263,22 @@ export default function AttendanceShareView() {
   }, [slug]);
 
   useEffect(() => {
+    if (character !== "me") return;
+    if (myCharacter || myCharacterLoading) return;
+    (async () => {
+      try {
+        setMyCharacterLoading(true);
+        const res = await fetch(`${API_BASE}/api/character/me`, { credentials: "include" });
+        if (!res.ok) return;
+        const payload: MyCharacterProfile = await res.json();
+        setMyCharacter(payload);
+      } finally {
+        setMyCharacterLoading(false);
+      }
+    })();
+  }, [character, myCharacter, myCharacterLoading]);
+
+  useEffect(() => {
     if (!data) return;
     const seed = data.shareComment?.trim() || data.memo?.trim() || "오늘 출석 완료!";
     setCustomMessage(seed);
@@ -177,6 +291,11 @@ export default function AttendanceShareView() {
   }, [data]);
 
   const templatePool = useMemo(() => buildTemplatePool(data), [data]);
+  const activePose = useMemo(
+    () => CHARACTER_POSE_OPTIONS.find((item) => item.id === characterPose) ?? CHARACTER_POSE_OPTIONS[0],
+    [characterPose]
+  );
+  const showAdvancedControls = !simpleMode || advancedOpen;
 
   const appOrigin = window.location.origin;
   const publicShareOrigin = API_BASE || window.location.origin;
@@ -208,6 +327,14 @@ export default function AttendanceShareView() {
           quoteStyle,
           sticker,
           showMeta,
+          mediaFit,
+          mediaPositionX,
+          mediaPositionY,
+          character,
+          characterPose,
+          characterSize,
+          characterLabel: character === "me" ? (data.authorNickname || "내 캐릭터") : "득근이",
+          watermarkText: "득근득근",
           cheerCount: data.cheerCount,
         });
         if (!cancelled) setPreviewThumb(thumb);
@@ -218,7 +345,22 @@ export default function AttendanceShareView() {
     return () => {
       cancelled = true;
     };
-  }, [data, customMessage, firstImage, quoteStyle, ratio, showMeta, sticker, theme]);
+  }, [
+    character,
+    characterPose,
+    characterSize,
+    customMessage,
+    data,
+    firstImage,
+    mediaFit,
+    mediaPositionX,
+    mediaPositionY,
+    quoteStyle,
+    ratio,
+    showMeta,
+    sticker,
+    theme,
+  ]);
 
   const composeShareText = () => {
     const message = customMessage.trim() || data?.memo?.trim() || "오늘 출석 완료!";
@@ -226,7 +368,20 @@ export default function AttendanceShareView() {
   };
 
   const savePreset = () => {
-    const next: SharePreset = { theme, ratio, quoteStyle, sticker, showMeta, exportScale };
+    const next: SharePreset = {
+      theme,
+      ratio,
+      quoteStyle,
+      sticker,
+      showMeta,
+      mediaFit,
+      mediaPositionX,
+      mediaPositionY,
+      character,
+      characterPose,
+      characterSize,
+      exportScale,
+    };
     localStorage.setItem(PRESET_KEY, JSON.stringify(next));
     alert("커스텀 프리셋을 저장했어요.");
   };
@@ -261,23 +416,80 @@ export default function AttendanceShareView() {
   const saveImage = async () => {
     if (!data) return;
     try {
-      const blob = await renderAttendanceShareCard({
-        date: data.date,
-        didWorkout: data.didWorkout,
-        workoutTypes: data.workoutTypes ?? [],
-        workoutIntensity: data.workoutIntensity ?? null,
-        memo: data.memo ?? null,
-        shareComment: customMessage || data.shareComment || null,
-        mediaUrl: firstImage,
-        nickname: data.authorNickname ?? null,
-        theme,
-        ratio,
-        quoteStyle,
-        sticker,
-        showMeta,
-        cheerCount: data.cheerCount,
-        scale: exportScale,
-      });
+      let blob: Blob;
+      const captureNode = previewCaptureRef.current;
+      if (captureNode) {
+        try {
+          const canvas = await html2canvas(captureNode, {
+            backgroundColor: null,
+            scale: exportScale,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+          });
+          blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((file) => {
+              if (!file) {
+                reject(new Error("이미지 변환에 실패했어요."));
+                return;
+              }
+              resolve(file);
+            }, "image/png");
+          });
+        } catch {
+          blob = await renderAttendanceShareCard({
+            date: data.date,
+            didWorkout: data.didWorkout,
+            workoutTypes: data.workoutTypes ?? [],
+            workoutIntensity: data.workoutIntensity ?? null,
+            memo: data.memo ?? null,
+            shareComment: customMessage || data.shareComment || null,
+            mediaUrl: firstImage,
+            nickname: data.authorNickname ?? null,
+            theme,
+            ratio,
+            quoteStyle,
+            sticker,
+            showMeta,
+            mediaFit,
+            mediaPositionX,
+            mediaPositionY,
+            character,
+            characterPose,
+            characterSize,
+            characterLabel: character === "me" ? (data.authorNickname || "내 캐릭터") : "득근이",
+            watermarkText: "득근득근",
+            cheerCount: data.cheerCount,
+            scale: exportScale,
+          });
+        }
+      } else {
+        blob = await renderAttendanceShareCard({
+          date: data.date,
+          didWorkout: data.didWorkout,
+          workoutTypes: data.workoutTypes ?? [],
+          workoutIntensity: data.workoutIntensity ?? null,
+          memo: data.memo ?? null,
+          shareComment: customMessage || data.shareComment || null,
+          mediaUrl: firstImage,
+          nickname: data.authorNickname ?? null,
+          theme,
+          ratio,
+          quoteStyle,
+          sticker,
+          showMeta,
+          mediaFit,
+          mediaPositionX,
+          mediaPositionY,
+          character,
+          characterPose,
+          characterSize,
+          characterLabel: character === "me" ? (data.authorNickname || "내 캐릭터") : "득근이",
+          watermarkText: "득근득근",
+          cheerCount: data.cheerCount,
+          scale: exportScale,
+        });
+      }
       const fileUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = fileUrl;
@@ -363,11 +575,48 @@ export default function AttendanceShareView() {
 
         <div className="share-grid">
           <div className="share-panel" aria-label="share preview panel">
-            <div className={`share-preview ratio-${ratio}`}>
-              {firstImage && <img src={firstImage} alt="attendance" className="share-media" />}
+            <div ref={previewCaptureRef} className={`share-preview ratio-${ratio}`}>
+              {firstImage && (
+                <img
+                  src={firstImage}
+                  alt="attendance"
+                  className="share-media"
+                  style={{
+                    objectFit: mediaFit,
+                    objectPosition: `${mediaPositionX}% ${mediaPositionY}%`,
+                  }}
+                />
+              )}
               <div className="share-overlay" />
-              <div className="share-logo">MUSCLEUP</div>
+              <div className="share-logo">득근득근</div>
               {sticker && <div className="share-sticker">{sticker}</div>}
+              {character !== "none" && (
+                <div
+                  className={`share-character ${character === "deukgeun" ? "deukgeun" : "me"} pose-${characterPose}`}
+                  style={{ transform: `scale(${characterSize})` }}
+                >
+                  <div className="share-character-avatar">
+                    {character === "deukgeun" ? (
+                      <DeukgeunPoseAvatar pose={characterPose} />
+                    ) : myCharacter ? (
+                      <AvatarRenderer
+                        avatarSeed={myCharacter.avatarSeed}
+                        growthParams={myCharacter.growthParams ?? defaultGrowthParams}
+                        tier={myCharacter.tier}
+                        stage={myCharacter.evolutionStage}
+                        gender={myCharacter.gender}
+                        size={54}
+                      />
+                    ) : (
+                      data.authorNickname?.[0] || "나"
+                    )}
+                  </div>
+                  <div className="share-character-meta">
+                    <strong>{character === "deukgeun" ? "득근이" : "내 캐릭터"}</strong>
+                    <span>{activePose.emoji} {activePose.label} 포즈</span>
+                  </div>
+                </div>
+              )}
 
               {ratio === "story" && (
                 <>
@@ -391,7 +640,7 @@ export default function AttendanceShareView() {
                 <p className={`share-quote quote-${quoteStyle}`}>{customMessage || data.shareComment || data.memo || "오늘 출석 완료!"}</p>
 
                 {showMeta && (
-                  <p className="share-meta">응원 {data.cheerCount} · 신고 {data.reportCount} · MUSCLEUP</p>
+                  <p className="share-meta">응원 {data.cheerCount} · 신고 {data.reportCount} · 득근득근</p>
                 )}
               </div>
             </div>
@@ -403,96 +652,208 @@ export default function AttendanceShareView() {
 
           <div className="share-panel" aria-label="customization controls">
             <div className="control-row">
+              <p className="control-title">UI 모드</p>
+              <div className="choice-wrap">
+                <button className={`choice-btn ${simpleMode ? "active" : ""}`} onClick={() => setSimpleMode(true)}>초간단</button>
+                <button className={`choice-btn ${!simpleMode ? "active" : ""}`} onClick={() => setSimpleMode(false)}>전문가</button>
+              </div>
+            </div>
+
+            <div className="control-row">
               <p className="control-title">Preset</p>
               <div className="choice-wrap">
                 <button className="choice-btn" onClick={savePreset} aria-label="save preset">현재 설정 저장</button>
               </div>
             </div>
 
+            {showAdvancedControls && (
+              <div className="control-row">
+                <p className="control-title">Theme</p>
+                <div className="choice-wrap">
+                  {THEME_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`choice-btn ${theme === option.id ? "active" : ""}`}
+                      onClick={() => setTheme(option.id)}
+                      aria-label={`theme ${option.label}`}
+                      aria-pressed={theme === option.id}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {showAdvancedControls && (
+              <div className="control-row">
+                <p className="control-title">Image Ratio</p>
+                <div className="choice-wrap">
+                  {RATIO_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`choice-btn ${ratio === option.id ? "active" : ""}`}
+                      onClick={() => setRatio(option.id)}
+                      aria-label={`ratio ${option.label}`}
+                      aria-pressed={ratio === option.id}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {showAdvancedControls && (
+              <div className="control-row">
+                <p className="control-title">Quote Style</p>
+                <div className="choice-wrap">
+                  {QUOTE_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`choice-btn ${quoteStyle === option.id ? "active" : ""}`}
+                      onClick={() => setQuoteStyle(option.id)}
+                      aria-label={`quote style ${option.label}`}
+                      aria-pressed={quoteStyle === option.id}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="control-row">
-              <p className="control-title">Theme</p>
+              <p className="control-title">사진 맞춤</p>
               <div className="choice-wrap">
-                {THEME_OPTIONS.map((option) => (
+                {MEDIA_FIT_OPTIONS.map((option) => (
                   <button
                     key={option.id}
-                    className={`choice-btn ${theme === option.id ? "active" : ""}`}
-                    onClick={() => setTheme(option.id)}
-                    aria-label={`theme ${option.label}`}
-                    aria-pressed={theme === option.id}
+                    className={`choice-btn ${mediaFit === option.id ? "active" : ""}`}
+                    onClick={() => setMediaFit(option.id)}
+                    aria-label={`media fit ${option.label}`}
+                    aria-pressed={mediaFit === option.id}
                   >
                     {option.label}
                   </button>
                 ))}
               </div>
+              <div className="range-grid mt-3">
+                <label className="range-label">
+                  좌우 위치 {mediaPositionX}%
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={mediaPositionX}
+                    onChange={(e) => setMediaPositionX(Number(e.target.value))}
+                    disabled={!firstImage || mediaFit !== "cover"}
+                  />
+                </label>
+                <label className="range-label">
+                  상하 위치 {mediaPositionY}%
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={mediaPositionY}
+                    onChange={(e) => setMediaPositionY(Number(e.target.value))}
+                    disabled={!firstImage || mediaFit !== "cover"}
+                  />
+                </label>
+              </div>
+              {!firstImage && <p className="text-xs text-white/60 mt-2">사진이 없어서 위치 조절은 비활성화돼요.</p>}
             </div>
 
             <div className="control-row">
-              <p className="control-title">Image Ratio</p>
+              <p className="control-title">캐릭터</p>
               <div className="choice-wrap">
-                {RATIO_OPTIONS.map((option) => (
+                {CHARACTER_OPTIONS.map((option) => (
                   <button
                     key={option.id}
-                    className={`choice-btn ${ratio === option.id ? "active" : ""}`}
-                    onClick={() => setRatio(option.id)}
-                    aria-label={`ratio ${option.label}`}
-                    aria-pressed={ratio === option.id}
+                    className={`choice-btn ${character === option.id ? "active" : ""}`}
+                    onClick={() => setCharacter(option.id)}
+                    aria-label={`character ${option.label}`}
+                    aria-pressed={character === option.id}
                   >
                     {option.label}
                   </button>
                 ))}
               </div>
+              {character !== "none" && (
+                <>
+                  <div className="choice-wrap mt-2">
+                    {CHARACTER_POSE_OPTIONS.map((pose) => (
+                      <button
+                        key={pose.id}
+                        className={`choice-btn ${characterPose === pose.id ? "active" : ""}`}
+                        onClick={() => setCharacterPose(pose.id)}
+                        aria-label={`pose ${pose.label}`}
+                        aria-pressed={characterPose === pose.id}
+                      >
+                        {pose.emoji} {pose.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="range-grid mt-3">
+                    <label className="range-label">
+                      캐릭터 크기 {characterSize.toFixed(2)}x
+                      <input
+                        type="range"
+                        min={0.65}
+                        max={1.8}
+                        step={0.01}
+                        value={characterSize}
+                        onChange={(e) => setCharacterSize(Number(e.target.value))}
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
+              {character === "me" && !myCharacter && (
+                <p className="text-xs text-white/65 mt-2">
+                  {myCharacterLoading ? "내 캐릭터 정보를 불러오는 중..." : "로그인 상태가 아니면 내 캐릭터를 표시할 수 없어요."}
+                </p>
+              )}
             </div>
 
-            <div className="control-row">
-              <p className="control-title">Quote Style</p>
-              <div className="choice-wrap">
-                {QUOTE_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    className={`choice-btn ${quoteStyle === option.id ? "active" : ""}`}
-                    onClick={() => setQuoteStyle(option.id)}
-                    aria-label={`quote style ${option.label}`}
-                    aria-pressed={quoteStyle === option.id}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+            {showAdvancedControls && (
+              <div className="control-row">
+                <p className="control-title">Sticker</p>
+                <div className="choice-wrap">
+                  {STICKERS.map((item) => (
+                    <button
+                      key={item || "none"}
+                      className={`choice-btn ${sticker === item ? "active" : ""}`}
+                      onClick={() => setSticker(item)}
+                      aria-label={`sticker ${item || "none"}`}
+                      aria-pressed={sticker === item}
+                    >
+                      {item || "None"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="control-row">
-              <p className="control-title">Sticker</p>
-              <div className="choice-wrap">
-                {STICKERS.map((item) => (
-                  <button
-                    key={item || "none"}
-                    className={`choice-btn ${sticker === item ? "active" : ""}`}
-                    onClick={() => setSticker(item)}
-                    aria-label={`sticker ${item || "none"}`}
-                    aria-pressed={sticker === item}
-                  >
-                    {item || "None"}
-                  </button>
-                ))}
+            {showAdvancedControls && (
+              <div className="control-row">
+                <p className="control-title">Export Quality</p>
+                <div className="choice-wrap">
+                  {[1, 2, 3].map((scale) => (
+                    <button
+                      key={scale}
+                      className={`choice-btn ${exportScale === scale ? "active" : ""}`}
+                      onClick={() => setExportScale(scale as 1 | 2 | 3)}
+                      aria-label={`export ${scale}x`}
+                      aria-pressed={exportScale === scale}
+                    >
+                      {scale}x PNG
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div className="control-row">
-              <p className="control-title">Export Quality</p>
-              <div className="choice-wrap">
-                {[1, 2, 3].map((scale) => (
-                  <button
-                    key={scale}
-                    className={`choice-btn ${exportScale === scale ? "active" : ""}`}
-                    onClick={() => setExportScale(scale as 1 | 2 | 3)}
-                    aria-label={`export ${scale}x`}
-                    aria-pressed={exportScale === scale}
-                  >
-                    {scale}x PNG
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
 
             <div className="control-row">
               <p className="control-title">Brag Message</p>
@@ -515,15 +876,25 @@ export default function AttendanceShareView() {
               <p className="text-xs text-white/70 mt-2">{customMessage.length}/280</p>
             </div>
 
-            <div className="control-row flex items-center gap-2">
-              <input id="meta-toggle" type="checkbox" checked={showMeta} onChange={(e) => setShowMeta(e.target.checked)} aria-label="toggle meta" />
-              <label htmlFor="meta-toggle" className="text-sm text-white/90">응원/공유 메타 표시</label>
-            </div>
+            {showAdvancedControls && (
+              <div className="control-row flex items-center gap-2">
+                <input id="meta-toggle" type="checkbox" checked={showMeta} onChange={(e) => setShowMeta(e.target.checked)} aria-label="toggle meta" />
+                <label htmlFor="meta-toggle" className="text-sm text-white/90">응원/공유 메타 표시</label>
+              </div>
+            )}
 
-            {previewThumb && (
+            {showAdvancedControls && previewThumb && (
               <div className="control-row">
                 <p className="control-title">Live Thumbnail</p>
                 <img src={previewThumb} alt="share thumbnail preview" className="thumb-preview" />
+              </div>
+            )}
+
+            {simpleMode && (
+              <div className="control-row">
+                <button className="choice-btn" onClick={() => setAdvancedOpen((prev) => !prev)}>
+                  {advancedOpen ? "고급 설정 접기" : "고급 설정 펼치기"}
+                </button>
               </div>
             )}
 
