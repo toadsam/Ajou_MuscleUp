@@ -25,6 +25,7 @@ type InbodyResponse = {
   metrics: Record<string, string>;
   targets: Record<string, string>;
   dailyNutrition: Record<string, string>;
+  structuredReport: Record<string, string>;
   weeklyCheckpoints: Array<Record<string, string>>;
   goalSource?: "AUTO" | "USER" | "USER_CONFIRMED" | string;
   confidence: number;
@@ -165,14 +166,18 @@ export default function InbodyConsult() {
   }, [result]);
 
   const consultationSections = useMemo(() => {
-    return result ? buildConsultationSections(normalizedConsultation) : [];
+    return result ? buildCombinedConsultationSections(result, normalizedConsultation) : [];
   }, [result, normalizedConsultation]);
 
   const summaryLines = useMemo(() => buildKeySummaryLines(normalizedConsultation, consultationSections, 3), [normalizedConsultation, consultationSections]);
+  const consultationSectionMap = useMemo(
+    () => Object.fromEntries(consultationSections.map((section) => [section.key, section])),
+    [consultationSections]
+  );
   const prioritySections = useMemo(
     () =>
       consultationSections.filter((section) =>
-        ["overall", "diagnosis", "issues", "plan", "fourWeeks"].includes(section.key)
+        ["overall", "diagnosis", "priority", "issues", "riskSignals"].includes(section.key)
       ),
     [consultationSections]
   );
@@ -738,6 +743,94 @@ export default function InbodyConsult() {
               </div>
             )}
 
+            {(consultationSectionMap.priority || consultationSectionMap.riskSignals || consultationSectionMap.misconceptions) && (
+              <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="rounded-3xl border border-pink-400/35 bg-gradient-to-br from-pink-500/12 via-slate-900 to-slate-950 p-6 shadow-[0_18px_50px_-30px_rgba(236,72,153,0.55)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-pink-200">Priority Ladder</p>
+                  <h3 className="mt-2 text-xl font-bold text-slate-50">무엇부터 바꿔야 하는지 순서대로 정리</h3>
+                  <div className="mt-4 space-y-3">
+                    {buildSectionDigest(
+                      "priority",
+                      consultationSectionMap.priority?.content || consultationSectionMap.issues?.content || "",
+                      result
+                    ).items.slice(0, 3).map((item, idx) => (
+                      <div key={`priority-ladder-${idx}`} className="flex items-start gap-3 rounded-2xl border border-pink-300/20 bg-slate-950/50 p-4">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pink-300 text-sm font-black text-slate-950">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-pink-200">Priority {idx + 1}</p>
+                          <p className="mt-1 text-sm leading-relaxed text-slate-100">{item}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {consultationSectionMap.riskSignals && (
+                    <div className="rounded-3xl border border-red-400/40 bg-gradient-to-br from-red-500/12 via-red-950/40 to-slate-950 p-6 shadow-[0_18px_50px_-30px_rgba(248,113,113,0.55)]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-red-200">Risk Signals</p>
+                      <h3 className="mt-2 text-xl font-bold text-slate-50">이런 신호가 보이면 방향을 다시 봐야 함</h3>
+                      <div className="mt-4 space-y-3">
+                        {buildSectionDigest("riskSignals", consultationSectionMap.riskSignals.content, result).items.slice(0, 3).map((item, idx) => (
+                          <div key={`risk-signal-${idx}`} className="rounded-2xl border border-red-300/20 bg-slate-950/55 p-4">
+                            <p className="text-sm font-semibold text-red-100">경고 {idx + 1}</p>
+                            <p className="mt-2 text-sm leading-relaxed text-slate-100">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {consultationSectionMap.misconceptions && (
+                    <div className="rounded-3xl border border-fuchsia-400/35 bg-gradient-to-br from-fuchsia-500/10 via-slate-900 to-slate-950 p-6">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200">Beginner Corrections</p>
+                      <h3 className="mt-2 text-xl font-bold text-slate-50">초보자가 가장 자주 오해하는 포인트</h3>
+                      <div className="mt-4 space-y-3">
+                        {buildSectionDigest("misconceptions", consultationSectionMap.misconceptions.content, result).items.slice(0, 3).map((item, idx) => (
+                          <div key={`misconception-${idx}`} className="rounded-2xl border border-fuchsia-300/20 bg-slate-950/55 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-fuchsia-200">오해 정정 {idx + 1}</p>
+                            <p className="mt-2 text-sm leading-relaxed text-slate-100">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {(consultationSectionMap.exercisePlan || consultationSectionMap.nutritionPlan || consultationSectionMap.lifestylePlan || consultationSectionMap.donts) && (
+              <div data-pdf-block="1" className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+                {[
+                  { key: "exercisePlan", title: "운동", subtitle: "운동 계획", section: consultationSectionMap.exercisePlan },
+                  { key: "nutritionPlan", title: "식단", subtitle: "식단 계획", section: consultationSectionMap.nutritionPlan },
+                  { key: "lifestylePlan", title: "생활", subtitle: "생활습관 계획", section: consultationSectionMap.lifestylePlan },
+                  { key: "donts", title: "금지", subtitle: "하지 말아야 할 것", section: consultationSectionMap.donts },
+                ]
+                  .filter((item) => item.section)
+                  .map((item) => {
+                    const visual = sectionVisual(item.key);
+                    const digest = buildSectionDigest(item.key, item.section?.content || "", result);
+                    return (
+                      <div key={`detail-${item.key}`} className={`rounded-3xl border p-5 ${visual.cardClass}`}>
+                        <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${visual.titleClass}`}>{item.title}</p>
+                        <h3 className="mt-2 text-lg font-bold text-slate-50">{item.subtitle}</h3>
+                        <p className="mt-3 text-sm font-medium leading-relaxed text-slate-100">{digest.summary}</p>
+                        <div className="mt-4 space-y-2">
+                          {digest.items.slice(0, 3).map((line, idx) => (
+                            <div key={`detail-line-${item.key}-${idx}`} className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 text-sm leading-relaxed text-slate-100">
+                              {line}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
             <div data-pdf-block="1" className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5">
               <h3 className="text-sm font-semibold text-amber-100">입력값 재확인 (핵심 4개)</h3>
               <p className="mt-1 text-xs text-amber-50">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
@@ -980,8 +1073,22 @@ function sectionHelper(key: string) {
       return "\ud604\uc7ac \ubab8\uc5d0\uc11c \uc720\uc9c0\ud560 \ub9cc\ud55c \uc7a5\uc810\ub9cc \ucd94\ub824\uc11c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.";
     case "issues":
       return "\uac00\uc7a5 \uba3c\uc800 \uc190\ubd10\uc57c \ud560 \ubb38\uc81c\ub97c \uc6b0\uc120\uc21c\uc704\ub85c \uc815\ub9ac\ud569\ub2c8\ub2e4.";
+    case "priority":
+      return "\ubb34\uc5c7\ubd80\ud130 \uc190\ub300\uc57c \ud558\ub294\uc9c0 \uc21c\uc11c\ub97c \uc9da\uc5b4\uc8fc\ub294 \uad6c\uac04\uc785\ub2c8\ub2e4.";
     case "plan":
       return "\uc6b4\ub3d9, \uc2dd\ub2e8, \uc0dd\ud65c\uc2b5\uad00\uc744 \ubc14\ub85c \uc2e4\ud589\ud560 \uc218 \uc788\uac8c \uc815\ub9ac\ud569\ub2c8\ub2e4.";
+    case "exercisePlan":
+      return "\uc6b4\ub3d9\uc5d0\uc11c \ub2f9\uc7a5 \uc2dc\uc791\ud560 \ud575\uc2ec \ub8e8\ud2f4\uc744 \uc694\uc57d\ud574 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.";
+    case "nutritionPlan":
+      return "\uc2dd\ub2e8\uc5d0\uc11c \uac00\uc7a5 \uba3c\uc800 \uc7a1\uc544\uc57c \ud560 \uc2e4\ud589 \ud3ec\uc778\ud2b8\ub97c \uc815\ub9ac\ud569\ub2c8\ub2e4.";
+    case "lifestylePlan":
+      return "\uc218\uba74, \ud68c\ubcf5, \ud65c\ub3d9\ub7c9 \uac19\uc740 \uc0dd\ud65c\uc2b5\uad00 \uc870\uc815 \ud3ec\uc778\ud2b8\ub97c \ubaa8\uc544\uc11c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.";
+    case "riskSignals":
+      return "\ubb34\ub9ac\ud558\uac70\ub098 \ubc29\ud5a5\uc744 \uc798\ubabb \uc7a1\uc744 \ub54c \ub098\uc624\ub294 \uacbd\uace0 \uc2e0\ud638\ub97c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.";
+    case "misconceptions":
+      return "\ucd08\ubcf4\uc790\uac00 \ud5f7\uac08\ub9ac\uae30 \uc26c\uc6b4 \ud574\uc11d \uc2e4\uc218\ub97c \uba3c\uc800 \uc9da\uc5b4\uc90d\ub2c8\ub2e4.";
+    case "donts":
+      return "\ud6a8\uacfc\ub97c \ub5a8\uc5b4\ub728\ub9ac\uac70\ub098 \uba38\ub9ac\ub97c \ud5f7\uac08\ub9ac\uac8c \ud558\ub294 \uae08\uc9c0 \uc0ac\ud56d\uc744 \uc815\ub9ac\ud569\ub2c8\ub2e4.";
     case "fourWeeks":
       return "\uc55e\uc73c\ub85c 4\uc8fc \ub3d9\uc548 \uc5b4\ub5bb\uac8c \uc6c0\uc9c1\uc77c\uc9c0 \uc8fc\ucc28\ubcc4\ub85c \uc548\ub0b4\ud569\ub2c8\ub2e4.";
     case "nextCheck":
@@ -1024,8 +1131,22 @@ function sectionVisual(key: string) {
       return { tag: "\uac15\uc810", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
     case "issues":
       return { tag: "\uc6b0\uc120", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200", badgeClass: "bg-rose-300 text-slate-950" };
+    case "priority":
+      return { tag: "\uc21c\uc11c", cardClass: "border-pink-500/40 bg-pink-500/10", titleClass: "text-pink-200", badgeClass: "bg-pink-300 text-slate-950" };
     case "plan":
       return { tag: "\uc2e4\ud589", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200", badgeClass: "bg-amber-300 text-slate-950" };
+    case "exercisePlan":
+      return { tag: "\uc6b4\ub3d9", cardClass: "border-blue-500/40 bg-blue-500/10", titleClass: "text-blue-200", badgeClass: "bg-blue-300 text-slate-950" };
+    case "nutritionPlan":
+      return { tag: "\uc2dd\ub2e8", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
+    case "lifestylePlan":
+      return { tag: "\uc0dd\ud65c", cardClass: "border-teal-500/40 bg-teal-500/10", titleClass: "text-teal-200", badgeClass: "bg-teal-300 text-slate-950" };
+    case "riskSignals":
+      return { tag: "\uacbd\uace0", cardClass: "border-red-500/40 bg-red-500/10", titleClass: "text-red-200", badgeClass: "bg-red-300 text-slate-950" };
+    case "misconceptions":
+      return { tag: "\uc624\ud574", cardClass: "border-fuchsia-500/40 bg-fuchsia-500/10", titleClass: "text-fuchsia-200", badgeClass: "bg-fuchsia-300 text-slate-950" };
+    case "donts":
+      return { tag: "\uae08\uc9c0", cardClass: "border-red-500/40 bg-red-500/10", titleClass: "text-red-200", badgeClass: "bg-red-300 text-slate-950" };
     case "fourWeeks":
       return { tag: "4\uc8fc", cardClass: "border-lime-500/40 bg-lime-500/10", titleClass: "text-lime-200", badgeClass: "bg-lime-300 text-slate-950" };
     case "nextCheck":
@@ -1189,6 +1310,42 @@ function normalizeConsultation(result: InbodyResponse) {
   return buildFallbackConsultation(result);
 }
 
+function buildCombinedConsultationSections(result: InbodyResponse, normalizedConsultation: string) {
+  const structured = buildStructuredConsultationSections(result);
+  const parsed = buildConsultationSections(normalizedConsultation);
+
+  if (structured.length === 0) {
+    return parsed;
+  }
+
+  const seen = new Set(structured.map((section) => section.key));
+  return [...structured, ...parsed.filter((section) => !seen.has(section.key))];
+}
+
+function buildStructuredConsultationSections(result: InbodyResponse): ConsultationSection[] {
+  const structured = result.structuredReport || {};
+  const order: Array<{ key: string; title: string; sourceKey: string }> = [
+    { key: "overall", title: "한 줄 총평", sourceKey: "overall" },
+    { key: "diagnosis", title: "현재 몸 상태 진단", sourceKey: "diagnosis" },
+    { key: "priority", title: "우선순위", sourceKey: "priority_order" },
+    { key: "issues", title: "부족한 점 / 시급한 문제", sourceKey: "issues" },
+    { key: "exercisePlan", title: "운동 계획", sourceKey: "exercise_plan" },
+    { key: "nutritionPlan", title: "식단 계획", sourceKey: "nutrition_plan" },
+    { key: "lifestylePlan", title: "생활습관 계획", sourceKey: "lifestyle_plan" },
+    { key: "riskSignals", title: "위험 신호", sourceKey: "risk_signals" },
+    { key: "misconceptions", title: "오해하기 쉬운 포인트", sourceKey: "misconceptions" },
+    { key: "donts", title: "하지 말아야 할 것", sourceKey: "donts" },
+  ];
+
+  return order
+    .map((item) => ({
+      key: item.key,
+      title: item.title,
+      content: (structured[item.sourceKey] || "").trim(),
+    }))
+    .filter((item) => item.content.length > 0);
+}
+
 function buildFallbackConsultation(result: InbodyResponse) {
   const weight = result.metrics.weight_kg || "-";
   const muscle = result.metrics.skeletal_muscle_kg || "-";
@@ -1304,6 +1461,15 @@ function sectionFallbackDigest(sectionKey: string, result: InbodyResponse) {
           "\ud55c \ubc88\uc5d0 \ub2e4 \ubc14\uafb8\uae30\ubcf4\ub2e4 \uac00\uc7a5 \ud070 \ubb38\uc81c \ud558\ub098\ubd80\ud130 \ud574\uacb0\ud558\ub294 \ud3b8\uc774 \uc624\ub798 \uac11\ub2c8\ub2e4.",
         ],
       };
+    case "priority":
+      return {
+        summary: "\uc6b0\uc120\uc21c\uc704\uac00 \uc120\uba85\ud574\uc57c \uc2e4\uc81c \uc2e4\ud589\ub825\uc774 \uc0dd\uae41\ub2c8\ub2e4.",
+        items: [
+          "1\uc21c\uc704\ub294 \uac00\uc7a5 \ud070 \ubb38\uc81c\ub97c \uc7a1\ub294 \uac83\uc774\uace0, \ub098\uba38\uc9c0\ub294 \uadf8 \ub2e4\uc74c\uc785\ub2c8\ub2e4.",
+          "\ubaa8\ub4e0 \uac83\uc744 \ub3d9\uc2dc\uc5d0 \ubc14\uafb8\ub824\uace0 \ud558\uba74 \uc624\ud788\ub824 \uc720\uc9c0\uac00 \uc5b4\ub835\uc2b5\ub2c8\ub2e4.",
+          "\uccb4\uc911, \uccb4\uc9c0\ubc29, \uadfc\uc721, \uc2b5\uad00 \uc911 \ubb34\uc5c7\uc744 \uba3c\uc800 \uc190\ub300\uc57c \ud558\ub294\uc9c0 \uad6c\ubd84\ud574\uc57c \ud569\ub2c8\ub2e4.",
+        ],
+      };
     case "plan":
       return {
         summary: `\ud558\ub8e8 \uc12d\ucde8\ub294 \uc57d ${calories}kcal, \ub2e8\ubc31\uc9c8\uc740 ${protein}g \uae30\uc900\uc73c\ub85c \ub9de\ucd94\uba74 \uc2e4\ud589\ud558\uae30 \ud3b8\ud569\ub2c8\ub2e4.`,
@@ -1311,6 +1477,60 @@ function sectionFallbackDigest(sectionKey: string, result: InbodyResponse) {
           "\uc6b4\ub3d9\uc740 \uc8fc 3\ud68c \uc815\ub3c4\uc758 \uae30\ubcf8 \uadfc\ub825\uc6b4\ub3d9\ubd80\ud130 \uace0\uc815\ud558\ub294 \uac83\uc774 \ud604\uc2e4\uc801\uc785\ub2c8\ub2e4.",
           "\uc2dd\ub2e8\uc740 \uc644\ubcbd\ud568\ubcf4\ub2e4 \uacfc\uc2dd\uacfc \uc57c\uc2dd\uc744 \uc904\uc774\uace0 \ub2e8\ubc31\uc9c8\uc744 \uafb8\uc900\ud788 \ucc44\uc6b0\ub294 \ucabd\uc774 \ub354 \uc911\uc694\ud569\ub2c8\ub2e4.",
           "\uc0dd\ud65c\uc2b5\uad00\uc5d0\uc11c\ub294 \uc218\uba74, \uc218\ubd84, \ud65c\ub3d9\ub7c9\uc744 \uba3c\uc800 \uc548\uc815\uc2dc\ud0a4\ub294 \uac83\uc774 \uccb4\uc131\ubd84 \ubcc0\ud654\uc5d0 \uc9c1\uc811\uc801\uc785\ub2c8\ub2e4.",
+        ],
+      };
+    case "exercisePlan":
+      return {
+        summary: "\uc6b4\ub3d9\uc740 \ubcf5\uc7a1\ud55c \uae30\uc220\ubcf4\ub2e4 \uba3c\uc800 \ub8e8\ud2f4\uc744 \uace0\uc815\ud558\ub294 \uac83\uc774 \uc6b0\uc120\uc785\ub2c8\ub2e4.",
+        items: [
+          "\uc8fc 3\ud68c \uae30\ubcf8 \uadfc\ub825\uc6b4\ub3d9\uc744 \uc815\ud574 \ub193\uace0 \ube7c\ubbc0\ub294 \uc8fc\ub97c \uc904\uc774\uc138\uc694.",
+          "\uadfc\ub825\uc6b4\ub3d9\uc740 \uc790\uc138\uc640 \uc9c0\uc18d\uc131\uc744 \uc6b0\uc120\ud558\uace0 \uc720\uc0b0\uc18c\ub294 \ubcf4\uc870 \uac1c\ub150\uc73c\ub85c \ubd99\uc774\ub294 \ud3b8\uc774 \uc88b\uc2b5\ub2c8\ub2e4.",
+          "\ucc98\uc74c\ubd80\ud130 \uacfc\ud55c \ubd84\ud560 \ub8e8\ud2f4\uc744 \uc9dc\uba74 \uc624\ud788\ub824 \uc720\uc9c0\uac00 \uc5b4\ub835\uc2b5\ub2c8\ub2e4.",
+        ],
+      };
+    case "nutritionPlan":
+      return {
+        summary: `\uc2dd\ub2e8\uc740 \uce7c\ub85c\ub9ac ${calories}kcal\uc640 \ub2e8\ubc31\uc9c8 ${protein}g \uae30\uc900\uc744 \uc9c0\uc18d \uac00\ub2a5\ud558\uac8c \ub9de\ucd94\ub294 \uac83\uc774 \ud575\uc2ec\uc785\ub2c8\ub2e4.`,
+        items: [
+          "\ud55c \ubc88\uc5d0 \uc2dd\ub2e8\uc744 \uc644\ubcbd\ud558\uac8c \ubc14\uafb8\uae30\ubcf4\ub2e4 \uacfc\uc2dd, \uc57c\uc2dd, \ub2e8\ubc31\uc9c8 \ubd80\uc871\ubd80\ud130 \uc815\ub9ac\ud558\uc138\uc694.",
+          "\ub2e8\ubc31\uc9c8\uc740 \ub07c\ub2c8\ub9c8\ub2e4 \ub098\ub220 \ucc44\uc6b0\uace0, \ud0c4\uc218\ud654\ubb3c\uc740 \uc6b4\ub3d9\uacfc \ud65c\ub3d9\ub7c9\uc5d0 \ub9de\ucdb0 \uc870\uc808\ud558\ub294 \ud3b8\uc774 \uc88b\uc2b5\ub2c8\ub2e4.",
+          "\uadf9\ub2e8\uc801\uc778 \uc800\uc5f4\ub7c9 \uc2dd\ub2e8\uc740 \uc7a5\uae30\uc801\uc73c\ub85c \uc720\uc9c0\ud558\uae30 \uc5b4\ub835\uc2b5\ub2c8\ub2e4.",
+        ],
+      };
+    case "lifestylePlan":
+      return {
+        summary: "\uc0dd\ud65c\uc2b5\uad00\uc740 \ub208\uc5d0 \uc798 \uc548 \ubcf4\uc774\uc9c0\ub9cc \uccb4\uc131\ubd84 \ubcc0\ud654\ub97c \uac00\ub974\ub294 \uae30\ubcf8 \ud1a0\ub300\uc785\ub2c8\ub2e4.",
+        items: [
+          "\uc218\uba74 \uc2dc\uac04\uacfc \uc218\uba74 \ud488\uc9c8\uc744 \uba3c\uc800 \uc548\uc815\uc2dc\ud0a4\uba74 \ud53c\ub85c \ub204\uc801\uc774 \uc904\uc5b4\ub4ed\ub2c8\ub2e4.",
+          "\ubb3c, \uac78\uc74c \uc218, \ud65c\ub3d9\ub7c9 \uac19\uc740 \uae30\ubcf8 \ud65c\ub3d9 \uc9c0\ud45c\ub97c \ud568\uaed8 \ubcf4\uba74 \ubcc0\ud654\ub97c \uc720\uc9c0\ud558\uae30 \uc27d\uc2b5\ub2c8\ub2e4.",
+          "\uc8fc\ub9d0\ub9c8\ub2e4 \ubb34\ub108\uc9c0\ub294 \ud328\ud134\uc774 \uc788\ub2e4\uba74 \ud3c9\uc77c \ub178\ub825\ub3c4 \ud6a8\uc728\uc774 \ub5a8\uc5b4\uc9d1\ub2c8\ub2e4.",
+        ],
+      };
+    case "riskSignals":
+      return {
+        summary: "\uc704\ud5d8 \uc2e0\ud638\ub294 \ube68\ub9ac \ubc14\ub01c \uac83\ucc98\ub7fc \ubcf4\uc774\ub354\ub77c\ub3c4 \uacb0\uad6d \uc5ed\ud6a8\uacfc\ub97c \ubd80\ub974\uae30 \uc27d\uc2b5\ub2c8\ub2e4.",
+        items: [
+          "\ud53c\ub85c \ub204\uc801, \ud68c\ubcf5 \uc9c0\uc5f0, \ud1b5\uc99d \ubb34\uc2dc\ub294 \uc6b4\ub3d9 \ubc29\ud5a5\uc744 \uc7ac\uc870\uc815\ud574\uc57c \ud560 \uc2e0\ud638\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+          "\uccb4\uc911\uc774 \uae09\uac8c \ubc14\ub00c\ub354\ub77c\ub3c4 \ucee8\ub514\uc158\uc774 \ub098\ube60\uc9c0\uba74 \uc88b\uc740 \ubcc0\ud654\ub85c \ubcf4\uae30 \uc5b4\ub835\uc2b5\ub2c8\ub2e4.",
+          "\ud611\uc624 \uae30\ubc18\uc758 \uc2dd\ub2e8\uc774\ub098 \uac15\ubc15\uc801\uc778 \uc6b4\ub3d9 \ud328\ud134\uc740 \uc624\ub798 \uac00\uc9c0 \ubabb\ud569\ub2c8\ub2e4.",
+        ],
+      };
+    case "misconceptions":
+      return {
+        summary: "\uccb4\uc911 \uc22b\uc790 \ud558\ub098\ub85c \ubaa8\ub4e0 \ubcc0\ud654\ub97c \ud310\ub2e8\ud558\uba74 \ud574\uc11d\uc774 \uc5b4\uae0b\ub098\uae30 \uc27d\uc2b5\ub2c8\ub2e4.",
+        items: [
+          "\uac19\uc740 \uccb4\uc911\uc774\ub77c\ub3c4 \uace8\uaca9\uadfc\ub7c9\uacfc \uccb4\uc9c0\ubc29\ub960\uc5d0 \ub530\ub77c \ubab8 \uc0c1\ud0dc\ub294 \uc804\ud600 \ub2e4\ub974\uac8c \ubcf4\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+          "\ub2e8\uae30\uc5d0 \uccb4\uc911\uc774 \uc904\uc5b4\ub3c4 \uadfc\uc721\uae4c\uc9c0 \ud568\uaed8 \ube60\uc84c\ub2e4\uba74 \uc88b\uc740 \uac10\ub7c9\uc774 \uc544\ub2d0 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+          "\uc778\ubc14\ub514\ub294 \ud55c \ud56d\ubaa9\uc774 \uc544\ub2c8\ub77c \uc5ec\ub7ec \uc218\uce58\ub97c \ud568\uaed8 \ubd10\uc57c \uc758\ubbf8\uac00 \uc0b4\uc544\ub0a9\ub2c8\ub2e4.",
+        ],
+      };
+    case "donts":
+      return {
+        summary: "\ube68\ub9ac \ubc14\ub00c\uaca0\ub2e4\uace0 \ubb34\ub9ac\ud558\ub294 \ubc29\uc2dd\uc740 \uc624\ud788\ub824 \uacb0\uacfc\ub97c \ub9dd\uce60 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+        items: [
+          "\ubb34\ub9ac\ud55c \uc808\uc2dd\uacfc \uacfc\ub3c4\ud55c \uc720\uc0b0\uc18c\ub9cc\uc73c\ub85c \ubc84\ud2f0\ub294 \ubc29\uc2dd\uc740 \ud53c\ud558\ub294 \ud3b8\uc774 \uc88b\uc2b5\ub2c8\ub2e4.",
+          "\uc218\uba74\uc774 \ubb34\ub108\uc9c4 \uc0c1\ud0dc\uc5d0\uc11c \uc6b4\ub3d9\ub7c9\ub9cc \uacc4\uc18d \ub298\ub9ac\ub294 \ubc29\uc2dd\uc740 \ud68c\ubcf5\uc744 \ub354 \ub2a6\ucd25\ub2c8\ub2e4.",
+          "\ubcf4\ucda9\uc81c\ub098 \ub2e8\uae30 \ubcc0\ud654\uc5d0\ub9cc \uc758\uc874\ud558\uace0 \uae30\ubcf8 \uc2dd\uc0ac\uc640 \ub8e8\ud2f4\uc744 \ub193\uce58\uba74 \uc9c0\uc18d\ud558\uae30 \uc5b4\ub835\uc2b5\ub2c8\ub2e4.",
         ],
       };
     case "fourWeeks":

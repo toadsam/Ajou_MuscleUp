@@ -1,0 +1,282 @@
+[
+  {
+    "case_id": "skinny_fat_beginner_male",
+    "label": "마른 비만형 초보 남성",
+    "context": {
+      "gender": "MALE",
+      "age": 25,
+      "height_cm": 175,
+      "goal": "체지방을 줄이면서 보기 좋은 몸 만들기",
+      "goal_intensity": "standard",
+      "notes": "운동은 가끔 하고 식단은 불규칙함"
+    },
+    "metrics": {
+      "height_cm": "175",
+      "weight_kg": "67.8",
+      "skeletal_muscle_kg": "27.4",
+      "body_fat_kg": "15.9",
+      "body_fat_percent": "23.5",
+      "bmi": "22.1",
+      "bmr_kcal": "1498",
+      "visceral_fat_level": "8",
+      "inbody_score": "69"
+    },
+    "expected_direction": {
+      "body_type": "정상 체중처럼 보이지만 근육량이 부족한 마른 비만 경향",
+      "priority_order": [
+        "근력운동 루틴 고정",
+        "단백질과 식사 리듬 안정화",
+        "체중보다 체지방률과 골격근량을 함께 추적"
+      ],
+      "must_mention": [
+        "체중만 보면 괜찮아 보여도 몸 구성은 아쉽다는 점",
+        "급격한 감량보다 체성분 개선이 우선이라는 점"
+      ]
+    }
+  },
+  {
+    "case_id": "obese_beginner_female",
+    "label": "체지방 과다형 초보 여성",
+    "context": {
+      "gender": "FEMALE",
+      "age": 29,
+      "height_cm": 162,
+      "goal": "건강하게 감량하고 싶음",
+      "goal_intensity": "conservative",
+      "notes": "앉아서 일하는 시간이 길고 저녁 폭식이 잦음"
+    },
+    "metrics": {
+      "height_cm": "162",
+      "weight_kg": "68.2",
+      "skeletal_muscle_kg": "21.3",
+      "body_fat_kg": "24.7",
+      "body_fat_percent": "36.2",
+      "bmi": "26.0",
+      "bmr_kcal": "1325",
+      "visceral_fat_level": "12",
+      "inbody_score": "58"
+    },
+    "expected_direction": {
+      "body_type": "체지방 감량 우선형",
+      "priority_order": [
+        "과식과 폭식 패턴 정리",
+        "걷기와 기본 근력운동 병행",
+        "체중 감소보다 지속 가능한 생활 루틴 만들기"
+      ],
+      "must_mention": [
+        "식단 안정화가 운동만큼 중요하다는 점",
+        "무리한 저열량 식단을 경계해야 한다는 점"
+      ]
+    }
+  },
+  {
+    "case_id": "muscle_deficient_female",
+    "label": "근육 부족형 여성",
+    "context": {
+      "gender": "FEMALE",
+      "age": 23,
+      "height_cm": 165,
+      "goal": "탄탄한 몸 만들기",
+      "goal_intensity": "standard",
+      "notes": "유산소만 주로 해왔음"
+    },
+    "metrics": {
+      "height_cm": "165",
+      "weight_kg": "54.2",
+      "skeletal_muscle_kg": "18.9",
+      "body_fat_kg": "14.2",
+      "body_fat_percent": "26.2",
+      "bmi": "19.9",
+      "bmr_kcal": "1195",
+      "visceral_fat_level": "5",
+      "inbody_score": "63"
+    },
+    "expected_direction": {
+      "body_type": "체중은 가벼우나 근육 기반이 약한 형",
+      "priority_order": [
+        "근력운동 비중 확대",
+        "유산소 과다 의존 줄이기",
+        "단백질 섭취 확보"
+      ],
+      "must_mention": [
+        "체중 감량이 먼저가 아니라는 점",
+        "근육 부족이 기초 체력과 체형을 제한한다는 점"
+      ]
+    }
+  },
+  {
+    "case_id": "balanced_muscle_gain_male",
+    "label": "벌크업 준비형 남성",
+    "context": {
+      "gender": "MALE",
+      "age": 27,
+      "height_cm": 178,
+      "goal": "린매스업",
+      "goal_intensity": "standard",
+      "notes": "주 4회 운동 중, 체지방은 크게 늘리고 싶지 않음"
+    },
+    "metrics": {
+      "height_cm": "178",
+      "weight_kg": "72.1",
+      "skeletal_muscle_kg": "34.8",
+      "body_fat_kg": "10.4",
+      "body_fat_percent": "14.4",
+      "bmi": "22.8",
+      "bmr_kcal": "1715",
+      "visceral_fat_level": "5",
+      "inbody_score": "84"
+    },
+    "expected_direction": {
+      "body_type": "근육 증가 여력이 있는 균형형",
+      "priority_order": [
+        "천천히 근육량 증가",
+        "체지방 과상승 방지",
+        "루틴과 회복 관리"
+      ],
+      "must_mention": [
+        "무리한 벌크업보다 완만한 증량이 낫다는 점",
+        "체지방 관리가 같이 가야 한다는 점"
+      ]
+    }
+  },
+  {
+    "case_id": "high_body_fat_male",
+    "label": "체지방 과다 남성",
+    "context": {
+      "gender": "MALE",
+      "age": 33,
+      "height_cm": 174,
+      "goal": "배를 빼고 싶음",
+      "goal_intensity": "standard",
+      "notes": "야근이 많고 술자리가 잦음"
+    },
+    "metrics": {
+      "height_cm": "174",
+      "weight_kg": "83.7",
+      "skeletal_muscle_kg": "30.1",
+      "body_fat_kg": "25.8",
+      "body_fat_percent": "30.8",
+      "bmi": "27.7",
+      "bmr_kcal": "1652",
+      "visceral_fat_level": "14",
+      "inbody_score": "60"
+    },
+    "expected_direction": {
+      "body_type": "감량 우선형, 복부지방 관리 필요",
+      "priority_order": [
+        "음주/야식 패턴 조정",
+        "주간 활동량 증가",
+        "근력 유지하며 체지방 감량"
+      ],
+      "must_mention": [
+        "내장지방과 생활습관 리스크",
+        "근력운동을 빼면 안 된다는 점"
+      ]
+    }
+  },
+  {
+    "case_id": "lean_underweight_male",
+    "label": "저체중 경향 남성",
+    "context": {
+      "gender": "MALE",
+      "age": 21,
+      "height_cm": 181,
+      "goal": "체중과 근육 늘리기",
+      "goal_intensity": "standard",
+      "notes": "식사량이 적고 금방 배부름"
+    },
+    "metrics": {
+      "height_cm": "181",
+      "weight_kg": "59.4",
+      "skeletal_muscle_kg": "26.1",
+      "body_fat_kg": "6.5",
+      "body_fat_percent": "10.9",
+      "bmi": "18.1",
+      "bmr_kcal": "1460",
+      "visceral_fat_level": "3",
+      "inbody_score": "70"
+    },
+    "expected_direction": {
+      "body_type": "체중과 근육량이 모두 부족한 증량 우선형",
+      "priority_order": [
+        "식사량 증가 전략",
+        "기본 근력운동 고정",
+        "체중보다 근육 증가 추적"
+      ],
+      "must_mention": [
+        "감량이 아니라 증량이 우선이라는 점",
+        "먹는 양 부족이 핵심 병목이라는 점"
+      ]
+    }
+  },
+  {
+    "case_id": "older_beginner_recomposition",
+    "label": "30대 후반 재구성형",
+    "context": {
+      "gender": "FEMALE",
+      "age": 38,
+      "height_cm": 160,
+      "goal": "체력 회복과 체형 정리",
+      "goal_intensity": "conservative",
+      "notes": "출산 후 운동을 다시 시작하려는 단계"
+    },
+    "metrics": {
+      "height_cm": "160",
+      "weight_kg": "59.6",
+      "skeletal_muscle_kg": "20.4",
+      "body_fat_kg": "18.8",
+      "body_fat_percent": "31.5",
+      "bmi": "23.3",
+      "bmr_kcal": "1234",
+      "visceral_fat_level": "9",
+      "inbody_score": "61"
+    },
+    "expected_direction": {
+      "body_type": "체력 회복과 체성분 재구성이 동시에 필요한 형",
+      "priority_order": [
+        "생활 루틴 회복",
+        "근력 기반 재시작",
+        "과격하지 않은 감량"
+      ],
+      "must_mention": [
+        "무리한 고강도보다 회복 가능한 루틴이 중요하다는 점",
+        "지속 가능성이 핵심이라는 점"
+      ]
+    }
+  },
+  {
+    "case_id": "sparse_data_case",
+    "label": "수치 누락 케이스",
+    "context": {
+      "gender": "MALE",
+      "age": 31,
+      "height_cm": 177,
+      "goal": "막연히 살 빼고 싶음",
+      "goal_intensity": "standard",
+      "notes": "OCR 오류가 있었을 수 있음"
+    },
+    "metrics": {
+      "height_cm": "177",
+      "weight_kg": "78.2",
+      "skeletal_muscle_kg": "",
+      "body_fat_kg": "",
+      "body_fat_percent": "27.1",
+      "bmi": "25.0",
+      "bmr_kcal": "",
+      "visceral_fat_level": "11",
+      "inbody_score": ""
+    },
+    "expected_direction": {
+      "body_type": "일부 판단 가능하지만 불확실성 표시 필요",
+      "priority_order": [
+        "누락 수치 재확인",
+        "체지방 관리 방향만 우선 제안",
+        "확정적 표현 자제"
+      ],
+      "must_mention": [
+        "해석 한계와 불확실성",
+        "수치 재확인을 권장해야 함"
+      ]
+    }
+  }
+]

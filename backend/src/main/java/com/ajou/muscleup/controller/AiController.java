@@ -289,6 +289,8 @@ public class AiController {
         @SuppressWarnings("unchecked")
         Map<String, String> dailyNutrition = (Map<String, String>) result.getOrDefault("dailyNutrition", Map.of());
         @SuppressWarnings("unchecked")
+        Map<String, String> structuredReport = (Map<String, String>) result.getOrDefault("structuredReport", Map.of());
+        @SuppressWarnings("unchecked")
         List<Map<String, String>> weeklyCheckpoints = (List<Map<String, String>>) result.getOrDefault("weeklyCheckpoints", List.of());
         @SuppressWarnings("unchecked")
         List<String> warnings = (List<String>) result.getOrDefault("warnings", List.of());
@@ -300,6 +302,7 @@ public class AiController {
                 metrics,
                 targets,
                 dailyNutrition,
+                structuredReport,
                 weeklyCheckpoints,
                 goalSource,
                 confidence,

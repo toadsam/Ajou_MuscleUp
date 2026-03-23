@@ -30,6 +30,10 @@ public class AiService {
     private static final List<String> CORE_METRIC_KEYS = List.of(
             "weight_kg", "skeletal_muscle_kg", "body_fat_percent", "visceral_fat_level"
     );
+    private static final List<String> STRUCTURED_REPORT_KEYS = List.of(
+            "overall", "diagnosis", "priority_order", "issues", "exercise_plan",
+            "nutrition_plan", "lifestyle_plan", "risk_signals", "misconceptions", "donts"
+    );
 
     private final ObjectMapper objectMapper;
 
@@ -237,6 +241,7 @@ public class AiService {
                 List.of("target_weight_kg", "target_skeletal_muscle_kg", "target_body_fat_kg", "target_body_fat_percent"));
         Map<String, String> dailyNutrition = objectNodeToStringMap(node.path("daily_nutrition"),
                 List.of("calories_kcal", "carb_g", "protein_g", "fat_g", "carb_ratio_percent", "protein_ratio_percent", "fat_ratio_percent"));
+        Map<String, String> structuredReport = objectNodeToStringMap(node.path("structured_report"), STRUCTURED_REPORT_KEYS);
 
         List<Map<String, String>> weeklyCheckpoints = new ArrayList<>();
         JsonNode checkpointNode = node.path("weekly_checkpoints");
@@ -273,6 +278,7 @@ public class AiService {
         result.put("metrics", metrics);
         result.put("targets", targets);
         result.put("dailyNutrition", dailyNutrition);
+        result.put("structuredReport", structuredReport);
         result.put("weeklyCheckpoints", weeklyCheckpoints);
         result.put("confidence", confidence);
         result.put("warnings", warnings);
@@ -323,6 +329,7 @@ public class AiService {
                 "calories_kcal", "carb_g", "protein_g", "fat_g",
                 "carb_ratio_percent", "protein_ratio_percent", "fat_ratio_percent"
         )));
+        properties.set("structured_report", buildStringMapSchema(STRUCTURED_REPORT_KEYS));
 
         ObjectNode checkpointArray = properties.putObject("weekly_checkpoints");
         checkpointArray.put("type", "array");
@@ -350,6 +357,7 @@ public class AiService {
         required.add("metrics");
         required.add("targets");
         required.add("daily_nutrition");
+        required.add("structured_report");
         required.add("weekly_checkpoints");
         required.add("confidence");
         required.add("warnings");
@@ -463,6 +471,18 @@ public class AiService {
                         "    \"protein_ratio_percent\": \"\",\n" +
                         "    \"fat_ratio_percent\": \"\"\n" +
                         "  },\n" +
+                        "  \"structured_report\": {\n" +
+                        "    \"overall\": \"\",\n" +
+                        "    \"diagnosis\": \"\",\n" +
+                        "    \"priority_order\": \"\",\n" +
+                        "    \"issues\": \"\",\n" +
+                        "    \"exercise_plan\": \"\",\n" +
+                        "    \"nutrition_plan\": \"\",\n" +
+                        "    \"lifestyle_plan\": \"\",\n" +
+                        "    \"risk_signals\": \"\",\n" +
+                        "    \"misconceptions\": \"\",\n" +
+                        "    \"donts\": \"\"\n" +
+                        "  },\n" +
                         "  \"weekly_checkpoints\": [\n" +
                         "    {\n" +
                         "      \"week\": \"1\",\n" +
@@ -534,6 +554,16 @@ public class AiService {
                 "- section 6 must also include at least one '\ud558\uc9c0 \ub9d0\uc544\uc57c \ud560 \uac83' warning for each of \uc6b4\ub3d9, \uc2dd\ub2e8, \uc0dd\ud65c\uc2b5\uad00 when applicable.\n" +
                 "- section 7 must give a realistic week-by-week 4-week action plan. Each week needs a clear focus, a simple success condition, and a warning about common failure points.\n" +
                 "- section 8 must tell the user exactly which numbers to compare next time and what kind of change would count as meaningful progress.\n" +
+                "- structured_report.overall must be a compact premium summary sentence or two.\n" +
+                "- structured_report.diagnosis must summarize the current body tendency in dense but easy Korean.\n" +
+                "- structured_report.priority_order must rank the top priorities in order, with brief reason phrases.\n" +
+                "- structured_report.issues must summarize the biggest current problems in short but clear Korean.\n" +
+                "- structured_report.exercise_plan must summarize the most important exercise actions to start now.\n" +
+                "- structured_report.nutrition_plan must summarize the most important eating actions to start now.\n" +
+                "- structured_report.lifestyle_plan must summarize sleep, recovery, stress, activity, or routine management.\n" +
+                "- structured_report.risk_signals must summarize the main warning signs, overdoing patterns, or things requiring extra caution.\n" +
+                "- structured_report.misconceptions must explain common misreadings the user is likely to make.\n" +
+                "- structured_report.donts must list the most important mistakes or risky approaches to avoid.\n" +
                 "- include concrete numbers whenever possible, but never invent unsupported precision.\n" +
                 "- mention once that this is not medical diagnosis.\n";
     }
@@ -545,6 +575,8 @@ public class AiService {
         Map<String, String> targets = new LinkedHashMap<>((Map<String, String>) result.getOrDefault("targets", Map.of()));
         @SuppressWarnings("unchecked")
         Map<String, String> dailyNutrition = new LinkedHashMap<>((Map<String, String>) result.getOrDefault("dailyNutrition", Map.of()));
+        @SuppressWarnings("unchecked")
+        Map<String, String> structuredReport = new LinkedHashMap<>((Map<String, String>) result.getOrDefault("structuredReport", Map.of()));
         @SuppressWarnings("unchecked")
         List<Map<String, String>> weeklyCheckpoints = new ArrayList<>((List<Map<String, String>>) result.getOrDefault("weeklyCheckpoints", List.of()));
         @SuppressWarnings("unchecked")
@@ -564,6 +596,7 @@ public class AiService {
         applyDerivedMetrics(metrics, warnings);
         normalizeTargetNumbers(targets);
         normalizeNutritionNumbers(dailyNutrition);
+        structuredReport = normalizeStructuredReport(structuredReport, metrics, dailyNutrition);
         weeklyCheckpoints = normalizeWeeklyCheckpoints(weeklyCheckpoints, metrics, targets);
 
         int audited = qualityScore(metrics, weeklyCheckpoints);
@@ -579,9 +612,41 @@ public class AiService {
         normalized.put("metrics", metrics);
         normalized.put("targets", targets);
         normalized.put("dailyNutrition", dailyNutrition);
+        normalized.put("structuredReport", structuredReport);
         normalized.put("weeklyCheckpoints", weeklyCheckpoints);
         normalized.put("warnings", dedupeWarnings(warnings));
         normalized.put("confidence", finalConfidence);
+        return normalized;
+    }
+
+    private Map<String, String> normalizeStructuredReport(
+            Map<String, String> raw,
+            Map<String, String> metrics,
+            Map<String, String> dailyNutrition
+    ) {
+        Map<String, String> normalized = new LinkedHashMap<>();
+        for (String key : STRUCTURED_REPORT_KEYS) {
+            normalized.put(key, sanitizeMarkdown(raw.getOrDefault(key, "")).trim());
+        }
+
+        if (normalized.values().stream().allMatch(String::isBlank)) {
+            String weight = metrics.getOrDefault("weight_kg", "-");
+            String muscle = metrics.getOrDefault("skeletal_muscle_kg", "-");
+            String bodyFat = metrics.getOrDefault("body_fat_percent", "-");
+            String calories = dailyNutrition.getOrDefault("calories_kcal", "-");
+            String protein = dailyNutrition.getOrDefault("protein_g", "-");
+            normalized.put("overall", "현재 체중 " + weight + "kg, 골격근량 " + muscle + "kg, 체지방률 " + bodyFat + "%를 함께 보는 해석이 우선입니다.");
+            normalized.put("diagnosis", "체중만 보기보다 근육과 체지방 균형을 같이 보면서 현재 몸 구성의 방향을 판단해야 합니다.");
+            normalized.put("priority_order", "1) 가장 큰 문제부터 해결 2) 체지방과 근육량을 함께 점검 3) 체중 숫자만 보지 않기");
+            normalized.put("issues", "단기 체중 변화에만 매달리기보다 현재 몸 구성의 핵심 문제를 먼저 구분하는 것이 중요합니다.");
+            normalized.put("exercise_plan", "주 3회 이상 기본 근력운동을 고정하고, 무리한 강도 상승보다 루틴 지속을 우선하는 쪽이 현실적입니다.");
+            normalized.put("nutrition_plan", "하루 섭취는 약 " + calories + "kcal, 단백질은 " + protein + "g 기준으로 맞추고 과식과 야식을 먼저 줄이는 편이 좋습니다.");
+            normalized.put("lifestyle_plan", "수면, 수분, 활동량, 회복 리듬을 먼저 안정시키는 것이 체성분 변화에 직접적으로 연결됩니다.");
+            normalized.put("risk_signals", "과도한 감량 속도, 수면 부족, 피로 누적, 통증 무시는 결과를 망칠 수 있는 대표 신호입니다.");
+            normalized.put("misconceptions", "체중이 줄었다고 항상 좋은 변화는 아니며, 같은 체중이라도 근육과 체지방 비율에 따라 몸 상태는 크게 달라질 수 있습니다.");
+            normalized.put("donts", "무리한 감량, 과도한 운동량 증가, 수면 부족 상태에서의 억지 진행은 피하는 편이 좋습니다.");
+        }
+
         return normalized;
     }
 

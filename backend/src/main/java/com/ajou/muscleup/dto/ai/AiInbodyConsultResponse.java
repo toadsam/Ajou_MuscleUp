@@ -13,6 +13,7 @@ public class AiInbodyConsultResponse {
     private Map<String, String> metrics;
     private Map<String, String> targets;
     private Map<String, String> dailyNutrition;
+    private Map<String, String> structuredReport;
     private List<Map<String, String>> weeklyCheckpoints;
     private String goalSource;
     private int confidence;
