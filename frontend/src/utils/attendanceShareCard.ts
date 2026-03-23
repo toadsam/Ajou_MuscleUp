@@ -28,6 +28,8 @@ type ShareCardInput = {
   characterLabel?: string | null;
   characterSize?: number;
   watermarkText?: string;
+  showTitle?: boolean;
+  showSubtitle?: boolean;
   scale?: number;
 };
 
@@ -250,6 +252,8 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
       const mediaPosX = clamp(input.mediaPositionX ?? 50, 0, 100);
       const mediaPosY = clamp(input.mediaPositionY ?? 50, 0, 100);
       const watermarkText = (input.watermarkText || "DEUKGEUN").trim() || "DEUKGEUN";
+      const showTitle = input.showTitle ?? true;
+      const showSubtitle = input.showSubtitle ?? true;
 
       const canvas = document.createElement("canvas");
       canvas.width = width * scale;
@@ -321,15 +325,19 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
       }
 
       const headingY = mediaTop + mediaHeight + Math.round(height * 0.09);
-      ctx.fillStyle = "#fff";
-      ctx.font = `800 ${Math.round(width * 0.06)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
-      const heading = input.didWorkout ? "Workout Complete" : "Recovery Day";
-      ctx.fillText(heading, horizontalPad, headingY);
+      if (showTitle) {
+        ctx.fillStyle = "#fff";
+        ctx.font = `800 ${Math.round(width * 0.06)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+        const heading = input.didWorkout ? "Workout Complete" : "Recovery Day";
+        ctx.fillText(heading, horizontalPad, headingY);
+      }
 
-      ctx.font = `500 ${Math.round(width * 0.031)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      const owner = input.nickname?.trim() ? `${input.nickname}'s Log` : "My Daily Log";
-      ctx.fillText(`${owner}  ${input.date}`, horizontalPad, headingY + Math.round(height * 0.04));
+      if (showSubtitle) {
+        ctx.font = `500 ${Math.round(width * 0.031)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        const owner = input.nickname?.trim() ? `${input.nickname}'s Log` : "My Daily Log";
+        ctx.fillText(`${owner}  ${input.date}`, horizontalPad, headingY + Math.round(height * 0.04));
+      }
 
       let tagX = horizontalPad;
       const tagY = headingY + Math.round(height * 0.065);
