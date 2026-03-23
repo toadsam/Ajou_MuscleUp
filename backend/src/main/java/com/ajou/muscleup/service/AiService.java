@@ -152,9 +152,7 @@ public class AiService {
             ArrayNode messages = objectMapper.createArrayNode();
             messages.add(objectMapper.createObjectNode()
                     .put("role", "system")
-                    .put("content",
-                            "You are a fitness coach that builds detailed inbody consultation JSON only. " +
-                                    "Never diagnose medically."));
+                    .put("content", buildInbodySystemPrompt()));
 
             String metricJson = objectMapper.writeValueAsString(metrics == null ? Map.of() : metrics);
             String prompt = "Build inbody coaching from confirmed metrics.\n" +
@@ -165,12 +163,7 @@ public class AiService {
                     "- Age: " + (age == null ? "-" : age) + "\n" +
                     "- Height(cm): " + (heightCm == null ? "-" : heightCm) + "\n" +
                     "Consultation requirements:\n" +
-                    "- Write consultation in Korean.\n" +
-                    "- Include these sections explicitly: current status, goal setting, nutrition, exercise, checkpoint, caution.\n" +
-                    "- For each section, write at least 2 concrete sentences.\n" +
-                    "- Include concrete numbers whenever possible.\n" +
-                    "- consultation length target: at least 1,200 Korean characters.\n" +
-                    "- Mention this is not medical diagnosis.\n" +
+                    buildInbodyConsultationRequirements() +
                     "Goal intensity: " + nz(goalIntensity) + "\n" +
                     "User goal: " + nz(goal) + "\n" +
                     "User notes: " + nz(notes) + "\n" +
@@ -384,10 +377,9 @@ public class AiService {
         ArrayNode messages = objectMapper.createArrayNode();
         messages.add(objectMapper.createObjectNode()
                 .put("role", "system")
-                .put("content",
-                        "You are an InBody report parser and fitness coach. " +
-                                "Return only valid JSON without markdown. " +
-                                "Never provide medical diagnosis. If uncertain, lower confidence and add warnings."));
+                .put("content", buildInbodySystemPrompt() +
+                        " You must also extract OCR values from the uploaded InBody image accurately. " +
+                        " Return only valid JSON without markdown. If a value is unclear, keep it empty and lower confidence."));
 
         ArrayNode userContent = objectMapper.createArrayNode();
         userContent.add(objectMapper.createObjectNode()
@@ -490,20 +482,7 @@ public class AiService {
                         "- If user goal is '-', infer a reasonable default goal from InBody values and clearly explain why.\n" +
                         "- In that case, set targets as AI-recommended values rather than leaving them blank.\n" +
                         "- confidence is integer 0-100.\n" +
-                        "- consultation must be highly detailed and practical for real use.\n" +
-                        "- consultation must be written in Korean and include these explicit sections:\n" +
-                        "  1) current status summary (weight/body-fat/skeletal-muscle/metabolism)\n" +
-                        "  2) goal setting (4-week short-term + 12-week mid-term)\n" +
-                        "  3) daily calories and macro ratio plan (g and %)\n" +
-                        "  4) meal guide (meal examples, snack guidance, dining-out tips)\n" +
-                        "  5) exercise plan (weekly frequency, split, set/rep, cardio intensity/time, progression)\n" +
-                        "  6) recovery and stress/sleep checklist\n" +
-                        "  7) weekly checkpoint metrics and what to verify\n" +
-                        "  8) risk signals and cautions\n" +
-                        "- each section must contain at least 2 concrete sentences.\n" +
-                        "- consultation should include concrete numbers whenever possible.\n" +
-                        "- consultation length target: at least 1,200 Korean characters.\n" +
-                        "- Mention this is not medical diagnosis.\n" +
+                        buildInbodyConsultationRequirements() +
                         "- Personal context for interpretation:\n" +
                         "  - Gender: " + nz(gender) + "\n" +
                         "  - Age: " + (age == null ? "-" : age) + "\n" +
@@ -513,6 +492,50 @@ public class AiService {
                         "- Goal intensity (conservative/standard/aggressive): " + nz(goalIntensity) + "\n" +
                         "- User goal: " + nz(goal) + "\n" +
                         "- User notes: " + nz(notes);
+    }
+
+    private String buildInbodySystemPrompt() {
+        return "You are a senior fitness coach, InBody interpreter, and habit strategist for a paid fitness product. " +
+                "Your output must feel premium, clinically careful, commercially useful, and actionable for real users. " +
+                "Return only valid JSON that matches the requested schema. " +
+                "Write in Korean for beginners, but keep the logic expert-level. " +
+                "Do not give medical diagnosis. When uncertain, state limits, lower confidence, and add warnings.";
+    }
+
+    private String buildInbodyConsultationRequirements() {
+        return "- consultation must be written in Korean and must read like a premium paid report, not a short summary.\n" +
+                "- consultation must be highly detailed, concrete, and useful enough that a paying user would feel it was worth the price.\n" +
+                "- target length: at least 2,800 Korean characters unless input data is extremely sparse.\n" +
+                "- do not just list numbers; interpret each important metric in plain Korean and explain what it means in real life.\n" +
+                "- explain the logic behind conclusions. For every major judgment, mention which metric combination supports it.\n" +
+                "- be honest and direct. Do not sugarcoat low muscle, high body fat, weak recovery, or unrealistic goals.\n" +
+                "- never shame the user. Be factual, calm, specific, and evidence-based.\n" +
+                "- do not give medical diagnosis. Use wording such as '\uacbd\ud5a5', '\uac00\ub2a5\uc131', '\uc6b0\uc120\uc21c\uc704', '\ucd94\uc815'.\n" +
+                "- explicitly explain what the user should focus on now, what can wait, and what is not the priority yet.\n" +
+                "- include what the user should avoid, not only what the user should do.\n" +
+                "- include likely beginner misunderstandings if relevant, for example why weight alone is misleading.\n" +
+                "- when age, gender, height, body fat, muscle, BMI, BMR, or visceral fat are available, use them together rather than interpreting one metric in isolation.\n" +
+                "- if some inputs are missing, say which interpretations are less certain and adapt the depth honestly rather than pretending certainty.\n" +
+                "- include these explicit sections in this exact order using Korean section titles:\n" +
+                "  1) \ud55c \uc904 \ucd1d\ud3c9\n" +
+                "  2) \ud604\uc7ac \ubab8 \uc0c1\ud0dc \uc9c4\ub2e8\n" +
+                "  3) \ud56d\ubaa9\ubcc4 \ud574\uc11d\n" +
+                "  4) \uc88b\uc740 \uc810\n" +
+                "  5) \ubd80\uc871\ud55c \uc810 / \uac00\uc7a5 \uc2dc\uae09\ud55c \ubb38\uc81c\n" +
+                "  6) \uc5b4\ub5bb\uac8c \ud574\uc57c \ud558\ub294\uc9c0\n" +
+                "  7) 4\uc8fc \ud589\ub3d9 \uac00\uc774\ub4dc\n" +
+                "  8) \ub2e4\uc74c \uc778\ubc14\ub514 \ub54c \ud655\uc778\ud560 \ud3ec\uc778\ud2b8\n" +
+                "- section 1 must summarize the user's body state in one sharp sentence.\n" +
+                "- section 2 must classify the current body tendency clearly, such as muscle-deficient, fat-loss-priority, skinny-fat tendency, balanced, or muscle-building-ready.\n" +
+                "- section 3 must explain each meaningful metric with: what it means, what the current value suggests, why it matters, and how it connects to other metrics.\n" +
+                "- section 4 must mention only genuine strengths supported by the data, not empty compliments.\n" +
+                "- section 5 must rank the most urgent issues in priority order and explain why that order matters.\n" +
+                "- section 6 must be split into \uc6b4\ub3d9, \uc2dd\ub2e8, \uc0dd\ud65c\uc2b5\uad00. Each part must include concrete actions, realistic numbers, and beginner-friendly reasoning.\n" +
+                "- section 6 must also include at least one '\ud558\uc9c0 \ub9d0\uc544\uc57c \ud560 \uac83' warning for each of \uc6b4\ub3d9, \uc2dd\ub2e8, \uc0dd\ud65c\uc2b5\uad00 when applicable.\n" +
+                "- section 7 must give a realistic week-by-week 4-week action plan. Each week needs a clear focus, a simple success condition, and a warning about common failure points.\n" +
+                "- section 8 must tell the user exactly which numbers to compare next time and what kind of change would count as meaningful progress.\n" +
+                "- include concrete numbers whenever possible, but never invent unsupported precision.\n" +
+                "- mention once that this is not medical diagnosis.\n";
     }
 
     private Map<String, Object> normalizeInbodyResult(Map<String, Object> result) {

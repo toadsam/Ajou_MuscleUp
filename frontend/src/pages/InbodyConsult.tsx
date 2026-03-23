@@ -61,13 +61,15 @@ const goalIntensityOptions = [
   { value: "aggressive", label: "공격적" },
 ] as const;
 
-const sectionRules: Array<{ key: string; title: string; keywords: string[] }> = [
-  { key: "current", title: "현재 상태", keywords: ["현재", "요약", "분석", "체성", "상태"] },
-  { key: "goal", title: "목표 설정", keywords: ["목표", "감량", "증량", "12주", "4주"] },
-  { key: "nutrition", title: "식단/영양", keywords: ["식단", "영양", "탄수", "단백", "지방", "칼로리", "섭취"] },
-  { key: "exercise", title: "운동 계획", keywords: ["운동", "루틴", "유산소", "근력", "세트", "반복"] },
-  { key: "checkpoint", title: "체크포인트", keywords: ["체크", "주차", "측정", "점검"] },
-  { key: "caution", title: "주의사항", keywords: ["주의", "경고", "리스크", "위험", "통증", "어지럼"] },
+const consultationSectionRules: Array<{ key: string; title: string; keywords: string[] }> = [
+  { key: "overall", title: "한 줄 총평", keywords: ["한줄총평", "총평", "요약결론", "overall"] },
+  { key: "diagnosis", title: "현재 몸 상태 진단", keywords: ["현재몸상태진단", "현재몸상태", "상태진단", "진단", "currentstatus"] },
+  { key: "metrics", title: "항목별 해석", keywords: ["항목별해석", "수치해석", "지표해석", "metrics"] },
+  { key: "strengths", title: "좋은 점", keywords: ["좋은점", "강점", "strengths"] },
+  { key: "issues", title: "부족한 점 / 시급한 문제", keywords: ["부족한점", "시급한문제", "문제점", "우선순위", "issues"] },
+  { key: "plan", title: "어떻게 해야 하는지", keywords: ["어떻게해야하는지", "실행계획", "운동", "식단", "생활습관", "plan"] },
+  { key: "fourWeeks", title: "4주 행동 가이드", keywords: ["4주행동가이드", "4주가이드", "4주계획", "4week"] },
+  { key: "nextCheck", title: "다음 인바디 체크 포인트", keywords: ["다음인바디", "체크포인트", "다음측정", "nextcheck"] },
 ];
 
 const nutritionColors = ["#38bdf8", "#22c55e", "#f59e0b"];
@@ -167,6 +169,13 @@ export default function InbodyConsult() {
   }, [result, normalizedConsultation]);
 
   const summaryLines = useMemo(() => buildKeySummaryLines(normalizedConsultation, consultationSections, 3), [normalizedConsultation, consultationSections]);
+  const prioritySections = useMemo(
+    () =>
+      consultationSections.filter((section) =>
+        ["overall", "diagnosis", "issues", "plan", "fourWeeks"].includes(section.key)
+      ),
+    [consultationSections]
+  );
   const beginnerHighlights = useMemo(() => (result ? buildBeginnerHighlights(result) : []), [result]);
   const actionChecklist = useMemo(() => (result ? buildActionChecklist(result) : []), [result]);
   const metricInsightCards = useMemo(
@@ -704,6 +713,31 @@ export default function InbodyConsult() {
               </div>
             </div>
 
+            {prioritySections.length > 0 && (
+              <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-2">
+                {prioritySections.map((section) => {
+                  const visual = sectionVisual(section.key);
+                  const digest = buildSectionDigest(section.key, section.content, result);
+                  return (
+                    <div key={`priority-${section.key}`} className={`rounded-2xl border p-5 ${visual.cardClass}`}>
+                      <p className={`text-sm font-semibold ${visual.titleClass}`}>[{visual.tag}] {section.title}</p>
+                      <p className="mt-3 text-base font-semibold leading-relaxed text-slate-50">{digest.summary}</p>
+                      <div className="mt-4 space-y-2">
+                        {digest.items.slice(0, 3).map((item, idx) => (
+                          <div key={`priority-item-${section.key}-${idx}`} className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/35 p-3">
+                            <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${visual.badgeClass}`}>
+                              {idx + 1}
+                            </div>
+                            <p className="text-sm leading-relaxed text-slate-100">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <div data-pdf-block="1" className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5">
               <h3 className="text-sm font-semibold text-amber-100">입력값 재확인 (핵심 4개)</h3>
               <p className="mt-1 text-xs text-amber-50">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
@@ -936,20 +970,36 @@ function goalSourceLabel(source?: string) {
 
 function sectionHelper(key: string) {
   switch (key) {
+    case "overall":
+      return "\ubd84\uc11d \uc804\uccb4\ub97c \ud55c \ubb38\uc7a5\uc73c\ub85c \uba3c\uc800 \uc774\ud574\ud558\ub294 \uad6c\uac04\uc785\ub2c8\ub2e4.";
+    case "diagnosis":
+      return "\uc9c0\uae08 \ubab8 \uc0c1\ud0dc\uac00 \uc5b4\ub5a4 \uacbd\ud5a5\uc778\uc9c0 \ub0c9\uc815\ud558\uac8c \uc77d\ub294 \uad6c\uac04\uc785\ub2c8\ub2e4.";
+    case "metrics":
+      return "\uac01 \uc218\uce58\uac00 \ubb34\uc5c7\uc744 \ub73b\ud558\ub294\uc9c0 \uc0ac\ub78c\ub9d0\ub85c \ud480\uc5b4 \uc124\uba85\ud569\ub2c8\ub2e4.";
+    case "strengths":
+      return "\ud604\uc7ac \ubab8\uc5d0\uc11c \uc720\uc9c0\ud560 \ub9cc\ud55c \uc7a5\uc810\ub9cc \ucd94\ub824\uc11c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.";
+    case "issues":
+      return "\uac00\uc7a5 \uba3c\uc800 \uc190\ubd10\uc57c \ud560 \ubb38\uc81c\ub97c \uc6b0\uc120\uc21c\uc704\ub85c \uc815\ub9ac\ud569\ub2c8\ub2e4.";
+    case "plan":
+      return "\uc6b4\ub3d9, \uc2dd\ub2e8, \uc0dd\ud65c\uc2b5\uad00\uc744 \ubc14\ub85c \uc2e4\ud589\ud560 \uc218 \uc788\uac8c \uc815\ub9ac\ud569\ub2c8\ub2e4.";
+    case "fourWeeks":
+      return "\uc55e\uc73c\ub85c 4\uc8fc \ub3d9\uc548 \uc5b4\ub5bb\uac8c \uc6c0\uc9c1\uc77c\uc9c0 \uc8fc\ucc28\ubcc4\ub85c \uc548\ub0b4\ud569\ub2c8\ub2e4.";
+    case "nextCheck":
+      return "\ub2e4\uc74c \uce21\uc815 \ub54c \uc5b4\ub5a4 \uc218\uce58\ub97c \uc911\uc810\uc801\uc73c\ub85c \ubcfc\uc9c0 \uc815\ub9ac\ud569\ub2c8\ub2e4.";
     case "current":
-      return "현재 체형과 건강 상태를 쉬운 말로 풀어 읽는 구간입니다.";
+      return "\ud604\uc7ac \uccb4\ud615\uacfc \uac74\uac15 \uc0c1\ud0dc\ub97c \uc26c\uc6b4 \ub9d0\ub85c \ud480\uc5b4 \uc77d\ub294 \uad6c\uac04\uc785\ub2c8\ub2e4.";
     case "goal":
-      return "몇 주 동안 어떤 수치를 어디까지 바꾸는지 보는 구간입니다.";
+      return "\uba87 \uc8fc \ub3d9\uc548 \uc5b4\ub5a4 \uc218\uce58\ub97c \uc5b4\ub514\uae4c\uc9c0 \ubc14\uafb8\ub294\uc9c0 \ubcf4\ub294 \uad6c\uac04\uc785\ub2c8\ub2e4.";
     case "nutrition":
-      return "하루 식사량과 탄단지 균형을 이해하는 구간입니다.";
+      return "\ud558\ub8e8 \uc2dd\uc0ac\ub7c9\uacfc \ud0c4\ub2e8\uc9c0 \uade0\ud615\uc744 \uc774\ud574\ud558\ub294 \uad6c\uac04\uc785\ub2c8\ub2e4.";
     case "exercise":
-      return "실제로 어떤 운동을 어느 정도 할지 보는 구간입니다.";
+      return "\uc2e4\uc81c\ub85c \uc5b4\ub5a4 \uc6b4\ub3d9\uc744 \uc5b4\ub290 \uc815\ub3c4 \ud560\uc9c0 \ubcf4\ub294 \uad6c\uac04\uc785\ub2c8\ub2e4.";
     case "checkpoint":
-      return "주차별로 무엇을 점검해야 하는지 정리한 구간입니다.";
+      return "\uc8fc\ucc28\ubcc4\ub85c \ubb34\uc5c7\uc744 \uc810\uac80\ud574\uc57c \ud558\ub294\uc9c0 \uc815\ub9ac\ud55c \uad6c\uac04\uc785\ub2c8\ub2e4.";
     case "caution":
-      return "무리하지 않기 위해 꼭 확인해야 하는 주의점입니다.";
+      return "\ubb34\ub9ac\ud558\uc9c0 \uc54a\uae30 \uc704\ud574 \uaf2d \ud655\uc778\ud574\uc57c \ud558\ub294 \uc8fc\uc758\uc810\uc785\ub2c8\ub2e4.";
     default:
-      return "상담 내용을 순서대로 읽어 내려가면 됩니다.";
+      return "\uc0c1\ub2f4 \ub0b4\uc6a9\uc744 \uc21c\uc11c\ub300\ub85c \uc77d\uc5b4 \ub0b4\ub824\uac00\uba74 \ub429\ub2c8\ub2e4.";
   }
 }
 
@@ -964,20 +1014,36 @@ function extractCoreMetrics(metrics: Record<string, string>): Record<string, str
 
 function sectionVisual(key: string) {
   switch (key) {
+    case "overall":
+      return { tag: "\ucd1d\ud3c9", cardClass: "border-violet-500/40 bg-violet-500/10", titleClass: "text-violet-200", badgeClass: "bg-violet-300 text-slate-950" };
+    case "diagnosis":
+      return { tag: "\uc9c4\ub2e8", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200", badgeClass: "bg-sky-300 text-slate-950" };
+    case "metrics":
+      return { tag: "\ud574\uc11d", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200", badgeClass: "bg-cyan-300 text-slate-950" };
+    case "strengths":
+      return { tag: "\uac15\uc810", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
+    case "issues":
+      return { tag: "\uc6b0\uc120", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200", badgeClass: "bg-rose-300 text-slate-950" };
+    case "plan":
+      return { tag: "\uc2e4\ud589", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200", badgeClass: "bg-amber-300 text-slate-950" };
+    case "fourWeeks":
+      return { tag: "4\uc8fc", cardClass: "border-lime-500/40 bg-lime-500/10", titleClass: "text-lime-200", badgeClass: "bg-lime-300 text-slate-950" };
+    case "nextCheck":
+      return { tag: "\uccb4\ud06c", cardClass: "border-orange-500/40 bg-orange-500/10", titleClass: "text-orange-200", badgeClass: "bg-orange-300 text-slate-950" };
     case "current":
-      return { tag: "현재", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200", badgeClass: "bg-sky-300 text-slate-950" };
+      return { tag: "\ud604\uc7ac", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200", badgeClass: "bg-sky-300 text-slate-950" };
     case "goal":
-      return { tag: "목표", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200", badgeClass: "bg-cyan-300 text-slate-950" };
+      return { tag: "\ubaa9\ud45c", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200", badgeClass: "bg-cyan-300 text-slate-950" };
     case "nutrition":
-      return { tag: "식단", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
+      return { tag: "\uc2dd\ub2e8", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
     case "exercise":
-      return { tag: "운동", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200", badgeClass: "bg-rose-300 text-slate-950" };
+      return { tag: "\uc6b4\ub3d9", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200", badgeClass: "bg-rose-300 text-slate-950" };
     case "checkpoint":
-      return { tag: "체크", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200", badgeClass: "bg-amber-300 text-slate-950" };
+      return { tag: "\uccb4\ud06c", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200", badgeClass: "bg-amber-300 text-slate-950" };
     case "caution":
-      return { tag: "주의", cardClass: "border-orange-500/40 bg-orange-500/10", titleClass: "text-orange-200", badgeClass: "bg-orange-300 text-slate-950" };
+      return { tag: "\uc8fc\uc758", cardClass: "border-orange-500/40 bg-orange-500/10", titleClass: "text-orange-200", badgeClass: "bg-orange-300 text-slate-950" };
     default:
-      return { tag: "상담", cardClass: "border-slate-600 bg-slate-950", titleClass: "text-slate-200", badgeClass: "bg-slate-300 text-slate-950" };
+      return { tag: "\uc0c1\ub2f4", cardClass: "border-slate-600 bg-slate-950", titleClass: "text-slate-200", badgeClass: "bg-slate-300 text-slate-950" };
   }
 }
 
@@ -1031,9 +1097,9 @@ function buildConsultationSections(text: string): ConsultationSection[] {
     .filter(Boolean);
 
   const bucket = new Map<string, string[]>();
-  sectionRules.forEach((r) => bucket.set(r.key, []));
+  consultationSectionRules.forEach((r) => bucket.set(r.key, []));
 
-  let currentKey = "current";
+  let currentKey = "diagnosis";
   for (const line of lines) {
     const headingKey = detectSectionHeadingKey(line);
     if (headingKey) {
@@ -1043,7 +1109,7 @@ function buildConsultationSections(text: string): ConsultationSection[] {
     bucket.get(currentKey)?.push(line);
   }
 
-  const sections = sectionRules
+  const sections = consultationSectionRules
     .map((rule) => ({ key: rule.key, title: rule.title, content: (bucket.get(rule.key) || []).join("\n") }))
     .filter((s) => s.content.trim().length > 0);
 
@@ -1055,16 +1121,18 @@ function detectSectionHeadingKey(line: string) {
   const normalized = line
     .toLowerCase()
     .replace(/^[\[\(]?[0-9]+[.)\]]?\s*/, "")
-    .replace(/[：:]/g, "")
+    .replace(/[\uFF1A:]/g, "")
     .replace(/\s+/g, "");
 
   const headingMap: Array<{ key: string; aliases: string[] }> = [
-    { key: "current", aliases: ["현재상태", "상태요약", "현재"] },
-    { key: "goal", aliases: ["목표설정", "목표", "목표수정", "목표계획"] },
-    { key: "nutrition", aliases: ["식단영양", "식단/영양", "식단", "영양"] },
-    { key: "exercise", aliases: ["운동계획", "운동루틴", "운동"] },
-    { key: "checkpoint", aliases: ["체크포인트", "체크", "주차체크"] },
-    { key: "caution", aliases: ["주의사항", "주의", "리스크", "위험신호"] },
+    { key: "overall", aliases: ["\ud55c\uc904\ucd1d\ud3c9", "\ucd1d\ud3c9", "\uc694\uc57d\uacb0\ub860"] },
+    { key: "diagnosis", aliases: ["\ud604\uc7ac\ubab8\uc0c1\ud0dc\uc9c4\ub2e8", "\ud604\uc7ac\ubab8\uc0c1\ud0dc", "\uc0c1\ud0dc\uc9c4\ub2e8", "\uc9c4\ub2e8"] },
+    { key: "metrics", aliases: ["\ud56d\ubaa9\ubcc4\ud574\uc11d", "\uc218\uce58\ud574\uc11d", "\uc9c0\ud45c\ud574\uc11d"] },
+    { key: "strengths", aliases: ["\uc88b\uc740\uc810", "\uac15\uc810"] },
+    { key: "issues", aliases: ["\ubd80\uc871\ud55c\uc810/\uc2dc\uae09\ud55c\ubb38\uc81c", "\ubd80\uc871\ud55c\uc810", "\uc2dc\uae09\ud55c\ubb38\uc81c", "\ubb38\uc81c\uc810", "\uc6b0\uc120\uc21c\uc704"] },
+    { key: "plan", aliases: ["\uc5b4\ub5bb\uac8c\ud574\uc57c\ud558\ub294\uc9c0", "\uc2e4\ud589\uacc4\ud68d", "\uc6b4\ub3d9", "\uc2dd\ub2e8", "\uc0dd\ud65c\uc2b5\uad00"] },
+    { key: "fourWeeks", aliases: ["4\uc8fc\ud589\ub3d9\uac00\uc774\ub4dc", "4\uc8fc\uac00\uc774\ub4dc", "4\uc8fc\uacc4\ud68d"] },
+    { key: "nextCheck", aliases: ["\ub2e4\uc74c\uc778\ubc14\ub514\uccb4\ud06c\ud3ec\uc778\ud2b8", "\uccb4\ud06c\ud3ec\uc778\ud2b8", "\ub2e4\uc74c\uce21\uc815"] },
   ];
 
   for (const group of headingMap) {
@@ -1194,58 +1262,79 @@ function sectionFallbackDigest(sectionKey: string, result: InbodyResponse) {
   const firstWeek = result.weeklyCheckpoints?.[0];
 
   switch (sectionKey) {
-    case "current":
+    case "overall":
       return {
-        summary: `현재 체중 ${weight}kg, 골격근량 ${muscle}kg, 체지방률 ${bodyFat}%를 기준으로 현재 상태를 이해하면 됩니다.`,
+        summary: `\ud604\uc7ac \uccb4\uc911 ${weight}kg, \uace8\uaca9\uadfc\ub7c9 ${muscle}kg, \uccb4\uc9c0\ubc29\ub960 ${bodyFat}% \uae30\uc900\uc73c\ub85c \ubab8 \uc0c1\ud0dc\ub97c \uba3c\uc800 \uc774\ud574\ud558\uba74 \ub429\ub2c8\ub2e4.`,
         items: [
-          "현재는 체중 숫자 하나보다 체지방과 근육량 균형을 함께 보는 것이 더 중요합니다.",
-          "극단적인 감량보다 체성분을 천천히 개선하는 방향으로 해석하면 이해가 쉽습니다.",
+          "\uc9c0\uae08\uc740 \uccb4\uc911 \uc22b\uc790 \ud558\ub098\ubcf4\ub2e4 \uadfc\uc721\ub7c9\uacfc \uccb4\uc9c0\ubc29 \uade0\ud615\uc744 \uac19\uc774 \ubcf4\ub294 \ud3b8\uc774 \ub354 \uc911\uc694\ud569\ub2c8\ub2e4.",
+          "\uadf9\ub2e8\uc801\uc778 \uac10\ub7c9\ubcf4\ub2e4 \uccb4\uc131\ubd84\uc744 \ucc9c\ucc9c\ud788 \uac1c\uc120\ud558\ub294 \ubc29\ud5a5\uc73c\ub85c \ud574\uc11d\ud558\ub294 \uac83\uc774 \ud604\uc2e4\uc801\uc785\ub2c8\ub2e4.",
         ],
       };
-    case "goal":
+    case "diagnosis":
       return {
-        summary: "목표는 짧은 기간과 중간 기간으로 나눠서 보면 훨씬 부담이 적습니다.",
+        summary: `\ud604\uc7ac \uc218\uce58\uc0c1 \uccb4\uc9c0\ubc29\ub960 ${bodyFat}%\uc640 \uace8\uaca9\uadfc\ub7c9 ${muscle}kg\ub97c \ud568\uaed8 \ubcf4\uba74 \ubab8 \uad6c\uc131\uc758 \ubc29\ud5a5\uc744 \uc77d\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.`,
         items: [
-          "1~4주 목표와 12주 목표를 따로 보면 진행 상황을 확인하기 쉽습니다.",
-          "체중 변화와 함께 체지방, 근육량 변화도 같이 체크하세요.",
+          "\uccb4\uc911\uc774 \uc815\uc0c1\ucc98\ub7fc \ubcf4\uc5ec\ub3c4 \uadfc\uc721\uc774 \ubd80\uc871\ud558\uba74 \uc2e4\uc81c \uccb4\ud615\uc740 \uae30\ub300\ubcf4\ub2e4 \ud0c4\ud0c4\ud558\uc9c0 \uc54a\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+          "\ubc18\ub300\ub85c \uccb4\uc911\uc774 \ub192\uc544\ub3c4 \uadfc\uc721\ub7c9\uc774 \ubc1b\uccd0\uc8fc\uba74 \uac10\ub7c9\ubcf4\ub2e4 \uad6c\uc131 \uc870\uc815\uc774 \uba3c\uc800\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
         ],
       };
-    case "nutrition":
+    case "metrics":
       return {
-        summary: `하루 식단은 약 ${calories}kcal, 단백질은 ${protein}g 기준으로 이해하면 됩니다.`,
+        summary: "\uac01 \uc218\uce58\ub294 \ub530\ub85c \ubcf4\uc9c0 \ub9d0\uace0 \uc11c\ub85c \uc5f0\uacb0\ud574\uc11c \uc77d\uc5b4\uc57c \ud574\uc11d\uc774 \uc815\ud655\ud574\uc9d1\ub2c8\ub2e4.",
         items: [
-          "초보자는 끼니마다 단백질을 나눠 챙기는 것부터 시작하는 편이 쉽습니다.",
-          "탄단지 비율은 완벽함보다 꾸준하게 유지하는 것이 더 중요합니다.",
+          "\uace8\uaca9\uadfc\ub7c9\uc740 \ubab8\uc744 \uc6c0\uc9c1\uc774\ub294 \uadfc\uc721 \uae30\ubc18\uc774 \uc5b4\ub290 \uc815\ub3c4\uc778\uc9c0 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.",
+          "\uccb4\uc9c0\ubc29\ub960\uc740 \uac10\ub7c9 \ud544\uc694\uc131\uacfc \uc2dd\ub2e8 \uad00\ub9ac \uac15\ub3c4\ub97c \ud310\ub2e8\ud558\ub294 \uae30\uc900\uc774 \ub429\ub2c8\ub2e4.",
+          "BMI\ub294 \ucc38\uace0\uc6a9\uc774\uace0, \uc2e4\uc81c \ubab8 \uc0c1\ud0dc\ub294 \uadfc\uc721\uacfc \uc9c0\ubc29 \ube44\uc728\uc744 \uac19\uc774 \ubd10\uc57c \ub354 \uc815\ud655\ud569\ub2c8\ub2e4.",
         ],
       };
-    case "exercise":
+    case "strengths":
       return {
-        summary: "운동은 주 2~4회 정도의 꾸준한 근력운동과 쉬운 유산소부터 시작하면 충분합니다.",
+        summary: "\ud604\uc7ac \uc218\uce58 \uc548\uc5d0\uc11c\ub3c4 \uc720\uc9c0\ud558\uac70\ub098 \uc0b4\ub9b4 \ub9cc\ud55c \uc694\uc18c\ub294 \ubd84\uba85\ud788 \uc788\uc2b5\ub2c8\ub2e4.",
         items: [
-          "처음에는 강도보다 꾸준함과 자세를 우선하세요.",
-          "전신 근력운동과 걷기, 실내 자전거 같은 쉬운 유산소를 함께 가져가세요.",
+          "\ud55c \ud56d\ubaa9\uc774\ub77c\ub3c4 \uc548\uc815\uc801\uc73c\ub85c \uc720\uc9c0\ub418\uace0 \uc788\ub2e4\uba74 \uadf8 \ubd80\ubd84\uc740 \ud604\uc7ac \ub8e8\ud2f4\uc758 \uc7a5\uc810\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+          "\uc88b\uc740 \uc810\uc740 \uacfc\uc7a5\ud558\uc9c0 \uc54a\uace0, \ub2e4\uc74c \ub2e8\uacc4\uc5d0\uc11c \uacc4\uc18d \uac00\uc838\uac08 \uae30\ubc18\uc73c\ub85c \ubcf4\uba74 \ub429\ub2c8\ub2e4.",
         ],
       };
-    case "checkpoint":
+    case "issues":
       return {
-        summary: firstWeek?.focus ? `첫 체크포인트는 '${firstWeek.focus}'입니다.` : "첫 1~2주는 몸이 적응하는 기간으로 보면 됩니다.",
+        summary: "\uac00\uc7a5 \uba3c\uc800 \uace0\ccd0\uc57c \ud560 \ubb38\uc81c\ub97c \uba3c\uc800 \uc7a1\uc544\uc57c \ubcc0\ud654\uac00 \ube68\ub77c\uc9d1\ub2c8\ub2e4.",
         items: [
-          "주 1회 같은 시간에 체중과 컨디션을 기록해 보세요.",
-          "급격한 변화보다 천천히 좋아지는 추세를 확인하는 것이 좋습니다.",
+          "\uadfc\uc721\ub7c9 \ubd80\uc871\uc740 \uccb4\ud615 \ubcc0\ud654 \uc18d\ub3c4\ub97c \ub2a6\ucd94\ub294 \ub300\ud45c \uc6d0\uc778\uc785\ub2c8\ub2e4.",
+          "\uccb4\uc9c0\ubc29\uc774 \ub192\ub2e4\uba74 \uc6b4\ub3d9\ubcf4\ub2e4 \uc2dd\ub2e8 \uc548\uc815\ud654\uac00 \uba3c\uc800 \ud6a8\uacfc\ub97c \ub0b4\ub294 \uacbd\uc6b0\uac00 \ub9ce\uc2b5\ub2c8\ub2e4.",
+          "\ud55c \ubc88\uc5d0 \ub2e4 \ubc14\uafb8\uae30\ubcf4\ub2e4 \uac00\uc7a5 \ud070 \ubb38\uc81c \ud558\ub098\ubd80\ud130 \ud574\uacb0\ud558\ub294 \ud3b8\uc774 \uc624\ub798 \uac11\ub2c8\ub2e4.",
         ],
       };
-    case "caution":
+    case "plan":
       return {
-        summary: "무리한 감량과 과도한 운동보다 지속 가능한 루틴이 더 중요합니다.",
+        summary: `\ud558\ub8e8 \uc12d\ucde8\ub294 \uc57d ${calories}kcal, \ub2e8\ubc31\uc9c8\uc740 ${protein}g \uae30\uc900\uc73c\ub85c \ub9de\ucd94\uba74 \uc2e4\ud589\ud558\uae30 \ud3b8\ud569\ub2c8\ub2e4.`,
         items: [
-          "피로가 크면 강도를 낮추고 수면과 식사를 먼저 점검하세요.",
-          "통증이 있으면 해당 운동을 멈추고 다른 동작으로 대체하세요.",
+          "\uc6b4\ub3d9\uc740 \uc8fc 3\ud68c \uc815\ub3c4\uc758 \uae30\ubcf8 \uadfc\ub825\uc6b4\ub3d9\ubd80\ud130 \uace0\uc815\ud558\ub294 \uac83\uc774 \ud604\uc2e4\uc801\uc785\ub2c8\ub2e4.",
+          "\uc2dd\ub2e8\uc740 \uc644\ubcbd\ud568\ubcf4\ub2e4 \uacfc\uc2dd\uacfc \uc57c\uc2dd\uc744 \uc904\uc774\uace0 \ub2e8\ubc31\uc9c8\uc744 \uafb8\uc900\ud788 \ucc44\uc6b0\ub294 \ucabd\uc774 \ub354 \uc911\uc694\ud569\ub2c8\ub2e4.",
+          "\uc0dd\ud65c\uc2b5\uad00\uc5d0\uc11c\ub294 \uc218\uba74, \uc218\ubd84, \ud65c\ub3d9\ub7c9\uc744 \uba3c\uc800 \uc548\uc815\uc2dc\ud0a4\ub294 \uac83\uc774 \uccb4\uc131\ubd84 \ubcc0\ud654\uc5d0 \uc9c1\uc811\uc801\uc785\ub2c8\ub2e4.",
+        ],
+      };
+    case "fourWeeks":
+      return {
+        summary: firstWeek?.focus ? `\uccab \uc8fc \ud575\uc2ec\uc740 '${firstWeek.focus}'\uc785\ub2c8\ub2e4.` : "\uc55e\uc73c\ub85c 4\uc8fc\ub294 \ub8e8\ud2f4\uc744 \ub9cc\ub4e4\uace0 \ubab8\uc744 \uc801\uc751\uc2dc\ud0a4\ub294 \uae30\uac04\uc73c\ub85c \ubcf4\uba74 \ub429\ub2c8\ub2e4.",
+        items: [
+          "1\uc8fc\ucc28\uc5d0\ub294 \uc6b4\ub3d9 \ud69f\uc218\uc640 \uc2dd\uc0ac \ub9ac\ub4ec\uc744 \uace0\uc815\ud558\ub294 \ub370 \uc9d1\uc911\ud558\uc138\uc694.",
+          "2\uc8fc\ucc28\uc5d0\ub294 \ub2e8\ubc31\uc9c8\uacfc \uc218\uba74 \uc2dc\uac04\uc744 \uc870\uae08 \ub354 \uc548\uc815\uc801\uc73c\ub85c \ub9de\ucd94\uc138\uc694.",
+          "3~4\uc8fc\ucc28\uc5d0\ub294 \uccb4\uc911\ubcf4\ub2e4 \uadfc\uc721\ub7c9\uacfc \uccb4\uc9c0\ubc29\ub960 \ubcc0\ud654\ub97c \ud568\uaed8 \ud655\uc778\ud558\uc138\uc694.",
+        ],
+      };
+    case "nextCheck":
+      return {
+        summary: "\ub2e4\uc74c \uc778\ubc14\ub514\uc5d0\uc11c\ub294 \uccb4\uc911\ubcf4\ub2e4 \uccb4\uc131\ubd84 \ubcc0\ud654\uac00 \ub354 \uc911\uc694\ud569\ub2c8\ub2e4.",
+        items: [
+          "\uace8\uaca9\uadfc\ub7c9\uc774 \uc720\uc9c0\ub418\uac70\ub098 \ub298\uc5c8\ub294\uc9c0 \uba3c\uc800 \ud655\uc778\ud558\uc138\uc694.",
+          "\uccb4\uc9c0\ubc29\ub960\uc774 \uc904\uc5c8\ub294\uc9c0 \ud568\uaed8 \uccb4\ud06c\ud558\uc138\uc694.",
+          "\uac19\uc740 \uccb4\uc911\uc774\ub77c\ub3c4 \ubab8 \uad6c\uc131\uc774 \uc88b\uc544\uc84c\ub294\uc9c0 \ubcf4\ub294 \uc2b5\uad00\uc774 \uc911\uc694\ud569\ub2c8\ub2e4.",
         ],
       };
     default:
       return {
-        summary: "핵심 내용을 먼저 읽고 필요할 때만 원문을 펼쳐서 확인해 주세요.",
-        items: ["이 화면은 초보자도 빠르게 이해할 수 있도록 핵심만 먼저 보여줍니다."],
+        summary: "\ud575\uc2ec \ub0b4\uc6a9\uc744 \uba3c\uc800 \uc77d\uace0 \ud544\uc694\ud560 \ub54c\ub9cc \uc6d0\ubb38\uc744 \ud3bc\uccd0\uc11c \ud655\uc778\ud574 \uc8fc\uc138\uc694.",
+        items: ["\uc774 \ud654\uba74\uc740 \ucd08\ubcf4\uc790\ub3c4 \ube60\ub974\uac8c \uc774\ud574\ud560 \uc218 \uc788\ub3c4\ub85d \ud575\uc2ec\ub9cc \uba3c\uc800 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4."],
       };
   }
 }
