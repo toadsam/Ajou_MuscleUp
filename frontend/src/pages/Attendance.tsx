@@ -128,6 +128,7 @@ export default function Attendance() {
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<RankingItem[]>([]);
   const [mediaRank, setMediaRank] = useState<RankingItem[]>([]);
+  const [mobileStep, setMobileStep] = useState<"record" | "media" | "share">("record");
   const appOrigin = window.location.origin;
   const publicShareOrigin = API_BASE || window.location.origin;
   const appShareLinkForSlug = (slug: string) => `${appOrigin}/attendance/share/${slug}`;
@@ -325,20 +326,6 @@ export default function Attendance() {
     }
   };
 
-  const kakaoShare = async () => {
-    try {
-      setSharing(true);
-      const slug = await ensureShareSlug();
-      const link = publicShareLinkForSlug(slug);
-      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(link)}`, "_blank", "noopener,noreferrer");
-      await reloadMonth();
-    } catch (e: any) {
-      showToast({ type: "error", message: e?.message || "카카오 공유에 실패했어요." });
-    } finally {
-      setSharing(false);
-    }
-  };
-
   const quickShare = async () => {
     try {
       setSharing(true);
@@ -429,6 +416,12 @@ export default function Attendance() {
     const mediaBonus = mediaUrls.length > 0 ? 1 : 0;
     return base + typeBonus + intensityBonus + memoBonus + keywordBonus + mediaBonus + streakBonus(projectedStreak);
   }, [didWorkout, workoutTypes, workoutIntensity, memo, keywordMatches.length, projectedStreak, hasTodayLog, mediaUrls.length]);
+
+  const jumpTo = (id: "att-record" | "att-media" | "att-share") => {
+    setMobileStep(id === "att-record" ? "record" : id === "att-media" ? "media" : "share");
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const titleLabel = `${month.getFullYear()}년 ${String(month.getMonth() + 1).padStart(2, "0")}월`;
 
@@ -608,7 +601,7 @@ export default function Attendance() {
           </div>
         )}
 
-        <div className="attendance-card action-card">
+        <div className={`attendance-card action-card ${mobileStep === "share" ? "has-mobile-save-gap" : ""}`}>
           <div className="action-header">
             <div>
               <h2>오늘의 운동 체크</h2>
@@ -617,6 +610,19 @@ export default function Attendance() {
             <div className={`status-pill ${didWorkout ? "active" : "rest"}`}>{didWorkout ? "운동 완료" : "휴식"}</div>
           </div>
 
+          <div className="attendance-mobile-steps">
+            <button type="button" onClick={() => jumpTo("att-record")} className={`step-btn ${mobileStep === "record" ? "active" : ""}`}>
+              1단계 기록
+            </button>
+            <button type="button" onClick={() => jumpTo("att-media")} className={`step-btn ${mobileStep === "media" ? "active" : ""}`}>
+              2단계 미디어
+            </button>
+            <button type="button" onClick={() => jumpTo("att-share")} className={`step-btn ${mobileStep === "share" ? "active" : ""}`}>
+              3단계 공유
+            </button>
+          </div>
+
+          <div id="att-record" className={`stack-section ${mobileStep !== "record" ? "step-mobile-hidden" : ""}`}>
           <div className="action-row">
             <div className="toggle-group">
               <button onClick={() => setDidWorkout(true)} className={`toggle-btn ${didWorkout ? "selected" : ""}`}>운동했다</button>
@@ -673,6 +679,9 @@ export default function Attendance() {
             </div>
           </div>
 
+          </div>
+
+          <div id="att-media" className={`stack-section ${mobileStep !== "media" ? "step-mobile-hidden" : ""}`}>
           <div className="space-y-3">
             <p className="text-sm text-white/70">사진/영상 첨부 (최대 10개)</p>
             <UploadDropzone
@@ -698,13 +707,16 @@ export default function Attendance() {
             )}
           </div>
 
+          </div>
+
+          <div id="att-share" className={`stack-section ${mobileStep !== "share" ? "step-mobile-hidden" : ""}`}>
           <div className="action-footer">
             <div className="reward-preview">
               <span>예상 EXP</span>
               <strong>{didWorkout ? `+${estimatedExp}` : "+0"}</strong>
               <small>스트릭 + 미디어 보너스 포함</small>
             </div>
-            <button onClick={saveToday} disabled={saving} className="primary-btn">
+            <button onClick={saveToday} disabled={saving} className="primary-btn section-save-btn">
               {saving ? "저장 중..." : hasTodayLog ? "출석 기록 수정 저장" : "출석 기록 저장"}
             </button>
           </div>
@@ -716,9 +728,6 @@ export default function Attendance() {
               </button>
               <button onClick={copyShareLink} disabled={sharing} className="rounded-xl border border-orange-400/60 px-4 py-2 text-sm text-orange-200 hover:bg-orange-500/10">
                 {sharing ? "생성 중..." : todayLog.shareSlug ? "자랑 링크 복사" : "자랑 링크 만들기"}
-              </button>
-              <button onClick={kakaoShare} disabled={sharing} className="rounded-xl border border-yellow-400/60 px-4 py-2 text-sm text-yellow-200 hover:bg-yellow-500/10">
-                카카오 공유
               </button>
               <button onClick={saveInstaImage} className="rounded-xl border border-fuchsia-400/60 px-4 py-2 text-sm text-fuchsia-200 hover:bg-fuchsia-500/10">
                 인스타용 이미지 저장
@@ -741,6 +750,17 @@ export default function Attendance() {
               <span className="text-xs text-white/60 self-center">응원 {todayLog.cheerCount ?? 0} · 수정 {todayLog.editCount ?? 0}회</span>
             </div>
           )}
+          </div>
+
+          <div className={`mobile-save-bar ${mobileStep === "share" ? "show" : ""}`}>
+            <div className="mobile-save-meta">
+              <strong>{didWorkout ? `EXP +${estimatedExp}` : "휴식 모드"}</strong>
+              <span>{hasTodayLog ? "오늘 기록 수정" : "오늘 기록 저장"}</span>
+            </div>
+            <button onClick={saveToday} disabled={saving} className="primary-btn mobile-save-btn">
+              {saving ? "저장 중..." : "저장"}
+            </button>
+          </div>
         </div>
       </div>
 
