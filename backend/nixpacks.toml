@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["jdk17", "gradle"]
+
+[phases.build]
+cmds = [
+  "chmod +x ./gradlew",
+  "gradle clean bootJar -x test --no-daemon || ./gradlew clean bootJar -x test --no-daemon"
+]
+
+[start]
+cmd = "java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar build/libs/*.jar"
