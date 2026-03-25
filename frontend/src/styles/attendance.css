@@ -37,6 +37,7 @@
   padding: 0 1.5rem;
   display: grid;
   gap: 2rem;
+  min-width: 0;
 }
 
 .attendance-hero {
@@ -67,6 +68,7 @@
 .attendance-grid {
   display: grid;
   gap: 1.5rem;
+  min-width: 0;
 }
 
 @media (min-width: 1024px) {
@@ -83,6 +85,7 @@
   backdrop-filter: blur(12px);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
   animation: fadeInUp 0.6s ease both;
+  min-width: 0;
 }
 
 .calendar-card {
@@ -197,6 +200,7 @@
 .attendance-side {
   display: grid;
   gap: 1.2rem;
+  min-width: 0;
 }
 
 .streak-card {
@@ -304,13 +308,16 @@
 .weekly-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 0.3rem 0;
   color: var(--mu-muted);
+  gap: 0.6rem;
 }
 
 .summary-row strong,
 .weekly-row strong {
   color: #fff;
+  flex-shrink: 0;
 }
 
 .weekly-card {
@@ -576,6 +583,116 @@
   margin-left: 0.6rem;
   color: #facc15;
   font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .attendance-shell {
+    padding: 6rem 0 3rem;
+    overflow-x: hidden;
+  }
+
+  .attendance-wrap {
+    padding: 0 0.9rem;
+    gap: 1rem;
+  }
+
+  .attendance-hero h1 {
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+
+  .attendance-card {
+    border-radius: 20px;
+    padding: 1rem;
+  }
+
+  .calendar-header {
+    gap: 0.55rem;
+  }
+
+  .calendar-nav {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .ghost-btn {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.78rem;
+  }
+
+  .calendar-weekdays {
+    gap: 0.2rem;
+    font-size: 0.66rem;
+  }
+
+  .calendar-grid {
+    gap: 0.25rem;
+  }
+
+  .calendar-cell {
+    height: 58px;
+    border-radius: 12px;
+    padding: 0.35rem;
+  }
+
+  .calendar-day {
+    font-size: 0.78rem;
+  }
+
+  .calendar-meta {
+    font-size: 0.72rem;
+  }
+
+  .action-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .toggle-group {
+    width: 100%;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem 0.7rem;
+  }
+
+  .action-grid,
+  .intensity-row {
+    grid-template-columns: 1fr;
+  }
+
+  .workout-chip,
+  .intensity-chip {
+    border-radius: 14px;
+  }
+
+  .memo-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .action-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primary-btn {
+    width: 100%;
+  }
+
+  .toast {
+    left: 0.9rem;
+    right: 0.9rem;
+    top: auto;
+    bottom: 14px;
+    border-radius: 14px;
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 @keyframes flame {
