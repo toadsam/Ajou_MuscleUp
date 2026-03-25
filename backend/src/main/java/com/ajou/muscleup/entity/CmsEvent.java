@@ -40,7 +40,7 @@ public class CmsEvent extends BaseTimeEntity {
     private String summary;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
+    @Column(nullable = false)
     private String content;
 
     @Column(name = "thumbnail_url", nullable = false, length = 500)
