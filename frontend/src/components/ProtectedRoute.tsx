@@ -22,9 +22,22 @@ export default function ProtectedRoute({ children }: Props) {
         if (!mounted) return;
         if (res.ok) {
           const user = await res.json();
+          const existingRaw = localStorage.getItem("user");
+          let existingAccessToken: string | null = null;
+          if (existingRaw) {
+            try {
+              const existing = JSON.parse(existingRaw) as { accessToken?: string };
+              if (typeof existing?.accessToken === "string") {
+                existingAccessToken = existing.accessToken;
+              }
+            } catch {
+              existingAccessToken = null;
+            }
+          }
           localStorage.setItem(
             "user",
             JSON.stringify({
+              accessToken: existingAccessToken,
               email: user?.email,
               nickname: user?.nickname,
               role: user?.role,
