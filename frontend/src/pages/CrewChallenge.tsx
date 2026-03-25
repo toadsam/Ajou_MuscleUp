@@ -138,9 +138,14 @@ export default function CrewChallenge() {
   const [myNickname, setMyNickname] = useState("");
   const [rankDeltaByUser, setRankDeltaByUser] = useState<Record<number, number>>({});
   const [animatedRows, setAnimatedRows] = useState<number[]>([]);
+  const [boardQuery, setBoardQuery] = useState("");
+  const [memberQuery, setMemberQuery] = useState("");
+  const [memberSort, setMemberSort] = useState<"rank" | "weekly" | "attendance">("rank");
+  const [memberVisibleCount, setMemberVisibleCount] = useState(24);
   const previousRanksRef = useRef<Record<number, number>>({});
   const tabSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const challengeSwipeStartRef = useRef<number | null>(null);
+  const tabContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -158,6 +163,10 @@ export default function CrewChallenge() {
     const timer = window.setTimeout(() => setAnimatedRows([]), 1800);
     return () => window.clearTimeout(timer);
   }, [animatedRows]);
+
+  useEffect(() => {
+    setMemberVisibleCount(24);
+  }, [memberQuery, memberSort]);
 
   const myAttendanceRow = useMemo(() => {
     if (!detail?.members?.length) return null;
@@ -190,6 +199,49 @@ export default function CrewChallenge() {
   const myAvatar = useMemo(() => resolveAvatarConfig(myAttendanceRow as any, myAttendanceRow?.attendanceRate ?? 0), [myAttendanceRow]);
   const ongoingChallengeCount = detail?.challenges.filter((c) => c.status === "ONGOING").length ?? 0;
   const missionLabel = quickMissionLabel(myAttendanceRow?.attendanceRate ?? 0, myBoardRow?.rank ?? null);
+  const rivalRow = useMemo(() => {
+    if (!detail?.competitionBoard?.length || !myBoardRow) return null;
+    return detail.competitionBoard.find((row) => row.rank === myBoardRow.rank - 1) ?? null;
+  }, [detail?.competitionBoard, myBoardRow]);
+  const trailingRow = useMemo(() => {
+    if (!detail?.competitionBoard?.length || !myBoardRow) return null;
+    return detail.competitionBoard.find((row) => row.rank === myBoardRow.rank + 1) ?? null;
+  }, [detail?.competitionBoard, myBoardRow]);
+  const chaseGap = useMemo(() => {
+    if (!rivalRow || !myBoardRow) return 0;
+    return Math.max(0, Number((rivalRow.score - myBoardRow.score).toFixed(1)));
+  }, [rivalRow, myBoardRow]);
+  const defendGap = useMemo(() => {
+    if (!trailingRow || !myBoardRow) return 0;
+    return Math.max(0, Number((myBoardRow.score - trailingRow.score).toFixed(1)));
+  }, [trailingRow, myBoardRow]);
+  const myWeeklyWorkout = myBoardRow?.recentWorkoutDays ?? 0;
+
+  const filteredBoard = useMemo(() => {
+    if (!detail?.competitionBoard) return [];
+    const q = boardQuery.trim().toLowerCase();
+    if (!q) return detail.competitionBoard;
+    return detail.competitionBoard.filter((row) => row.nickname.toLowerCase().includes(q));
+  }, [detail?.competitionBoard, boardQuery]);
+
+  const membersWithBoardMeta = useMemo(() => {
+    if (!detail?.members) return [];
+    const boardMap = new Map(detail.competitionBoard.map((row) => [row.userId, row]));
+    const q = memberQuery.trim().toLowerCase();
+    const merged = detail.members
+      .filter((member) => (q ? member.nickname.toLowerCase().includes(q) : true))
+      .map((member) => ({ member, board: boardMap.get(member.userId) ?? null }));
+    merged.sort((a, b) => {
+      if (memberSort === "weekly") {
+        return (b.board?.recentWorkoutDays ?? 0) - (a.board?.recentWorkoutDays ?? 0);
+      }
+      if (memberSort === "attendance") {
+        return b.member.attendanceRate - a.member.attendanceRate;
+      }
+      return (a.board?.rank ?? Number.MAX_SAFE_INTEGER) - (b.board?.rank ?? Number.MAX_SAFE_INTEGER);
+    });
+    return merged;
+  }, [detail?.members, detail?.competitionBoard, memberQuery, memberSort]);
 
   const switchTab = (nextTab: ViewTab) => {
     if (nextTab === activeTab) return;
@@ -198,6 +250,9 @@ export default function CrewChallenge() {
     setTabMotion(nextIndex >= prevIndex ? "right" : "left");
     setActiveTab(nextTab);
     setTabMotionTick((v) => v + 1);
+    window.requestAnimationFrame(() => {
+      tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const loadDetail = async (targetCrewId: number, monthKey: string) => {
@@ -390,6 +445,14 @@ export default function CrewChallenge() {
     return <span className="ml-1 text-[11px] font-bold text-rose-300">▼{Math.abs(delta)}</span>;
   };
 
+  const rankMotionClass = (userId: number) => {
+    if (!animatedRows.includes(userId)) return "";
+    const delta = rankDeltaByUser[userId] ?? 0;
+    if (delta > 0) return "crew-rank-rise";
+    if (delta < 0) return "crew-rank-fall";
+    return "";
+  };
+
   const renderLeaderboard = () => {
     if (!detail) return null;
     const top3 = detail.competitionBoard.slice(0, 3);
@@ -408,31 +471,75 @@ export default function CrewChallenge() {
                     <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={78} rank={row.rank} />
                   </div>
                   <p className="mt-2 text-center font-bold">{row.nickname}{renderRankDelta(row.userId)}</p>
-                  <p className="text-center text-xs text-gray-300">출석 {row.attendanceRate}%</p>
+                  <p className="text-center text-xs text-gray-300">출석 {row.attendanceRate}% · 주간 {row.recentWorkoutDays}회</p>
                 </article>
               );
             })}
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="grid grid-cols-[48px_1fr_74px_72px] rounded-lg bg-white/5 px-3 py-2 text-[11px] text-gray-300 sm:grid-cols-[56px_1fr_90px_96px]">
-            <span>순위</span><span>닉네임</span><span>출석률</span><span>점수</span>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <input
+              value={boardQuery}
+              onChange={(e) => setBoardQuery(e.target.value)}
+              placeholder="닉네임 검색"
+              className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+            />
+            <span className="rounded-md border border-white/15 bg-black/30 px-2 py-1 text-xs text-gray-300 whitespace-nowrap">
+              {filteredBoard.length}명
+            </span>
           </div>
-          <div className="mt-1 max-h-80 space-y-1 overflow-y-auto">
-            {detail.competitionBoard.map((row) => {
+          <div className="md:hidden space-y-2 max-h-[56vh] overflow-y-auto pr-1">
+            {filteredBoard.map((row) => {
               const animated = animatedRows.includes(row.userId);
               return (
-                <div key={row.userId} className={`grid grid-cols-[48px_1fr_74px_72px] rounded-lg px-3 py-2 text-sm transition-all sm:grid-cols-[56px_1fr_90px_96px] ${row.rank <= 3 ? "bg-amber-500/5" : "bg-black/15"} ${animated ? "ring-1 ring-cyan-300/60" : ""}`}>
-                  <span className="text-cyan-200">#{row.rank}{renderRankDelta(row.userId)}</span>
-                  <div>
-                    <p className="font-semibold">{row.nickname}</p>
-                    <p className="text-[11px] text-gray-400">출석 {row.attendanceScore} + 도전 {row.challengeScore} + 최근 {row.recentScore}{row.bonusScore > 0 ? ` + 보너스 ${row.bonusScore}` : ""}</p>
+                <div
+                  key={`m-${row.userId}`}
+                  className={`rounded-xl border border-white/10 bg-black/20 p-3 ${animated ? "ring-1 ring-cyan-300/60" : ""} ${rankMotionClass(row.userId)}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-white">#{row.rank} {row.nickname}{renderRankDelta(row.userId)}</p>
+                    <p className="text-amber-200 font-bold">{row.score}점</p>
                   </div>
-                  <span>{row.attendanceRate}%</span>
-                  <span className="font-semibold text-amber-200">{row.score}</span>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center">
+                      <p className="text-gray-400">주간</p>
+                      <p className="font-semibold text-emerald-200">{row.recentWorkoutDays}회</p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center">
+                      <p className="text-gray-400">출석률</p>
+                      <p className="font-semibold">{row.attendanceRate}%</p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center">
+                      <p className="text-gray-400">최근점수</p>
+                      <p className="font-semibold text-cyan-200">{row.recentScore}</p>
+                    </div>
+                  </div>
                 </div>
               );
             })}
+          </div>
+          <div className="hidden md:block">
+            <div className="grid grid-cols-[46px_1fr_58px_64px_62px] rounded-lg bg-white/5 px-3 py-2 text-[11px] text-gray-300 sm:grid-cols-[56px_1fr_90px_96px_80px]">
+              <span>순위</span><span>닉네임</span><span>주간</span><span>출석률</span><span>점수</span>
+            </div>
+            <div className="mt-1 max-h-80 space-y-1 overflow-y-auto">
+              {filteredBoard.map((row) => {
+                const animated = animatedRows.includes(row.userId);
+                return (
+                  <div key={row.userId} className={`grid grid-cols-[46px_1fr_58px_64px_62px] rounded-lg px-3 py-2 text-sm transition-all sm:grid-cols-[56px_1fr_90px_96px_80px] ${row.rank <= 3 ? "bg-amber-500/5" : "bg-black/15"} ${animated ? "ring-1 ring-cyan-300/60" : ""} ${rankMotionClass(row.userId)}`}>
+                    <span className="text-cyan-200">#{row.rank}{renderRankDelta(row.userId)}</span>
+                    <div>
+                      <p className="font-semibold">{row.nickname}</p>
+                      <p className="text-[11px] text-gray-400">출석 {row.attendanceScore} + 도전 {row.challengeScore} + 최근 {row.recentScore}{row.bonusScore > 0 ? ` + 보너스 ${row.bonusScore}` : ""}</p>
+                    </div>
+                    <span className="text-emerald-200">{row.recentWorkoutDays}회</span>
+                    <span>{row.attendanceRate}%</span>
+                    <span className="font-semibold text-amber-200">{row.score}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -609,26 +716,90 @@ export default function CrewChallenge() {
 
   const renderMembers = () => {
     if (!detail) return null;
+    const visibleMembers = membersWithBoardMeta.slice(0, memberVisibleCount);
     return (
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {detail.members.map((member, idx) => {
+      <div className="space-y-3">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+            <input
+              value={memberQuery}
+              onChange={(e) => setMemberQuery(e.target.value)}
+              placeholder="멤버 닉네임 검색"
+              className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+            />
+            <select
+              value={memberSort}
+              onChange={(e) => setMemberSort(e.target.value as "rank" | "weekly" | "attendance")}
+              className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+            >
+              <option value="rank">순위순</option>
+              <option value="weekly">주간 운동순</option>
+              <option value="attendance">출석률순</option>
+            </select>
+            <div className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-gray-200">
+              {membersWithBoardMeta.length}명
+            </div>
+          </div>
+        </div>
+
+        <div className="md:hidden space-y-2">
+          {visibleMembers.map(({ member, board }) => {
+            const avatar = resolveAvatarConfig(member as any, member.attendanceRate);
+            const memberRank = board?.rank ?? "-";
+            const weeklyWorkout = board?.recentWorkoutDays ?? 0;
+            return (
+              <article key={`mobile-${member.userId}`} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={42} />
+                    <div>
+                      <p className="text-sm font-semibold">{member.nickname}</p>
+                      <p className="text-[11px] text-gray-400">#{memberRank} · {member.role}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[11px] text-gray-400">이번주</p>
+                    <p className="text-sm font-bold text-emerald-200">{weeklyWorkout}회</p>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-gray-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="hidden md:grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {visibleMembers.map(({ member, board }) => {
           const avatar = resolveAvatarConfig(member as any, member.attendanceRate);
+          const memberRank = board?.rank ?? "-";
+          const weeklyWorkout = board?.recentWorkoutDays ?? 0;
           return (
             <article key={member.userId} className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="flex items-center gap-3">
-                <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={60} rank={idx + 1} />
+                <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={60} />
                 <div>
                   <p className="font-semibold">{member.nickname}</p>
-                  <p className="text-xs text-gray-400">#{idx + 1} · {member.role}</p>
+                  <p className="text-xs text-gray-400">#{memberRank} · {member.role}</p>
                   {member.characterLevel != null && <p className="text-[11px] text-cyan-200">Lv.{member.characterLevel}</p>}
                 </div>
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${Math.min(member.attendanceRate, 100)}%` }} /></div>
               <p className="mt-2 text-xs text-gray-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
+              <p className="mt-1 text-xs text-emerald-200">이번주 운동 {weeklyWorkout}회</p>
               {detail.leader && manageMode && member.role !== "LEADER" && <button type="button" onClick={() => void onKickMember(member.userId)} className="mt-3 rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">강퇴</button>}
             </article>
           );
         })}
+        </div>
+        {memberVisibleCount < membersWithBoardMeta.length && (
+          <button
+            type="button"
+            onClick={() => setMemberVisibleCount((prev) => prev + 24)}
+            className="w-full rounded-xl border border-cyan-300/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20"
+          >
+            멤버 더 보기 (+24)
+          </button>
+        )}
       </div>
     );
   };
@@ -643,8 +814,17 @@ export default function CrewChallenge() {
             MuscleUp
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><p className="text-xs tracking-[0.2em] text-cyan-200">CREW CHALLENGE ARENA</p><h1 className="text-2xl font-black">{detail?.name || "모임 챌린지"}</h1><p className="text-xs text-gray-300">{nextGoal}</p></div>
-            <div className="flex items-center gap-2"><Link to="/crew" className="rounded-lg border border-white/20 px-3 py-2 text-sm text-gray-200 hover:bg-white/10">모임 허브</Link><Link to={`/crew/${crewIdNum}/lobby`} className="rounded-lg border border-cyan-300/35 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 hover:bg-cyan-500/20">로비</Link><Link to={`/crew/${crewIdNum}/highlights`} className="rounded-lg border border-amber-300/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-100 hover:bg-amber-500/20">하이라이트</Link><input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" /></div>
+            <div>
+              <p className="text-xs tracking-[0.2em] text-cyan-200">CREW CHALLENGE ARENA</p>
+              <h1 className="text-2xl font-black">{detail?.name || "모임 챌린지"}</h1>
+              <p className="text-xs text-gray-300">{nextGoal}</p>
+            </div>
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
+              <Link to="/crew" className="rounded-lg border border-white/20 px-3 py-2 text-center text-sm text-gray-200 hover:bg-white/10">모임 허브</Link>
+              <Link to={`/crew/${crewIdNum}/lobby`} className="rounded-lg border border-cyan-300/35 bg-cyan-500/10 px-3 py-2 text-center text-sm text-cyan-100 hover:bg-cyan-500/20">로비</Link>
+              <Link to={`/crew/${crewIdNum}/highlights`} className="rounded-lg border border-amber-300/35 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-100 hover:bg-amber-500/20">하이라이트</Link>
+              <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm col-span-2 sm:col-span-1" />
+            </div>
           </div>
         </div>
 
@@ -665,9 +845,36 @@ export default function CrewChallenge() {
               <p className="text-[11px] text-gray-400">활성 챌린지</p>
               <p className="text-xl font-black">{ongoingChallengeCount}</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-              <p className="text-[11px] text-gray-400">오늘 미션</p>
-              <p className="text-xs text-emerald-200">{missionLabel}</p>
+            <div className="rounded-xl border border-amber-300/30 bg-amber-500/10 p-3">
+              <p className="text-[11px] text-amber-100/80">이번주 스프린트</p>
+              <p className="text-sm font-black text-amber-200">주간 운동 {myWeeklyWorkout}회</p>
+              <p className="mt-1 text-[11px] text-amber-100/80">
+                {rivalRow ? `다음 목표 ${rivalRow.nickname} · ${chaseGap}점 차이` : missionLabel}
+              </p>
+            </div>
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-rose-300/30 bg-rose-500/10 p-3">
+              <p className="text-[11px] text-rose-100/80">내 바로 위 라이벌</p>
+              {rivalRow ? (
+                <>
+                  <p className="mt-1 text-sm font-black text-rose-100">{rivalRow.nickname}</p>
+                  <p className="text-[11px] text-rose-100/80">#{rivalRow.rank} · 주간 {rivalRow.recentWorkoutDays}회 · {chaseGap}점 차이</p>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-rose-100/80">현재 1위입니다. 방어 모드 유지!</p>
+              )}
+            </div>
+            <div className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 p-3">
+              <p className="text-[11px] text-emerald-100/80">내 바로 아래 추격자</p>
+              {trailingRow ? (
+                <>
+                  <p className="mt-1 text-sm font-black text-emerald-100">{trailingRow.nickname}</p>
+                  <p className="text-[11px] text-emerald-100/80">#{trailingRow.rank} · 주간 {trailingRow.recentWorkoutDays}회 · {defendGap}점 차이</p>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-emerald-100/80">추격자 없음. 페이스 유지!</p>
+              )}
             </div>
           </div>
         </div>
@@ -700,6 +907,7 @@ export default function CrewChallenge() {
             </div>
 
             <div
+              ref={tabContentRef}
               className="touch-pan-y"
               onTouchStart={(e) => {
                 tabSwipeStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -732,8 +940,31 @@ export default function CrewChallenge() {
         )}
       </div>
 
-      <div className="fixed inset-x-4 bottom-4 z-40 md:hidden"><div className="grid grid-cols-4 gap-2 rounded-2xl border border-white/15 bg-slate-900/95 p-2 backdrop-blur">{[{ key: "dashboard", label: "대시" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "랭킹" }, { key: "members", label: "멤버" }].map((tab) => <button key={tab.key} type="button" onClick={() => switchTab(tab.key as ViewTab)} className={`rounded-xl py-2 text-xs font-semibold ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "text-gray-200"}`}>{tab.label}</button>)}</div></div>
-      <style>{`@keyframes crewTabSlideInRight{from{opacity:.35;transform:translate3d(22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}@keyframes crewTabSlideInLeft{from{opacity:.35;transform:translate3d(-22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}`}</style>
+      <div
+        className="fixed inset-x-4 bottom-4 z-[70] md:hidden pointer-events-auto"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="grid grid-cols-4 gap-2 rounded-2xl border border-white/15 bg-slate-900/95 p-2 backdrop-blur">
+          {[{ key: "dashboard", label: "대시" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "랭킹" }, { key: "members", label: "멤버" }].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => switchTab(tab.key as ViewTab)}
+              className={`touch-manipulation rounded-xl py-2 text-xs font-semibold ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "text-gray-200"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <style>{`
+        @keyframes crewTabSlideInRight{from{opacity:.35;transform:translate3d(22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+        @keyframes crewTabSlideInLeft{from{opacity:.35;transform:translate3d(-22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+        @keyframes crewRankRise{0%{transform:translateY(0);box-shadow:0 0 0 rgba(16,185,129,0)}35%{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(16,185,129,.5),0 8px 18px rgba(16,185,129,.22)}100%{transform:translateY(0);box-shadow:0 0 0 rgba(16,185,129,0)}}
+        @keyframes crewRankFall{0%{transform:translateY(0);box-shadow:0 0 0 rgba(244,63,94,0)}35%{transform:translateY(2px);box-shadow:0 0 0 1px rgba(244,63,94,.45),0 8px 18px rgba(244,63,94,.18)}100%{transform:translateY(0);box-shadow:0 0 0 rgba(244,63,94,0)}}
+        .crew-rank-rise{animation:crewRankRise .9s ease-out}
+        .crew-rank-fall{animation:crewRankFall .9s ease-out}
+      `}</style>
     </section>
   );
 }
