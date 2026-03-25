@@ -3,8 +3,11 @@ nixPkgs = ["jdk17", "gradle"]
 
 [phases.build]
 cmds = [
+  "export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))",
+  "echo Using JAVA_HOME=$JAVA_HOME",
   "chmod +x ./gradlew",
-  "gradle clean bootJar -x test --no-daemon || ./gradlew clean bootJar -x test --no-daemon"
+  "./gradlew --version",
+  "./gradlew clean bootJar -x test -Pproduction --no-daemon"
 ]
 
 [start]
