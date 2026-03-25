@@ -7,8 +7,42 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+function getStoredAccessToken(): string | null {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { accessToken?: string };
+    return parsed?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function setStoredAccessToken(token: string) {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    parsed.accessToken = token;
+    localStorage.setItem("user", JSON.stringify(parsed));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 let refreshing = false;
 let waiters: Array<() => void> = [];
+
+api.interceptors.request.use((config) => {
+  const token = getStoredAccessToken();
+  if (token) {
+    config.headers = config.headers ?? {};
+    if (!config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
 
 api.interceptors.response.use(
   (response) => response,
@@ -26,7 +60,10 @@ api.interceptors.response.use(
     refreshing = true;
     originalRequest._retry = true;
     try {
-      await api.post("/api/auth/refresh");
+      const refreshRes = await api.post<{ accessToken?: string }>("/api/auth/refresh");
+      if (refreshRes.data?.accessToken) {
+        setStoredAccessToken(refreshRes.data.accessToken);
+      }
       waiters.forEach((resolve) => resolve());
       waiters = [];
       return api(originalRequest);

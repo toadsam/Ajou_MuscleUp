@@ -35,6 +35,7 @@ function storeSession(data: LoginResponse) {
   localStorage.setItem(
     "user",
     JSON.stringify({
+      accessToken: data.token,
       email: data.email,
       nickname: data.nickname,
       role: data.role,

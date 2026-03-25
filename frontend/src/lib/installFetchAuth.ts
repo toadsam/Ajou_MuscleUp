@@ -1,6 +1,30 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const RETRY_HEADER = "x-auth-retry";
 
+function readUserRecord(): Record<string, unknown> | null {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function getAccessToken(): string | null {
+  const user = readUserRecord();
+  const token = user?.accessToken;
+  return typeof token === "string" && token.length > 0 ? token : null;
+}
+
+function setAccessToken(token: string) {
+  const user = readUserRecord();
+  if (!user) return;
+  user.accessToken = token;
+  localStorage.setItem("user", JSON.stringify(user));
+}
+
 type HeaderLike = HeadersInit | undefined;
 
 function toHeadersObject(headers: HeaderLike): Record<string, string> {
@@ -16,6 +40,20 @@ function toHeadersObject(headers: HeaderLike): Record<string, string> {
     return Object.fromEntries(headers);
   }
   return { ...headers };
+}
+
+function applyAuthHeader(url: string, headers: Record<string, string>): Record<string, string> {
+  if (!isApiRequest(url)) return headers;
+  const hasAuthorization =
+    Object.keys(headers).some((key) => key.toLowerCase() === "authorization");
+  if (hasAuthorization) return headers;
+
+  const token = getAccessToken();
+  if (!token) return headers;
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 function hasRetryMarker(input: RequestInfo | URL, init?: RequestInit): boolean {
@@ -60,13 +98,25 @@ export function installFetchAuth() {
       credentials: "include",
       headers: { [RETRY_HEADER]: "1" },
     });
+    if (res.ok) {
+      try {
+        const payload = (await res.json()) as { accessToken?: string };
+        if (payload?.accessToken) {
+          setAccessToken(payload.accessToken);
+        }
+      } catch {
+        // ignore non-JSON refresh responses
+      }
+    }
     return res.ok;
   }
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = resolveUrl(input);
-    const effectiveInit: RequestInit =
-      isApiRequest(url) ? { ...init, credentials: init?.credentials ?? "include" } : { ...init };
+    const effectiveInitHeaders = applyAuthHeader(url, toHeadersObject(init?.headers));
+    const effectiveInit: RequestInit = isApiRequest(url)
+      ? { ...init, credentials: init?.credentials ?? "include", headers: effectiveInitHeaders }
+      : { ...init, headers: effectiveInitHeaders };
     const response = await originalFetch(input, effectiveInit);
 
     if (response.status !== 401) return response;
@@ -86,6 +136,7 @@ export function installFetchAuth() {
         headers: {
           ...toHeadersObject(input.headers),
           ...toHeadersObject(init?.headers),
+          ...applyAuthHeader(url, {}),
           [RETRY_HEADER]: "1",
         },
       });
@@ -97,6 +148,7 @@ export function installFetchAuth() {
       credentials: "include",
       headers: {
         ...toHeadersObject(init?.headers),
+        ...applyAuthHeader(url, {}),
         [RETRY_HEADER]: "1",
       },
     });
