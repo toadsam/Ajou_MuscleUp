@@ -239,19 +239,19 @@ const DEFAULT_PRESET: SharePreset = {
   theme: "sunset",
   ratio: "feed",
   quoteStyle: "glass",
-  sticker: "🔥",
-  showMeta: true,
+  sticker: "",
+  showMeta: false,
   mediaFit: "cover",
   mediaPositionX: 50,
   mediaPositionY: 50,
-  character: "deukgeun",
+  character: "none",
   characterPose: "flex",
   characterExpression: "smile",
   characterSize: 1,
   textFont: "comic",
   textDecor: "gradient",
-  showTitle: true,
-  showSubtitle: true,
+  showTitle: false,
+  showSubtitle: false,
   exportScale: 2,
 };
 
@@ -709,12 +709,6 @@ export default function AttendanceShareView() {
     } catch {
       // user canceled
     }
-  };
-
-  const kakaoShare = () => {
-    if (!publicShareLink) return;
-    const storyUrl = `https://story.kakao.com/share?url=${encodeURIComponent(publicShareLink)}`;
-    window.open(storyUrl, "_blank", "noopener,noreferrer");
   };
 
   const saveImage = async () => {
@@ -1602,7 +1596,6 @@ export default function AttendanceShareView() {
                   <button className="action-btn" onClick={async () => { await navigator.clipboard.writeText(composeShareText()); alert("멘트와 링크를 복사했어요."); }} aria-label="copy message and link">
                     멘트+링크 복사
                   </button>
-                  <button className="action-btn" onClick={kakaoShare} aria-label="share to kakao">카카오 공유</button>
                   <button
                     disabled={sending || hasReacted("cheer")}
                     className="action-btn"
