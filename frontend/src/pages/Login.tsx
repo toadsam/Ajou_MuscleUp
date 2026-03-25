@@ -48,9 +48,9 @@ export default function Login() {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoadFailed, setGoogleLoadFailed] = useState(false);
 
-  const handleGoogleCredential = async (credential: string) => {
+  const handleGoogleCredential = async (credential: string, remember = rememberMe) => {
     try {
-      const data = await loginRequest({ idToken: credential, rememberMe }, "google");
+      const data = await loginRequest({ idToken: credential, rememberMe: remember }, "google");
       storeSession(data);
       alert(`${data.nickname}님, 환영합니다!`);
       window.location.href = "/";
@@ -59,7 +59,41 @@ export default function Login() {
     }
   };
 
+  const startGoogleFallbackLogin = () => {
+    if (!GOOGLE_CLIENT_ID) {
+      alert("Google Client ID가 설정되지 않았습니다.");
+      return;
+    }
+
+    const nonce = crypto.randomUUID();
+    sessionStorage.setItem("google_oauth_nonce", nonce);
+    sessionStorage.setItem("google_remember_me", rememberMe ? "1" : "0");
+
+    const redirectUri = `${window.location.origin}/login`;
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    url.searchParams.set("client_id", GOOGLE_CLIENT_ID);
+    url.searchParams.set("redirect_uri", redirectUri);
+    url.searchParams.set("response_type", "id_token");
+    url.searchParams.set("scope", "openid email profile");
+    url.searchParams.set("nonce", nonce);
+    url.searchParams.set("prompt", "select_account");
+
+    window.location.href = url.toString();
+  };
+
   useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const idTokenFromHash = hash.get("id_token");
+    if (idTokenFromHash) {
+      const remembered = sessionStorage.getItem("google_remember_me") === "1";
+      setRememberMe(remembered);
+      void handleGoogleCredential(idTokenFromHash, remembered);
+      window.history.replaceState(null, "", "/login");
+      sessionStorage.removeItem("google_oauth_nonce");
+      sessionStorage.removeItem("google_remember_me");
+      return;
+    }
+
     if (!GOOGLE_CLIENT_ID) return;
 
     const script = document.createElement("script");
@@ -121,17 +155,21 @@ export default function Login() {
         </div>
 
         {googleLoadFailed && (
-          <p className="text-center text-xs text-gray-400">
-            브라우저 환경 문제로 Google 버튼을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
-          </p>
+          <div className="space-y-3">
+            <p className="text-center text-xs text-gray-400">
+              현재 브라우저 환경에서 Google 버튼을 불러오지 못했습니다.
+            </p>
+            <button
+              type="button"
+              className="w-full bg-white text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+              onClick={startGoogleFallbackLogin}
+            >
+              Google 로그인 계속하기
+            </button>
+          </div>
         )}
 
-        <p className="text-center text-gray-400">
-          아직 계정이 없으신가요?{" "}
-          <a href="/register" className="text-pink-400 hover:underline">
-            회원가입
-          </a>
-        </p>
+        {/* 회원가입 문구 임시 비활성화 */}
       </div>
     </section>
   );
