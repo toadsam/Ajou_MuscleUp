@@ -35,9 +35,11 @@ public class CmsEventServiceImpl implements CmsEventService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only public statuses are allowed");
         }
         Set<CmsEventStatus> statuses = status == null ? PUBLIC_STATUSES : Set.of(status);
-        return cmsEventRepository
-                .findPublic(statuses, normalizeQuery(q), withDefaultSort(pageable))
-                .map(EventListItemResponse::from);
+        String normalizedQuery = normalizeQuery(q);
+        Page<CmsEvent> page = normalizedQuery == null
+                ? cmsEventRepository.findPublic(statuses, withDefaultSort(pageable))
+                : cmsEventRepository.findPublicWithQuery(statuses, normalizedQuery, withDefaultSort(pageable));
+        return page.map(EventListItemResponse::from);
     }
 
     @Override
@@ -75,9 +77,11 @@ public class CmsEventServiceImpl implements CmsEventService {
     @Override
     @Transactional(readOnly = true)
     public Page<EventAdminListResponse> getAdminList(CmsEventStatus status, String q, Pageable pageable) {
-        return cmsEventRepository
-                .findAdmin(status, normalizeQuery(q), withDefaultSort(pageable))
-                .map(EventAdminListResponse::from);
+        String normalizedQuery = normalizeQuery(q);
+        Page<CmsEvent> page = normalizedQuery == null
+                ? cmsEventRepository.findAdmin(status, withDefaultSort(pageable))
+                : cmsEventRepository.findAdminWithQuery(status, normalizedQuery, withDefaultSort(pageable));
+        return page.map(EventAdminListResponse::from);
     }
 
     @Override

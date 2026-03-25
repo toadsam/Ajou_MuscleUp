@@ -14,9 +14,18 @@ public interface CmsEventRepository extends JpaRepository<CmsEvent, Long> {
     @Query("""
       select e from CmsEvent e
       where e.status in :statuses
-        and (:q is null or lower(e.title) like lower(concat('%', :q, '%')))
       """)
     Page<CmsEvent> findPublic(
+            @Param("statuses") Collection<CmsEventStatus> statuses,
+            Pageable pageable
+    );
+
+    @Query("""
+      select e from CmsEvent e
+      where e.status in :statuses
+        and lower(e.title) like lower(concat('%', :q, '%'))
+      """)
+    Page<CmsEvent> findPublicWithQuery(
             @Param("statuses") Collection<CmsEventStatus> statuses,
             @Param("q") String q,
             Pageable pageable
@@ -25,9 +34,18 @@ public interface CmsEventRepository extends JpaRepository<CmsEvent, Long> {
     @Query("""
       select e from CmsEvent e
       where (:status is null or e.status = :status)
-        and (:q is null or lower(e.title) like lower(concat('%', :q, '%')))
       """)
     Page<CmsEvent> findAdmin(
+            @Param("status") CmsEventStatus status,
+            Pageable pageable
+    );
+
+    @Query("""
+      select e from CmsEvent e
+      where (:status is null or e.status = :status)
+        and lower(e.title) like lower(concat('%', :q, '%'))
+      """)
+    Page<CmsEvent> findAdminWithQuery(
             @Param("status") CmsEventStatus status,
             @Param("q") String q,
             Pageable pageable
