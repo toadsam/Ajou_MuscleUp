@@ -15,6 +15,7 @@ declare global {
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
+const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL ?? "https://ajou-muscle-up.vercel.app";
 
 async function loginRequest(body: Record<string, unknown>, path: string) {
   const response = await fetch(`${API_BASE}/api/auth/${path}`, {
@@ -47,6 +48,9 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoadFailed, setGoogleLoadFailed] = useState(false);
+  const isBlockedUserAgent = /wv|WebView|FBAN|FBAV|Instagram|Line|KAKAOTALK|NAVER|DaumApps/i.test(
+    navigator.userAgent
+  );
 
   const handleGoogleCredential = async (credential: string, remember = rememberMe) => {
     try {
@@ -79,6 +83,17 @@ export default function Login() {
     url.searchParams.set("prompt", "select_account");
 
     window.location.href = url.toString();
+  };
+
+  const openInExternalBrowser = () => {
+    const target = `${FRONTEND_BASE_URL.replace(/\/+$/, "")}/login`;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (isAndroid) {
+      const stripped = target.replace(/^https?:\/\//, "");
+      window.location.href = `intent://${stripped}#Intent;scheme=https;package=com.android.chrome;end`;
+      return;
+    }
+    window.open(target, "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -159,13 +174,23 @@ export default function Login() {
             <p className="text-center text-xs text-gray-400">
               현재 브라우저 환경에서 Google 버튼을 불러오지 못했습니다.
             </p>
-            <button
-              type="button"
-              className="w-full bg-white text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-              onClick={startGoogleFallbackLogin}
-            >
-              Google 로그인 계속하기
-            </button>
+            {isBlockedUserAgent ? (
+              <button
+                type="button"
+                className="w-full bg-white text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+                onClick={openInExternalBrowser}
+              >
+                외부 브라우저에서 로그인 열기
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="w-full bg-white text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+                onClick={startGoogleFallbackLogin}
+              >
+                Google 로그인 계속하기
+              </button>
+            )}
           </div>
         )}
 
