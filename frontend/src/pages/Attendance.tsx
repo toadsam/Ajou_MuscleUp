@@ -129,6 +129,8 @@ export default function Attendance() {
   const [weeklyRank, setWeeklyRank] = useState<RankingItem[]>([]);
   const [mediaRank, setMediaRank] = useState<RankingItem[]>([]);
   const [mobileStep, setMobileStep] = useState<"record" | "media" | "share">("record");
+  const [showCalendarCard, setShowCalendarCard] = useState(false);
+  const [showInsightCards, setShowInsightCards] = useState(false);
   const appOrigin = window.location.origin;
   const publicShareOrigin = API_BASE || window.location.origin;
   const appShareLinkForSlug = (slug: string) => `${appOrigin}/attendance/share/${slug}`;
@@ -435,8 +437,31 @@ export default function Attendance() {
           <p>운동 기록과 사진/영상을 함께 저장하고, 바로 자랑 링크로 공유해보세요.</p>
         </header>
 
+        <div className="mobile-top-summary">
+          <div className="mobile-summary-badges">
+            <span className="mobile-summary-badge">이번달 운동 {summary?.monthWorkoutCount ?? 0}일</span>
+            <span className="mobile-summary-badge">현재 스트릭 {currentStreak}일</span>
+          </div>
+          <div className="mobile-summary-actions">
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => setShowCalendarCard((prev) => !prev)}
+            >
+              {showCalendarCard ? "▲ 캘린더 닫기" : "▼ 캘린더 펼치기"}
+            </button>
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => setShowInsightCards((prev) => !prev)}
+            >
+              {showInsightCards ? "▲ 통계 닫기" : "▼ 통계 펼치기"}
+            </button>
+          </div>
+        </div>
+
         <div className="attendance-grid">
-          <div className="attendance-card calendar-card">
+          <div className={`attendance-card calendar-card mobile-collapsible ${showCalendarCard ? "is-open" : ""}`}>
             <div className="calendar-header">
               <div>
                 <h2>월간 캘린더</h2>
@@ -491,7 +516,7 @@ export default function Attendance() {
             </div>
           </div>
 
-          <div className="attendance-side">
+          <div className={`attendance-side mobile-collapsible ${showInsightCards ? "is-open" : ""}`}>
             <div className="attendance-card streak-card">
               <div className="streak-header">
                 <div>
