@@ -218,6 +218,10 @@ export default function CrewChallenge() {
     return Math.max(0, Number((myBoardRow.score - trailingRow.score).toFixed(1)));
   }, [trailingRow, myBoardRow]);
   const myWeeklyWorkout = myBoardRow?.recentWorkoutDays ?? 0;
+  const attendanceGauge = Math.max(0, Math.min(100, myAttendanceRow?.attendanceRate ?? 0));
+  const weeklyGauge = Math.max(0, Math.min(100, (myWeeklyWorkout / 7) * 100));
+  const questReward = Math.round((myWeeklyWorkout + 1) * 12 + (attendanceGauge >= 80 ? 18 : 8));
+  const chasePressure = rivalRow ? Math.max(0, Math.min(100, 100 - chaseGap * 4)) : 100;
 
   const filteredBoard = useMemo(() => {
     if (!detail?.competitionBoard) return [];
@@ -498,6 +502,107 @@ export default function CrewChallenge() {
     if (delta > 0) return "crew-rank-rise";
     if (delta < 0) return "crew-rank-fall";
     return "";
+  };
+
+  const renderDashboard = () => {
+    if (!detail) return null;
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 lg:grid-cols-[1.1fr_1fr]">
+          <article className="rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-500/15 via-slate-900/80 to-indigo-500/20 p-4 shadow-[0_0_40px_rgba(34,211,238,0.15)]">
+            <p className="text-[11px] tracking-[0.18em] text-cyan-200">BATTLE STATUS</p>
+            <h3 className="mt-1 text-xl font-black text-cyan-100">랭크 전투 현황</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[11px] text-gray-400">현재 순위</p>
+                <p className="text-2xl font-black text-amber-200">#{myBoardRow?.rank ?? "-"}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[11px] text-gray-400">전투 점수</p>
+                <p className="text-2xl font-black text-fuchsia-200">{myBoardRow?.score ?? 0}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[11px] text-gray-400">주간 운동</p>
+                <p className="text-2xl font-black text-emerald-200">{myWeeklyWorkout}회</p>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-xs text-cyan-100">
+                <span>출석 게이지</span>
+                <span>{attendanceGauge.toFixed(1)}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-400" style={{ width: `${attendanceGauge}%` }} />
+              </div>
+              <div className="flex items-center justify-between text-xs text-emerald-100">
+                <span>주간 연속 페이스</span>
+                <span>{myWeeklyWorkout}/7</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-lime-300" style={{ width: `${weeklyGauge}%` }} />
+              </div>
+            </div>
+          </article>
+
+          <article className="rounded-2xl border border-amber-300/35 bg-gradient-to-br from-amber-500/15 via-slate-900/80 to-rose-500/20 p-4 shadow-[0_0_40px_rgba(251,191,36,0.12)]">
+            <p className="text-[11px] tracking-[0.18em] text-amber-100">TODAY QUEST</p>
+            <h3 className="mt-1 text-xl font-black text-amber-100">즉시 수행 미션</h3>
+            <p className="mt-2 rounded-xl border border-amber-200/30 bg-black/30 px-3 py-2 text-sm text-amber-50">{missionLabel}</p>
+            <div className="mt-3 rounded-xl border border-rose-200/30 bg-rose-500/10 p-3">
+              <p className="text-[11px] text-rose-100/80">라이벌 압박도</p>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-rose-400 to-orange-300" style={{ width: `${chasePressure}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-rose-100/80">{rivalRow ? `${rivalRow.nickname}까지 ${chaseGap}점` : "현재 최상위권 유지 중"}</p>
+            </div>
+            <div className="mt-3 flex items-center justify-between rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-3 py-2">
+              <span className="text-xs text-emerald-100">미션 성공 보상</span>
+              <span className="text-lg font-black text-emerald-200">+{questReward} EXP</span>
+            </div>
+          </article>
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-[1.1fr_1fr]">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 className="text-lg font-bold">왕 타이틀</h3>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {detail.kingTitles?.map((king) => (
+                <div key={king.title} className={`rounded-xl border p-3 ${kingStyleByTitle[king.title]?.className ?? "border-white/20 bg-white/10 text-white"} animate-pulse`}>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 text-xs font-bold">{kingStyleByTitle[king.title]?.icon ?? "K"}</span>
+                    <p className="text-xs">{king.title}</p>
+                  </div>
+                  <p className="mt-2 text-sm font-bold text-white">{king.nickname}</p>
+                  <p className="text-xs opacity-90">{king.metric}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 className="text-lg font-bold">빠른 챌린지 현황</h3>
+            <div className="mt-3 space-y-2">
+              {detail.challenges.slice(0, 3).map((challenge) => (
+                <button
+                  key={challenge.id}
+                  type="button"
+                  onClick={() => {
+                    switchTab("challenges");
+                    setExpandedChallengeId(challenge.id);
+                  }}
+                  className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-left transition hover:border-cyan-300/40 hover:bg-cyan-500/10"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold">{challenge.title}</p>
+                    <span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderLeaderboard = () => {
@@ -852,19 +957,22 @@ export default function CrewChallenge() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-slate-950 pb-28 pt-24 text-white">
-      <div className="pointer-events-none absolute -left-32 top-16 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
+    <section className="relative min-h-screen overflow-hidden bg-[#040714] pb-28 pt-24 text-white">
+      <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:radial-gradient(circle_at_1px_1px,rgba(56,189,248,0.22)_1px,transparent_0)] [background-size:22px_22px]" />
+      <div className="pointer-events-none absolute -left-32 top-16 h-72 w-72 rounded-full bg-cyan-500/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 top-20 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-8 left-1/3 h-64 w-64 rounded-full bg-fuchsia-500/10 blur-3xl" />
       <div className="mx-auto max-w-6xl space-y-4 px-4 sm:px-6 lg:px-10">
-        <div className="relative rounded-2xl border border-white/10 bg-gradient-to-r from-cyan-900/35 via-slate-900/60 to-emerald-900/20 p-4">
+        <div className="crew-hud-glow relative overflow-hidden rounded-2xl border border-cyan-300/25 bg-gradient-to-r from-cyan-900/35 via-slate-900/70 to-emerald-900/25 p-4 shadow-[0_0_50px_rgba(56,189,248,0.12)]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.18),transparent_50%),radial-gradient(circle_at_80%_80%,rgba(20,184,166,0.16),transparent_45%)]" />
           <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[11px] font-black tracking-[0.14em] text-cyan-100">
             MuscleUp
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs tracking-[0.2em] text-cyan-200">CREW CHALLENGE ARENA</p>
-              <h1 className="text-2xl font-black">{detail?.name || "모임 챌린지"}</h1>
-              <p className="text-xs text-gray-300">{nextGoal}</p>
+              <p className="text-xs tracking-[0.22em] text-cyan-200">CREW CHALLENGE ARENA</p>
+              <h1 className="text-2xl font-black text-cyan-50 drop-shadow-[0_0_12px_rgba(34,211,238,0.35)]">{detail?.name || "모임 챌린지"}</h1>
+              <p className="text-xs text-cyan-100/85">{nextGoal}</p>
             </div>
             <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
               <Link to="/crew" className="rounded-lg border border-white/20 px-3 py-2 text-center text-sm text-gray-200 hover:bg-white/10">모임 허브</Link>
@@ -875,24 +983,24 @@ export default function CrewChallenge() {
           </div>
         </div>
 
-        <div className="sticky top-20 z-30 rounded-2xl border border-cyan-300/25 bg-slate-900/90 p-3 backdrop-blur">
+        <div className="crew-hud-glow-soft sticky top-20 z-30 rounded-2xl border border-cyan-300/30 bg-slate-900/88 p-3 shadow-[0_0_45px_rgba(34,211,238,0.12)] backdrop-blur">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="rounded-xl border border-cyan-300/20 bg-gradient-to-br from-cyan-500/10 to-slate-900/80 p-3">
               <p className="text-[11px] text-gray-400">내 캐릭터</p>
               <div className="mt-1 flex items-center gap-2">
                 <EnhancedAvatar seed={myAvatar.seed} tier={myAvatar.tier} stage={myAvatar.stage} gender={myAvatar.gender} isResting={myAvatar.isResting} size={38} />
                 <p className="text-sm font-semibold">{myAttendanceRow?.nickname ?? "-"}</p>
               </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="rounded-xl border border-amber-300/20 bg-gradient-to-br from-amber-500/10 to-slate-900/80 p-3">
               <p className="text-[11px] text-gray-400">현재 순위</p>
               <p className="text-xl font-black text-amber-200">#{myBoardRow?.rank ?? "-"}</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="rounded-xl border border-violet-300/20 bg-gradient-to-br from-violet-500/10 to-slate-900/80 p-3">
               <p className="text-[11px] text-gray-400">활성 챌린지</p>
               <p className="text-xl font-black">{ongoingChallengeCount}</p>
             </div>
-            <div className="rounded-xl border border-amber-300/30 bg-amber-500/10 p-3">
+            <div className="rounded-xl border border-amber-300/35 bg-gradient-to-br from-amber-500/15 to-rose-500/10 p-3">
               <p className="text-[11px] text-amber-100/80">이번주 스프린트</p>
               <p className="text-sm font-black text-amber-200">주간 운동 {myWeeklyWorkout}회</p>
               <p className="mt-1 text-[11px] text-amber-100/80">
@@ -901,7 +1009,7 @@ export default function CrewChallenge() {
             </div>
           </div>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-xl border border-rose-300/30 bg-rose-500/10 p-3">
+            <div className="rounded-xl border border-rose-300/35 bg-gradient-to-br from-rose-500/15 to-slate-900/80 p-3">
               <p className="text-[11px] text-rose-100/80">내 바로 위 라이벌</p>
               {rivalRow ? (
                 <>
@@ -912,7 +1020,7 @@ export default function CrewChallenge() {
                 <p className="mt-1 text-xs text-rose-100/80">현재 1위입니다. 방어 모드 유지!</p>
               )}
             </div>
-            <div className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 p-3">
+            <div className="rounded-xl border border-emerald-300/35 bg-gradient-to-br from-emerald-500/15 to-slate-900/80 p-3">
               <p className="text-[11px] text-emerald-100/80">내 바로 아래 추격자</p>
               {trailingRow ? (
                 <>
@@ -928,7 +1036,16 @@ export default function CrewChallenge() {
 
         <div className="hidden flex-wrap gap-2 md:flex">
           {[{ key: "dashboard", label: "대시보드" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "리더보드" }, { key: "members", label: "멤버" }].map((tab) => (
-            <button key={tab.key} type="button" onClick={() => switchTab(tab.key as ViewTab)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "border border-white/20 bg-black/20 text-gray-200 hover:bg-white/10"}`}>
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => switchTab(tab.key as ViewTab)}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeTab === tab.key
+                  ? "border border-cyan-200/60 bg-gradient-to-r from-cyan-300 to-blue-300 text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.45)]"
+                  : "border border-white/20 bg-black/25 text-gray-200 hover:border-cyan-300/45 hover:bg-cyan-500/10"
+              }`}
+            >
               {tab.label}
             </button>
           ))}
@@ -1032,7 +1149,7 @@ export default function CrewChallenge() {
                 key={`${activeTab}-${tabMotionTick}`}
                 style={{ animation: `${tabMotion === "right" ? "crewTabSlideInRight" : "crewTabSlideInLeft"} 240ms ease-out` }}
               >
-                {activeTab === "dashboard" && <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr]"><div className="rounded-2xl border border-white/10 bg-white/5 p-5"><h3 className="text-lg font-bold">왕 타이틀</h3><div className="mt-3 grid gap-2 sm:grid-cols-3">{detail.kingTitles?.map((king) => <div key={king.title} className={`rounded-xl border p-3 ${kingStyleByTitle[king.title]?.className ?? "border-white/20 bg-white/10 text-white"} animate-pulse`}><div className="flex items-center gap-2"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 text-xs font-bold">{kingStyleByTitle[king.title]?.icon ?? "K"}</span><p className="text-xs">{king.title}</p></div><p className="mt-2 text-sm font-bold text-white">{king.nickname}</p><p className="text-xs opacity-90">{king.metric}</p></div>)}</div></div><div className="rounded-2xl border border-white/10 bg-white/5 p-5"><h3 className="text-lg font-bold">빠른 챌린지 현황</h3><div className="mt-3 space-y-2">{detail.challenges.slice(0, 3).map((challenge) => <button key={challenge.id} type="button" onClick={() => { switchTab("challenges"); setExpandedChallengeId(challenge.id); }} className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-left"><div className="flex items-center justify-between gap-2"><p className="font-semibold">{challenge.title}</p><span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span></div><p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate}</p></button>)}</div></div></div>}
+                {activeTab === "dashboard" && renderDashboard()}
                 {activeTab === "challenges" && renderChallenges()}
                 {activeTab === "leaderboard" && renderLeaderboard()}
                 {activeTab === "members" && renderMembers()}
@@ -1046,13 +1163,17 @@ export default function CrewChallenge() {
         className="fixed inset-x-4 bottom-4 z-[70] md:hidden pointer-events-auto"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div className="grid grid-cols-4 gap-2 rounded-2xl border border-white/15 bg-slate-900/95 p-2 backdrop-blur">
+        <div className="grid grid-cols-4 gap-2 rounded-2xl border border-cyan-300/25 bg-slate-900/95 p-2 shadow-[0_0_24px_rgba(34,211,238,0.18)] backdrop-blur">
           {[{ key: "dashboard", label: "대시" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "랭킹" }, { key: "members", label: "멤버" }].map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => switchTab(tab.key as ViewTab)}
-              className={`touch-manipulation rounded-xl py-2 text-xs font-semibold ${activeTab === tab.key ? "bg-cyan-400 text-slate-950" : "text-gray-200"}`}
+              className={`touch-manipulation rounded-xl py-2 text-xs font-semibold ${
+                activeTab === tab.key
+                  ? "bg-gradient-to-r from-cyan-300 to-blue-300 text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.4)]"
+                  : "text-gray-200"
+              }`}
             >
               {tab.label}
             </button>
@@ -1064,8 +1185,12 @@ export default function CrewChallenge() {
         @keyframes crewTabSlideInLeft{from{opacity:.35;transform:translate3d(-22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
         @keyframes crewRankRise{0%{transform:translateY(0);box-shadow:0 0 0 rgba(16,185,129,0)}35%{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(16,185,129,.5),0 8px 18px rgba(16,185,129,.22)}100%{transform:translateY(0);box-shadow:0 0 0 rgba(16,185,129,0)}}
         @keyframes crewRankFall{0%{transform:translateY(0);box-shadow:0 0 0 rgba(244,63,94,0)}35%{transform:translateY(2px);box-shadow:0 0 0 1px rgba(244,63,94,.45),0 8px 18px rgba(244,63,94,.18)}100%{transform:translateY(0);box-shadow:0 0 0 rgba(244,63,94,0)}}
+        @keyframes crewHudPulse{0%{box-shadow:0 0 0 rgba(34,211,238,0)}50%{box-shadow:0 0 24px rgba(34,211,238,.18)}100%{box-shadow:0 0 0 rgba(34,211,238,0)}}
+        @keyframes crewHudPulseSoft{0%{box-shadow:0 0 0 rgba(16,185,129,0)}50%{box-shadow:0 0 18px rgba(16,185,129,.14)}100%{box-shadow:0 0 0 rgba(16,185,129,0)}}
         .crew-rank-rise{animation:crewRankRise .9s ease-out}
         .crew-rank-fall{animation:crewRankFall .9s ease-out}
+        .crew-hud-glow{animation:crewHudPulse 2.8s ease-in-out infinite}
+        .crew-hud-glow-soft{animation:crewHudPulseSoft 3.4s ease-in-out infinite}
       `}</style>
     </section>
   );
