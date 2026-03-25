@@ -25,7 +25,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'   // BCrypt PasswordEncoder ??
-    implementation 'org.springframework.boot:spring-boot-starter-validation' // ??DTO 검�?
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // ??DTO 검�?
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -38,15 +38,16 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // DB: ??�??�나 ?�택(?�는 ?�로?�로 분리)
-    implementation 'com.mysql:mysql-connector-j'  // MySQL ?�용 ??
+    // DB: ??�??�나 ?�택(?�는 ?�로?�로 분리)
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.postgresql:postgresql'
     // runtimeOnly 'com.h2database:h2'         // 로컬 빠른 ?�스?�용
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // Google ID Token 검증
+    // Google ID Token 검�?
     implementation 'com.google.api-client:google-api-client:2.6.0'
     implementation 'org.apache.pdfbox:pdfbox:3.0.3'
 }
