@@ -8,7 +8,7 @@ import com.ajou.muscleup.dto.brag.BragCommentUpdateRequest;
 import java.util.List;
 
 public interface BragInteractionService {
-    List<BragCommentResponse> listComments(Long postId);
+    List<BragCommentResponse> listComments(String userEmail, Long postId);
     BragCommentResponse addComment(String userEmail, Long postId, BragCommentCreateRequest req);
     BragCommentResponse updateComment(String userEmail, Long commentId, BragCommentUpdateRequest req);
     void deleteComment(String userEmail, Long commentId);

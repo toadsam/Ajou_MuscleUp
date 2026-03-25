@@ -1,0 +1,8 @@
+-- Track lounge page entry counts.
+CREATE TABLE IF NOT EXISTS lounge_visit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_lounge_visit_user FOREIGN KEY (user_id) REFERENCES users(id)
+);

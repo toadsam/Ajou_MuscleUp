@@ -1,5 +1,6 @@
 package com.ajou.muscleup.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,7 +10,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,12 +40,28 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationEntryPoint restAuthenticationEntryPoint() {
+        return (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    @Bean
+    public AccessDeniedHandler restAccessDeniedHandler() {
+        return (request, response, accessDeniedException) -> response.sendError(HttpServletResponse.SC_FORBIDDEN);
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                                   @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource,
+                                                   AuthenticationEntryPoint restAuthenticationEntryPoint,
+                                                   AccessDeniedHandler restAccessDeniedHandler) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(restAuthenticationEntryPoint)
+                .accessDeniedHandler(restAccessDeniedHandler)
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -54,19 +73,37 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/programs/apply").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/analytics/events").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/ai/share/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/attendance/share/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/attendance/share/*/cheer").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/attendance/share/*/report").permitAll()
+                .requestMatchers(HttpMethod.GET, "/share/attendance/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/metrics/lobby").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/events/*/view", "/api/events/*/click").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                 // Protected APIs (allow USER and ADMIN)
                 .requestMatchers("/uploads/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/brags/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/proteins/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/proteins/**").hasRole("ADMIN")
+                .requestMatchers("/api/proteins/*/applications/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/proteins/*/chat/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/ai/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/files/upload").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/files/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/files/**").hasRole("ADMIN")
                 .requestMatchers("/api/mypage/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/character/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/rankings/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/attendance/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/events/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/lounge/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/crew/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/friends/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/admin/events/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()

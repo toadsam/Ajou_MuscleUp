@@ -1,4 +1,5 @@
-import { useCallback, useId, useState } from "react";
+﻿import { useCallback, useId, useState } from "react";
+import { api } from "../lib/api";
 
 type Props = {
   onUploaded?: (url: string) => void;
@@ -11,7 +12,13 @@ type Props = {
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
 
-export default function UploadDropzone({ onUploaded, accept = "image/*", multiple = false, className, folder = "gallery" }: Props) {
+export default function UploadDropzone({
+  onUploaded,
+  accept = "image/*",
+  multiple = false,
+  className,
+  folder = "gallery",
+}: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [activeUploads, setActiveUploads] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -25,27 +32,31 @@ export default function UploadDropzone({ onUploaded, accept = "image/*", multipl
       try {
         const form = new FormData();
         form.append("file", file);
-        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/files/upload?folder=${encodeURIComponent(folder)}`, {
-          method: "POST",
-          credentials: "include",
-          body: form,
+        const res = await api.post("/api/files/upload", form, {
+          params: { folder },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        const url = withBase(data.url);
+        const url = withBase(res.data.url);
         if (onUploaded) onUploaded(url);
       } catch (e: any) {
-        setError(e?.message || "업로드에 실패했어요");
+        const message =
+          e?.response?.data?.message ||
+          e?.response?.data?.error ||
+          e?.message ||
+          "업로드에 실패했습니다.";
+        setError(message);
       } finally {
         setActiveUploads((c) => Math.max(0, c - 1));
       }
     },
-    [onUploaded]
+    [folder, onUploaded]
   );
 
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    Array.from(files).forEach((f) => upload(f));
+    Array.from(files).forEach((file) => {
+      void upload(file);
+    });
   };
 
   const onDrop = (e: React.DragEvent) => {
@@ -67,23 +78,16 @@ export default function UploadDropzone({ onUploaded, accept = "image/*", multipl
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
       className={`rounded-2xl border-2 border-dashed p-6 text-center transition ${
-        dragOver ? "border-pink-500 bg-pink-500/10" : "border-gray-600 bg-gray-800/40"
+        dragOver ? "border-cyan-400 bg-cyan-500/10" : "border-gray-600 bg-gray-800/40"
       } ${className ?? ""}`}
     >
-      <input
-        type="file"
-        accept={accept}
-        multiple={multiple}
-        className="hidden"
-        id={inputId}
-        onChange={onPick}
-      />
+      <input id={inputId} type="file" accept={accept} multiple={multiple} className="hidden" onChange={onPick} />
       <label htmlFor={inputId} className="block cursor-pointer select-none">
-        <div className="text-gray-300">사진/영상은 드래그하거나 터치해서 올릴 수 있어요.</div>
-        <div className="text-sm text-gray-500 mt-1">PNG, JPG, MP4 등 (최대 10MB 권장)</div>
+        <div className="text-gray-300">파일을 드래그해서 놓거나 클릭해서 선택하세요.</div>
+        <div className="mt-1 text-sm text-gray-500">이미지 업로드를 권장합니다.</div>
       </label>
-      {uploading && <div className="text-sm text-gray-400 mt-2">업로드 중...</div>}
-      {error && <div className="text-sm text-red-400 mt-2">{error}</div>}
+      {uploading && <div className="mt-2 text-sm text-gray-400">업로드 중...</div>}
+      {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
     </div>
   );
 }

@@ -2,6 +2,7 @@ package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.protein.ProteinCreateUpdateRequest;
 import com.ajou.muscleup.entity.Protein;
+import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.ProteinRepository;
 import com.ajou.muscleup.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,9 @@ public class ProteinServiceImpl implements ProteinService {
     private final ReviewRepository reviewRepository;
 
     @Override
-    public Protein create(ProteinCreateUpdateRequest req) {
+    public Protein create(ProteinCreateUpdateRequest req, User owner) {
         Protein p = Protein.builder()
+                .owner(owner)
                 .name(req.getName()).price(req.getPrice()).days(req.getDays()).goal(req.getGoal())
                 .imageUrl(req.getImageUrl()).description(req.getDescription()).category(req.getCategory())
                 .build();

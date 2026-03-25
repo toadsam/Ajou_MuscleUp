@@ -36,4 +36,8 @@ public class BragPost extends BaseTimeEntity {
     @CollectionTable(name = "brag_media", joinColumns = @JoinColumn(name = "brag_id"))
     @Column(name = "media_url", length = 500)
     private List<String> mediaUrls = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private BragVisibility visibility = BragVisibility.PUBLIC;
 }

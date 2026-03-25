@@ -8,8 +8,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface BragPostService {
     BragPostResponse create(String userEmail, BragPostCreateRequest req);
-    Page<BragPostResponse> list(Pageable pageable);
-    BragPostResponse get(Long id);
+    Page<BragPostResponse> list(String userEmail, Pageable pageable);
+    BragPostResponse get(Long id, String userEmail);
     BragPostResponse update(Long id, String userEmail, BragPostUpdateRequest req);
     void delete(Long id, String userEmail);
 }

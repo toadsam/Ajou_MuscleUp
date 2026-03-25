@@ -1,0 +1,107 @@
+@keyframes avatarBreathe {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+@keyframes avatarBounce {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 0.6;
+    filter: blur(1px);
+  }
+}
+
+@keyframes auraWave {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.5;
+  }
+}
+
+@keyframes sparkleFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+.avatar-breathe {
+  animation: avatarBreathe 3.2s ease-in-out infinite;
+}
+
+.avatar-bounce {
+  animation: avatarBounce 1.8s ease-in-out infinite;
+}
+
+.avatar-aura .avatar-ring {
+  animation: glowPulse 2.6s ease-in-out infinite;
+}
+
+.avatar-wave {
+  animation: auraWave 2.4s ease-in-out infinite;
+}
+
+.avatar-wave-strong {
+  animation: auraWave 1.8s ease-in-out infinite;
+}
+
+.avatar-sparkle {
+  animation: sparkleFloat 2.8s ease-in-out infinite;
+}
+
+.sparkle-2 {
+  animation-delay: 0.4s;
+}
+
+.sparkle-3 {
+  animation-delay: 0.8s;
+}
+
+.sparkle-4 {
+  animation-delay: 1.2s;
+}
+
+.sparkle-5 {
+  animation-delay: 1.6s;
+}
+
+.sparkle-6 {
+  animation-delay: 2s;
+}
+
+.sparkle-7 {
+  animation-delay: 2.4s;
+}
+
+.sparkle-8 {
+  animation-delay: 2.8s;
+}

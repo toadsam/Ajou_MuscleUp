@@ -2,21 +2,27 @@ package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.protein.*;
 import com.ajou.muscleup.entity.Protein;
+import com.ajou.muscleup.entity.User;
+import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.service.ProteinService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page; import org.springframework.data.domain.PageRequest; import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity; import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/api/proteins")
 @RequiredArgsConstructor
 public class ProteinController {
     private final ProteinService proteinService;
+    private final UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody ProteinCreateUpdateRequest req) {
-        Protein saved = proteinService.create(req);
+    public ResponseEntity<?> create(@AuthenticationPrincipal String email,
+                                    @Valid @RequestBody ProteinCreateUpdateRequest req) {
+        User owner = userRepository.findByEmail(email).orElse(null);
+        Protein saved = proteinService.create(req, owner);
         return ResponseEntity.ok(ProteinResponse.from(saved, 0.0));
     }
 

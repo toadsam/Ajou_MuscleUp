@@ -1,6 +1,9 @@
 package com.ajou.muscleup.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -83,5 +86,33 @@ public class FileController {
                 })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(urls);
+    }
+
+    @GetMapping("/list/paged")
+    public ResponseEntity<Page<String>> listPaged(
+            @RequestParam(value = "folder", defaultValue = "gallery") String folder,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size
+    ) throws IOException {
+        Path base = root.resolve(folder);
+        if (!Files.exists(base)) return ResponseEntity.ok(Page.empty());
+
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        List<String> all = Files.walk(base)
+                .filter(Files::isRegularFile)
+                .sorted(Comparator.comparingLong((Path p) -> p.toFile().lastModified()).reversed())
+                .map(p -> root.relativize(p).toString().replace('\\', '/'))
+                .map(rel -> {
+                    String relative = "/uploads/" + rel;
+                    String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+                    return baseUrl + relative;
+                })
+                .collect(Collectors.toList());
+
+        int from = Math.min(safePage * safeSize, all.size());
+        int to = Math.min(from + safeSize, all.size());
+        List<String> content = all.subList(from, to);
+        return ResponseEntity.ok(new PageImpl<>(content, PageRequest.of(safePage, safeSize), all.size()));
     }
 }

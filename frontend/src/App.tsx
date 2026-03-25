@@ -25,7 +25,22 @@ import BragWrite from "./pages/BragWrite";
 import BragDetail from "./pages/BragDetail";
 import MyPage from "./pages/MyPage";
 import AiShareView from "./pages/AiShareView";
+import InbodyConsult from "./pages/InbodyConsult";
 import AdminHistory from "./pages/AdminHistory";
+import Attendance from "./pages/Attendance";
+import AttendanceShareView from "./pages/AttendanceShareView";
+import Rankings from "./pages/Rankings";
+import Lounge from "./pages/Lounge";
+import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
+import AdminEventsList from "./pages/admin/AdminEventsList";
+import AdminEventForm from "./pages/admin/AdminEventForm";
+import CrewHub from "./pages/CrewHub";
+import CrewChallenge from "./pages/CrewChallenge";
+import CrewLobby from "./pages/CrewLobby";
+import CrewHighlights from "./pages/CrewHighlights";
+import Friends from "./pages/Friends";
+import Forbidden from "./pages/Forbidden";
 
 function App() {
   return (
@@ -38,6 +53,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/ai/share/:slug" element={<AiShareView />} />
+            <Route path="/attendance/share/:slug" element={<AttendanceShareView />} />
+            <Route path="/forbidden" element={<Forbidden />} />
 
             {/* ??로그???�요 ?�는 공개 ?�우??*/}
             <Route path="/proteins/:id" element={<ProteinDetail />} />
@@ -52,8 +69,13 @@ function App() {
             <Route path="/members" element={<Members />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/about" element={<About />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
+            <Route path="/admin/events" element={<AdminRoute><AdminEventsList /></AdminRoute>} />
+            <Route path="/admin/events/new" element={<AdminRoute><AdminEventForm mode="create" /></AdminRoute>} />
+            <Route path="/admin/events/:id/edit" element={<AdminRoute><AdminEventForm mode="edit" /></AdminRoute>} />
             <Route path="/programs" element={<Programs />} />
             <Route path="/programs/apply/success" element={<ProgramsApplySuccess />} />
             <Route
@@ -99,6 +121,14 @@ function App() {
               }
             />
             <Route
+              path="/ai/inbody"
+              element={
+                <ProtectedRoute>
+                  <InbodyConsult />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/brag"
               element={
                 <ProtectedRoute>
@@ -119,6 +149,70 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WriteReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendance"
+              element={
+                <ProtectedRoute>
+                  <Attendance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rankings"
+              element={
+                <ProtectedRoute>
+                  <Rankings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lounge"
+              element={
+                <ProtectedRoute>
+                  <Lounge />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crew"
+              element={
+                <ProtectedRoute>
+                  <CrewHub />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crew/:crewId/challenges"
+              element={
+                <ProtectedRoute>
+                  <CrewChallenge />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crew/:crewId/lobby"
+              element={
+                <ProtectedRoute>
+                  <CrewLobby />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/crew/:crewId/highlights"
+              element={
+                <ProtectedRoute>
+                  <CrewHighlights />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/friends"
+              element={
+                <ProtectedRoute>
+                  <Friends />
                 </ProtectedRoute>
               }
             />

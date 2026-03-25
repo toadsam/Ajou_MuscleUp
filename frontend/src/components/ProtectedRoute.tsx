@@ -1,22 +1,57 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+
+type AuthState = "checking" | "ok" | "unauthorized";
 
 interface Props {
   children: React.ReactNode;
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
 export default function ProtectedRoute({ children }: Props) {
-  const user = localStorage.getItem("user");
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [authState, setAuthState] = useState<AuthState>("checking");
 
   useEffect(() => {
-    if (!user) {
-      alert("로그인이 필요합니다.");
-      setShouldRedirect(true);
-    }
-  }, [user]);
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+          credentials: "include",
+        });
+        if (!mounted) return;
+        if (res.ok) {
+          const user = await res.json();
+          localStorage.setItem(
+            "user",
+            JSON.stringify({
+              email: user?.email,
+              nickname: user?.nickname,
+              role: user?.role,
+            })
+          );
+          setAuthState("ok");
+          return;
+        }
+        localStorage.removeItem("user");
+        setAuthState("unauthorized");
+      } catch {
+        if (!mounted) return;
+        localStorage.removeItem("user");
+        setAuthState("unauthorized");
+      }
+    })();
 
-  if (shouldRedirect) {
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (authState === "checking") {
+    return <div className="pt-24 text-center text-white/70">인증 확인 중...</div>;
+  }
+
+  if (authState === "unauthorized") {
     return <Navigate to="/login" replace />;
   }
 

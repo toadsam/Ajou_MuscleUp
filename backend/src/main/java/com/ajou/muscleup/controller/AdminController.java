@@ -1,6 +1,7 @@
 package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.analytics.AnalyticsSummaryResponse;
+import com.ajou.muscleup.entity.ApplicationStatus;
 import com.ajou.muscleup.repository.AiChatMessageRepository;
 import com.ajou.muscleup.repository.BragCommentRepository;
 import com.ajou.muscleup.repository.BragLikeRepository;
@@ -8,9 +9,14 @@ import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.ProgramApplicationRepository;
 import com.ajou.muscleup.repository.ReviewRepository;
 import com.ajou.muscleup.service.AnalyticsService;
+import com.ajou.muscleup.service.AttendanceService;
 import com.ajou.muscleup.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -30,6 +36,7 @@ public class AdminController {
     private final AiChatMessageRepository aiChatMessageRepository;
     private final ProgramApplicationRepository programApplicationRepository;
     private final AuditLogService auditLogService;
+    private final AttendanceService attendanceService;
 
     @GetMapping("/ping")
     public ResponseEntity<Map<String, Object>> ping() {
@@ -85,14 +92,21 @@ public class AdminController {
     }
 
     @GetMapping("/programs/applications")
-    public ResponseEntity<?> listProgramApplications() {
-        return ResponseEntity.ok(programApplicationRepository.findAllByOrderByCreatedAtDesc()
-                .stream().map(com.ajou.muscleup.dto.program.ApplicationResponse::from).toList());
+    public ResponseEntity<Page<com.ajou.muscleup.dto.program.ApplicationResponse>> listProgramApplications(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size
+    ) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        return ResponseEntity.ok(
+                programApplicationRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(safePage, safeSize))
+                        .map(com.ajou.muscleup.dto.program.ApplicationResponse::from)
+        );
     }
 
     @PatchMapping("/programs/applications/{id}/status")
     public ResponseEntity<?> updateProgramApplicationStatus(@PathVariable("id") Long id,
-                                                            @RequestParam("status") com.ajou.muscleup.entity.ApplicationStatus status) {
+                                                            @RequestParam("status") ApplicationStatus status) {
         var app = programApplicationRepository.findById(id).orElse(null);
         if (app == null) {
             return ResponseEntity.notFound().build();
@@ -100,5 +114,44 @@ public class AdminController {
         app.setStatus(status);
         programApplicationRepository.save(app);
         return ResponseEntity.ok(com.ajou.muscleup.dto.program.ApplicationResponse.from(app));
+    }
+
+    @GetMapping("/attendance/shares")
+    public ResponseEntity<Page<com.ajou.muscleup.dto.attendance.AttendanceShareResponse>> listAttendanceShares(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(attendanceService.listSharedForAdmin(page, size));
+    }
+
+    @PatchMapping("/attendance/shares/{id}/hidden")
+    public ResponseEntity<com.ajou.muscleup.dto.attendance.AttendanceShareResponse> setAttendanceShareHidden(
+            @PathVariable("id") Long id,
+            @RequestParam("hidden") boolean hidden
+    ) {
+        return ResponseEntity.ok(attendanceService.setHiddenByAdmin(id, hidden));
+    }
+
+    @PostMapping("/audit/manual")
+    public ResponseEntity<Void> manualAudit(
+            @AuthenticationPrincipal String email,
+            @RequestBody ManualAuditRequest request
+    ) {
+        auditLogService.log(
+                email,
+                request.getAction() != null ? request.getAction() : "ADMIN_ACTION",
+                request.getResource() != null ? request.getResource() : "admin",
+                request.getSummary(),
+                request.getMetadata()
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    @Getter
+    static class ManualAuditRequest {
+        private String action;
+        private String resource;
+        private String summary;
+        private String metadata;
     }
 }

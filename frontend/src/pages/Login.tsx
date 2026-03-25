@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 
 interface LoginResponse {
   token: string;
@@ -16,7 +16,7 @@ declare global {
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
-async function loginRequest(body: any, path: string) {
+async function loginRequest(body: Record<string, unknown>, path: string) {
   const response = await fetch(`${API_BASE}/api/auth/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -43,19 +43,30 @@ function storeSession(data: LoginResponse) {
 }
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", rememberMe: true });
   const [googleReady, setGoogleReady] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, type, checked, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = await loginRequest(form, "login");
+      const data = await loginRequest(
+        {
+          email: form.email,
+          password: form.password,
+          rememberMe: form.rememberMe,
+        },
+        "login"
+      );
       storeSession(data);
-      alert(`로그인 성공! 환영합니다 ${data.nickname}`);
+      alert(`${data.nickname}님, 환영합니다!`);
       window.location.href = "/";
     } catch (err: any) {
       alert(err?.message || "로그인에 실패했습니다.");
@@ -64,9 +75,9 @@ export default function Login() {
 
   const handleGoogleCredential = async (credential: string) => {
     try {
-      const data = await loginRequest({ idToken: credential }, "google");
+      const data = await loginRequest({ idToken: credential, rememberMe: form.rememberMe }, "google");
       storeSession(data);
-      alert(`Google 로그인 성공! 환영합니다 ${data.nickname}`);
+      alert(`${data.nickname}님, 환영합니다!`);
       window.location.href = "/";
     } catch (err: any) {
       alert(err?.message || "Google 로그인에 실패했습니다.");
@@ -98,11 +109,12 @@ export default function Login() {
         }
       },
     });
-    window.google.accounts.id.renderButton(
-      document.getElementById("googleSignInButton"),
-      { theme: "outline", size: "large", width: 320 }
-    );
-  }, [googleReady]);
+    window.google.accounts.id.renderButton(document.getElementById("googleSignInButton"), {
+      theme: "outline",
+      size: "large",
+      width: 320,
+    });
+  }, [googleReady, form.rememberMe]);
 
   return (
     <section className="pt-32 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800">
@@ -137,6 +149,11 @@ export default function Login() {
           />
         </div>
 
+        <label className="flex items-center gap-2 text-sm text-gray-200">
+          <input type="checkbox" name="rememberMe" checked={form.rememberMe} onChange={handleChange} />
+          자동 로그인
+        </label>
+
         <button
           type="submit"
           className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
@@ -154,9 +171,7 @@ export default function Login() {
           {GOOGLE_CLIENT_ID ? (
             <div id="googleSignInButton" />
           ) : (
-            <p className="text-sm text-gray-400">
-              Google Client ID가 설정되지 않았습니다. 환경변수 VITE_GOOGLE_CLIENT_ID를 입력해주세요.
-            </p>
+            <p className="text-sm text-gray-400">Google Client ID가 설정되지 않았습니다.</p>
           )}
         </div>
 

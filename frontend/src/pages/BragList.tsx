@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 
@@ -11,8 +11,8 @@ type BragPost = {
   mediaUrls: string[];
   likeCount?: number;
   authorNickname?: string | null;
-  authorEmail?: string | null;
   createdAt?: string | null;
+  visibility?: "PUBLIC" | "FRIENDS";
 };
 
 type PageResponse<T> = {
@@ -27,28 +27,17 @@ type BragLikeResponse = {
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
 const isVideo = (url: string) => /\.(mp4|mov|webm|avi|mkv)(\?|$)/i.test(url.split("?")[0]);
-const formatDate = (v?: string | null) => {
-  if (!v) return "";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime())
-    ? ""
-    : d.toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-};
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
   const res = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
+    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
     credentials: "include",
     ...init,
   });
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw new Error("로그인이 필요합니다.");
   }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -57,22 +46,30 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+const extractSummary = (content: string) => {
+  const clean = content.replace(/---\s*META[\s\S]*?---/gi, "").trim();
+  return clean.length > 110 ? `${clean.slice(0, 110)}...` : clean;
+};
+
+const buildShareUrl = (postId: number) => `${window.location.origin}/brag/${postId}`;
+
 export default function BragList() {
   const [posts, setPosts] = useState<BragPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<"ALL" | "FRIENDS">("ALL");
   const [likes, setLikes] = useState<Record<number, { count: number; liked: boolean }>>({});
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await api<PageResponse<BragPost>>("/api/brags");
-      const items = Array.isArray(data) ? data : data.content ?? [];
-      setPosts(items);
+      setPosts(Array.isArray(data) ? data : data.content ?? []);
     } catch (e: any) {
-      setError(e?.message || "자랑 목록을 불러오지 못했어요.");
+      setError(e?.message || "자랑글 목록을 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -83,154 +80,236 @@ export default function BragList() {
       const res = await api<BragLikeResponse>(`/api/brags/${postId}/like`);
       setLikes((prev) => ({ ...prev, [postId]: { count: res.likeCount, liked: res.liked } }));
     } catch {
-      // ignore
+      // keep feed usable even when like status fails
     }
   }, []);
 
   useEffect(() => {
-    posts.forEach((p) => fetchLikeStatus(p.id));
+    void fetchPosts();
+    logEvent("brag_list", "page_view");
+  }, [fetchPosts]);
+
+  useEffect(() => {
+    posts.forEach((post) => void fetchLikeStatus(post.id));
   }, [posts, fetchLikeStatus]);
+
+  useEffect(() => {
+    if (!shareMessage) return;
+    const timer = window.setTimeout(() => setShareMessage(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [shareMessage]);
+
+  const filtered = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return posts
+      .filter((post) => (visibilityFilter === "FRIENDS" ? post.visibility === "FRIENDS" : true))
+      .filter((post) => {
+        if (!keyword) return true;
+        return (
+          post.title.toLowerCase().includes(keyword) ||
+          post.content.toLowerCase().includes(keyword) ||
+          (post.movement || "").toLowerCase().includes(keyword)
+        );
+      });
+  }, [posts, search, visibilityFilter]);
+
+  const featuredTemplates = [
+    { label: "PR 달성", desc: "무게나 횟수를 자랑하는 가장 쉬운 템플릿", emoji: "🏆" },
+    { label: "오늘 운동", desc: "오늘 한 운동과 한 줄 소감을 빠르게 기록", emoji: "🔥" },
+    { label: "체형 변화", desc: "Before / After 비교 사진 중심 공유", emoji: "📸" },
+  ];
 
   const toggleLike = async (postId: number) => {
     try {
       const res = await api<BragLikeResponse>(`/api/brags/${postId}/like`, { method: "POST" });
       setLikes((prev) => ({ ...prev, [postId]: { count: res.likeCount, liked: res.liked } }));
     } catch (e: any) {
-      alert(e?.message || "좋아요 처리에 실패했어요.");
+      alert(e?.message || "좋아요 처리에 실패했습니다.");
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
-
-  useEffect(() => {
-    logEvent("brag_list", "page_view");
-  }, []);
+  const handleShare = async (post: BragPost) => {
+    const url = buildShareUrl(post.id);
+    const text = `${post.title}\n${extractSummary(post.content)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${post.authorNickname ?? "회원"}님의 운동 자랑`,
+          text,
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareMessage("공유 링크를 복사했습니다.");
+      }
+    } catch {
+      // user cancelled or browser blocked share
+    }
+  };
 
   return (
-    <section className="pt-32 pb-20 px-5 md:px-10 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-pink-300">우리 회원 자랑방</p>
-            <h1 className="text-3xl md:text-4xl font-extrabold">최신 자랑 모음</h1>
+    <section className="min-h-screen bg-slate-950 pt-28 pb-24 text-white">
+      <div className="mx-auto max-w-6xl space-y-6 px-6 lg:px-10">
+        <header className="grid gap-4 rounded-[28px] border border-white/10 bg-gradient-to-br from-orange-500/18 via-amber-400/10 to-white/5 p-6 lg:grid-cols-[1.1fr,0.9fr]">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold tracking-[0.28em] text-orange-200">BRAG</p>
+            <h1 className="text-3xl font-extrabold md:text-5xl">운동 자랑방</h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-white/70">
+              기록이 짧아도 괜찮습니다. 오늘 운동, PR 달성, 체형 변화처럼 자랑할 주제만 고르면
+              초보도 빠르게 올릴 수 있게 만들었습니다.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/brag/write" className="rounded-full bg-orange-500 px-5 py-2 font-semibold text-black">
+                빠르게 자랑 올리기
+              </Link>
+              <a href="#brag-feed" className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/75">
+                최근 자랑 보기
+              </a>
+            </div>
           </div>
-          <a
-            href="/brag/write"
-            className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-pink-500 to-orange-500 px-5 py-3 font-semibold hover:opacity-90 transition"
-          >
-            자랑 올리기
-          </a>
-        </header>
-
-        {loading && (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse rounded-2xl bg-gray-800/60 h-28" />
+          <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-1">
+            {featuredTemplates.map((item) => (
+              <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="text-2xl">{item.emoji}</div>
+                <div className="mt-3 font-semibold">{item.label}</div>
+                <p className="mt-1 text-sm text-white/60">{item.desc}</p>
+              </div>
             ))}
           </div>
-        )}
+        </header>
 
-        {error && <p className="text-red-400">{error}</p>}
+        <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-[0.65fr,1fr]">
+          <div>
+            <div className="text-sm font-semibold text-white">초보용 필터</div>
+            <p className="mt-1 text-xs text-white/55">친구 공개 글만 따로 보거나 운동 종목으로 바로 찾을 수 있습니다.</p>
+          </div>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setVisibilityFilter("ALL")}
+                className={`rounded-full px-3 py-1 text-sm ${visibilityFilter === "ALL" ? "bg-orange-500 text-black" : "bg-black/30 text-gray-300"}`}
+              >
+                전체 보기
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisibilityFilter("FRIENDS")}
+                className={`rounded-full px-3 py-1 text-sm ${visibilityFilter === "FRIENDS" ? "bg-sky-500 text-black" : "bg-black/30 text-gray-300"}`}
+              >
+                친구 공개만
+              </button>
+            </div>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="종목, 제목, 내용으로 검색"
+              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm"
+            />
+          </div>
+        </div>
 
-        {!loading && posts.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-gray-600 bg-gray-800/40 p-10 text-center text-gray-300">
-            아직 자랑이 없어요. 첫 번째 기록을 남겨주세요!
+        {shareMessage && (
+          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {shareMessage}
           </div>
         )}
 
-        <div className="space-y-4">
-          {posts.map((post) => (
-            <article
-              key={post.id}
-              className="rounded-2xl border border-white/5 bg-gray-800/70 backdrop-blur-md p-6 shadow-lg"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm text-pink-300 font-semibold">{post.authorNickname || "익명 회원"}</p>
-                  <p className="text-xs text-gray-400">{formatDate(post.createdAt)}</p>
-                </div>
-                {(post.movement || post.weight) && (
-                  <div className="px-3 py-2 rounded-xl bg-gray-900 text-sm text-gray-200 border border-gray-700">
-                    {post.movement && <span className="font-semibold">{post.movement}</span>}
-                    {post.movement && post.weight && <span className="text-gray-500 mx-1">·</span>}
-                    {post.weight && <span>{post.weight}</span>}
+        {loading && <p className="text-gray-400">자랑글을 불러오는 중입니다...</p>}
+        {error && <p className="text-red-400">{error}</p>}
+        {!loading && !error && filtered.length === 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/60">
+            아직 표시할 자랑글이 없습니다. 첫 번째 자랑을 올려보세요.
+          </div>
+        )}
+
+        <div id="brag-feed" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((post) => {
+            const cover = post.mediaUrls?.[0];
+            const likeState = likes[post.id];
+            const summary = extractSummary(post.content);
+            return (
+              <article key={post.id} className="overflow-hidden rounded-[26px] border border-white/10 bg-white/5">
+                {cover ? (
+                  <div className="relative h-56 overflow-hidden border-b border-white/10">
+                    {isVideo(cover) ? (
+                      <video src={withBase(cover)} className="h-full w-full object-cover" muted controls />
+                    ) : (
+                      <img src={withBase(cover)} alt={post.title} className="h-full w-full object-cover" />
+                    )}
+                    <div className="absolute left-4 top-4 flex gap-2 text-xs">
+                      {post.visibility === "FRIENDS" && (
+                        <span className="rounded-full bg-sky-500/85 px-3 py-1 font-semibold text-black">친구 공개</span>
+                      )}
+                      {post.movement && (
+                        <span className="rounded-full bg-black/70 px-3 py-1 font-semibold text-white">{post.movement}</span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-40 items-end bg-gradient-to-br from-orange-500/25 via-amber-300/10 to-transparent p-5">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.28em] text-orange-200">Workout Brag</div>
+                      <div className="mt-2 text-lg font-bold">{post.movement || "오늘 운동 기록"}</div>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              <Link to={`/brag/${post.id}`} className="mt-3 block text-xl font-bold hover:text-pink-200 transition">
-                {post.title}
-              </Link>
-              <p className="mt-2 text-gray-200 leading-relaxed whitespace-pre-line">{post.content}</p>
+                <div className="space-y-4 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-white">{post.authorNickname ?? "익명 회원"}</div>
+                      <div className="text-xs text-white/45">
+                        {post.createdAt ? new Date(post.createdAt).toLocaleString("ko-KR") : ""}
+                      </div>
+                    </div>
+                    {post.weight && (
+                      <div className="rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-xs text-orange-100">
+                        {post.weight}
+                      </div>
+                    )}
+                  </div>
 
-              <div className="mt-3 flex items-center gap-3">
-                <button
-                  onClick={() => toggleLike(post.id)}
-                  className="flex items-center gap-2 rounded-full border border-pink-400/50 px-3 py-1 text-sm text-pink-200 hover:bg-pink-500/10 transition"
-                >
-                  <span>👍</span>
-                  <span>{likes[post.id]?.count ?? post.likeCount ?? 0}</span>
-                  <span className="text-xs">{likes[post.id]?.liked ? "좋아요 취소" : "좋아요"}</span>
-                </button>
-                <a
-                  href={`/brag/${post.id}#comments`}
-                  className="text-sm text-gray-300 hover:text-white underline-offset-2 hover:underline"
-                >
-                  댓글 보기/쓰기
-                </a>
-              </div>
+                  <div>
+                    <Link to={`/brag/${post.id}`} className="line-clamp-2 text-xl font-bold hover:text-orange-200">
+                      {post.title}
+                    </Link>
+                    <p className="mt-2 min-h-[64px] text-sm leading-relaxed text-white/70">{summary || "운동 기록이 등록되어 있습니다."}</p>
+                  </div>
 
-              {post.mediaUrls && post.mediaUrls.length > 0 && (
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {post.mediaUrls.map((rawUrl) => {
-                    const url = withBase(rawUrl);
-                    return (
-                      <button
-                        key={rawUrl}
-                        onClick={() => setLightbox(url)}
-                        className="group rounded-xl overflow-hidden border border-gray-700 bg-gray-900 relative"
-                      >
-                        {isVideo(url) ? (
-                          <video src={url} className="w-full h-48 object-cover" muted />
-                        ) : (
-                          <img src={url} alt="" className="w-full h-48 object-cover" />
-                        )}
-                        <span className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition" />
-                      </button>
-                    );
-                  })}
+                  <div className="flex flex-wrap gap-2 text-xs text-white/55">
+                    {post.movement && <span className="rounded-full bg-white/5 px-3 py-1">{post.movement}</span>}
+                    <span className="rounded-full bg-white/5 px-3 py-1">좋아요 {likeState?.count ?? post.likeCount ?? 0}</span>
+                    <span className="rounded-full bg-white/5 px-3 py-1">상세 보기 가능</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => void toggleLike(post.id)}
+                      className={`flex-1 rounded-full border px-3 py-2 text-sm ${
+                        likeState?.liked
+                          ? "border-orange-300/60 bg-orange-400/20 text-orange-100"
+                          : "border-white/10 text-white/75"
+                      }`}
+                    >
+                      좋아요 {likeState?.count ?? post.likeCount ?? 0}
+                    </button>
+                    <button
+                      onClick={() => void handleShare(post)}
+                      className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/75"
+                    >
+                      공유
+                    </button>
+                    <Link to={`/brag/${post.id}`} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">
+                      보기
+                    </Link>
+                  </div>
                 </div>
-              )}
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </div>
-
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <div className="relative max-w-5xl w-full flex justify-center">
-            {isVideo(lightbox) ? (
-              <video src={lightbox} controls autoPlay className="max-h-[90vh] max-w-[90vw]" />
-            ) : (
-              <img src={lightbox} className="max-h-[90vh] max-w-[90vw]" alt="" />
-            )}
-            <button
-              className="absolute -top-3 -right-3 bg-black/80 text-white rounded-full px-3 py-1 text-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightbox(null);
-              }}
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

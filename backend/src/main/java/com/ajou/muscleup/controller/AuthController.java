@@ -3,6 +3,7 @@ package com.ajou.muscleup.controller;
 import com.ajou.muscleup.config.JwtUtil;
 import com.ajou.muscleup.dto.AccessTokenResponse;
 import com.ajou.muscleup.dto.LoginResponse;
+import com.ajou.muscleup.dto.UserDTO;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.service.EmailVerificationService;
@@ -20,11 +21,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.util.List;
@@ -65,6 +69,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginReq req) {
         User user = userService.login(req.getEmail(), req.getPassword());
+        boolean rememberMe = Boolean.TRUE.equals(req.getRememberMe());
 
         String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRole());
         String refreshToken = refreshTokenService.issueFor(user);
@@ -78,16 +83,21 @@ public class AuthController {
 
         return ResponseEntity
                 .ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken).toString())
-                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())
+                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString())
                 .body(response);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AccessTokenResponse> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+    public ResponseEntity<AccessTokenResponse> refresh(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @CookieValue(name = "rememberMe", required = false) String rememberMeCookie
+    ) {
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(401).build();
         }
+        boolean rememberMe = "1".equals(rememberMeCookie);
 
         String newRefresh = refreshTokenService.rotate(refreshToken);
         String email = jwtUtil.getEmailFromToken(newRefresh);
@@ -98,8 +108,9 @@ public class AuthController {
         String accessToken = jwtUtil.generateAccessToken(email, role);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(newRefresh).toString())
-                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(newRefresh, rememberMe).toString())
+                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString())
                 .body(new AccessTokenResponse(accessToken));
     }
 
@@ -124,9 +135,17 @@ public class AuthController {
                 .path("/")
                 .maxAge(0)
                 .build();
+        ResponseCookie clearRememberMe = ResponseCookie.from("rememberMe", "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(0)
+                .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, clearRefresh.toString())
                 .header(HttpHeaders.SET_COOKIE, clearAccess.toString())
+                .header(HttpHeaders.SET_COOKIE, clearRememberMe.toString())
                 .build();
     }
 
@@ -135,6 +154,7 @@ public class AuthController {
         if (googleClientId == null || googleClientId.isBlank()) {
             return ResponseEntity.status(500).build();
         }
+        boolean rememberMe = Boolean.TRUE.equals(req.getRememberMe());
         GoogleIdToken.Payload payload = verifyGoogleToken(req.getIdToken());
         if (payload == null) {
             return ResponseEntity.status(401).build();
@@ -159,9 +179,20 @@ public class AuthController {
 
         return ResponseEntity
                 .ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken).toString())
-                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())
+                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString())
                 .body(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> me(@AuthenticationPrincipal String email) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Unauthorized"));
+        return ResponseEntity.ok(UserDTO.from(user));
     }
 
     private GoogleIdToken.Payload verifyGoogleToken(String idToken) {
@@ -176,24 +207,40 @@ public class AuthController {
         }
     }
 
-    private ResponseCookie buildRefreshCookie(String token) {
-        return ResponseCookie.from("refreshToken", token)
+    private ResponseCookie buildRefreshCookie(String token, boolean rememberMe) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
                 .secure(false) // set true when behind HTTPS
                 .sameSite("Lax")
-                .path("/")
-                .maxAge(REFRESH_COOKIE_MAX_AGE)
-                .build();
+                .path("/");
+        if (rememberMe) {
+            builder.maxAge(REFRESH_COOKIE_MAX_AGE);
+        }
+        return builder.build();
     }
 
-    private ResponseCookie buildAccessCookie(String token) {
-        return ResponseCookie.from("accessToken", token)
+    private ResponseCookie buildAccessCookie(String token, boolean rememberMe) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("accessToken", token)
                 .httpOnly(true)
                 .secure(false) // set true when behind HTTPS
                 .sameSite("Lax")
-                .path("/")
-                .maxAge(ACCESS_COOKIE_MAX_AGE)
-                .build();
+                .path("/");
+        if (rememberMe) {
+            builder.maxAge(ACCESS_COOKIE_MAX_AGE);
+        }
+        return builder.build();
+    }
+
+    private ResponseCookie buildRememberMeCookie(boolean rememberMe) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("rememberMe", rememberMe ? "1" : "0")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/");
+        if (rememberMe) {
+            builder.maxAge(REFRESH_COOKIE_MAX_AGE);
+        }
+        return builder.build();
     }
 
     // ----------------- Request DTO -----------------
@@ -218,11 +265,13 @@ public class AuthController {
         private String email;
         @NotBlank
         private String password;
+        private Boolean rememberMe;
     }
 
     @Getter
     static class GoogleLoginReq {
         @NotBlank
         private String idToken;
+        private Boolean rememberMe;
     }
 }
