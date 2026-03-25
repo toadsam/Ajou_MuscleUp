@@ -221,6 +221,9 @@ const MOVEMENT_PRESETS: Record<MovementPresetKey, MovementConfig> = {
 const POSITION_STEP_PX = 12;
 const GAMEPAD_DEADZONE = 0.2;
 const PLAYER_SYNC_THROTTLE_MS = 90;
+const PLAYER_HARD_RECONCILE_DISTANCE = 180;
+const PLAYER_SOFT_RECONCILE_DISTANCE = 10;
+const PLAYER_SOFT_RECONCILE_BLEND = 0.22;
 const CHAT_RENDER_LIMIT = 70;
 
 const LOUNGE_STORAGE_KEYS = {
@@ -598,7 +601,7 @@ export default function Lounge() {
         const dx = positionRef.current.x - me.x;
         const dy = positionRef.current.y - me.y;
         const distance = Math.hypot(dx, dy);
-        if (distance > 80 || localPositionRef.current === null) {
+        if (distance > PLAYER_HARD_RECONCILE_DISTANCE || localPositionRef.current === null) {
           positionRef.current = { x: me.x, y: me.y };
           renderPositionRef.current = { x: me.x, y: me.y };
           localPositionRef.current = { x: me.x, y: me.y };
@@ -608,6 +611,26 @@ export default function Lounge() {
           coyoteUntilRef.current = 0;
           jumpBufferUntilRef.current = 0;
           setLocalPosition({ x: me.x, y: me.y });
+        } else if (distance > PLAYER_SOFT_RECONCILE_DISTANCE) {
+          const correctedX = positionRef.current.x + (me.x - positionRef.current.x) * PLAYER_SOFT_RECONCILE_BLEND;
+          const correctedY = positionRef.current.y + (me.y - positionRef.current.y) * PLAYER_SOFT_RECONCILE_BLEND;
+          positionRef.current = { x: correctedX, y: correctedY };
+          renderPositionRef.current = {
+            x: renderPositionRef.current.x + (correctedX - renderPositionRef.current.x) * 0.55,
+            y: renderPositionRef.current.y + (correctedY - renderPositionRef.current.y) * 0.55,
+          };
+          localPositionRef.current = {
+            x: renderPositionRef.current.x,
+            y: renderPositionRef.current.y,
+          };
+          velocityRef.current = {
+            x: velocityRef.current.x * 0.65,
+            y: velocityRef.current.y * 0.65,
+          };
+          setLocalPosition({
+            x: renderPositionRef.current.x,
+            y: renderPositionRef.current.y,
+          });
         }
       }
     });
@@ -1967,6 +1990,8 @@ export default function Lounge() {
       : null;
 
   const tabPanelAnimClass = `transform transition-all duration-200 ${tabEntering ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`;
+  const mobileControlsRaised =
+    isMobile && ((isImmersiveFullscreen && sidebarTab === "chat") || Boolean(interactionSubject));
 
   return (
     <section
@@ -2816,17 +2841,23 @@ export default function Lounge() {
                 </div>
 
                 {isMobile && (
-                  <div className="mobile-controls">
+                  <div className={`mobile-controls ${mobileControlsRaised ? "mobile-controls-raised" : ""}`}>
                     <button
-                      onTouchStart={() => {
+                      onTouchStart={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
                         setKeyState("jump", true);
                         setKeyState("up", true);
                       }}
-                      onTouchEnd={() => {
+                      onTouchEnd={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
                         setKeyState("jump", false);
                         setKeyState("up", false);
                       }}
-                      onTouchCancel={() => {
+                      onTouchCancel={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
                         setKeyState("jump", false);
                         setKeyState("up", false);
                       }}
@@ -2837,27 +2868,63 @@ export default function Lounge() {
                     </button>
                     <div className="ctrl-row">
                       <button
-                        onTouchStart={() => setKeyState("left", true)}
-                        onTouchEnd={() => setKeyState("left", false)}
-                        onTouchCancel={() => setKeyState("left", false)}
+                        onTouchStart={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("left", true);
+                        }}
+                        onTouchEnd={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("left", false);
+                        }}
+                        onTouchCancel={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("left", false);
+                        }}
                         className="ctrl-btn"
                         aria-label="왼쪽 이동"
                       >
                         L
                       </button>
                       <button
-                        onTouchStart={() => setKeyState("down", true)}
-                        onTouchEnd={() => setKeyState("down", false)}
-                        onTouchCancel={() => setKeyState("down", false)}
+                        onTouchStart={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("down", true);
+                        }}
+                        onTouchEnd={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("down", false);
+                        }}
+                        onTouchCancel={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("down", false);
+                        }}
                         className="ctrl-btn"
                         aria-label="아래 이동"
                       >
                         D
                       </button>
                       <button
-                        onTouchStart={() => setKeyState("right", true)}
-                        onTouchEnd={() => setKeyState("right", false)}
-                        onTouchCancel={() => setKeyState("right", false)}
+                        onTouchStart={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("right", true);
+                        }}
+                        onTouchEnd={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("right", false);
+                        }}
+                        onTouchCancel={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setKeyState("right", false);
+                        }}
                         className="ctrl-btn"
                         aria-label="오른쪽 이동"
                       >

@@ -306,6 +306,14 @@
   flex-direction: column;
   gap: 6px;
   z-index: 12;
+  touch-action: none;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-controls-raised {
+  left: auto;
+  right: 12px;
+  bottom: 136px;
 }
 
 .ctrl-row {
@@ -1209,6 +1217,18 @@
     bottom: 84px;
     gap: 10px;
     padding: 12px 14px;
+  }
+
+  .mobile-controls {
+    left: 12px;
+    bottom: 12px;
+    z-index: 24;
+  }
+
+  .mobile-controls-raised {
+    left: auto;
+    right: 12px;
+    bottom: 142px;
   }
 }
 
