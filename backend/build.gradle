@@ -50,6 +50,8 @@ dependencies {
     // Google ID Token ê²€ì¦?
     implementation 'com.google.api-client:google-api-client:2.6.0'
     implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+    implementation platform('software.amazon.awssdk:bom:2.30.27')
+    implementation 'software.amazon.awssdk:s3'
 }
 
 tasks.named('test') {
@@ -77,4 +79,5 @@ tasks.withType(Test).configureEach {
 tasks.matching { it.name == 'bootRun' }.configureEach {
     systemProperty 'file.encoding', 'UTF-8'
 }
+
 
