@@ -8,4 +8,4 @@ cmds = [
 ]
 
 [start]
-cmd = "java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar build/libs/*.jar"
+cmd = "java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar build/libs/app.jar"
