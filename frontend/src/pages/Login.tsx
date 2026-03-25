@@ -44,39 +44,13 @@ function storeSession(data: LoginResponse) {
 }
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "", rememberMe: true });
+  const [rememberMe, setRememberMe] = useState(true);
   const [googleReady, setGoogleReady] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, type, checked, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const data = await loginRequest(
-        {
-          email: form.email,
-          password: form.password,
-          rememberMe: form.rememberMe,
-        },
-        "login"
-      );
-      storeSession(data);
-      alert(`${data.nickname}님, 환영합니다!`);
-      window.location.href = "/";
-    } catch (err: any) {
-      alert(err?.message || "로그인에 실패했습니다.");
-    }
-  };
+  const [googleLoadFailed, setGoogleLoadFailed] = useState(false);
 
   const handleGoogleCredential = async (credential: string) => {
     try {
-      const data = await loginRequest({ idToken: credential, rememberMe: form.rememberMe }, "google");
+      const data = await loginRequest({ idToken: credential, rememberMe }, "google");
       storeSession(data);
       alert(`${data.nickname}님, 환영합니다!`);
       window.location.href = "/";
@@ -93,9 +67,15 @@ export default function Login() {
     script.async = true;
     script.defer = true;
     script.onload = () => setGoogleReady(true);
+    script.onerror = () => setGoogleLoadFailed(true);
     document.body.appendChild(script);
 
+    const timeout = window.setTimeout(() => {
+      if (!window.google) setGoogleLoadFailed(true);
+    }, 4000);
+
     return () => {
+      window.clearTimeout(timeout);
       document.body.removeChild(script);
     };
   }, []);
@@ -115,60 +95,24 @@ export default function Login() {
       size: "large",
       width: 320,
     });
-  }, [googleReady, form.rememberMe]);
+  }, [googleReady, rememberMe]);
 
   return (
     <section className="pt-32 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-gray-800/70 backdrop-blur-md p-10 rounded-2xl shadow-xl w-full max-w-md text-white space-y-6"
-      >
-        <h2 className="text-3xl font-extrabold text-center mb-2">로그인</h2>
-        <p className="text-center text-gray-400 text-sm">이메일/비밀번호 또는 Google로 로그인하세요.</p>
+      <div className="bg-gray-800/70 backdrop-blur-md p-10 rounded-2xl shadow-xl w-full max-w-md text-white space-y-6">
+        <h2 className="text-3xl font-extrabold text-center mb-2">Google 로그인</h2>
+        <p className="text-center text-gray-400 text-sm">Google 계정으로 빠르게 시작하세요.</p>
 
-        <div className="space-y-2">
-          <label className="block">이메일</label>
+        <label className="flex items-center gap-2 text-sm text-gray-200 justify-center">
           <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            className="w-full p-3 rounded bg-gray-900 text-white focus:outline-none"
-            required
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
           />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block">비밀번호</label>
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            className="w-full p-3 rounded bg-gray-900 text-white focus:outline-none"
-            required
-          />
-        </div>
-
-        <label className="flex items-center gap-2 text-sm text-gray-200">
-          <input type="checkbox" name="rememberMe" checked={form.rememberMe} onChange={handleChange} />
           자동 로그인
         </label>
 
-        <button
-          type="submit"
-          className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
-        >
-          로그인
-        </button>
-
-        <div className="flex items-center gap-3 text-gray-400 text-sm">
-          <div className="flex-1 h-px bg-gray-700" />
-          <span>또는</span>
-          <div className="flex-1 h-px bg-gray-700" />
-        </div>
-
-        <div className="flex justify-center">
+        <div className="flex justify-center min-h-[42px] items-center">
           {GOOGLE_CLIENT_ID ? (
             <div id="googleSignInButton" />
           ) : (
@@ -176,13 +120,19 @@ export default function Login() {
           )}
         </div>
 
+        {googleLoadFailed && (
+          <p className="text-center text-xs text-gray-400">
+            브라우저 환경 문제로 Google 버튼을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+          </p>
+        )}
+
         <p className="text-center text-gray-400">
           아직 계정이 없으신가요?{" "}
           <a href="/register" className="text-pink-400 hover:underline">
             회원가입
           </a>
         </p>
-      </form>
+      </div>
     </section>
   );
 }
