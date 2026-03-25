@@ -54,6 +54,12 @@ public class AuthController {
     @Value("${google.client-id:}")
     private String googleClientId;
 
+    @Value("${app.cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${app.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
     @PostMapping("/email/send-code")
     public ResponseEntity<Void> send(@RequestBody SendReq req) {
         emailSvc.sendCode(req.getEmail(), from);
@@ -123,22 +129,22 @@ public class AuthController {
 
         ResponseCookie clearRefresh = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
         ResponseCookie clearAccess = ResponseCookie.from("accessToken", "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
         ResponseCookie clearRememberMe = ResponseCookie.from("rememberMe", "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -210,8 +216,8 @@ public class AuthController {
     private ResponseCookie buildRefreshCookie(String token, boolean rememberMe) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(false) // set true when behind HTTPS
-                .sameSite("Lax")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/");
         if (rememberMe) {
             builder.maxAge(REFRESH_COOKIE_MAX_AGE);
@@ -222,8 +228,8 @@ public class AuthController {
     private ResponseCookie buildAccessCookie(String token, boolean rememberMe) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("accessToken", token)
                 .httpOnly(true)
-                .secure(false) // set true when behind HTTPS
-                .sameSite("Lax")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/");
         if (rememberMe) {
             builder.maxAge(ACCESS_COOKIE_MAX_AGE);
@@ -234,8 +240,8 @@ public class AuthController {
     private ResponseCookie buildRememberMeCookie(boolean rememberMe) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("rememberMe", rememberMe ? "1" : "0")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/");
         if (rememberMe) {
             builder.maxAge(REFRESH_COOKIE_MAX_AGE);

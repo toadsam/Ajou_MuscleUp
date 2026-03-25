@@ -65,7 +65,9 @@ export function installFetchAuth() {
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = resolveUrl(input);
-    const response = await originalFetch(input, init);
+    const effectiveInit: RequestInit =
+      isApiRequest(url) ? { ...init, credentials: init?.credentials ?? "include" } : { ...init };
+    const response = await originalFetch(input, effectiveInit);
 
     if (response.status !== 401) return response;
     if (!isApiRequest(url) || isRefreshRequest(url) || hasRetryMarker(input, init)) return response;
@@ -80,6 +82,7 @@ export function installFetchAuth() {
 
     if (typeof Request !== "undefined" && input instanceof Request) {
       const retryRequest = new Request(input, {
+        credentials: "include",
         headers: {
           ...toHeadersObject(input.headers),
           ...toHeadersObject(init?.headers),
@@ -91,6 +94,7 @@ export function installFetchAuth() {
 
     return originalFetch(input, {
       ...init,
+      credentials: "include",
       headers: {
         ...toHeadersObject(init?.headers),
         [RETRY_HEADER]: "1",
