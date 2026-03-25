@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
 import { crewApi } from "../services/crewApi";
-import type { CrewChallenge, CrewDetail } from "../types/crew";
+import type { CrewChallenge, CrewDetail, CrewJoinRequest } from "../types/crew";
 
 const currentMonthKey = () => {
   const now = new Date();
@@ -142,6 +142,8 @@ export default function CrewChallenge() {
   const [memberQuery, setMemberQuery] = useState("");
   const [memberSort, setMemberSort] = useState<"rank" | "weekly" | "attendance">("rank");
   const [memberVisibleCount, setMemberVisibleCount] = useState(24);
+  const [joinRequests, setJoinRequests] = useState<CrewJoinRequest[]>([]);
+  const [joinRequestLoading, setJoinRequestLoading] = useState(false);
   const previousRanksRef = useRef<Record<number, number>>({});
   const tabSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const challengeSwipeStartRef = useRef<number | null>(null);
@@ -255,6 +257,19 @@ export default function CrewChallenge() {
     });
   };
 
+  const loadJoinRequests = async (targetCrewId: number) => {
+    if (!targetCrewId) return;
+    setJoinRequestLoading(true);
+    try {
+      const list = await crewApi.listJoinRequests(targetCrewId);
+      setJoinRequests(list);
+    } catch {
+      setJoinRequests([]);
+    } finally {
+      setJoinRequestLoading(false);
+    }
+  };
+
   const loadDetail = async (targetCrewId: number, monthKey: string) => {
     if (!targetCrewId) return;
     try {
@@ -283,6 +298,11 @@ export default function CrewChallenge() {
       previousRanksRef.current = currentRanks;
 
       setDetail(data);
+      if (data.leader) {
+        void loadJoinRequests(targetCrewId);
+      } else {
+        setJoinRequests([]);
+      }
       if (data.challenges.length > 0 && expandedChallengeId == null) {
         setExpandedChallengeId(data.challenges[0].id);
       }
@@ -316,7 +336,10 @@ export default function CrewChallenge() {
     if (!crewIdNum) return;
     setError("");
     try {
-      await crewApi.join(crewIdNum);
+      const result = await crewApi.join(crewIdNum);
+      if (result.result === "PENDING") {
+        window.alert(result.message);
+      }
       await loadDetail(crewIdNum, month);
     } catch (e: any) {
       setError(e?.response?.data?.message || "모임 참여에 실패했습니다.");
@@ -341,6 +364,7 @@ export default function CrewChallenge() {
       const updated = await crewApi.update(crewIdNum, {
         name: detail.name,
         description: detail.description || "",
+        joinPolicy: detail.joinPolicy ?? "AUTO_APPROVE",
       });
       setDetail(updated);
     } catch (e: any) {
@@ -369,6 +393,29 @@ export default function CrewChallenge() {
       await loadDetail(crewIdNum, month);
     } catch (e: any) {
       setError(e?.response?.data?.message || "멤버 강퇴에 실패했습니다.");
+    }
+  };
+
+  const onApproveJoinRequest = async (requestId: number) => {
+    if (!crewIdNum) return;
+    setError("");
+    try {
+      await crewApi.approveJoinRequest(crewIdNum, requestId);
+      await loadJoinRequests(crewIdNum);
+      await loadDetail(crewIdNum, month);
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "가입 신청 승인에 실패했습니다.");
+    }
+  };
+
+  const onRejectJoinRequest = async (requestId: number) => {
+    if (!crewIdNum) return;
+    setError("");
+    try {
+      await crewApi.rejectJoinRequest(crewIdNum, requestId);
+      await loadJoinRequests(crewIdNum);
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "가입 신청 거절에 실패했습니다.");
     }
   };
 
@@ -897,6 +944,22 @@ export default function CrewChallenge() {
                 <div className="space-y-2">
                   <input value={detail.name} onChange={(e) => setDetail((prev) => (prev ? { ...prev, name: e.target.value } : prev))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-xl font-extrabold" />
                   <textarea value={detail.description ?? ""} onChange={(e) => setDetail((prev) => (prev ? { ...prev, description: e.target.value } : prev))} rows={2} className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-gray-300" />
+                  {detail.leader && (
+                    <select
+                      value={detail.joinPolicy ?? "AUTO_APPROVE"}
+                      onChange={(e) =>
+                        setDetail((prev) =>
+                          prev
+                            ? { ...prev, joinPolicy: e.target.value as "AUTO_APPROVE" | "LEADER_APPROVE" }
+                            : prev
+                        )
+                      }
+                      className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-cyan-100"
+                    >
+                      <option value="AUTO_APPROVE">가입 방식: 즉시 참여</option>
+                      <option value="LEADER_APPROVE">가입 방식: 방장 승인 필요</option>
+                    </select>
+                  )}
                   <div className="flex items-center gap-2 text-xs text-cyan-300"><span>초대코드: <span className="font-bold">{detail.inviteCode}</span></span><button type="button" onClick={() => void copyInviteLink()} className="rounded-md border border-cyan-300/40 px-2 py-1 text-cyan-200 hover:bg-cyan-500/10">{copiedLink ? "복사됨" : "링크 복사"}</button></div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -905,6 +968,45 @@ export default function CrewChallenge() {
                 </div>
               </div>
             </div>
+
+            {detail.leader && manageMode && (
+              <div className="rounded-2xl border border-cyan-300/25 bg-cyan-500/10 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-cyan-100">가입 신청 관리</h3>
+                  <span className="text-xs text-cyan-200">대기 {joinRequests.length}건</span>
+                </div>
+                {joinRequestLoading && <p className="text-xs text-gray-300">불러오는 중...</p>}
+                {!joinRequestLoading && joinRequests.length === 0 && (
+                  <p className="text-xs text-gray-300">현재 대기 중인 가입 신청이 없습니다.</p>
+                )}
+                <div className="space-y-2">
+                  {joinRequests.map((request) => (
+                    <div key={request.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{request.nickname}</p>
+                        <p className="truncate text-[11px] text-gray-400">{request.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void onApproveJoinRequest(request.id)}
+                          className="rounded-lg border border-emerald-300/40 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200"
+                        >
+                          승인
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void onRejectJoinRequest(request.id)}
+                          className="rounded-lg border border-rose-300/40 bg-rose-500/10 px-2 py-1 text-xs text-rose-200"
+                        >
+                          거절
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div
               ref={tabContentRef}

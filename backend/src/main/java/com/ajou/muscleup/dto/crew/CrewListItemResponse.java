@@ -1,5 +1,6 @@
 package com.ajou.muscleup.dto.crew;
 
+import com.ajou.muscleup.entity.CrewJoinPolicy;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,4 +14,5 @@ public class CrewListItemResponse {
     private long memberCount;
     private boolean joined;
     private String inviteCode;
+    private CrewJoinPolicy joinPolicy;
 }

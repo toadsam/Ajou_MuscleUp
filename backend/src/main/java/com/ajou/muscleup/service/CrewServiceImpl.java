@@ -3,18 +3,23 @@ package com.ajou.muscleup.service;
 import com.ajou.muscleup.dto.crew.*;
 import com.ajou.muscleup.entity.CharacterProfile;
 import com.ajou.muscleup.entity.CrewChallenge;
+import com.ajou.muscleup.entity.CrewJoinPolicy;
+import com.ajou.muscleup.entity.CrewJoinRequestStatus;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.WorkoutCrew;
 import com.ajou.muscleup.entity.WorkoutCrewMember;
 import com.ajou.muscleup.entity.WorkoutCrewMemberRole;
+import com.ajou.muscleup.entity.WorkoutCrewJoinRequest;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.CrewChallengeRepository;
 import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.repository.WorkoutCrewMemberRepository;
+import com.ajou.muscleup.repository.WorkoutCrewJoinRequestRepository;
 import com.ajou.muscleup.repository.WorkoutCrewRepository;
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +41,7 @@ public class CrewServiceImpl implements CrewService {
     private final UserRepository userRepository;
     private final WorkoutCrewRepository workoutCrewRepository;
     private final WorkoutCrewMemberRepository workoutCrewMemberRepository;
+    private final WorkoutCrewJoinRequestRepository workoutCrewJoinRequestRepository;
     private final CharacterProfileRepository characterProfileRepository;
     private final CrewChallengeRepository crewChallengeRepository;
     private final AttendanceLogRepository attendanceLogRepository;
@@ -43,12 +49,14 @@ public class CrewServiceImpl implements CrewService {
     @Override
     public CrewDetailResponse create(String email, CrewCreateRequest request) {
         User user = getUserByEmailOrThrow(email);
+        CrewJoinPolicy joinPolicy = request.getJoinPolicy() != null ? request.getJoinPolicy() : CrewJoinPolicy.AUTO_APPROVE;
         WorkoutCrew crew = workoutCrewRepository.save(
                 WorkoutCrew.builder()
                         .name(request.getName().trim())
                         .description(normalize(request.getDescription()))
                         .owner(user)
                         .inviteCode(generateInviteCode())
+                        .joinPolicy(joinPolicy)
                         .build()
         );
         workoutCrewMemberRepository.save(
@@ -76,6 +84,7 @@ public class CrewServiceImpl implements CrewService {
                         .memberCount(workoutCrewMemberRepository.countByCrew(crew))
                         .joined(workoutCrewMemberRepository.existsByCrewAndUser(crew, me))
                         .inviteCode(crew.getInviteCode())
+                        .joinPolicy(resolveJoinPolicy(crew))
                         .build())
                 .toList();
     }
@@ -89,18 +98,69 @@ public class CrewServiceImpl implements CrewService {
     }
 
     @Override
-    public void join(String email, Long crewId) {
+    public CrewJoinResultResponse join(String email, Long crewId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        joinCrewIfNotExists(me, crew);
+        return joinWithPolicy(me, crew);
     }
 
     @Override
-    public void joinByInviteCode(String email, String inviteCode) {
+    public CrewJoinResultResponse joinByInviteCode(String email, String inviteCode) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = workoutCrewRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 초대코드입니다."));
-        joinCrewIfNotExists(me, crew);
+        return joinWithPolicy(me, crew);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CrewJoinRequestResponse> listJoinRequests(String email, Long crewId) {
+        User me = getUserByEmailOrThrow(email);
+        WorkoutCrew crew = getCrewOrThrow(crewId);
+        ensureLeader(crew, me);
+        return workoutCrewJoinRequestRepository
+                .findAllByCrewAndStatusOrderByCreatedAtAsc(crew, CrewJoinRequestStatus.PENDING)
+                .stream()
+                .map(request -> CrewJoinRequestResponse.builder()
+                        .id(request.getId())
+                        .userId(request.getUser().getId())
+                        .nickname(request.getUser().getNickname())
+                        .email(request.getUser().getEmail())
+                        .status(request.getStatus().name())
+                        .requestedAt(request.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    public void approveJoinRequest(String email, Long crewId, Long requestId) {
+        User me = getUserByEmailOrThrow(email);
+        WorkoutCrew crew = getCrewOrThrow(crewId);
+        ensureLeader(crew, me);
+        WorkoutCrewJoinRequest request = workoutCrewJoinRequestRepository.findByIdAndCrew(requestId, crew)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join request not found"));
+        if (request.getStatus() != CrewJoinRequestStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Join request is already processed");
+        }
+        joinCrewIfNotExists(request.getUser(), crew);
+        request.setStatus(CrewJoinRequestStatus.APPROVED);
+        request.setDecidedBy(me);
+        request.setDecidedAt(LocalDateTime.now());
+    }
+
+    @Override
+    public void rejectJoinRequest(String email, Long crewId, Long requestId) {
+        User me = getUserByEmailOrThrow(email);
+        WorkoutCrew crew = getCrewOrThrow(crewId);
+        ensureLeader(crew, me);
+        WorkoutCrewJoinRequest request = workoutCrewJoinRequestRepository.findByIdAndCrew(requestId, crew)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join request not found"));
+        if (request.getStatus() != CrewJoinRequestStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Join request is already processed");
+        }
+        request.setStatus(CrewJoinRequestStatus.REJECTED);
+        request.setDecidedBy(me);
+        request.setDecidedAt(LocalDateTime.now());
     }
 
     @Override
@@ -123,6 +183,9 @@ public class CrewServiceImpl implements CrewService {
         ensureLeader(crew, me);
         crew.setName(request.getName().trim());
         crew.setDescription(normalize(request.getDescription()));
+        if (request.getJoinPolicy() != null) {
+            crew.setJoinPolicy(request.getJoinPolicy());
+        }
         return buildDetail(crew, me, YearMonth.now());
     }
 
@@ -132,6 +195,7 @@ public class CrewServiceImpl implements CrewService {
         WorkoutCrew crew = getCrewOrThrow(crewId);
         ensureLeader(crew, me);
         crewChallengeRepository.deleteAll(crewChallengeRepository.findAllByCrewOrderByStartDateDesc(crew));
+        workoutCrewJoinRequestRepository.deleteAllByCrew(crew);
         workoutCrewMemberRepository.deleteAllByCrew(crew);
         workoutCrewRepository.delete(crew);
     }
@@ -251,6 +315,7 @@ public class CrewServiceImpl implements CrewService {
                 .description(crew.getDescription())
                 .ownerNickname(crew.getOwner().getNickname())
                 .inviteCode(crew.getInviteCode())
+                .joinPolicy(resolveJoinPolicy(crew))
                 .joined(joined)
                 .leader(leader)
                 .month(month.toString())
@@ -497,6 +562,51 @@ public class CrewServiceImpl implements CrewService {
         );
     }
 
+    private CrewJoinResultResponse joinWithPolicy(User me, WorkoutCrew crew) {
+        if (workoutCrewMemberRepository.existsByCrewAndUser(crew, me)) {
+            return CrewJoinResultResponse.builder()
+                    .crewId(crew.getId())
+                    .crewName(crew.getName())
+                    .inviteCode(crew.getInviteCode())
+                    .result("ALREADY_MEMBER")
+                    .message("이미 참여 중인 모임입니다.")
+                    .build();
+        }
+
+        if (resolveJoinPolicy(crew) == CrewJoinPolicy.LEADER_APPROVE) {
+            WorkoutCrewJoinRequest request = workoutCrewJoinRequestRepository.findByCrewAndUser(crew, me)
+                    .orElseGet(() -> WorkoutCrewJoinRequest.builder()
+                            .crew(crew)
+                            .user(me)
+                            .build());
+            request.setStatus(CrewJoinRequestStatus.PENDING);
+            request.setDecidedBy(null);
+            request.setDecidedAt(null);
+            workoutCrewJoinRequestRepository.save(request);
+            return CrewJoinResultResponse.builder()
+                    .crewId(crew.getId())
+                    .crewName(crew.getName())
+                    .inviteCode(crew.getInviteCode())
+                    .result("PENDING")
+                    .message("가입 신청을 보냈습니다. 방장 승인 후 참여됩니다.")
+                    .build();
+        }
+
+        joinCrewIfNotExists(me, crew);
+        workoutCrewJoinRequestRepository.findByCrewAndUser(crew, me).ifPresent(existing -> {
+            existing.setStatus(CrewJoinRequestStatus.APPROVED);
+            existing.setDecidedBy(crew.getOwner());
+            existing.setDecidedAt(LocalDateTime.now());
+        });
+        return CrewJoinResultResponse.builder()
+                .crewId(crew.getId())
+                .crewName(crew.getName())
+                .inviteCode(crew.getInviteCode())
+                .result("JOINED")
+                .message("바로 모임에 참여했습니다.")
+                .build();
+    }
+
     private void ensureLeader(WorkoutCrew crew, User user) {
         if (!Objects.equals(crew.getOwner().getId(), user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "모임장만 가능한 작업입니다.");
@@ -522,6 +632,10 @@ public class CrewServiceImpl implements CrewService {
     private User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+    }
+
+    private CrewJoinPolicy resolveJoinPolicy(WorkoutCrew crew) {
+        return crew.getJoinPolicy() != null ? crew.getJoinPolicy() : CrewJoinPolicy.AUTO_APPROVE;
     }
 
     private String normalize(String value) {

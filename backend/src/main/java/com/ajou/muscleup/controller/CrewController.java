@@ -6,6 +6,8 @@ import com.ajou.muscleup.dto.crew.CrewListItemResponse;
 import com.ajou.muscleup.dto.crew.CrewUpdateRequest;
 import com.ajou.muscleup.dto.crew.CrewChallengeCreateRequest;
 import com.ajou.muscleup.dto.crew.CrewChallengeResponse;
+import com.ajou.muscleup.dto.crew.CrewJoinRequestResponse;
+import com.ajou.muscleup.dto.crew.CrewJoinResultResponse;
 import com.ajou.muscleup.service.CrewService;
 import jakarta.validation.Valid;
 import java.time.YearMonth;
@@ -52,12 +54,11 @@ public class CrewController {
     }
 
     @PostMapping("/groups/{crewId}/join")
-    public ResponseEntity<Void> join(
+    public ResponseEntity<CrewJoinResultResponse> join(
             @AuthenticationPrincipal String email,
             @PathVariable Long crewId
     ) {
-        crewService.join(email, crewId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(crewService.join(email, crewId));
     }
 
     @DeleteMapping("/groups/{crewId}/leave")
@@ -70,11 +71,38 @@ public class CrewController {
     }
 
     @PostMapping("/groups/join-by-code/{inviteCode}")
-    public ResponseEntity<Void> joinByCode(
+    public ResponseEntity<CrewJoinResultResponse> joinByCode(
             @AuthenticationPrincipal String email,
             @PathVariable String inviteCode
     ) {
-        crewService.joinByInviteCode(email, inviteCode);
+        return ResponseEntity.ok(crewService.joinByInviteCode(email, inviteCode));
+    }
+
+    @GetMapping("/groups/{crewId}/join-requests")
+    public ResponseEntity<List<CrewJoinRequestResponse>> listJoinRequests(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long crewId
+    ) {
+        return ResponseEntity.ok(crewService.listJoinRequests(email, crewId));
+    }
+
+    @PostMapping("/groups/{crewId}/join-requests/{requestId}/approve")
+    public ResponseEntity<Void> approveJoinRequest(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long crewId,
+            @PathVariable Long requestId
+    ) {
+        crewService.approveJoinRequest(email, crewId, requestId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/groups/{crewId}/join-requests/{requestId}/reject")
+    public ResponseEntity<Void> rejectJoinRequest(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long crewId,
+            @PathVariable Long requestId
+    ) {
+        crewService.rejectJoinRequest(email, crewId, requestId);
         return ResponseEntity.ok().build();
     }
 

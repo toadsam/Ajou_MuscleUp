@@ -27,4 +27,9 @@ public class WorkoutCrew extends BaseTimeEntity {
 
     @Column(unique = true, length = 20)
     private String inviteCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 24)
+    @Builder.Default
+    private CrewJoinPolicy joinPolicy = CrewJoinPolicy.AUTO_APPROVE;
 }

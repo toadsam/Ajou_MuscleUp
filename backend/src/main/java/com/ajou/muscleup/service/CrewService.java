@@ -2,6 +2,8 @@ package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.crew.CrewCreateRequest;
 import com.ajou.muscleup.dto.crew.CrewDetailResponse;
+import com.ajou.muscleup.dto.crew.CrewJoinRequestResponse;
+import com.ajou.muscleup.dto.crew.CrewJoinResultResponse;
 import com.ajou.muscleup.dto.crew.CrewListItemResponse;
 import com.ajou.muscleup.dto.crew.CrewUpdateRequest;
 import com.ajou.muscleup.dto.crew.CrewChallengeCreateRequest;
@@ -16,11 +18,17 @@ public interface CrewService {
 
     CrewDetailResponse getDetail(String email, Long crewId, YearMonth month);
 
-    void join(String email, Long crewId);
+    CrewJoinResultResponse join(String email, Long crewId);
 
-    void joinByInviteCode(String email, String inviteCode);
+    CrewJoinResultResponse joinByInviteCode(String email, String inviteCode);
 
     void leave(String email, Long crewId);
+
+    List<CrewJoinRequestResponse> listJoinRequests(String email, Long crewId);
+
+    void approveJoinRequest(String email, Long crewId, Long requestId);
+
+    void rejectJoinRequest(String email, Long crewId, Long requestId);
 
     CrewDetailResponse update(String email, Long crewId, CrewUpdateRequest request);
 

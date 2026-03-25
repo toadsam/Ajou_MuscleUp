@@ -1,4 +1,5 @@
 export type CrewMemberRole = "LEADER" | "MEMBER";
+export type CrewJoinPolicy = "AUTO_APPROVE" | "LEADER_APPROVE";
 export type CrewCharacterTier =
   | "BRONZE"
   | "SILVER"
@@ -17,6 +18,7 @@ export interface CrewListItem {
   memberCount: number;
   joined: boolean;
   inviteCode: string;
+  joinPolicy?: CrewJoinPolicy;
 }
 
 export interface CrewMemberAttendance {
@@ -40,6 +42,7 @@ export interface CrewDetail {
   description?: string | null;
   ownerNickname: string;
   inviteCode: string;
+  joinPolicy?: CrewJoinPolicy;
   joined: boolean;
   leader: boolean;
   month: string;
@@ -95,4 +98,21 @@ export interface CrewCompetitionEntry {
   attendanceRate: number;
   recentWorkoutDays: number;
   challengeAverageCompletion: number;
+}
+
+export interface CrewJoinResult {
+  crewId: number;
+  crewName: string;
+  inviteCode: string;
+  result: "JOINED" | "PENDING" | "ALREADY_MEMBER";
+  message: string;
+}
+
+export interface CrewJoinRequest {
+  id: number;
+  userId: number;
+  nickname: string;
+  email: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  requestedAt: string;
 }

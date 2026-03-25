@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
 import { crewApi } from "../services/crewApi";
-import type { CrewListItem } from "../types/crew";
+import type { CrewJoinPolicy, CrewListItem } from "../types/crew";
 
 type CrewSeed = {
   tier: CharacterTier;
@@ -48,7 +48,9 @@ export default function CrewHub() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [joinPolicy, setJoinPolicy] = useState<CrewJoinPolicy>("AUTO_APPROVE");
   const [inviteCodeInput, setInviteCodeInput] = useState("");
+  const [joinResultMessage, setJoinResultMessage] = useState("");
 
   const joinedGroups = useMemo(() => groups.filter((g) => g.joined), [groups]);
   const featuredGroups = useMemo(() => [...groups].sort((a, b) => b.memberCount - a.memberCount).slice(0, 3), [groups]);
@@ -82,9 +84,14 @@ export default function CrewHub() {
     if (!name.trim()) return;
     setError("");
     try {
-      const created = await crewApi.create({ name: name.trim(), description: description.trim() });
+      const created = await crewApi.create({
+        name: name.trim(),
+        description: description.trim(),
+        joinPolicy,
+      });
       setName("");
       setDescription("");
+      setJoinPolicy("AUTO_APPROVE");
       await loadGroups();
       navigate(`/crew/${created.id}/challenges`);
     } catch (e: any) {
@@ -96,9 +103,11 @@ export default function CrewHub() {
     event.preventDefault();
     if (!inviteCodeInput.trim()) return;
     setError("");
+    setJoinResultMessage("");
     try {
-      await crewApi.joinByCode(inviteCodeInput.trim().toUpperCase());
+      const result = await crewApi.joinByCode(inviteCodeInput.trim().toUpperCase());
       setInviteCodeInput("");
+      setJoinResultMessage(result.message);
       await loadGroups();
     } catch (e: any) {
       setError(e?.response?.data?.message || "초대코드 참가에 실패했습니다.");
@@ -189,6 +198,14 @@ export default function CrewHub() {
                 placeholder="모임 소개"
                 className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
               />
+              <select
+                value={joinPolicy}
+                onChange={(e) => setJoinPolicy(e.target.value as CrewJoinPolicy)}
+                className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+              >
+                <option value="AUTO_APPROVE">가입 방식: 즉시 참여</option>
+                <option value="LEADER_APPROVE">가입 방식: 방장 승인 필요</option>
+              </select>
               <button type="submit" className="w-full rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">
                 모임 생성하고 입장
               </button>
@@ -206,6 +223,11 @@ export default function CrewHub() {
               <button type="submit" className="w-full rounded-lg border border-cyan-300/40 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-200">
                 코드로 참여
               </button>
+              {joinResultMessage && (
+                <p className="rounded-lg border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                  {joinResultMessage}
+                </p>
+              )}
             </form>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">

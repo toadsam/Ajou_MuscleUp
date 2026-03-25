@@ -1,5 +1,6 @@
 package com.ajou.muscleup.dto.crew;
 
+import com.ajou.muscleup.entity.CrewJoinPolicy;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -14,4 +15,6 @@ public class CrewUpdateRequest {
 
     @Size(max = 300)
     private String description;
+
+    private CrewJoinPolicy joinPolicy;
 }
