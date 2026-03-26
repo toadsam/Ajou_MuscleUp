@@ -119,14 +119,6 @@
   border-color: transparent !important;
 }
 
-.share-preview.exporting .share-heading-layer,
-.share-preview.exporting .share-subheading-text {
-  padding: 0 !important;
-  margin: 0 !important;
-  line-height: 1.15 !important;
-  letter-spacing: normal !important;
-}
-
 .share-preview.exporting .share-heading-text.decor-gradient {
   background: none !important;
   color: #ffffff !important;
