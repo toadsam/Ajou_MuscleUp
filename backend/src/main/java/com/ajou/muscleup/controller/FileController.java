@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -139,6 +142,48 @@ public class FileController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/proxy")
+    public ResponseEntity<byte[]> proxy(@RequestParam("path") String path) throws IOException {
+        if (useS3()) {
+            String key = toS3KeyFromPath(path);
+            if (key == null || key.isBlank()) {
+                return ResponseEntity.badRequest().build();
+            }
+            try {
+                ResponseBytes<GetObjectResponse> bytes = s3Client.getObjectAsBytes(
+                        GetObjectRequest.builder().bucket(s3Bucket).key(key).build()
+                );
+                String contentType = bytes.response().contentType();
+                if (contentType == null || contentType.isBlank()) {
+                    contentType = "application/octet-stream";
+                }
+                return ResponseEntity.ok()
+                        .header("Content-Type", contentType)
+                        .body(bytes.asByteArray());
+            } catch (Exception e) {
+                return ResponseEntity.notFound().build();
+            }
+        }
+
+        String relative = toLocalRelativePath(path);
+        if (relative == null || relative.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Path target = root.resolve(relative).normalize();
+        if (!target.startsWith(root) || !Files.exists(target) || !Files.isRegularFile(target)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] bytes = Files.readAllBytes(target);
+        String contentType = Files.probeContentType(target);
+        if (contentType == null || contentType.isBlank()) {
+            contentType = "application/octet-stream";
+        }
+        return ResponseEntity.ok()
+                .header("Content-Type", contentType)
+                .body(bytes);
+    }
+
     @GetMapping("/list")
     public ResponseEntity<List<String>> list(@RequestParam(value = "folder", defaultValue = "gallery") String folder) throws IOException {
         String safeFolder = sanitizeFolder(folder);
@@ -257,6 +302,32 @@ public class FileController {
         }
 
         return toS3Key(candidate);
+    }
+
+    private String toLocalRelativePath(String path) {
+        if (path == null || path.isBlank()) return null;
+        String candidate = path.trim();
+
+        if (candidate.startsWith("http://") || candidate.startsWith("https://")) {
+            try {
+                candidate = URI.create(candidate).getPath();
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+
+        candidate = candidate.replace("\\", "/");
+        int idx = candidate.indexOf("/uploads/");
+        if (idx >= 0) {
+            return candidate.substring(idx + "/uploads/".length());
+        }
+        if (candidate.startsWith("/uploads/")) {
+            return candidate.substring("/uploads/".length());
+        }
+        if (candidate.startsWith("uploads/")) {
+            return candidate.substring("uploads/".length());
+        }
+        return null;
     }
 
     private List<S3Object> listS3Objects(String prefix) {

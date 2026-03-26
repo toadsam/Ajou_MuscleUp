@@ -76,6 +76,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/attendance/share/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/attendance/share/*/cheer").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/attendance/share/*/report").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/files/proxy").permitAll()
                 .requestMatchers(HttpMethod.GET, "/share/attendance/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/metrics/lobby").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*").permitAll()

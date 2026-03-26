@@ -56,6 +56,8 @@ const POSE_TEXT: Record<ShareCardCharacterPose, string> = {
   run: "RUN",
 };
 
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -90,7 +92,26 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
     // Fall through to direct image loading.
   }
 
-  // 2) Try anonymous CORS image loading.
+  // 2) Try backend proxy for cross-origin or private object URLs.
+  try {
+    const proxyBase = API_BASE || "";
+    const proxyUrl = `${proxyBase}/api/files/proxy?path=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl, { credentials: "include" });
+    if (res.ok) {
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      try {
+        const img = await loadImageFromSrc(objectUrl, false);
+        return img;
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+  } catch {
+    // Fall through to anonymous image loading.
+  }
+
+  // 3) Try anonymous CORS image loading.
   return loadImageFromSrc(url, true);
 }
 
