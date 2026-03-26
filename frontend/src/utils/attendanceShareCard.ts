@@ -60,14 +60,43 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
+function loadImageFromSrc(src: string, useAnonymousCrossOrigin: boolean): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    if (useAnonymousCrossOrigin) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => resolve(img);
     img.onerror = reject;
-    img.src = url;
+    img.src = src;
   });
+}
+
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  // 1) Try credentialed fetch first (works for cookie-protected media URLs).
+  try {
+    const res = await fetch(url, { credentials: "include" });
+    if (res.ok) {
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      try {
+        const img = await loadImageFromSrc(objectUrl, false);
+        return img;
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+  } catch {
+    // Fall through to direct image loading.
+  }
+
+  // 2) Try anonymous CORS image loading.
+  try {
+    return await loadImageFromSrc(url, true);
+  } catch {
+    // 3) Final fallback without explicit crossOrigin.
+    return loadImageFromSrc(url, false);
+  }
 }
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -251,7 +280,7 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
       const mediaFit = input.mediaFit ?? "cover";
       const mediaPosX = clamp(input.mediaPositionX ?? 50, 0, 100);
       const mediaPosY = clamp(input.mediaPositionY ?? 50, 0, 100);
-      const watermarkText = (input.watermarkText || "DEUKGEUN").trim() || "DEUKGEUN";
+      const watermarkText = (input.watermarkText || "득근득근").trim() || "득근득근";
       const showTitle = input.showTitle ?? true;
       const showSubtitle = input.showSubtitle ?? true;
 
@@ -328,14 +357,14 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
       if (showTitle) {
         ctx.fillStyle = "#fff";
         ctx.font = `800 ${Math.round(width * 0.06)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
-        const heading = input.didWorkout ? "Workout Complete" : "Recovery Day";
+        const heading = input.didWorkout ? "운동 완료" : "회복 데이";
         ctx.fillText(heading, horizontalPad, headingY);
       }
 
       if (showSubtitle) {
         ctx.font = `500 ${Math.round(width * 0.031)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
         ctx.fillStyle = "rgba(255,255,255,0.9)";
-        const owner = input.nickname?.trim() ? `${input.nickname}'s Log` : "My Daily Log";
+        const owner = input.nickname?.trim() ? `${input.nickname}의 운동 기록` : "오늘의 운동 기록";
         ctx.fillText(`${owner}  ${input.date}`, horizontalPad, headingY + Math.round(height * 0.04));
       }
 
@@ -372,7 +401,7 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
         ctx.fillStyle = "rgba(255,255,255,0.92)";
         ctx.font = `600 ${Math.round(width * 0.028)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
         const cheer = input.cheerCount ?? 0;
-        ctx.fillText(`Cheers ${cheer}  -  Shared via DEUKGEUN`, horizontalPad + 28, metaY + Math.round(height * 0.045));
+        ctx.fillText(`응원 ${cheer} · Shared via 득근득근`, horizontalPad + 28, metaY + Math.round(height * 0.045));
       }
 
       resolve(canvas);
