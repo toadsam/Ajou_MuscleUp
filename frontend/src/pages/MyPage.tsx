@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import CharacterCard from "../components/CharacterCard";
+import { Link } from "react-router-dom";
 import type { GrowthParams } from "../components/avatar/types";
 import {
   CUSTOM_PART_LABEL,
@@ -217,6 +218,24 @@ export default function MyPage() {
   const [customization, setCustomization] = useState<AvatarCustomization>({});
   const [skillEnabledMap, setSkillEnabledMap] = useState<Record<string, boolean>>({});
   const [isResting, setIsResting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileOpenSections, setMobileOpenSections] = useState({
+    stats: true,
+    gear: false,
+    logs: false,
+    feedback: false,
+  });
+
+  const toggleMobileSection = (key: keyof typeof mobileOpenSections) => {
+    setMobileOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  useEffect(() => {
+    const updateMobile = () => setIsMobile(window.matchMedia("(max-width: 767px)").matches);
+    updateMobile();
+    window.addEventListener("resize", updateMobile);
+    return () => window.removeEventListener("resize", updateMobile);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -528,10 +547,228 @@ export default function MyPage() {
           )}
         </header>
 
-        {loading && <div className="text-gray-300">불러오는 중...</div>}
+        {loading &&
+          (isMobile ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-20 animate-pulse rounded-2xl bg-white/10" />
+                <div className="h-20 animate-pulse rounded-2xl bg-white/10" />
+              </div>
+              <div className="h-12 animate-pulse rounded-2xl bg-white/10" />
+              <div className="h-14 animate-pulse rounded-2xl bg-white/10" />
+              <div className="h-14 animate-pulse rounded-2xl bg-white/10" />
+            </div>
+          ) : (
+            <div className="text-gray-300">불러오는 중...</div>
+          ))}
         {error && <div className="text-red-400">{error}</div>}
 
-        <div className="grid lg:grid-cols-[1.15fr,1fr] gap-6">
+        {isMobile && !loading && !error && (
+          <div className="space-y-4 md:hidden">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">캐릭터 상태</p>
+                <p className="mt-2 text-base font-bold text-white">
+                  {character ? `${character.tier} · Stage ${character.evolutionStage}` : "준비 중"}
+                </p>
+                <p className="mt-1 text-xs text-gray-400">{isResting ? "회복/휴식 중" : "활동 가능"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">현재 랭크</p>
+                <p className="mt-2 text-base font-bold text-white">#{rank?.myRank ?? "-"}</p>
+                <p className="mt-1 text-xs text-gray-400">상위 {rank?.myTopPercent ?? "-"}%</p>
+              </div>
+            </div>
+
+            {character && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+                <p className="px-2 pt-1 text-[11px] uppercase tracking-[0.18em] text-gray-400">내 캐릭터 미리보기</p>
+                <div className="mt-2 overflow-hidden rounded-xl">
+                  <CharacterCard
+                    character={character}
+                    evaluation={evaluation}
+                    gender={character.gender ?? stats?.gender}
+                    mbti={stats?.mbti}
+                    isResting={isResting}
+                    change={change}
+                    customization={customization}
+                    rerollBurstNonce={rerollBurstNonce}
+                    evolutionBranch={evolutionBranch}
+                    unlockedSkills={skillUnlocks}
+                    skillEnabledMap={skillEnabledMap}
+                    onToggleSkill={toggleSkillEnabled}
+                  />
+                </div>
+              </div>
+            )}
+
+            <Link to="/attendance" className="block rounded-2xl border border-pink-400/40 bg-pink-500/20 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-pink-100">오늘 해야 할 1개</p>
+              <p className="mt-1 text-base font-bold text-white">출석 체크하러 가기</p>
+            </Link>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5">
+              <button
+                type="button"
+                onClick={() => toggleMobileSection("stats")}
+                className="flex w-full items-center justify-between px-4 py-3 text-left"
+              >
+                <span className="font-semibold">통계</span>
+                <span className="text-sm text-gray-300">{mobileOpenSections.stats ? "접기" : "펼치기"}</span>
+              </button>
+              {mobileOpenSections.stats && (
+                <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-3">
+                  {statInputs.map((field) => (
+                    <label key={`m-${field.key}`} className="text-xs text-gray-300">
+                      <span>{field.label}</span>
+                      {field.key === "gender" ? (
+                        <div className="mt-1 flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setForm((prev) => ({ ...prev, gender: "MALE" }))}
+                            className={`flex-1 rounded-md border px-2 py-1 text-[11px] ${form.gender === "MALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"}`}
+                          >
+                            남
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setForm((prev) => ({ ...prev, gender: "FEMALE" }))}
+                            className={`flex-1 rounded-md border px-2 py-1 text-[11px] ${form.gender === "FEMALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"}`}
+                          >
+                            여
+                          </button>
+                        </div>
+                      ) : (
+                        <input
+                          type={field.key === "mbti" ? "text" : "number"}
+                          step={field.step || undefined}
+                          maxLength={field.key === "mbti" ? 4 : undefined}
+                          placeholder={field.placeholder}
+                          value={form[field.key as keyof StatsForm] as string}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              [field.key]:
+                                field.key === "mbti" ? e.target.value.toUpperCase() : e.target.value,
+                            }))
+                          }
+                          className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white"
+                        />
+                      )}
+                    </label>
+                  ))}
+                  <button
+                    onClick={saveStats}
+                    disabled={saving}
+                    className="col-span-2 mt-1 rounded-xl bg-pink-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {saving ? "저장 중..." : "저장"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5">
+              <button
+                type="button"
+                onClick={() => toggleMobileSection("gear")}
+                className="flex w-full items-center justify-between px-4 py-3 text-left"
+              >
+                <span className="font-semibold">장비</span>
+                <span className="text-sm text-gray-300">{mobileOpenSections.gear ? "접기" : "펼치기"}</span>
+              </button>
+              {mobileOpenSections.gear && (
+                <div className="space-y-3 border-t border-white/10 p-3">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => void toggleResting()} className="rounded-full border border-white/20 px-3 py-1.5 text-xs">
+                      {isResting ? "휴식중" : "휴식 모드"}
+                    </button>
+                    <button onClick={rerollAvatar} disabled={rerolling} className="rounded-full border border-amber-300/60 px-3 py-1.5 text-xs text-amber-100 disabled:opacity-60">
+                      {rerolling ? "리롤 중..." : "다시 만들기"}
+                    </button>
+                    <button onClick={togglePublic} disabled={publicUpdating} className="rounded-full border border-emerald-400/70 px-3 py-1.5 text-xs">
+                      {character?.isPublic ? "공개 중" : "비공개"}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["face", "body", "emblem"] as CustomPart[]).map((part) => {
+                      const unlocked = unlockedParts[part];
+                      const image = customization[part];
+                      return (
+                        <div key={`m-part-${part}`} className="rounded-xl border border-white/10 bg-black/20 p-2">
+                          <p className="text-[11px] text-white">{CUSTOM_PART_LABEL[part]}</p>
+                          <div className="mt-1 h-16 overflow-hidden rounded-md border border-white/10 bg-black/30">
+                            {image ? (
+                              <img src={image} alt={`${part} custom`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-[10px] text-gray-400">{unlocked ? "이미지 없음" : "잠김"}</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5">
+              <button
+                type="button"
+                onClick={() => toggleMobileSection("logs")}
+                className="flex w-full items-center justify-between px-4 py-3 text-left"
+              >
+                <span className="font-semibold">로그</span>
+                <span className="text-sm text-gray-300">{mobileOpenSections.logs ? "접기" : "펼치기"}</span>
+              </button>
+              {mobileOpenSections.logs && (
+                <div className="space-y-2 border-t border-white/10 p-3">
+                  {data?.recentAiChats?.slice(0, 8).map((item, idx) => (
+                    <div key={`m-ai-${idx}`} className="rounded-xl border border-white/10 bg-black/25 p-2">
+                      <p className="text-[11px] text-gray-400">{formatDate(item.createdAt)}</p>
+                      <p className="text-xs font-semibold text-white">Q. {item.question}</p>
+                      <p className="text-xs text-gray-300 line-clamp-3">A. {item.answer}</p>
+                    </div>
+                  ))}
+                  {(!data?.recentAiChats || data.recentAiChats.length === 0) && <p className="text-xs text-gray-400">AI 기록이 없습니다.</p>}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5">
+              <button
+                type="button"
+                onClick={() => toggleMobileSection("feedback")}
+                className="flex w-full items-center justify-between px-4 py-3 text-left"
+              >
+                <span className="font-semibold">공개 피드백</span>
+                <span className="text-sm text-gray-300">{mobileOpenSections.feedback ? "접기" : "펼치기"}</span>
+              </button>
+              {mobileOpenSections.feedback && (
+                <div className="space-y-2 border-t border-white/10 p-3">
+                  <div className="space-y-2">
+                    {(data?.recentComments ?? []).slice(0, 6).map((c) => (
+                      <div key={`m-c-${c.id}`} className="rounded-xl border border-white/10 bg-black/25 p-2">
+                        <p className="text-[11px] text-gray-400">{c.authorNickname || "익명"} · {formatDate(c.createdAt)}</p>
+                        <p className="text-xs text-gray-200 line-clamp-2">{c.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {(data?.recentLikes ?? []).slice(0, 6).map((p) => (
+                      <a key={`m-l-${p.id}`} href={`/brag/${p.id}`} className="block rounded-xl border border-white/10 bg-black/25 p-2">
+                        <p className="text-xs font-semibold text-pink-200 line-clamp-1">{p.title}</p>
+                        <p className="text-[11px] text-gray-400">Likes {p.likeCount ?? 0}</p>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="hidden gap-6 md:grid lg:grid-cols-[1.15fr,1fr]">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold">내 스탯 입력</h2>
@@ -710,7 +947,7 @@ export default function MyPage() {
                         </div>
                         <div className="mt-2 h-20 rounded-lg border border-white/10 bg-black/30 overflow-hidden">
                           {image ? (
-                            <img src={image} alt={`${part} custom`} className="h-full w-full object-cover" />
+                            <img src={image} alt={`${part} custom`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-xs text-gray-400">
                               {unlocked ? "이미지 없음" : "잠김"}
@@ -754,7 +991,7 @@ export default function MyPage() {
         </div>
 
         {data && (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="hidden gap-6 md:grid md:grid-cols-2">
             <div className="rounded-2xl border border-white/5 bg-gray-800/70 p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">최근 댓글</h2>
@@ -855,5 +1092,7 @@ export default function MyPage() {
     </section>
   );
 }
+
+
 
 
