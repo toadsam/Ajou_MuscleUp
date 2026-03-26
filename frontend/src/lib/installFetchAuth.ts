@@ -154,3 +154,28 @@ export function installFetchAuth() {
     });
   };
 }
+
+export async function bootstrapAuthSession(): Promise<boolean> {
+  const user = readUserRecord();
+  if (!user) return false;
+  const refreshUrl = API_BASE ? `${API_BASE}/api/auth/refresh` : "/api/auth/refresh";
+  try {
+    const res = await fetch(refreshUrl, {
+      method: "POST",
+      credentials: "include",
+      headers: { [RETRY_HEADER]: "1" },
+    });
+    if (!res.ok) return false;
+    try {
+      const payload = (await res.json()) as { accessToken?: string };
+      if (payload?.accessToken) {
+        setAccessToken(payload.accessToken);
+      }
+    } catch {
+      // ignore non-JSON refresh responses
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
