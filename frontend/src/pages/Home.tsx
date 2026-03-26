@@ -170,6 +170,9 @@ export default function Home() {
   const [activeEvents, setActiveEvents] = useState<EventItem[]>([]);
   const [eventIndex, setEventIndex] = useState(0);
   const [isEventPaused, setIsEventPaused] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileOverview, setShowMobileOverview] = useState(false);
+  const [showMobileCommunity, setShowMobileCommunity] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -179,6 +182,13 @@ export default function Home() {
     } catch {
       setUser(null);
     }
+  }, []);
+
+  useEffect(() => {
+    const updateMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    updateMobile();
+    window.addEventListener("resize", updateMobile);
+    return () => window.removeEventListener("resize", updateMobile);
   }, []);
 
   const monthKey = formatMonthKey(new Date());
@@ -354,6 +364,57 @@ export default function Home() {
     { label: "모두의 3대 합", value: totalThreeLiftLabel },
   ];
 
+  const visibleActions = useMemo(() => {
+    if (!isMobile) return ACTIONS;
+    return ACTIONS.filter((action) => action.id === "attendance" || action.id === "crew");
+  }, [isMobile]);
+
+  const renderCharacterPreviewCard = (className = "") => (
+    <div className={`character-preview ${className}`.trim()}>
+      <div className="card-header">
+        <div>
+          <span className="eyebrow">내 캐릭터</span>
+          <h3>캐릭터 미리보기</h3>
+        </div>
+        <Link to="/mypage" className="mini-link">
+          성장 기록 보기 →
+        </Link>
+      </div>
+      <div className="character-stage">
+        {character ? (
+          <div className={`avatar-shell ${showReaction ? "reacted" : ""}`}>
+            <AvatarRenderer
+              avatarSeed={character.avatarSeed}
+              growthParams={character.growthParams}
+              tier={character.tier}
+              stage={character.evolutionStage}
+              gender={character.gender}
+              mbti={mbti}
+              isResting={character.isResting ?? false}
+              size={180}
+            />
+          </div>
+        ) : (
+          <div className="avatar-placeholder">
+            <span>로그인 후 캐릭터가 표시됩니다</span>
+          </div>
+        )}
+        <div className="character-meta">
+          <strong>{character ? `${character.tier} · Stage ${character.evolutionStage}` : "캐릭터 준비 중"}</strong>
+          <p>{character ? `Lv.${character.level} ${character.title ?? ""}` : "출석과 운동 기록이 캐릭터를 키웁니다."}</p>
+        </div>
+      </div>
+      <div className="character-reward">
+        <span>출석 완료 시 캐릭터가 리액션합니다</span>
+        <div className="reaction-dots">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <section className="home-lobby">
       <div className="home-lobby-bg" />
@@ -369,6 +430,7 @@ export default function Home() {
               <span className="hero-line strong-copy">오늘의 땀으로 성장 폭발</span>
               <span className="hero-line highlight">서로를 키우는 커뮤니티</span>
             </h1>
+            {isMobile && renderCharacterPreviewCard("hero-character-mobile")}
             <p>
               출석 체크가 오늘의 첫 퀘스트가 되고, 캐릭터가 나의 성장을 보여주는 곳.
               지금 바로 로비에서 시작하세요.
@@ -377,11 +439,11 @@ export default function Home() {
               <Link to="/attendance" className="cta primary">
                 오늘 출석 시작
               </Link>
-              <Link to="/lounge" className="cta ghost">
-                라운지 둘러보기
+              <Link to="/crew" className="cta ghost">
+                운동모임 가기
               </Link>
             </div>
-            <div className="hero-stats">
+            <div className={`hero-stats ${isMobile && !showMobileOverview ? "mobile-collapsed" : ""}`}>
               {heroStats.map((stat) => (
                 <div key={stat.label}>
                   <strong>{stat.value}</strong>
@@ -393,7 +455,26 @@ export default function Home() {
 
         </header>
 
-        {activeEvents.length > 0 && (
+        {isMobile && (
+          <div className="mobile-toggle-strip">
+            <button
+              type="button"
+              className="mobile-toggle-btn"
+              onClick={() => setShowMobileOverview((prev) => !prev)}
+            >
+              {showMobileOverview ? "오늘 요약 접기 ▲" : "오늘 요약 펼치기 ▼"}
+            </button>
+            <button
+              type="button"
+              className="mobile-toggle-btn"
+              onClick={() => setShowMobileCommunity((prev) => !prev)}
+            >
+              {showMobileCommunity ? "커뮤니티 접기 ▲" : "커뮤니티 펼치기 ▼"}
+            </button>
+          </div>
+        )}
+
+        {activeEvents.length > 0 && (!isMobile || showMobileOverview) && (
           <section className="event-banner">
             <div className="event-banner-head">
               <span className="eyebrow">진행 중 이벤트</span>
@@ -458,7 +539,7 @@ export default function Home() {
                 </div>
 
                 <div className="action-list">
-                  {ACTIONS.map((action) => {
+                  {visibleActions.map((action) => {
                     const isAttendance = action.id === "attendance";
                     return (
                       <Link
@@ -500,50 +581,9 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="character-preview">
-            <div className="card-header">
-              <div>
-                <span className="eyebrow">내 캐릭터</span>
-                <h3>캐릭터 미리보기</h3>
-              </div>
-              <Link to="/mypage" className="mini-link">
-                성장 기록 보기 →
-              </Link>
-            </div>
-            <div className="character-stage">
-              {character ? (
-                <div className={`avatar-shell ${showReaction ? "reacted" : ""}`}>
-                  <AvatarRenderer
-                    avatarSeed={character.avatarSeed}
-                    growthParams={character.growthParams}
-                    tier={character.tier}
-                    stage={character.evolutionStage}
-                    gender={character.gender}
-                    mbti={mbti}
-                    isResting={character.isResting ?? false}
-                    size={180}
-                  />
-                </div>
-              ) : (
-                <div className="avatar-placeholder">
-                  <span>로그인 후 캐릭터가 표시됩니다</span>
-                </div>
-              )}
-              <div className="character-meta">
-                <strong>{character ? `${character.tier} · Stage ${character.evolutionStage}` : "캐릭터 준비 중"}</strong>
-                <p>{character ? `Lv.${character.level} ${character.title ?? ""}` : "출석과 운동 기록이 캐릭터를 키웁니다."}</p>
-              </div>
-            </div>
-            <div className="character-reward">
-              <span>출석 완료 시 캐릭터가 리액션합니다</span>
-              <div className="reaction-dots">
-                <span />
-                <span />
-                <span />
-              </div>
-            </div>
-          </div>
+          {!isMobile && renderCharacterPreviewCard()}
 
+          {(!isMobile || showMobileCommunity) && (
           <div className="lounge-preview">
             <div className="card-header">
               <div>
@@ -575,8 +615,10 @@ export default function Home() {
               </div>
             </div>
           </div>
+          )}
         </div>
 
+        {(!isMobile || showMobileCommunity) && (
         <div className="quest-strip">
           <div>
             <span className="eyebrow">출석 → 성장 → 라운지</span>
@@ -601,7 +643,16 @@ export default function Home() {
             </div>
           </div>
         </div>
+        )}
+
       </div>
+
+      {isMobile && (
+        <div className="mobile-fixed-actions" aria-label="빠른 이동">
+          <Link to="/attendance" className="mobile-fixed-action primary">출석하기</Link>
+          <Link to="/crew" className="mobile-fixed-action secondary">운동모임</Link>
+        </div>
+      )}
     </section>
   );
 }

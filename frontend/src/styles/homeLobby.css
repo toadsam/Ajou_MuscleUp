@@ -123,7 +123,9 @@
 .hero-line.highlight {
   color: #fdf4ff;
   text-shadow: 0 0 18px rgba(255, 59, 141, 0.7);
-  animation: neonPulse 3s ease-in-out infinite;
+  animation:
+    fadeUp 0.7s ease forwards,
+    neonPulse 3s ease-in-out 0.9s infinite;
 }
 
 .hero-text p {
@@ -802,8 +804,105 @@
 }
 
 @media (max-width: 768px) {
+  .home-lobby {
+    padding-bottom: 8rem;
+  }
+
+  .hero {
+    gap: 1rem;
+  }
+
+  .hero-text {
+    gap: 0.75rem;
+  }
+
+  .mobile-collapsed {
+    display: none;
+  }
+
+  .mobile-toggle-btn {
+    width: fit-content;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.65);
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    padding: 0.48rem 0.9rem;
+  }
+
+  .mobile-toggle-strip {
+    position: sticky;
+    top: 74px;
+    z-index: 25;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .mobile-toggle-strip .mobile-toggle-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-character-mobile {
+    margin-top: 0;
+    margin-bottom: 0.35rem;
+  }
+
+  .mobile-fixed-actions {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    padding: 0.55rem;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 16px;
+    background: rgba(2, 6, 23, 0.9);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-fixed-action {
+    border-radius: 12px;
+    text-align: center;
+    padding: 0.72rem 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+
+  .mobile-fixed-action.primary {
+    background: linear-gradient(120deg, #ff3b8d, #7c3aed);
+    color: #ffffff;
+  }
+
+  .mobile-fixed-action.secondary {
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    background: rgba(34, 211, 238, 0.14);
+    color: #dbeafe;
+  }
+
   .hero-text h1 {
     font-size: 2.4rem;
+    margin: 0;
+    gap: 0.05rem;
+  }
+
+  .hero-line.highlight {
+    display: none;
+  }
+
+  .hero-text p {
+    margin: 0;
+  }
+
+  .hero-actions {
+    margin-top: 0.15rem;
   }
 
   .event-banner-card {
