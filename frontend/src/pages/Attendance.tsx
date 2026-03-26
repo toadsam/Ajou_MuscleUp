@@ -334,9 +334,37 @@ export default function Attendance() {
       const slug = await ensureShareSlug();
       const link = publicShareLinkForSlug(slug);
       const text = composeShareText(link);
-      if (navigator.share) {
+
+      const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
+      const blob = await renderAttendanceShareCard({
+        date: todayKey,
+        didWorkout,
+        workoutTypes: workoutTypes.map((type) => WORKOUT_TYPES.find((item) => item.id === type)?.label ?? type),
+        workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
+        memo,
+        shareComment,
+        mediaUrl: mediaImage ?? null,
+      });
+      const imageFile = new File([blob], `attendance-card-${todayKey}.png`, { type: "image/png" });
+
+      const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
+      const canShareFile = Boolean(nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
+
+      if (navigator.share && canShareFile) {
+        try {
+          await navigator.share({
+            title: "출석 자랑",
+            text,
+            files: [imageFile],
+          });
+          showToast({ type: "success", message: "이미지로 공유했어요." });
+        } catch {
+          await navigator.share({ title: "출석 자랑", text, url: link });
+          showToast({ type: "success", message: "링크로 공유했어요." });
+        }
+      } else if (navigator.share) {
         await navigator.share({ title: "출석 자랑", text, url: link });
-        showToast({ type: "success", message: "공유 창을 열었어요." });
+        showToast({ type: "success", message: "링크로 공유했어요." });
       } else {
         await navigator.clipboard.writeText(text);
         showToast({ type: "success", message: "멘트+링크를 복사했어요." });

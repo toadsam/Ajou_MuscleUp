@@ -700,7 +700,48 @@ export default function AttendanceShareView() {
     if (!publicShareLink) return;
     const text = composeShareText();
     try {
-      if (navigator.share) {
+      const blob = await renderAttendanceShareCard({
+        date: data?.date ?? "",
+        didWorkout: Boolean(data?.didWorkout),
+        workoutTypes: data?.workoutTypes ?? [],
+        workoutIntensity: data?.workoutIntensity ?? null,
+        memo: data?.memo ?? null,
+        shareComment: customMessage || data?.shareComment || null,
+        mediaUrl: firstImage,
+        nickname: data?.authorNickname ?? null,
+        theme,
+        ratio,
+        quoteStyle,
+        sticker,
+        showMeta,
+        mediaFit,
+        mediaPositionX,
+        mediaPositionY,
+        character,
+        characterPose,
+        characterSize,
+        characterLabel: character === "me" ? (data?.authorNickname || "내 캐릭터") : "득근이",
+        watermarkText: "득근득근",
+        cheerCount: data?.cheerCount ?? 0,
+        showTitle,
+        showSubtitle,
+        scale: Math.min(exportScale, 2),
+      });
+      const imageFile = new File([blob], `attendance-share-${data?.date ?? "today"}.png`, { type: "image/png" });
+      const nav = navigator as Navigator & { canShare?: (payload?: ShareData) => boolean };
+      const canShareFile = Boolean(nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
+
+      if (navigator.share && canShareFile) {
+        try {
+          await navigator.share({
+            title: "출석 자랑",
+            text,
+            files: [imageFile],
+          });
+        } catch {
+          await navigator.share({ title: "출석 자랑", text, url: publicShareLink });
+        }
+      } else if (navigator.share) {
         await navigator.share({ title: "출석 자랑", text, url: publicShareLink });
       } else {
         await navigator.clipboard.writeText(text);
