@@ -1,4 +1,4 @@
-﻿import { useCallback, useId, useState } from "react";
+﻿import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 
 type Props = {
@@ -23,7 +23,11 @@ export default function UploadDropzone({
   const [activeUploads, setActiveUploads] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputId = useId();
+  const cameraInputId = `${inputId}-camera`;
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const uploading = activeUploads > 0;
+  const supportsCameraCapture = useMemo(() => accept.includes("image"), [accept]);
 
   const upload = useCallback(
     async (file: File) => {
@@ -67,6 +71,7 @@ export default function UploadDropzone({
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files);
+    e.target.value = "";
   };
 
   return (
@@ -81,11 +86,50 @@ export default function UploadDropzone({
         dragOver ? "border-cyan-400 bg-cyan-500/10" : "border-gray-600 bg-gray-800/40"
       } ${className ?? ""}`}
     >
-      <input id={inputId} type="file" accept={accept} multiple={multiple} className="hidden" onChange={onPick} />
-      <label htmlFor={inputId} className="block cursor-pointer select-none">
-        <div className="text-gray-300">파일을 드래그해서 놓거나 클릭해서 선택하세요.</div>
-        <div className="mt-1 text-sm text-gray-500">이미지 업로드를 권장합니다.</div>
-      </label>
+      <input
+        ref={galleryInputRef}
+        id={inputId}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        onChange={onPick}
+      />
+      {supportsCameraCapture && (
+        <input
+          ref={cameraInputRef}
+          id={cameraInputId}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple={false}
+          className="hidden"
+          onChange={onPick}
+        />
+      )}
+
+      <div className="text-gray-300">파일을 드래그해서 놓거나 버튼으로 선택하세요.</div>
+      <div className="mt-1 text-sm text-gray-500">모바일에서는 카메라 촬영 후 바로 업로드할 수 있습니다.</div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 hover:bg-cyan-500/20"
+          onClick={() => galleryInputRef.current?.click()}
+        >
+          갤러리에서 선택
+        </button>
+        {supportsCameraCapture && (
+          <button
+            type="button"
+            className="rounded-lg border border-fuchsia-400/40 bg-fuchsia-500/10 px-3 py-2 text-sm text-fuchsia-100 hover:bg-fuchsia-500/20"
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            카메라로 촬영
+          </button>
+        )}
+      </div>
+
       {uploading && <div className="mt-2 text-sm text-gray-400">업로드 중...</div>}
       {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
     </div>
