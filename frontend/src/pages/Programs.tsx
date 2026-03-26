@@ -506,25 +506,25 @@ export default function Programs() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#0d0f12] via-[#151826] to-[#0b0d14] px-6 pb-24 pt-28 text-white lg:px-10">
+    <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#0d0f12] via-[#151826] to-[#0b0d14] px-4 pb-32 pt-24 text-white sm:px-6 lg:px-10">
       <div className="absolute inset-x-0 top-0 h-[26rem] bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.22),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(45,212,191,0.2),_transparent_32%),linear-gradient(180deg,_rgba(255,255,255,0.65),_rgba(244,239,231,0))]" />
       <div className="absolute -left-20 top-40 h-72 w-72 rounded-full bg-orange-200/60 blur-3xl" />
       <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-cyan-200/50 blur-3xl" />
 
-      <div className="relative mx-auto flex max-w-7xl flex-col gap-10">
-        <header className="grid gap-8 rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-[0_24px_80px_-40px_rgba(120,53,15,0.45)] backdrop-blur xl:grid-cols-[1.15fr_0.85fr] xl:p-10">
+      <div className="relative mx-auto flex max-w-7xl flex-col gap-8 sm:gap-10">
+        <header className="grid gap-6 rounded-[1.6rem] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_-40px_rgba(120,53,15,0.45)] backdrop-blur sm:gap-8 sm:rounded-[2rem] sm:p-8 xl:grid-cols-[1.15fr_0.85fr] xl:p-10">
           <div className="space-y-5">
             <p className="text-sm font-semibold uppercase tracking-[0.35em] text-orange-300">Programs</p>
             <div className="space-y-3">
-              <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">
+              <h1 className="max-w-3xl text-2xl font-black tracking-tight text-white sm:text-4xl">
                 설문으로 현재 운동 상태를 파악하고, 나에게 맞는 반을 바로 신청하세요.
               </h1>
-              <p className="max-w-2xl text-base leading-7 text-gray-300 sm:text-lg">
+              <p className="max-w-2xl text-sm leading-6 text-gray-300 sm:text-base sm:leading-7 lg:text-lg">
                 기존 식단방/잡담방을 4개 반 구조로 개편했습니다. 입문, 감량, 성장, 유지 중 어떤 흐름이 맞는지
                 간단한 설문으로 추천하고, 결과를 바탕으로 바로 반 신청까지 이어집니다.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3 text-sm font-semibold">
+            <div className="hidden flex-wrap gap-3 text-sm font-semibold sm:flex">
               <button
                 type="button"
                 onClick={() => jumpTo(surveyRef)}
@@ -542,9 +542,17 @@ export default function Programs() {
             </div>
           </div>
 
-          <div className="rounded-[1.75rem] bg-slate-900/80 p-6 text-stone-100 shadow-[0_24px_80px_-45px_rgba(28,25,23,0.9)]">
+          <div className="rounded-[1.25rem] bg-slate-900/80 p-4 text-stone-100 shadow-[0_24px_80px_-45px_rgba(28,25,23,0.9)] sm:rounded-[1.75rem] sm:p-6">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">Page Flow</p>
-            <div className="mt-5 space-y-4">
+            <div className="mt-4 grid gap-2 sm:hidden">
+              {["반 소개", "6문항 설문", "추천 확인", "신청 완료"].map((item, index) => (
+                <div key={item} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200">
+                  <span className="mr-2 text-orange-300">0{index + 1}</span>
+                  {item}
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 hidden space-y-4 sm:block">
               {[
                 ["1. 반 소개 확인", "4개 반의 분위기와 추천 대상을 먼저 확인합니다."],
                 ["2. 6문항 설문 진행", "운동 경험, 빈도, 목표, 스타일을 단계별로 답합니다."],
@@ -565,7 +573,46 @@ export default function Programs() {
           </div>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
+        <section className="sm:hidden">
+          <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
+            {programs.map((program) => {
+              const isSelected = selectedTrack === program.id;
+              const isRecommended = recommendation?.trackId === program.id;
+              return (
+                <article
+                  key={`mobile-${program.id}`}
+                  className={`min-w-[86%] snap-start rounded-[1.3rem] border p-4 transition ${
+                    isSelected ? "border-white/30 bg-slate-900/85 text-white" : "border-white/15 bg-white/5 text-white"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${isSelected ? "text-orange-200" : "text-gray-400"}`}>
+                        {program.eyebrow}
+                      </p>
+                      <h2 className="mt-1 text-xl font-black">{program.title}</h2>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-gray-100">{program.shortLabel}</span>
+                  </div>
+                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-200">{program.description}</p>
+                  {isRecommended && <p className="mt-2 text-xs font-semibold text-orange-200">설문 추천 반</p>}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTrack(program.id);
+                      jumpTo(applyRef);
+                    }}
+                    className="mt-4 w-full rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+                  >
+                    이 반 선택
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="hidden gap-5 sm:grid lg:grid-cols-2 xl:grid-cols-4">
           {programs.map((program) => {
             const isSelected = selectedTrack === program.id;
             const isRecommended = recommendation?.trackId === program.id;
@@ -931,6 +978,25 @@ export default function Programs() {
             </button>
           </form>
         </section>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-4 z-40 px-4 sm:hidden">
+        <div className="mx-auto flex max-w-md gap-3 rounded-2xl border border-white/15 bg-[#070b17]/90 p-2 shadow-[0_16px_44px_-24px_rgba(0,0,0,0.9)] backdrop-blur">
+          <button
+            type="button"
+            onClick={() => jumpTo(surveyRef)}
+            className="flex-1 rounded-xl bg-fuchsia-500 px-4 py-3 text-sm font-bold text-white"
+          >
+            설문 이동
+          </button>
+          <button
+            type="button"
+            onClick={() => jumpTo(applyRef)}
+            className="flex-1 rounded-xl border border-cyan-300/40 bg-cyan-500/20 px-4 py-3 text-sm font-bold text-cyan-100"
+          >
+            신청 이동
+          </button>
+        </div>
       </div>
     </section>
   );
