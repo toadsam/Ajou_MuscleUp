@@ -700,7 +700,6 @@ export default function AttendanceShareView() {
 
   const quickShare = async () => {
     if (!publicShareLink) return;
-    const text = composeShareText();
     try {
       const captureNode = previewCaptureRef.current;
       if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
@@ -727,20 +726,18 @@ export default function AttendanceShareView() {
       const canShareFile = Boolean(imageFile && nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
 
       if (navigator.share && canShareFile && imageFile) {
-        try {
-          await navigator.share({
-            title: "출석 자랑",
-            text,
-            files: [imageFile],
-          });
-        } catch {
-          await navigator.share({ title: "출석 자랑", text, url: publicShareLink });
-        }
+        await navigator.share({
+          title: "출석 자랑",
+          text: customMessage.trim() || "오늘 출석 완료!",
+          files: [imageFile],
+        });
       } else if (navigator.share) {
+        const text = composeShareText();
         await navigator.share({ title: "출석 자랑", text, url: publicShareLink });
       } else {
+        const text = composeShareText();
         await navigator.clipboard.writeText(text);
-        alert("멘트와 링크를 복사했어요.");
+        alert("이 브라우저는 이미지 공유를 지원하지 않아 링크를 복사했어요.");
       }
     } catch {
       // user canceled
