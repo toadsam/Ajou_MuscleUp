@@ -980,7 +980,7 @@ export default function Programs() {
         </section>
       </div>
 
-      <div className="fixed inset-x-0 bottom-4 z-40 px-4 sm:hidden">
+      <div className="programs-mobile-action-dock fixed inset-x-0 bottom-4 z-40 px-4 sm:hidden">
         <div className="mx-auto flex max-w-md gap-3 rounded-2xl border border-white/15 bg-[#070b17]/90 p-2 shadow-[0_16px_44px_-24px_rgba(0,0,0,0.9)] backdrop-blur">
           <button
             type="button"

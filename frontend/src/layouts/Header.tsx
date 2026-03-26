@@ -255,7 +255,7 @@ export default function Header() {
       </div>
 
       {isMenuOpen && (
-        <div className="bg-white px-6 py-4 text-gray-800 shadow-lg lg:hidden">
+        <div className="bg-white px-6 py-4 text-gray-800 shadow-lg lg:hidden max-h-[calc(100dvh-76px)] overflow-y-auto overscroll-y-contain pb-24">
           {navGroups.map((group) => (
             <div key={group.label} className="py-3">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">{group.label}</p>

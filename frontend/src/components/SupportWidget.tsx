@@ -16,6 +16,7 @@ const SUGGESTED_QUESTIONS = [
 
 export default function SupportWidget() {
   const [open, setOpen] = useState(false);
+  const [fabBottom, setFabBottom] = useState(24);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>(() => {
@@ -33,6 +34,59 @@ export default function SupportWidget() {
       paneRef.current.scrollTop = paneRef.current.scrollHeight;
     }
   }, [open, msgs, sending]);
+
+  useEffect(() => {
+    const detectBottomDockHeight = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const fixedNodes = Array.from(document.querySelectorAll<HTMLElement>("body *")).filter((el) => {
+        if (el.dataset.supportWidget === "true") return false;
+        const style = window.getComputedStyle(el);
+        if (style.position !== "fixed") return false;
+        if (style.display === "none" || style.visibility === "hidden") return false;
+        const rect = el.getBoundingClientRect();
+        if (rect.width < vw * 0.45 || rect.height < 36) return false;
+        if (rect.top < vh * 0.55) return false;
+        // Use visual position instead of parsing computed bottom (can be max()/env()).
+        return rect.bottom >= vh - 28;
+      });
+
+      if (!fixedNodes.length) return 0;
+      return Math.max(
+        ...fixedNodes.map((el) => {
+          const rect = el.getBoundingClientRect();
+          return Math.max(0, vh - rect.top);
+        })
+      );
+    };
+
+    const updateFabOffset = () => {
+      if (window.innerWidth >= 640) {
+        setFabBottom(24);
+        return;
+      }
+      const dockHeight = detectBottomDockHeight();
+      const nextBottom = dockHeight > 0 ? Math.min(220, 24 + dockHeight + 12) : 24;
+      setFabBottom(nextBottom);
+    };
+
+    updateFabOffset();
+    window.addEventListener("resize", updateFabOffset);
+    window.addEventListener("scroll", updateFabOffset, { passive: true });
+    const observer = new MutationObserver(updateFabOffset);
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["class", "style"],
+    });
+
+    return () => {
+      window.removeEventListener("resize", updateFabOffset);
+      window.removeEventListener("scroll", updateFabOffset);
+      observer.disconnect();
+    };
+  }, []);
 
   const greeting = useMemo<Msg>(
     () => ({
@@ -92,12 +146,18 @@ export default function SupportWidget() {
         aria-label="문의하기"
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg hover:opacity-90"
+        style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${fabBottom}px)` }}
+        data-support-widget="true"
       >
         {open ? "X" : "?"}
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 overflow-hidden rounded-2xl border border-white/10 bg-gray-900/95 shadow-2xl backdrop-blur md:w-96">
+        <div
+          className="fixed right-6 z-50 w-80 overflow-hidden rounded-2xl border border-white/10 bg-gray-900/95 shadow-2xl backdrop-blur md:w-96"
+          style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${fabBottom + 68}px)` }}
+          data-support-widget="true"
+        >
           <div className="bg-gradient-to-r from-pink-600 to-purple-600 px-4 py-3 font-semibold text-white">
             {BOT_NAME} | 홈페이지 안내
             {sending && <span className="ml-2 text-xs font-medium text-pink-100">답변 준비 중...</span>}
