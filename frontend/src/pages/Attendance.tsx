@@ -125,6 +125,7 @@ export default function Attendance() {
   const [memo, setMemo] = useState("");
   const [shareComment, setShareComment] = useState("");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [shareImageFile, setShareImageFile] = useState<File | null>(null);
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<RankingItem[]>([]);
   const [mediaRank, setMediaRank] = useState<RankingItem[]>([]);
@@ -328,48 +329,62 @@ export default function Attendance() {
     }
   };
 
+  const buildShareImageFile = async () => {
+    const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
+    const blob = await renderAttendanceShareCard({
+      date: todayKey,
+      didWorkout,
+      workoutTypes: workoutTypes.map((type) => WORKOUT_TYPES.find((item) => item.id === type)?.label ?? type),
+      workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
+      memo,
+      shareComment,
+      mediaUrl: mediaImage ?? null,
+    });
+    return new File([blob], `attendance-card-${todayKey}.png`, { type: "image/png" });
+  };
+
   const quickShare = async () => {
     try {
-      setSharing(true);
-      const slug = await ensureShareSlug();
-      const link = publicShareLinkForSlug(slug);
-      const text = composeShareText(link);
-
-      const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
-      const blob = await renderAttendanceShareCard({
-        date: todayKey,
-        didWorkout,
-        workoutTypes: workoutTypes.map((type) => WORKOUT_TYPES.find((item) => item.id === type)?.label ?? type),
-        workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
-        memo,
-        shareComment,
-        mediaUrl: mediaImage ?? null,
-      });
-      const imageFile = new File([blob], `attendance-card-${todayKey}.png`, { type: "image/png" });
+      if (!todayLog) {
+        showToast({ type: "error", message: "출석 저장 후 공유할 수 있어요." });
+        return;
+      }
 
       const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
-      const canShareFile = Boolean(nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
+      const shareFn = navigator.share?.bind(navigator);
+      const link = todayLog.shareSlug ? publicShareLinkForSlug(todayLog.shareSlug) : "";
+      const text = composeShareText(link);
+      const canShareFile = Boolean(shareImageFile && nav.canShare && nav.canShare({ files: [shareImageFile] as File[] }));
 
-      if (navigator.share && canShareFile) {
-        try {
-          await navigator.share({
+      if (shareFn) {
+        if (canShareFile && shareImageFile) {
+          await shareFn({
             title: "출석 자랑",
             text,
-            files: [imageFile],
+            files: [shareImageFile],
           });
           showToast({ type: "success", message: "이미지로 공유했어요." });
-        } catch {
-          await navigator.share({ title: "출석 자랑", text, url: link });
+        } else if (link) {
+          await shareFn({ title: "출석 자랑", text, url: link });
           showToast({ type: "success", message: "링크로 공유했어요." });
+        } else {
+          await shareFn({ title: "출석 자랑", text });
+          showToast({ type: "success", message: "메시지로 공유했어요." });
         }
-      } else if (navigator.share) {
-        await navigator.share({ title: "출석 자랑", text, url: link });
-        showToast({ type: "success", message: "링크로 공유했어요." });
       } else {
         await navigator.clipboard.writeText(text);
         showToast({ type: "success", message: "멘트+링크를 복사했어요." });
       }
-      await reloadMonth();
+
+      if (!todayLog.shareSlug) {
+        setSharing(true);
+        try {
+          await ensureShareSlug();
+          await reloadMonth();
+        } catch {
+          // Sharing already succeeded; link creation can be retried later.
+        }
+      }
     } catch (e: any) {
       showToast({ type: "error", message: e?.message || "공유에 실패했어요." });
     } finally {
@@ -446,6 +461,21 @@ export default function Attendance() {
     const mediaBonus = mediaUrls.length > 0 ? 1 : 0;
     return base + typeBonus + intensityBonus + memoBonus + keywordBonus + mediaBonus + streakBonus(projectedStreak);
   }, [didWorkout, workoutTypes, workoutIntensity, memo, keywordMatches.length, projectedStreak, hasTodayLog, mediaUrls.length]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const imageFile = await buildShareImageFile();
+        if (!cancelled) setShareImageFile(imageFile);
+      } catch {
+        if (!cancelled) setShareImageFile(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [todayKey, didWorkout, workoutTypes, workoutIntensity, memo, shareComment, mediaUrls]);
 
   const jumpTo = (id: "att-record" | "att-media" | "att-share") => {
     setMobileStep(id === "att-record" ? "record" : id === "att-media" ? "media" : "share");

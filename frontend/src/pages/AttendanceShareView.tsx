@@ -666,6 +666,21 @@ export default function AttendanceShareView() {
     return `${message}\n${publicShareLink}`;
   };
 
+  const dataUrlToFile = (dataUrl: string, fileName: string) => {
+    const parts = dataUrl.split(",");
+    const header = parts[0] ?? "";
+    const body = parts[1] ?? "";
+    const mimeMatch = header.match(/data:(.*?);base64/);
+    const mime = mimeMatch?.[1] || "image/png";
+    const binary = atob(body);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new File([bytes], fileName, { type: mime });
+  };
+
   const savePreset = () => {
     const next: SharePreset = {
       theme,
@@ -700,38 +715,13 @@ export default function AttendanceShareView() {
     if (!publicShareLink) return;
     const text = composeShareText();
     try {
-      const blob = await renderAttendanceShareCard({
-        date: data?.date ?? "",
-        didWorkout: Boolean(data?.didWorkout),
-        workoutTypes: data?.workoutTypes ?? [],
-        workoutIntensity: data?.workoutIntensity ?? null,
-        memo: data?.memo ?? null,
-        shareComment: customMessage || data?.shareComment || null,
-        mediaUrl: firstImage,
-        nickname: data?.authorNickname ?? null,
-        theme,
-        ratio,
-        quoteStyle,
-        sticker,
-        showMeta,
-        mediaFit,
-        mediaPositionX,
-        mediaPositionY,
-        character,
-        characterPose,
-        characterSize,
-        characterLabel: character === "me" ? (data?.authorNickname || "내 캐릭터") : "득근이",
-        watermarkText: "득근득근",
-        cheerCount: data?.cheerCount ?? 0,
-        showTitle,
-        showSubtitle,
-        scale: Math.min(exportScale, 2),
-      });
-      const imageFile = new File([blob], `attendance-share-${data?.date ?? "today"}.png`, { type: "image/png" });
+      const imageFile = previewThumb?.startsWith("data:image/")
+        ? dataUrlToFile(previewThumb, `attendance-share-${data?.date ?? "today"}.png`)
+        : null;
       const nav = navigator as Navigator & { canShare?: (payload?: ShareData) => boolean };
-      const canShareFile = Boolean(nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
+      const canShareFile = Boolean(imageFile && nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
 
-      if (navigator.share && canShareFile) {
+      if (navigator.share && canShareFile && imageFile) {
         try {
           await navigator.share({
             title: "출석 자랑",
