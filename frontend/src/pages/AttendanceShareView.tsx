@@ -96,6 +96,7 @@ const PRESET_KEY = "attendance_share_preset_v1";
 const REACTION_KEY = "attendance_share_reaction_v1";
 
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
+const withProxy = (url: string) => `${API_BASE}/api/files/proxy?path=${encodeURIComponent(url)}`;
 const isVideo = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?|$)/i.test(url.split("?")[0]);
 
 const THEME_OPTIONS: Array<{ id: ShareCardTheme; label: string }> = [
@@ -565,7 +566,9 @@ export default function AttendanceShareView() {
   const firstImage = useMemo(() => {
     if (!data?.mediaUrls?.length) return null;
     const image = data.mediaUrls.find((raw) => !isVideo(withBase(raw)));
-    return image ? withBase(image) : null;
+    if (!image) return null;
+    const absolute = withBase(image);
+    return withProxy(absolute);
   }, [data]);
 
   const addDecoration = (type: DecoType) => {

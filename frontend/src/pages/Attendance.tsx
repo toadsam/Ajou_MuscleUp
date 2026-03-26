@@ -37,6 +37,7 @@ type IntensityOption = { id: string; label: string; tag: string; power: number }
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
+const withProxy = (url: string) => `${API_BASE}/api/files/proxy?path=${encodeURIComponent(url)}`;
 const isVideo = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?|$)/i.test(url.split("?")[0]);
 
 const WORKOUT_TYPES: WorkoutOption[] = [
@@ -331,6 +332,7 @@ export default function Attendance() {
 
   const buildShareImageFile = async () => {
     const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
+    const mediaImageForRender = mediaImage ? withProxy(mediaImage) : null;
     const blob = await renderAttendanceShareCard({
       date: todayKey,
       didWorkout,
@@ -338,7 +340,7 @@ export default function Attendance() {
       workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
       memo,
       shareComment,
-      mediaUrl: mediaImage ?? null,
+      mediaUrl: mediaImageForRender,
     });
     return new File([blob], `attendance-card-${todayKey}.png`, { type: "image/png" });
   };
@@ -395,6 +397,7 @@ export default function Attendance() {
   const saveInstaImage = async () => {
     try {
       const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
+      const mediaImageForRender = mediaImage ? withProxy(mediaImage) : null;
       const blob = await renderAttendanceShareCard({
         date: todayKey,
         didWorkout,
@@ -402,7 +405,7 @@ export default function Attendance() {
         workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
         memo,
         shareComment,
-        mediaUrl: mediaImage ?? null,
+        mediaUrl: mediaImageForRender,
       });
       const fileUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
