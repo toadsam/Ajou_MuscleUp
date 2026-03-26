@@ -761,14 +761,9 @@ export default function AttendanceShareView() {
         return sampled > 0 && blackish / sampled > 0.9;
       };
 
-      const ua = typeof navigator !== "undefined" ? navigator.userAgent.toLowerCase() : "";
-      const isMobileOrWebView =
-        /android|iphone|ipad|ipod|mobile/.test(ua) ||
-        /kakaotalk|instagram|fb_iab|line|naver|wv/.test(ua);
-
       let blob: Blob;
       const captureNode = previewCaptureRef.current;
-      if (captureNode && !isMobileOrWebView) {
+      if (captureNode) {
         const prevInlineWidth = captureNode.style.width;
         const prevInlineHeight = captureNode.style.height;
         try {
