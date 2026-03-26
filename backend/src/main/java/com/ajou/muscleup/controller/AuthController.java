@@ -75,7 +75,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginReq req) {
         User user = userService.login(req.getEmail(), req.getPassword());
-        boolean rememberMe = Boolean.TRUE.equals(req.getRememberMe());
+        boolean rememberMe = req.getRememberMe() == null || Boolean.TRUE.equals(req.getRememberMe());
 
         String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRole());
         String refreshToken = refreshTokenService.issueFor(user);
@@ -103,7 +103,8 @@ public class AuthController {
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(401).build();
         }
-        boolean rememberMe = "1".equals(rememberMeCookie);
+        // Default to persistent login when rememberMe cookie is missing.
+        boolean rememberMe = rememberMeCookie == null || "1".equals(rememberMeCookie);
 
         String newRefresh = refreshTokenService.rotate(refreshToken);
         String email = jwtUtil.getEmailFromToken(newRefresh);
@@ -160,7 +161,7 @@ public class AuthController {
         if (googleClientId == null || googleClientId.isBlank()) {
             return ResponseEntity.status(500).build();
         }
-        boolean rememberMe = Boolean.TRUE.equals(req.getRememberMe());
+        boolean rememberMe = req.getRememberMe() == null || Boolean.TRUE.equals(req.getRememberMe());
         GoogleIdToken.Payload payload = verifyGoogleToken(req.getIdToken());
         if (payload == null) {
             return ResponseEntity.status(401).build();
