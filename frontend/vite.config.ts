@@ -1,17 +1,16 @@
-import { defineConfig } from 'vite'
+﻿import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg'],
+      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: '득근 MuscleUp',
-        short_name: '득근',
+        name: '득근득근 MuscleUp',
+        short_name: '득근득근',
         description: '게임형 피트니스 커뮤니티 앱',
         theme_color: '#0b0f14',
         background_color: '#0b0f14',
@@ -19,7 +18,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         icons: [
-          { src: '/vite.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       },
       workbox: {
@@ -42,7 +42,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/api": "http://localhost:8080",
+      '/api': 'http://localhost:8080',
     },
   },
 })
