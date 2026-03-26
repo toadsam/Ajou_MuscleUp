@@ -91,12 +91,7 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
   }
 
   // 2) Try anonymous CORS image loading.
-  try {
-    return await loadImageFromSrc(url, true);
-  } catch {
-    // 3) Final fallback without explicit crossOrigin.
-    return loadImageFromSrc(url, false);
-  }
+  return loadImageFromSrc(url, true);
 }
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
