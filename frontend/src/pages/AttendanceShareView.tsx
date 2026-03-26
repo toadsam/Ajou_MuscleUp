@@ -7,7 +7,6 @@ import {
   type ShareCardCharacter,
   type ShareCardCharacterPose,
   type ShareCardMediaFit,
-  renderAttendanceShareCard,
   renderAttendanceShareCardPreviewDataUrl,
   type ShareCardQuoteStyle,
   type ShareCardRatio,
@@ -669,21 +668,6 @@ export default function AttendanceShareView() {
     return `${message}\n${publicShareLink}`;
   };
 
-  const dataUrlToFile = (dataUrl: string, fileName: string) => {
-    const parts = dataUrl.split(",");
-    const header = parts[0] ?? "";
-    const body = parts[1] ?? "";
-    const mimeMatch = header.match(/data:(.*?);base64/);
-    const mime = mimeMatch?.[1] || "image/png";
-    const binary = atob(body);
-    const len = binary.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i += 1) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return new File([bytes], fileName, { type: mime });
-  };
-
   const savePreset = () => {
     const next: SharePreset = {
       theme,
@@ -718,9 +702,27 @@ export default function AttendanceShareView() {
     if (!publicShareLink) return;
     const text = composeShareText();
     try {
-      const imageFile = previewThumb?.startsWith("data:image/")
-        ? dataUrlToFile(previewThumb, `attendance-share-${data?.date ?? "today"}.png`)
-        : null;
+      const captureNode = previewCaptureRef.current;
+      if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
+      const rect = captureNode.getBoundingClientRect();
+      const rawCanvas = await html2canvas(captureNode, {
+        backgroundColor: null,
+        scale: Math.min(exportScale, 2),
+        useCORS: true,
+        allowTaint: false,
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+        scrollX: 0,
+        scrollY: 0,
+        logging: false,
+      });
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        rawCanvas.toBlob((file) => {
+          if (!file) return reject(new Error("이미지 변환에 실패했어요."));
+          resolve(file);
+        }, "image/png");
+      });
+      const imageFile = new File([blob], `attendance-share-${data?.date ?? "today"}.png`, { type: "image/png" });
       const nav = navigator as Navigator & { canShare?: (payload?: ShareData) => boolean };
       const canShareFile = Boolean(imageFile && nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
 
@@ -748,105 +750,45 @@ export default function AttendanceShareView() {
   const saveImage = async () => {
     if (!data) return;
     try {
-      const buildFallbackBlob = () =>
-        renderAttendanceShareCard({
-          date: data.date,
-          didWorkout: data.didWorkout,
-          workoutTypes: data.workoutTypes ?? [],
-          workoutIntensity: data.workoutIntensity ?? null,
-          memo: data.memo ?? null,
-          shareComment: customMessage || data.shareComment || null,
-          mediaUrl: firstImage,
-          nickname: data.authorNickname ?? null,
-          theme,
-          ratio,
-          quoteStyle,
-          sticker,
-          showMeta,
-          mediaFit,
-          mediaPositionX,
-          mediaPositionY,
-          character,
-          characterPose,
-          characterSize,
-          characterLabel: character === "me" ? (data.authorNickname || "내 캐릭터") : "득근이",
-          watermarkText: "득근득근",
-          cheerCount: data.cheerCount,
-          showTitle,
-          showSubtitle,
-          scale: exportScale,
-        });
-
-      const isLikelyBlackCanvas = (canvas: HTMLCanvasElement) => {
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return false;
-        const sampleStepX = Math.max(1, Math.floor(canvas.width / 8));
-        const sampleStepY = Math.max(1, Math.floor(canvas.height / 8));
-        let blackish = 0;
-        let sampled = 0;
-        for (let y = 0; y < canvas.height; y += sampleStepY) {
-          for (let x = 0; x < canvas.width; x += sampleStepX) {
-            const px = ctx.getImageData(x, y, 1, 1).data;
-            const luma = px[0] * 0.2126 + px[1] * 0.7152 + px[2] * 0.0722;
-            if (luma < 8 && px[3] > 200) blackish += 1;
-            sampled += 1;
-          }
-        }
-        return sampled > 0 && blackish / sampled > 0.9;
-      };
-
-      let blob: Blob;
       const captureNode = previewCaptureRef.current;
-      if (captureNode) {
-        const prevInlineWidth = captureNode.style.width;
-        const prevInlineHeight = captureNode.style.height;
-        try {
-          captureNode.classList.add("exporting");
-          if (typeof document !== "undefined" && "fonts" in document) {
-            await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
-          }
-          const rect = captureNode.getBoundingClientRect();
-          const captureWidth = Math.max(1, Math.round(rect.width));
-          const captureHeight = Math.max(1, Math.round(rect.height));
-          captureNode.style.width = `${captureWidth}px`;
-          captureNode.style.height = `${captureHeight}px`;
-          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-
-          const rawCanvas = await html2canvas(captureNode, {
-            backgroundColor: null,
-            scale: Math.min(exportScale, 2),
-            useCORS: true,
-            allowTaint: false,
-            width: captureWidth,
-            height: captureHeight,
-            scrollX: 0,
-            scrollY: 0,
-            logging: false,
-          });
-          if (isLikelyBlackCanvas(rawCanvas)) {
-            throw new Error("preview capture turned black");
-          }
-
-          blob = await new Promise<Blob>((resolve, reject) => {
-            rawCanvas.toBlob((file) => {
-              if (!file) {
-                reject(new Error("이미지 변환에 실패했어요."));
-                return;
-              }
-              resolve(file);
-            }, "image/png");
-          });
-        } catch {
-          blob = await buildFallbackBlob();
-        } finally {
-          captureNode.style.width = prevInlineWidth;
-          captureNode.style.height = prevInlineHeight;
-          captureNode.classList.remove("exporting");
-        }
-      } else {
-        blob = await buildFallbackBlob();
+      if (!captureNode) throw new Error("저장할 카드 영역을 찾을 수 없어요.");
+      const prevInlineWidth = captureNode.style.width;
+      const prevInlineHeight = captureNode.style.height;
+      captureNode.classList.add("exporting");
+      if (typeof document !== "undefined" && "fonts" in document) {
+        await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
       }
+      const rect = captureNode.getBoundingClientRect();
+      const captureWidth = Math.max(1, Math.round(rect.width));
+      const captureHeight = Math.max(1, Math.round(rect.height));
+      captureNode.style.width = `${captureWidth}px`;
+      captureNode.style.height = `${captureHeight}px`;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+      const rawCanvas = await html2canvas(captureNode, {
+        backgroundColor: null,
+        scale: Math.min(exportScale, 2),
+        useCORS: true,
+        allowTaint: false,
+        width: captureWidth,
+        height: captureHeight,
+        scrollX: 0,
+        scrollY: 0,
+        logging: false,
+      });
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        rawCanvas.toBlob((file) => {
+          if (!file) {
+            reject(new Error("이미지 변환에 실패했어요."));
+            return;
+          }
+          resolve(file);
+        }, "image/png");
+      });
+      captureNode.style.width = prevInlineWidth;
+      captureNode.style.height = prevInlineHeight;
+      captureNode.classList.remove("exporting");
       const fileUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = fileUrl;
@@ -857,6 +799,10 @@ export default function AttendanceShareView() {
       URL.revokeObjectURL(fileUrl);
     } catch (e: any) {
       alert(e?.message || "이미지 저장에 실패했어요.");
+      const captureNode = previewCaptureRef.current;
+      if (captureNode) {
+        captureNode.classList.remove("exporting");
+      }
     }
   };
 
