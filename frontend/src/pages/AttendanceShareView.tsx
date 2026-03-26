@@ -12,6 +12,7 @@ import {
   type ShareCardRatio,
   type ShareCardTheme,
 } from "../utils/attendanceShareCard";
+import watermarkLogo from "../assets/images/워터마크.png";
 import "../styles/attendanceShare.css";
 
 type ShareData = {
@@ -703,6 +704,12 @@ export default function AttendanceShareView() {
     try {
       const captureNode = previewCaptureRef.current;
       if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
+      captureNode.classList.add("exporting");
+      if (typeof document !== "undefined" && "fonts" in document) {
+        await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
+      }
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       const rect = captureNode.getBoundingClientRect();
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
@@ -711,10 +718,13 @@ export default function AttendanceShareView() {
         allowTaint: false,
         width: Math.max(1, Math.round(rect.width)),
         height: Math.max(1, Math.round(rect.height)),
-        scrollX: 0,
-        scrollY: 0,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.clientWidth,
+        windowHeight: document.documentElement.clientHeight,
         logging: false,
       });
+      captureNode.classList.remove("exporting");
       const blob = await new Promise<Blob>((resolve, reject) => {
         rawCanvas.toBlob((file) => {
           if (!file) return reject(new Error("이미지 변환에 실패했어요."));
@@ -740,6 +750,10 @@ export default function AttendanceShareView() {
         alert("이 브라우저는 이미지 공유를 지원하지 않아 링크를 복사했어요.");
       }
     } catch {
+      const captureNode = previewCaptureRef.current;
+      if (captureNode) {
+        captureNode.classList.remove("exporting");
+      }
       // user canceled
     }
   };
@@ -770,8 +784,10 @@ export default function AttendanceShareView() {
         allowTaint: false,
         width: captureWidth,
         height: captureHeight,
-        scrollX: 0,
-        scrollY: 0,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.clientWidth,
+        windowHeight: document.documentElement.clientHeight,
         logging: false,
       });
       const blob = await new Promise<Blob>((resolve, reject) => {
@@ -889,7 +905,9 @@ export default function AttendanceShareView() {
                 />
               )}
               <div className="share-overlay" />
-              <div className="share-logo">득근득근</div>
+              <div className="share-logo">
+                <img src={watermarkLogo} alt="득근 워터마크" className="share-logo-image" />
+              </div>
               {sticker && <div className="share-sticker">{sticker}</div>}
               <div className="share-deco-layer">
                 {decorations.map((item) => (
@@ -1014,13 +1032,6 @@ export default function AttendanceShareView() {
 
               <div className="share-content">
                 <p className="share-attendance-label">Attendance</p>
-
-                <div className="share-badges">
-                  {(data.workoutTypes ?? []).slice(0, 3).map((type) => (
-                    <span key={type} className="share-badge">{type}</span>
-                  ))}
-                  {data.workoutIntensity && <span className="share-badge">강도 {data.workoutIntensity}</span>}
-                </div>
 
                 <p className={`share-quote quote-${quoteStyle}`}>{customMessage || data.shareComment || data.memo || "오늘 출석 완료!"}</p>
 
