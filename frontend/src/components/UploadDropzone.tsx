@@ -1,5 +1,6 @@
 ﻿import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
+import { optimizeUploadImage } from "../utils/imageUpload";
 
 type Props = {
   onUploaded?: (url: string) => void;
@@ -34,8 +35,9 @@ export default function UploadDropzone({
       setActiveUploads((c) => c + 1);
       setError(null);
       try {
+        const optimizedFile = await optimizeUploadImage(file);
         const form = new FormData();
-        form.append("file", file);
+        form.append("file", optimizedFile);
         const res = await api.post("/api/files/upload", form, {
           params: { folder },
           headers: { "Content-Type": "multipart/form-data" },
@@ -109,7 +111,7 @@ export default function UploadDropzone({
       )}
 
       <div className="text-gray-300">파일을 드래그해서 놓거나 버튼으로 선택하세요.</div>
-      <div className="mt-1 text-sm text-gray-500">모바일에서는 카메라 촬영 후 바로 업로드할 수 있습니다.</div>
+      <div className="mt-1 text-sm text-gray-500">모바일 카메라 업로드 지원 · 이미지는 업로드 전 자동 압축됩니다.</div>
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         <button

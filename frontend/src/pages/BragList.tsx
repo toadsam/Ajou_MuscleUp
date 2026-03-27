@@ -215,7 +215,21 @@ export default function BragList() {
           </div>
         )}
 
-        {loading && <p className="text-gray-400">자랑글을 불러오는 중입니다...</p>}
+        {loading && (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div key={`brag-skeleton-${idx}`} className="overflow-hidden rounded-[26px] border border-white/10 bg-white/5">
+                <div className="h-56 animate-pulse bg-white/10" />
+                <div className="space-y-3 p-5">
+                  <div className="h-4 w-2/5 animate-pulse rounded bg-white/10" />
+                  <div className="h-6 w-4/5 animate-pulse rounded bg-white/10" />
+                  <div className="h-4 w-full animate-pulse rounded bg-white/10" />
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         {error && <p className="text-red-400">{error}</p>}
         {!loading && !error && filtered.length === 0 && (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/60">
@@ -235,7 +249,7 @@ export default function BragList() {
                     {isVideo(cover) ? (
                       <video src={withBase(cover)} className="h-full w-full object-cover" muted controls />
                     ) : (
-                      <img src={withBase(cover)} alt={post.title} className="h-full w-full object-cover" />
+                      <img loading="lazy" decoding="async" src={withBase(cover)} alt={post.title} className="h-full w-full object-cover" />
                     )}
                     <div className="absolute left-4 top-4 flex gap-2 text-xs">
                       {post.visibility === "FRIENDS" && (

@@ -540,7 +540,7 @@ export default function BragDetail() {
                           {isVideo(url) ? (
                             <video src={url} className="w-full h-28 object-cover" controls />
                           ) : (
-                            <img src={url} alt="" className="w-full h-28 object-cover" />
+                            <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-28 object-cover" />
                           )}
                           <button
                             type="button"
@@ -640,7 +640,7 @@ export default function BragDetail() {
                     영상이 포함된 자랑글입니다
                   </div>
                 ) : (
-                  <img src={withBase(post.mediaUrls[0])} alt={post.title} className="h-full min-h-[220px] w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={withBase(post.mediaUrls[0])} alt={post.title} className="h-full min-h-[220px] w-full object-cover" />
                 )
               ) : (
                 <div className="flex min-h-[220px] items-center justify-center bg-black/20 text-sm text-white/55">
@@ -702,7 +702,7 @@ export default function BragDetail() {
                     {isVideo(url) ? (
                       <video src={url} className="w-full h-60 object-cover" muted />
                     ) : (
-                      <img src={url} alt="before" className="w-full h-60 object-cover" />
+                      <img loading="lazy" decoding="async" src={url} alt="before" className="w-full h-60 object-cover" />
                     )}
                   </button>
                 );
@@ -726,7 +726,7 @@ export default function BragDetail() {
                     {isVideo(url) ? (
                       <video src={url} className="w-full h-60 object-cover" muted />
                     ) : (
-                      <img src={url} alt="after" className="w-full h-60 object-cover" />
+                      <img loading="lazy" decoding="async" src={url} alt="after" className="w-full h-60 object-cover" />
                     )}
                   </button>
                 );
@@ -748,7 +748,7 @@ export default function BragDetail() {
                   {isVideo(url) ? (
                     <video src={url} className="w-full h-64 object-cover" muted />
                   ) : (
-                    <img src={url} alt="media" className="w-full h-64 object-cover" />
+                    <img loading="lazy" decoding="async" src={url} alt="media" className="w-full h-64 object-cover" />
                   )}
                 </button>
               );

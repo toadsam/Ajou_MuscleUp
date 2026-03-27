@@ -699,7 +699,7 @@ export default function MyPage() {
                           <p className="text-[11px] text-white">{CUSTOM_PART_LABEL[part]}</p>
                           <div className="mt-1 h-16 overflow-hidden rounded-md border border-white/10 bg-black/30">
                             {image ? (
-                              <img src={image} alt={`${part} custom`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                              <img loading="lazy" decoding="async" src={image} alt={`${part} custom`} className="h-full w-full object-cover" />
                             ) : (
                               <div className="flex h-full items-center justify-center text-[10px] text-gray-400">{unlocked ? "이미지 없음" : "잠김"}</div>
                             )}
@@ -947,7 +947,7 @@ export default function MyPage() {
                         </div>
                         <div className="mt-2 h-20 rounded-lg border border-white/10 bg-black/30 overflow-hidden">
                           {image ? (
-                            <img src={image} alt={`${part} custom`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                            <img loading="lazy" decoding="async" src={image} alt={`${part} custom`} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-xs text-gray-400">
                               {unlocked ? "이미지 없음" : "잠김"}
@@ -1092,6 +1092,7 @@ export default function MyPage() {
     </section>
   );
 }
+
 
 
 

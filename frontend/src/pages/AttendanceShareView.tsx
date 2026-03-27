@@ -2,7 +2,7 @@
 import html2canvas from "html2canvas";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import { defaultGrowthParams, type GrowthParams } from "../components/avatar/types";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   type ShareCardCharacter,
   type ShareCardCharacterPose,
@@ -372,6 +372,7 @@ function buildTemplatePool(data: ShareData | null): string[] {
 
 export default function AttendanceShareView() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState<ShareData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -435,6 +436,7 @@ export default function AttendanceShareView() {
     startY: number;
   } | null>(null);
   const previewCaptureRef = useRef<HTMLDivElement | null>(null);
+  const autoActionTriggeredRef = useRef(false);
 
   const [reactionStore, setReactionStore] = useState<ReactionStore>(() => loadReactionStore());
 
@@ -754,7 +756,7 @@ export default function AttendanceShareView() {
       if (captureNode) {
         captureNode.classList.remove("exporting");
       }
-      // user canceled
+      alert("자동 공유가 차단되었거나 취소되었습니다. 아래 '원클릭 공유' 버튼을 눌러 주세요.");
     }
   };
 
@@ -818,6 +820,20 @@ export default function AttendanceShareView() {
       }
     }
   };
+
+  useEffect(() => {
+    if (!data || autoActionTriggeredRef.current) return;
+    const auto = searchParams.get("auto");
+    if (auto !== "share" && auto !== "save") return;
+    autoActionTriggeredRef.current = true;
+    window.setTimeout(() => {
+      if (auto === "save") {
+        void saveImage();
+      } else {
+        void quickShare();
+      }
+    }, 120);
+  }, [data, searchParams]);
 
   const hasReacted = (kind: "cheer" | "report") => {
     if (!slug) return false;

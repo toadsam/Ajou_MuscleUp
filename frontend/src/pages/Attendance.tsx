@@ -348,13 +348,20 @@ export default function Attendance() {
   const quickShare = async () => {
     try {
       if (!todayLog) {
-        showToast({ type: "error", message: "출석 저장 후 공유할 수 있어요." });
+        showToast({ type: "error", message: "먼저 오늘 출석을 저장해 주세요." });
         return;
       }
 
+      setSharing(true);
+      const autoSlug = await ensureShareSlug();
+      window.location.href = `${appShareLinkForSlug(autoSlug)}?auto=share&from=attendance`;
+      return;
+
+      const ensuredLog = todayLog as AttendanceLog;
+
       const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
       const shareFn = navigator.share?.bind(navigator);
-      const link = todayLog.shareSlug ? publicShareLinkForSlug(todayLog.shareSlug) : "";
+      const link = ensuredLog.shareSlug ? publicShareLinkForSlug(ensuredLog.shareSlug as string) : "";
       const text = composeShareText(link);
       const canShareFile = Boolean(shareImageFile && nav.canShare && nav.canShare({ files: [shareImageFile] as File[] }));
 
@@ -363,7 +370,7 @@ export default function Attendance() {
           await shareFn({
             title: "출석 자랑",
             text,
-            files: [shareImageFile],
+            files: [shareImageFile as File],
           });
           showToast({ type: "success", message: "이미지로 공유했어요." });
         } else if (link) {
@@ -378,7 +385,7 @@ export default function Attendance() {
         showToast({ type: "success", message: "멘트+링크를 복사했어요." });
       }
 
-      if (!todayLog.shareSlug) {
+      if (!ensuredLog.shareSlug) {
         setSharing(true);
         try {
           await ensureShareSlug();
@@ -396,8 +403,16 @@ export default function Attendance() {
 
   const saveInstaImage = async () => {
     try {
+      if (!todayLog) {
+        showToast({ type: "error", message: "먼저 오늘 출석을 저장해 주세요." });
+        return;
+      }
+      const autoSlug = await ensureShareSlug();
+      window.location.href = `${appShareLinkForSlug(String(autoSlug))}?auto=save&from=attendance`;
+      return;
+
       const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
-      const mediaImageForRender = mediaImage ? withProxy(mediaImage) : null;
+      const mediaImageForRender = mediaImage ? withProxy(mediaImage as string) : null;
       const blob = await renderAttendanceShareCard({
         date: todayKey,
         didWorkout,

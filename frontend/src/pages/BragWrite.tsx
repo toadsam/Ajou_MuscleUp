@@ -546,7 +546,7 @@ export default function BragWrite() {
                             {isVid ? (
                               <video src={url} className="h-44 w-full object-cover" controls />
                             ) : (
-                              <img src={url} alt="media" className="h-44 w-full object-cover" />
+                              <img loading="lazy" decoding="async" src={url} alt="media" className="h-44 w-full object-cover" />
                             )}
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs">
@@ -617,7 +617,7 @@ export default function BragWrite() {
                     <div className="grid grid-cols-2 gap-2">
                       {mediaItems.slice(0, 2).map((item) => (
                         <div key={`preview-${item.url}`} className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                          <img src={withBase(item.url)} alt="preview" className="h-24 w-full object-cover" />
+                          <img loading="lazy" decoding="async" src={withBase(item.url)} alt="preview" className="h-24 w-full object-cover" />
                         </div>
                       ))}
                     </div>
