@@ -1,6 +1,7 @@
 ﻿import { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import AdminRoute from "./components/AdminRoute";
+import BetaNoticeModal from "./components/BetaNoticeModal";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SupportWidget from "./components/SupportWidget";
 import Footer from "./layouts/Footer";
@@ -273,6 +274,7 @@ function App() {
         </main>
         <Footer />
         <SupportWidget />
+        <BetaNoticeModal />
       </div>
     </Router>
   );
