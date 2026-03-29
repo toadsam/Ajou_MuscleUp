@@ -448,6 +448,7 @@ export default function AttendanceShareView() {
   const [shareProgress, setShareProgress] = useState<"idle" | "preparing_share" | "sharing" | "preparing_save" | "saving">("idle");
   const [mediaReady, setMediaReady] = useState(true);
   const [mediaLoadFailed, setMediaLoadFailed] = useState(false);
+  const [captureMediaUrl, setCaptureMediaUrl] = useState<string | null>(null);
   const [previewThumb, setPreviewThumb] = useState<string>("");
 
   const preset = useMemo(loadPreset, []);
@@ -646,7 +647,10 @@ export default function AttendanceShareView() {
 
   useEffect(() => {
     let cancelled = false;
+    let objectUrl: string | null = null;
+
     if (!firstImage) {
+      setCaptureMediaUrl(null);
       setMediaReady(true);
       setMediaLoadFailed(false);
       return () => {
@@ -656,20 +660,42 @@ export default function AttendanceShareView() {
 
     setMediaReady(false);
     setMediaLoadFailed(false);
+    setCaptureMediaUrl(null);
+
     void (async () => {
-      const loaded = await waitForImageUrl(firstImage, 9000, 300);
-      if (cancelled) return;
-      if (loaded) {
+      try {
+        const res = await fetch(firstImage, { credentials: "include" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (cancelled) {
+          URL.revokeObjectURL(objectUrl);
+          objectUrl = null;
+          return;
+        }
+        setCaptureMediaUrl(objectUrl);
         setMediaReady(true);
         setMediaLoadFailed(false);
-      } else {
-        setMediaReady(false);
-        setMediaLoadFailed(true);
+      } catch {
+        const loaded = await waitForImageUrl(firstImage, 9000, 300);
+        if (cancelled) return;
+        if (loaded) {
+          setCaptureMediaUrl(firstImage);
+          setMediaReady(true);
+          setMediaLoadFailed(false);
+        } else {
+          setCaptureMediaUrl(null);
+          setMediaReady(false);
+          setMediaLoadFailed(true);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
   }, [firstImage]);
 
@@ -720,7 +746,7 @@ export default function AttendanceShareView() {
           workoutIntensity: data.workoutIntensity ?? null,
           memo: data.memo ?? null,
           shareComment: customMessage || data.shareComment || null,
-          mediaUrl: firstImage,
+          mediaUrl: captureMediaUrl,
           nickname: data.authorNickname ?? null,
           theme,
           ratio,
@@ -753,7 +779,7 @@ export default function AttendanceShareView() {
     characterSize,
     customMessage,
     data,
-    firstImage,
+    captureMediaUrl,
     mediaFit,
     mediaPositionX,
     mediaPositionY,
@@ -1057,14 +1083,14 @@ export default function AttendanceShareView() {
         <div className="share-grid">
           <div className="share-panel" aria-label="share preview panel">
             <div ref={previewCaptureRef} className={`share-preview ratio-${ratio}`}>
-              {firstImage && (
-                <div
-                  aria-label="attendance media"
-                  className="share-media-bg"
+              {captureMediaUrl && (
+                <img
+                  src={captureMediaUrl}
+                  alt="attendance media"
+                  className="share-media"
                   style={{
-                    backgroundImage: `url("${firstImage}")`,
-                    backgroundSize: mediaFit === "cover" ? "cover" : "contain",
-                    backgroundPosition: `${mediaPositionX}% ${mediaPositionY}%`,
+                    objectFit: mediaFit === "cover" ? "cover" : "contain",
+                    objectPosition: `${mediaPositionX}% ${mediaPositionY}%`,
                     filter: mediaFilter,
                   }}
                 />
