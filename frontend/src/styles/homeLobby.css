@@ -340,14 +340,22 @@
 .action-header h2 {
   font-size: 1.3rem;
   font-weight: 700;
+  white-space: nowrap;
+  word-break: keep-all;
+  line-break: strict;
 }
 
 .attendance-status {
+  display: inline-flex;
+  align-items: center;
   padding: 0.35rem 0.8rem;
   border-radius: 999px;
   font-size: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--lobby-muted);
+  white-space: nowrap;
+  word-break: keep-all;
+  line-break: strict;
 }
 
 .attendance-status.done {
