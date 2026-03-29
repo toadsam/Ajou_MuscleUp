@@ -376,30 +376,30 @@ function extractBackgroundImageUrls(styleValue: string): string[] {
   return Array.from(matches, (match) => match[2]).filter(Boolean);
 }
 
-function waitForImageUrl(url: string, timeoutMs = 7000, retryMs = 250): Promise<void> {
+function waitForImageUrl(url: string, timeoutMs = 7000, retryMs = 250): Promise<boolean> {
   return new Promise((resolve) => {
     const deadline = Date.now() + timeoutMs;
     let settled = false;
 
-    const finish = () => {
+    const finish = (ok: boolean) => {
       if (settled) return;
       settled = true;
-      resolve();
+      resolve(ok);
     };
 
     const attempt = () => {
       if (Date.now() >= deadline) {
-        finish();
+        finish(false);
         return;
       }
       const img = new Image();
-      img.onload = finish;
+      img.onload = () => finish(true);
       img.onerror = () => {
         window.setTimeout(attempt, retryMs);
       };
       img.src = url;
       if (img.complete && img.naturalWidth > 0) {
-        finish();
+        finish(true);
       }
     };
 
@@ -433,7 +433,7 @@ async function waitForCaptureAssets(root: HTMLElement): Promise<void> {
     const style = window.getComputedStyle(node).backgroundImage;
     extractBackgroundImageUrls(style).forEach((url) => bgUrls.add(url));
   });
-  bgUrls.forEach((url) => imageTasks.push(waitForImageUrl(url)));
+  bgUrls.forEach((url) => imageTasks.push(waitForImageUrl(url).then(() => undefined)));
 
   await Promise.all(imageTasks);
 }
@@ -446,6 +446,8 @@ export default function AttendanceShareView() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [shareProgress, setShareProgress] = useState<"idle" | "preparing_share" | "sharing" | "preparing_save" | "saving">("idle");
+  const [mediaReady, setMediaReady] = useState(true);
+  const [mediaLoadFailed, setMediaLoadFailed] = useState(false);
   const [previewThumb, setPreviewThumb] = useState<string>("");
 
   const preset = useMemo(loadPreset, []);
@@ -642,6 +644,35 @@ export default function AttendanceShareView() {
     return withProxy(absolute);
   }, [data]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!firstImage) {
+      setMediaReady(true);
+      setMediaLoadFailed(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setMediaReady(false);
+    setMediaLoadFailed(false);
+    void (async () => {
+      const loaded = await waitForImageUrl(firstImage, 9000, 300);
+      if (cancelled) return;
+      if (loaded) {
+        setMediaReady(true);
+        setMediaLoadFailed(false);
+      } else {
+        setMediaReady(false);
+        setMediaLoadFailed(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [firstImage]);
+
   const addDecoration = (type: DecoType) => {
     const id = `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const next: DecoItem = { id, type, x: 48, y: 48, size: 1, rotation: 0, opacity: 0.95 };
@@ -740,10 +771,33 @@ export default function AttendanceShareView() {
     return `${message}\n${publicShareLink}`;
   };
   const isCaptureBusy = shareProgress !== "idle";
+  const isActionDisabled = isCaptureBusy || !mediaReady;
   const shareButtonLabel =
-    shareProgress === "preparing_share" ? "이미지 반영 중..." : shareProgress === "sharing" ? "공유 중..." : "원클릭 공유";
+    !mediaReady
+      ? mediaLoadFailed
+        ? "이미지 반영 실패"
+        : "이미지 반영 중..."
+      : shareProgress === "preparing_share"
+        ? "이미지 반영 중..."
+        : shareProgress === "sharing"
+          ? "공유 중..."
+          : "원클릭 공유";
   const saveButtonLabel =
-    shareProgress === "preparing_save" ? "이미지 반영 중..." : shareProgress === "saving" ? "저장 중..." : "커스텀 카드 저장";
+    !mediaReady
+      ? mediaLoadFailed
+        ? "이미지 반영 실패"
+        : "이미지 반영 중..."
+      : shareProgress === "preparing_save"
+        ? "이미지 반영 중..."
+        : shareProgress === "saving"
+          ? "저장 중..."
+          : "커스텀 카드 저장";
+  const showLoadingOverlay = !mediaReady || shareProgress === "preparing_share" || shareProgress === "preparing_save";
+  const overlayMessage = mediaLoadFailed
+    ? "이미지 반영에 실패했어요. 잠시 후 다시 시도해 주세요."
+    : shareProgress === "preparing_save"
+      ? "저장용 이미지 반영 중..."
+      : "공유용 이미지 반영 중...";
 
   const savePreset = () => {
     const next: SharePreset = {
@@ -777,6 +831,7 @@ export default function AttendanceShareView() {
 
   const quickShare = async () => {
     if (!publicShareLink) return;
+    if (!mediaReady) return;
     if (shareProgress !== "idle") return;
     try {
       setShareProgress("preparing_share");
@@ -796,6 +851,7 @@ export default function AttendanceShareView() {
         scale: Math.min(exportScale, 2),
         useCORS: true,
         allowTaint: false,
+        ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
         width: Math.max(1, Math.round(rect.width)),
         height: Math.max(1, Math.round(rect.height)),
         scrollX: -window.scrollX,
@@ -842,6 +898,7 @@ export default function AttendanceShareView() {
 
   const saveImage = async () => {
     if (!data) return;
+    if (!mediaReady) return;
     if (shareProgress !== "idle") return;
     let captureNode: HTMLDivElement | null = null;
     let prevInlineWidth = "";
@@ -871,6 +928,7 @@ export default function AttendanceShareView() {
         scale: Math.min(exportScale, 2),
         useCORS: true,
         allowTaint: false,
+        ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
         width: captureWidth,
         height: captureHeight,
         scrollX: -window.scrollX,
@@ -913,6 +971,7 @@ export default function AttendanceShareView() {
 
   useEffect(() => {
     if (!data || autoActionTriggeredRef.current) return;
+    if (!mediaReady) return;
     const auto = searchParams.get("auto");
     if (auto !== "share" && auto !== "save") return;
     autoActionTriggeredRef.current = true;
@@ -923,7 +982,7 @@ export default function AttendanceShareView() {
         void quickShare();
       }
     }, 120);
-  }, [data, searchParams]);
+  }, [data, mediaReady, searchParams]);
 
   const hasReacted = (kind: "cheer" | "report") => {
     if (!slug) return false;
@@ -1014,6 +1073,12 @@ export default function AttendanceShareView() {
               <div className="share-logo">
                 <img src={watermarkLogo} alt="득근 워터마크" className="share-logo-image" />
               </div>
+              {showLoadingOverlay && (
+                <div className="share-loading-overlay" aria-live="polite" data-html2canvas-ignore="true">
+                  <img src={watermarkLogo} alt="" className="share-loading-logo" />
+                  <p className="share-loading-text">{overlayMessage}</p>
+                </div>
+              )}
               {sticker && <div className="share-sticker">{sticker}</div>}
               <div className="share-deco-layer">
                 {decorations.map((item) => (
@@ -1163,8 +1228,15 @@ export default function AttendanceShareView() {
 
             {simpleMode && (
               <div className="control-row simple-core-bar">
-                <button className="action-btn" onClick={saveImage} disabled={isCaptureBusy} aria-label="save custom card quick">
-                  {saveButtonLabel}
+                <button className="action-btn" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card quick">
+                  {isActionDisabled ? (
+                    <span className="action-btn-loading">
+                      <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                      <span>{saveButtonLabel}</span>
+                    </span>
+                  ) : (
+                    saveButtonLabel
+                  )}
                 </button>
                 <button
                   className={`choice-btn section-toggle compact ${advancedOpen ? "open" : ""}`}
@@ -1683,11 +1755,25 @@ export default function AttendanceShareView() {
             )}
 
             <div className="action-list">
-              <button className="action-btn primary" onClick={quickShare} disabled={isCaptureBusy} aria-label="quick share">
-                {shareButtonLabel}
+              <button className="action-btn primary" onClick={quickShare} disabled={isActionDisabled} aria-label="quick share">
+                {isActionDisabled ? (
+                  <span className="action-btn-loading">
+                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span>{shareButtonLabel}</span>
+                  </span>
+                ) : (
+                  shareButtonLabel
+                )}
               </button>
-              <button className="action-btn" onClick={saveImage} disabled={isCaptureBusy} aria-label="save custom card">
-                {saveButtonLabel}
+              <button className="action-btn" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card">
+                {isActionDisabled ? (
+                  <span className="action-btn-loading">
+                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span>{saveButtonLabel}</span>
+                  </span>
+                ) : (
+                  saveButtonLabel
+                )}
               </button>
               {showSimpleExtra && (
                 <>
