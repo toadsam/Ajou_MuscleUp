@@ -29,16 +29,23 @@ const leads: Lead[] = [
     area: "Brand",
   },
   {
-    name: "유수빈",
+    name: "유수정",
     role: "테크 리드",
     focus: "플랫폼, 데이터, AI 기능",
     quote: "기록과 데이터를 연결해 개인 맞춤형 운동 경험을 만듭니다.",
     area: "Tech",
   },
+  {
+    name: "김명욱",
+    role: "운영진",
+    focus: "멤버 관리, 커뮤니티 운영",
+    quote: "작은 불편도 놓치지 않고 더 나은 운영 경험으로 연결합니다.",
+    area: "Community",
+  },
 ];
 
 const leadershipStats = [
-  { label: "리더십 팀", value: "04" },
+  { label: "리더십 팀", value: "05" },
   { label: "운영 스프린트", value: "24/yr" },
   { label: "핵심 프로젝트", value: "11" },
 ] as const;
