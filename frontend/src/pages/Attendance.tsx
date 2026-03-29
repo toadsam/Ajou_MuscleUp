@@ -354,7 +354,7 @@ export default function Attendance() {
 
       setSharing(true);
       const autoSlug = await ensureShareSlug();
-      window.location.href = `${appShareLinkForSlug(autoSlug)}?auto=share&from=attendance`;
+      window.open(appShareLinkForSlug(autoSlug), "_blank", "noopener,noreferrer");
       return;
 
       const ensuredLog = todayLog as AttendanceLog;
@@ -838,16 +838,6 @@ export default function Attendance() {
                 <button onClick={unshareToday} disabled={sharing} className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/70 hover:border-white/40">
                   공유 해제
                 </button>
-              )}
-              {todayLog.shareSlug && (
-                <a
-                  href={appShareLinkForSlug(todayLog.shareSlug)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-xl border border-sky-400/60 px-4 py-2 text-sm text-sky-200 hover:bg-sky-500/10"
-                >
-                  자랑 페이지 보기
-                </a>
               )}
               <span className="text-xs text-white/60 self-center">응원 {todayLog.cheerCount ?? 0} · 수정 {todayLog.editCount ?? 0}회</span>
             </div>
