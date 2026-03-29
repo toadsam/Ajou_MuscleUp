@@ -370,6 +370,74 @@ function buildTemplatePool(data: ShareData | null): string[] {
   return Array.from(pool);
 }
 
+function extractBackgroundImageUrls(styleValue: string): string[] {
+  if (!styleValue || styleValue === "none") return [];
+  const matches = styleValue.matchAll(/url\((['"]?)(.*?)\1\)/g);
+  return Array.from(matches, (match) => match[2]).filter(Boolean);
+}
+
+function waitForImageUrl(url: string, timeoutMs = 7000, retryMs = 250): Promise<void> {
+  return new Promise((resolve) => {
+    const deadline = Date.now() + timeoutMs;
+    let settled = false;
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+
+    const attempt = () => {
+      if (Date.now() >= deadline) {
+        finish();
+        return;
+      }
+      const img = new Image();
+      img.onload = finish;
+      img.onerror = () => {
+        window.setTimeout(attempt, retryMs);
+      };
+      img.src = url;
+      if (img.complete && img.naturalWidth > 0) {
+        finish();
+      }
+    };
+
+    attempt();
+  });
+}
+
+async function waitForCaptureAssets(root: HTMLElement): Promise<void> {
+  const imageTasks: Promise<void>[] = [];
+
+  const imageElements = Array.from(root.querySelectorAll("img"));
+  imageElements.forEach((img) => {
+    if (img.complete && img.naturalWidth > 0) return;
+    imageTasks.push(
+      new Promise<void>((resolve) => {
+        const done = () => {
+          img.removeEventListener("load", done);
+          img.removeEventListener("error", done);
+          resolve();
+        };
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+        window.setTimeout(done, 3000);
+      })
+    );
+  });
+
+  const nodes = [root, ...Array.from(root.querySelectorAll<HTMLElement>("*"))];
+  const bgUrls = new Set<string>();
+  nodes.forEach((node) => {
+    const style = window.getComputedStyle(node).backgroundImage;
+    extractBackgroundImageUrls(style).forEach((url) => bgUrls.add(url));
+  });
+  bgUrls.forEach((url) => imageTasks.push(waitForImageUrl(url)));
+
+  await Promise.all(imageTasks);
+}
+
 export default function AttendanceShareView() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
@@ -377,6 +445,7 @@ export default function AttendanceShareView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [shareProgress, setShareProgress] = useState<"idle" | "preparing_share" | "sharing" | "preparing_save" | "saving">("idle");
   const [previewThumb, setPreviewThumb] = useState<string>("");
 
   const preset = useMemo(loadPreset, []);
@@ -670,6 +739,11 @@ export default function AttendanceShareView() {
     const message = customMessage.trim() || data?.memo?.trim() || "오늘 출석 완료!";
     return `${message}\n${publicShareLink}`;
   };
+  const isCaptureBusy = shareProgress !== "idle";
+  const shareButtonLabel =
+    shareProgress === "preparing_share" ? "이미지 반영 중..." : shareProgress === "sharing" ? "공유 중..." : "원클릭 공유";
+  const saveButtonLabel =
+    shareProgress === "preparing_save" ? "이미지 반영 중..." : shareProgress === "saving" ? "저장 중..." : "커스텀 카드 저장";
 
   const savePreset = () => {
     const next: SharePreset = {
@@ -703,15 +777,19 @@ export default function AttendanceShareView() {
 
   const quickShare = async () => {
     if (!publicShareLink) return;
+    if (shareProgress !== "idle") return;
     try {
+      setShareProgress("preparing_share");
       const captureNode = previewCaptureRef.current;
       if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
       captureNode.classList.add("exporting");
       if (typeof document !== "undefined" && "fonts" in document) {
         await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
       }
+      await waitForCaptureAssets(captureNode);
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      setShareProgress("sharing");
       const rect = captureNode.getBoundingClientRect();
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
@@ -757,20 +835,28 @@ export default function AttendanceShareView() {
         captureNode.classList.remove("exporting");
       }
       alert("자동 공유가 차단되었거나 취소되었습니다. 아래 '원클릭 공유' 버튼을 눌러 주세요.");
+    } finally {
+      setShareProgress("idle");
     }
   };
 
   const saveImage = async () => {
     if (!data) return;
+    if (shareProgress !== "idle") return;
+    let captureNode: HTMLDivElement | null = null;
+    let prevInlineWidth = "";
+    let prevInlineHeight = "";
     try {
-      const captureNode = previewCaptureRef.current;
+      setShareProgress("preparing_save");
+      captureNode = previewCaptureRef.current;
       if (!captureNode) throw new Error("저장할 카드 영역을 찾을 수 없어요.");
-      const prevInlineWidth = captureNode.style.width;
-      const prevInlineHeight = captureNode.style.height;
+      prevInlineWidth = captureNode.style.width;
+      prevInlineHeight = captureNode.style.height;
       captureNode.classList.add("exporting");
       if (typeof document !== "undefined" && "fonts" in document) {
         await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
       }
+      await waitForCaptureAssets(captureNode);
       const rect = captureNode.getBoundingClientRect();
       const captureWidth = Math.max(1, Math.round(rect.width));
       const captureHeight = Math.max(1, Math.round(rect.height));
@@ -778,6 +864,7 @@ export default function AttendanceShareView() {
       captureNode.style.height = `${captureHeight}px`;
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      setShareProgress("saving");
 
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
@@ -814,10 +901,13 @@ export default function AttendanceShareView() {
       URL.revokeObjectURL(fileUrl);
     } catch (e: any) {
       alert(e?.message || "이미지 저장에 실패했어요.");
-      const captureNode = previewCaptureRef.current;
+    } finally {
       if (captureNode) {
+        captureNode.style.width = prevInlineWidth;
+        captureNode.style.height = prevInlineHeight;
         captureNode.classList.remove("exporting");
       }
+      setShareProgress("idle");
     }
   };
 
@@ -1073,7 +1163,9 @@ export default function AttendanceShareView() {
 
             {simpleMode && (
               <div className="control-row simple-core-bar">
-                <button className="action-btn" onClick={saveImage} aria-label="save custom card quick">커스텀 카드 저장</button>
+                <button className="action-btn" onClick={saveImage} disabled={isCaptureBusy} aria-label="save custom card quick">
+                  {saveButtonLabel}
+                </button>
                 <button
                   className={`choice-btn section-toggle compact ${advancedOpen ? "open" : ""}`}
                   onClick={() => setAdvancedOpen((prev) => !prev)}
@@ -1591,8 +1683,12 @@ export default function AttendanceShareView() {
             )}
 
             <div className="action-list">
-              <button className="action-btn primary" onClick={quickShare} aria-label="quick share">원클릭 공유</button>
-              <button className="action-btn" onClick={saveImage} aria-label="save custom card">커스텀 카드 저장</button>
+              <button className="action-btn primary" onClick={quickShare} disabled={isCaptureBusy} aria-label="quick share">
+                {shareButtonLabel}
+              </button>
+              <button className="action-btn" onClick={saveImage} disabled={isCaptureBusy} aria-label="save custom card">
+                {saveButtonLabel}
+              </button>
               {showSimpleExtra && (
                 <>
                   <button className="action-btn" onClick={async () => { await navigator.clipboard.writeText(composeShareText()); alert("멘트와 링크를 복사했어요."); }} aria-label="copy message and link">

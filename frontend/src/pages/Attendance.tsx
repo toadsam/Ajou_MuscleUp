@@ -785,6 +785,7 @@ export default function Attendance() {
           <div id="att-media" className={`stack-section ${mobileStep !== "media" ? "step-mobile-hidden" : ""}`}>
           <div className="space-y-3">
             <p className="text-sm text-white/70">사진/영상 첨부 (최대 10개)</p>
+            <p className="text-xs text-emerald-200/90">사진 없이도 출석 기록과 공유가 가능합니다.</p>
             <UploadDropzone
               onUploaded={(url) => setMediaUrls((prev) => (prev.length >= 10 ? prev : [...prev, url]))}
               accept="image/*,video/*"
