@@ -442,6 +442,7 @@ async function waitForCaptureAssets(root: HTMLElement): Promise<void> {
 export default function AttendanceShareView() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
+  const fromAttendance = searchParams.get("from") === "attendance";
   const [data, setData] = useState<ShareData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -470,6 +471,7 @@ export default function AttendanceShareView() {
   const [showTitle, setShowTitle] = useState<boolean>(preset.showTitle);
   const [showSubtitle, setShowSubtitle] = useState<boolean>(preset.showSubtitle);
   const [exportScale, setExportScale] = useState<1 | 2 | 3 | 4>(preset.exportScale);
+  const effectiveExportScale: 1 | 2 | 3 | 4 = fromAttendance ? 4 : exportScale;
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     preset: false,
     themePack: true,
@@ -889,7 +891,7 @@ export default function AttendanceShareView() {
       cheerCount: data.cheerCount,
       showTitle,
       showSubtitle,
-      scale: exportScale,
+      scale: effectiveExportScale,
     });
   };
 
@@ -905,7 +907,7 @@ export default function AttendanceShareView() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       const rect = captureNode.getBoundingClientRect();
-      const baseWidth = exportScale >= 4 ? 2880 : exportScale === 3 ? 2160 : exportScale === 2 ? 1620 : 1080;
+      const baseWidth = effectiveExportScale >= 4 ? 2880 : effectiveExportScale === 3 ? 2160 : effectiveExportScale === 2 ? 1620 : 1080;
       const captureScale = Math.min(10, Math.max(1, baseWidth / Math.max(1, rect.width)));
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
@@ -984,7 +986,7 @@ export default function AttendanceShareView() {
       const fileUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = fileUrl;
-      a.download = `attendance-card-${data.date}-${exportScale}x.png`;
+      a.download = `attendance-card-${data.date}-${effectiveExportScale}x.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();

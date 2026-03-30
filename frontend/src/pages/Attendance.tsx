@@ -354,7 +354,7 @@ export default function Attendance() {
 
       setSharing(true);
       const autoSlug = await ensureShareSlug();
-      window.open(appShareLinkForSlug(autoSlug), "_blank", "noopener,noreferrer");
+      window.open(`${appShareLinkForSlug(autoSlug)}?auto=share&from=attendance`, "_blank", "noopener,noreferrer");
       return;
 
       const ensuredLog = todayLog as AttendanceLog;
