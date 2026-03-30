@@ -1,5 +1,5 @@
 export default function Footer() {
-  const rawUpdatedAt = import.meta.env.VITE_APP_UPDATED_AT ?? "2026-03-30 15:55";
+  const rawUpdatedAt = import.meta.env.VITE_APP_UPDATED_AT ?? "2026-03-30 16:55";
   const lastUpdated = rawUpdatedAt.includes(":") ? rawUpdatedAt : `${rawUpdatedAt} 00:00`;
 
   return (

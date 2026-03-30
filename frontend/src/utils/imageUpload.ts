@@ -1,6 +1,6 @@
-const DEFAULT_MAX_EDGE = 1280;
-const DEFAULT_QUALITY = 0.78;
-const MIN_IMAGE_BYTES = 250 * 1024; // 250KB
+const DEFAULT_MAX_EDGE = 2048;
+const DEFAULT_QUALITY = 0.9;
+const MIN_IMAGE_BYTES = 1024 * 1024; // 1MB
 
 const isCompressibleImage = (file: File) =>
   file.type.startsWith("image/") &&

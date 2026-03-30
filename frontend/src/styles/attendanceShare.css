@@ -1,4 +1,4 @@
-﻿.attendance-share-page {
+.attendance-share-page {
   --bg-a: #1d1234;
   --bg-b: #4a2b68;
   --bg-c: #f58a43;
@@ -139,7 +139,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.88;
+  opacity: 0.98;
 }
 
 .share-media {
@@ -154,7 +154,7 @@
 .share-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.08) 62%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.03) 62%);
 }
 
 .share-logo {
