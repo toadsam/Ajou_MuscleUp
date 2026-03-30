@@ -64,4 +64,26 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
             @Param("start") LocalDate start,
             @Param("end") LocalDate end
     );
+
+    @Query("""
+            select l
+            from AttendanceLog l
+            join l.user u
+            where (:query is null
+                    or lower(u.email) like lower(concat('%', :query, '%'))
+                    or lower(u.nickname) like lower(concat('%', :query, '%')))
+              and (:didWorkout is null or l.didWorkout = :didWorkout)
+              and (:shared is null or l.shared = :shared)
+              and (:fromDate is null or l.date >= :fromDate)
+              and (:toDate is null or l.date <= :toDate)
+            order by l.updatedAt desc
+            """)
+    Page<AttendanceLog> searchForAdmin(
+            @Param("query") String query,
+            @Param("didWorkout") Boolean didWorkout,
+            @Param("shared") Boolean shared,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate,
+            Pageable pageable
+    );
 }

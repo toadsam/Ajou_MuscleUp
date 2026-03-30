@@ -3,6 +3,8 @@ package com.ajou.muscleup.service;
 import com.ajou.muscleup.dto.analytics.AnalyticsEventRequest;
 import com.ajou.muscleup.dto.analytics.AnalyticsEventResponse;
 import com.ajou.muscleup.dto.analytics.AnalyticsSummaryResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ajou.muscleup.entity.AnalyticsEvent;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.AnalyticsEventRepository;
@@ -23,11 +25,16 @@ public class AnalyticsService {
 
     private final AnalyticsEventRepository analyticsEventRepository;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     public void recordEvent(String email, AnalyticsEventRequest req) {
         User user = null;
-        if (email != null && !email.isBlank()) {
-            user = userRepository.findByEmail(email).orElse(null);
+        String effectiveEmail = email;
+        if (effectiveEmail == null || effectiveEmail.isBlank()) {
+            effectiveEmail = extractMetadataField(req.getMetadata(), "actorEmail");
+        }
+        if (effectiveEmail != null && !effectiveEmail.isBlank()) {
+            user = userRepository.findByEmail(effectiveEmail).orElse(null);
         }
         AnalyticsEvent event = AnalyticsEvent.builder()
                 .user(user)
@@ -63,10 +70,27 @@ public class AnalyticsService {
                         e.getPage(),
                         e.getAction(),
                         e.getMetadata(),
-                        e.getUser() != null ? e.getUser().getEmail() : null,
-                        e.getUser() != null ? e.getUser().getNickname() : null,
+                        e.getUser() != null ? e.getUser().getEmail() : extractMetadataField(e.getMetadata(), "actorEmail"),
+                        e.getUser() != null ? e.getUser().getNickname() : extractMetadataField(e.getMetadata(), "actorNickname"),
                         e.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    private String extractMetadataField(String rawMetadata, String fieldName) {
+        if (rawMetadata == null || rawMetadata.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(rawMetadata);
+            JsonNode value = root.get(fieldName);
+            if (value == null || value.isNull()) {
+                return null;
+            }
+            String text = value.asText();
+            return text == null || text.isBlank() ? null : text.trim();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }

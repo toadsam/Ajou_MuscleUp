@@ -7,18 +7,28 @@ type Props = {
   seedFeatures: SeededFeatures;
   strokeColor: string;
   skinColor: string;
+  gender?: "MALE" | "FEMALE" | null;
 };
 
-export default function Arms({ growthParams, tierBoost = 0, seedFeatures, strokeColor, skinColor }: Props) {
+export default function Arms({
+  growthParams,
+  tierBoost = 0,
+  seedFeatures,
+  strokeColor,
+  skinColor,
+  gender = "MALE",
+}: Props) {
+  const feminine = gender === "FEMALE";
   const sensitiveGrowth = Math.min(1, Math.max(0, growthParams.armGrowth * 1.35 + 0.08));
   const baseUpper = 9 + seedFeatures.baseBuild;
   const baseLower = 7 + seedFeatures.baseBuild * 0.5;
-  const bicepsBulge = 1 + sensitiveGrowth * 0.95 + tierBoost * 0.18;
-  const forearmBulge = 1 + sensitiveGrowth * 0.45 + tierBoost * 0.12;
+  const armSlimFactor = feminine ? 0.72 : 1;
+  const bicepsBulge = (1 + sensitiveGrowth * 0.95 + tierBoost * 0.18) * armSlimFactor;
+  const forearmBulge = (1 + sensitiveGrowth * 0.45 + tierBoost * 0.12) * (feminine ? 0.78 : 1);
   const upperWidth = baseUpper * bicepsBulge;
   const lowerWidth = baseLower * forearmBulge;
-  const upperHeight = 25 + sensitiveGrowth * 7;
-  const lowerHeight = 24 + sensitiveGrowth * 6;
+  const upperHeight = (25 + sensitiveGrowth * 7) * (feminine ? 1.08 : 1);
+  const lowerHeight = (24 + sensitiveGrowth * 6) * (feminine ? 1.1 : 1);
   const elbowY = upperHeight - 2;
   const strokeWidth = growthParams.strokeWidth;
   const scale = growthParams.armScale + tierBoost * 0.04;

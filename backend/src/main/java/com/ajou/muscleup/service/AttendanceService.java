@@ -1,6 +1,7 @@
 package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
+import com.ajou.muscleup.dto.attendance.AdminAttendanceLogResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceRankingItemResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
@@ -35,6 +36,15 @@ public interface AttendanceService {
 
     List<AttendanceShareResponse> listSharedForAdmin(int limit);
     Page<AttendanceShareResponse> listSharedForAdmin(int page, int size);
+    Page<AdminAttendanceLogResponse> listLogsForAdmin(
+            int page,
+            int size,
+            String query,
+            Boolean didWorkout,
+            Boolean shared,
+            LocalDate fromDate,
+            LocalDate toDate
+    );
 
     AttendanceShareResponse setHiddenByAdmin(Long attendanceId, boolean hidden);
 }

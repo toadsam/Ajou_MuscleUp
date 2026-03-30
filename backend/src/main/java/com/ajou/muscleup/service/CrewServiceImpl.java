@@ -380,7 +380,7 @@ public class CrewServiceImpl implements CrewService {
         monthAttendance.forEach(item -> attendanceRateMap.put(item.getUserId(), item.getAttendanceRate()));
 
         LocalDate today = LocalDate.now();
-        LocalDate recentStart = today.minusDays(6);
+        LocalDate recentStart = startOfWeekMonday(today);
         Map<Long, Long> recentWorkoutMap = countWorkout(members, recentStart, today);
 
         List<CrewChallenge> challenges = crewChallengeRepository.findAllByCrewOrderByStartDateDesc(crew);
@@ -535,6 +535,10 @@ public class CrewServiceImpl implements CrewService {
 
     private double round1(double value) {
         return Math.round(value * 10.0) / 10.0;
+    }
+
+    private LocalDate startOfWeekMonday(LocalDate date) {
+        return date.minusDays((date.getDayOfWeek().getValue() + 6L) % 7L);
     }
 
     private Map<Long, CharacterProfile> buildCharacterProfileMap(List<WorkoutCrewMember> members) {

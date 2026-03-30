@@ -43,22 +43,23 @@ export default function Head({ gender = "MALE", mbti, isResting = false, seedFea
   const expression = isResting ? "tired" : expressionByMbti(mbti);
   const face = faceRadii[seedFeatures.faceShape % faceRadii.length];
   const feminine = gender === "FEMALE";
-  const faceRx = face.rx * seedFeatures.jawWidth * (feminine ? 0.92 : 1);
-  const faceRy = face.ry * seedFeatures.cheekDepth * (feminine ? 1.03 : 1);
-  const eyeDist = 6.5 * seedFeatures.eyeSpacing;
+  const faceRx = face.rx * seedFeatures.jawWidth * (feminine ? 0.78 : 1);
+  const faceRy = face.ry * seedFeatures.cheekDepth * (feminine ? 1.07 : 1);
+  const eyeDist = 6.5 * seedFeatures.eyeSpacing * (feminine ? 1.08 : 1);
   const browTilt = seedFeatures.browTilt;
   const mouthHalf = 5.6 * seedFeatures.mouthWidth;
   const noseHeight = 4.2 * seedFeatures.noseHeight;
   const earRx = 2.2 * seedFeatures.earSize;
   const earRy = 3.5 * seedFeatures.earSize;
-  const hairVolume = seedFeatures.hairVolume * (feminine ? 1.18 : 1);
+  const hairVolume = seedFeatures.hairVolume * (feminine ? 1.4 : 1);
+  const neckWidth = seedFeatures.neckWidth * (feminine ? 0.8 : 1);
 
   return (
     <g>
       <ellipse cx={72} cy={38} rx={faceRx} ry={faceRy} fill={skinColor} stroke={strokeColor} strokeWidth={2.4} />
       <ellipse cx={72 - faceRx - 1} cy={39} rx={earRx} ry={earRy} fill={skinColor} stroke={strokeColor} strokeWidth={1.3} />
       <ellipse cx={72 + faceRx + 1} cy={39} rx={earRx} ry={earRy} fill={skinColor} stroke={strokeColor} strokeWidth={1.3} />
-      <rect x={66 - seedFeatures.neckWidth * 2.2} y={50} width={12 + seedFeatures.neckWidth * 2.4} height={10} rx={4} fill={skinColor} />
+      <rect x={66 - neckWidth * 2.2} y={50} width={12 + neckWidth * 2.4} height={10} rx={4} fill={skinColor} />
 
       {seedFeatures.hairStyle === 0 && <path d={`M ${58 - hairVolume * 3} 33 Q 72 10, ${86 + hairVolume * 3} 33 L 88 37 Q 72 31 56 37 Z`} fill={hairColor} />}
       {seedFeatures.hairStyle === 1 && <path d={`M 56 36 Q 72 18, 88 36 Q 72 ${28 - hairVolume * 2} 56 36 Z`} fill={hairColor} />}
@@ -72,8 +73,11 @@ export default function Head({ gender = "MALE", mbti, isResting = false, seedFea
       {seedFeatures.hairStyle === 9 && <path d={`M 56 33 Q 72 12, 88 33 L 88 40 Q 72 34 56 40 Z`} fill={hairColor} />}
       {feminine && (
         <>
+          <path d={`M 59 31 Q 72 ${67 + hairVolume * 3} 85 31 L 82 60 Q 72 70 62 60 Z`} fill={hairColor} opacity={0.24} />
           <path d={`M 55 29 Q 50 45 55 60 Q 60 55 61 44 Q 61 ${26 + hairVolume * 2} 55 29 Z`} fill={hairColor} opacity={0.98} />
           <path d={`M 89 29 Q 94 45 89 60 Q 84 55 83 44 Q 83 ${26 + hairVolume * 2} 89 29 Z`} fill={hairColor} opacity={0.98} />
+          <path d={`M 57 49 Q 58 65 63 78`} stroke={hairColor} strokeWidth={3.8} strokeLinecap="round" opacity={0.9} />
+          <path d={`M 87 49 Q 86 66 81 79`} stroke={hairColor} strokeWidth={3.8} strokeLinecap="round" opacity={0.9} />
           <path d="M 62 21 Q 72 13 82 21" stroke="#f9a8d4" strokeWidth={2.1} strokeLinecap="round" opacity={0.95} />
           <circle cx={60} cy={22} r={2.3} fill="#f9a8d4" opacity={0.95} />
           <circle cx={84} cy={22} r={2.3} fill="#f9a8d4" opacity={0.95} />
@@ -122,8 +126,10 @@ export default function Head({ gender = "MALE", mbti, isResting = false, seedFea
           <path d={`M ${72 - eyeDist + 2.8} 34.7 L ${72 - eyeDist + 4.2} 33.6`} stroke="#0f172a" strokeWidth={1.2} strokeLinecap="round" />
           <path d={`M ${72 + eyeDist - 2.8} 34.7 L ${72 + eyeDist - 4.2} 33.6`} stroke="#0f172a" strokeWidth={1.2} strokeLinecap="round" />
           <path d={`M ${72 + eyeDist + 2.8} 34.7 L ${72 + eyeDist + 4.2} 33.6`} stroke="#0f172a" strokeWidth={1.2} strokeLinecap="round" />
-          <ellipse cx={72 - 8.2} cy={43.5} rx={2.4} ry={1.5} fill="#fda4af" opacity={0.3} />
-          <ellipse cx={72 + 8.2} cy={43.5} rx={2.4} ry={1.5} fill="#fda4af" opacity={0.3} />
+          <ellipse cx={72 - 8.2} cy={43.5} rx={2.9} ry={1.8} fill="#fda4af" opacity={0.42} />
+          <ellipse cx={72 + 8.2} cy={43.5} rx={2.9} ry={1.8} fill="#fda4af" opacity={0.42} />
+          <path d={`M ${72 - eyeDist - 2.7} 39.2 Q ${72 - eyeDist} 40.3, ${72 - eyeDist + 2.7} 39.2`} stroke="#7f1d1d" strokeWidth={1.05} fill="none" strokeLinecap="round" opacity={0.72} />
+          <path d={`M ${72 + eyeDist - 2.7} 39.2 Q ${72 + eyeDist} 40.3, ${72 + eyeDist + 2.7} 39.2`} stroke="#7f1d1d" strokeWidth={1.05} fill="none" strokeLinecap="round" opacity={0.72} />
         </>
       )}
 
@@ -147,7 +153,10 @@ export default function Head({ gender = "MALE", mbti, isResting = false, seedFea
       )}
 
       {feminine && !isResting && (
-        <path d={`M ${72 - mouthHalf * 0.72} 47 Q 72 50.4, ${72 + mouthHalf * 0.72} 47`} stroke="#be185d" strokeWidth={1.45} fill="none" strokeLinecap="round" opacity={0.95} />
+        <>
+          <path d={`M ${72 - mouthHalf * 0.76} 47 Q 72 50.8, ${72 + mouthHalf * 0.76} 47`} stroke="#be185d" strokeWidth={1.65} fill="none" strokeLinecap="round" opacity={0.98} />
+          <path d={`M ${72 - mouthHalf * 0.66} 47.3 Q 72 49.6, ${72 + mouthHalf * 0.66} 47.3`} fill="#f9a8d4" opacity={0.45} />
+        </>
       )}
     </g>
   );

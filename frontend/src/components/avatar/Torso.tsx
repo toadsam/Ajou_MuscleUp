@@ -6,14 +6,22 @@ type Props = {
   seedFeatures: SeededFeatures;
   strokeColor: string;
   suitColor: string;
+  gender?: "MALE" | "FEMALE" | null;
 };
 
-export default function Torso({ growthParams, seedFeatures, strokeColor, suitColor }: Props) {
-  const shoulder = 44 + growthParams.armGrowth * 9 + growthParams.shoulderGrowth * 16 + seedFeatures.baseBuild * 2.5;
-  const chest = 36 + growthParams.chestGrowth * 20;
-  const waist = 30 + growthParams.torsoGrowth * 10 + growthParams.fatNormalized * 6;
-  const lat = 34 + growthParams.backGrowth * 22;
-  const hip = 38 + growthParams.gluteGrowth * 10 + growthParams.fatNormalized * 8;
+export default function Torso({ growthParams, seedFeatures, strokeColor, suitColor, gender = "MALE" }: Props) {
+  const feminine = gender === "FEMALE";
+  const shoulderFactor = feminine ? 0.8 : 1;
+  const chestFactor = feminine ? 0.84 : 1;
+  const waistFactor = feminine ? 0.74 : 1;
+  const latFactor = feminine ? 0.76 : 1;
+  const hipFactor = feminine ? 1.18 : 1;
+
+  const shoulder = (44 + growthParams.armGrowth * 9 + growthParams.shoulderGrowth * 16 + seedFeatures.baseBuild * 2.5) * shoulderFactor;
+  const chest = (36 + growthParams.chestGrowth * 20) * chestFactor;
+  const waist = (30 + growthParams.torsoGrowth * 10 + growthParams.fatNormalized * 6) * waistFactor;
+  const lat = (34 + growthParams.backGrowth * 22) * latFactor;
+  const hip = (38 + growthParams.gluteGrowth * 10 + growthParams.fatNormalized * 8) * hipFactor;
   const strokeWidth = growthParams.strokeWidth;
   const detailOpacity = growthParams.muscleDetailOpacity;
   const fatShadeOpacity = growthParams.fatShadowOpacity;
@@ -32,6 +40,15 @@ export default function Torso({ growthParams, seedFeatures, strokeColor, suitCol
     <g transform={`scale(${growthParams.torsoScaleX}, 1) translate(${72 * (1 - growthParams.torsoScaleX)}, 0)`}>
       <path d={torsoPath} fill={suitColor} stroke={strokeColor} strokeWidth={strokeWidth} />
       <ellipse cx={72} cy={83} rx={9 + growthParams.chestGrowth * 7} ry={4 + growthParams.chestGrowth * 2} fill="#ffffff" opacity={0.12 + growthParams.chestGrowth * 0.2} />
+      {feminine && (
+        <path
+          d={`M ${72 - waist * 0.35} 101 Q 72 109, ${72 + waist * 0.35} 101`}
+          stroke="#ffffff"
+          strokeWidth={1.2}
+          opacity={0.16 + growthParams.torsoGrowth * 0.2}
+          fill="none"
+        />
+      )}
       <path
         d={`M ${72 - chest * 0.32} 95 Q 72 102, ${72 + chest * 0.32} 95`}
         stroke="#ffffff"

@@ -32,11 +32,63 @@ export type BragItem = { id: number; title: string };
 export type AttendanceShareItem = {
   id: number;
   date: string;
+  didWorkout?: boolean;
+  memo?: string | null;
+  shareComment?: string | null;
+  workoutTypes?: string[];
+  workoutIntensity?: string | null;
+  mediaUrls?: string[];
   authorNickname?: string | null;
   cheerCount: number;
   reportCount: number;
   shareSlug?: string | null;
   hiddenByAdmin?: boolean;
+  lastEditedAt?: string | null;
+  updatedAt?: string | null;
+  currentStreak?: number | null;
+};
+
+export type AdminAttendanceLogItem = {
+  id: number;
+  userId?: number | null;
+  userEmail?: string | null;
+  userNickname?: string | null;
+  date: string;
+  didWorkout: boolean;
+  memo?: string | null;
+  shareComment?: string | null;
+  workoutTypes: string[];
+  workoutIntensity?: string | null;
+  mediaUrls: string[];
+  shared: boolean;
+  shareSlug?: string | null;
+  cheerCount: number;
+  reportCount: number;
+  hiddenByAdmin: boolean;
+  editCount: number;
+  lastEditedAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type AnalyticsEventItem = {
+  id: number;
+  page: string;
+  action: string;
+  metadata?: string | null;
+  userEmail?: string | null;
+  userNickname?: string | null;
+  createdAt: string;
+};
+
+export type AuditLogItem = {
+  id: number;
+  action: string;
+  resource: string;
+  summary?: string | null;
+  metadata?: string | null;
+  userEmail?: string | null;
+  userNickname?: string | null;
+  createdAt: string;
 };
 
 export type AdminRole = "ROLE_ADMIN" | "ADMIN" | "ROLE_CONTENT_ADMIN" | "CONTENT_ADMIN" | "ROLE_SUPPORT_ADMIN" | "SUPPORT_ADMIN" | string;
@@ -61,6 +113,9 @@ export const adminApi = {
     api
       .get<SummaryResponse>("/api/admin/analytics/summary", { params: { days: 30 } })
       .then((res) => res.data),
+
+  getAnalyticsEvents: (limit = 400) =>
+    api.get<AnalyticsEventItem[]>("/api/admin/analytics/events", { params: { limit } }).then((res) => res.data),
 
   getApplications: (page = 0, size = 20) =>
     api
@@ -113,11 +168,34 @@ export const adminApi = {
       .get<PagedResult<AttendanceShareItem>>("/api/admin/attendance/shares", { params: { page, size } })
       .then((res) => res.data),
 
+  getAttendanceLogs: (params: {
+    page?: number;
+    size?: number;
+    query?: string;
+    didWorkout?: boolean | null;
+    shared?: boolean | null;
+    from?: string;
+    to?: string;
+  }) =>
+    api
+      .get<PagedResult<AdminAttendanceLogItem>>("/api/admin/attendance/logs", {
+        params: {
+          page: params.page ?? 0,
+          size: params.size ?? 20,
+          query: params.query?.trim() || undefined,
+          didWorkout: params.didWorkout == null ? undefined : params.didWorkout,
+          shared: params.shared == null ? undefined : params.shared,
+          from: params.from || undefined,
+          to: params.to || undefined,
+        },
+      })
+      .then((res) => res.data),
+
   setAttendanceHidden: (id: number, hidden: boolean) =>
     api.patch(`/api/admin/attendance/shares/${id}/hidden`, null, { params: { hidden } }),
 
   getAudit: (limit = 300) =>
-    api.get("/api/admin/audit", { params: { limit } }).then((res) => res.data),
+    api.get<AuditLogItem[]>("/api/admin/audit", { params: { limit } }).then((res) => res.data),
 
   getMe: () => api.get<{ role?: AdminRole }>('/api/auth/me').then((res) => res.data),
 

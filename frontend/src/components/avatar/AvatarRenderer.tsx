@@ -177,13 +177,20 @@ export default function AvatarRenderer({
           }}
         >
           <Legs growthParams={{ ...growth, strokeWidth: boostedStroke }} seedFeatures={seedFeatures} strokeColor={strokeColor} bodyColor={tone.skin} />
-          <Torso growthParams={{ ...growth, strokeWidth: boostedStroke }} seedFeatures={seedFeatures} strokeColor={strokeColor} suitColor={tone.suit} />
+          <Torso
+            growthParams={{ ...growth, strokeWidth: boostedStroke }}
+            seedFeatures={seedFeatures}
+            strokeColor={strokeColor}
+            suitColor={tone.suit}
+            gender={resolvedGender}
+          />
           <Arms
             growthParams={{ ...growth, strokeWidth: boostedStroke }}
             tierBoost={tierPreset.auraIntensity}
             seedFeatures={seedFeatures}
             strokeColor={strokeColor}
             skinColor={tone.skin}
+            gender={resolvedGender}
           />
           <Head
             gender={resolvedGender}
@@ -197,22 +204,22 @@ export default function AvatarRenderer({
           {resolvedGender === "FEMALE" && (
             <>
               <path
-                d="M 54 66 Q 72 55 90 66 L 97 86 Q 90 106 72 111 Q 54 106 47 86 Z"
-                fill="rgba(255,255,255,0.15)"
-                stroke="rgba(255,255,255,0.3)"
-                strokeWidth="1.2"
+                d="M 51 64 Q 72 51 93 64 L 99 86 Q 94 112 72 118 Q 50 112 45 86 Z"
+                fill="rgba(255,255,255,0.23)"
+                stroke="rgba(255,255,255,0.42)"
+                strokeWidth="1.35"
               />
               <path
-                d="M 72 62 C 68 70, 66 78, 66 92"
-                stroke="rgba(255,255,255,0.45)"
-                strokeWidth="1.3"
+                d="M 72 60 C 66 70, 64 79, 64 97"
+                stroke="rgba(255,255,255,0.56)"
+                strokeWidth="1.45"
                 fill="none"
                 strokeLinecap="round"
               />
               <path
-                d="M 72 62 C 76 70, 78 78, 78 92"
-                stroke="rgba(255,255,255,0.45)"
-                strokeWidth="1.3"
+                d="M 72 60 C 78 70, 80 79, 80 97"
+                stroke="rgba(255,255,255,0.56)"
+                strokeWidth="1.45"
                 fill="none"
                 strokeLinecap="round"
               />

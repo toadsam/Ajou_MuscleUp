@@ -1,6 +1,7 @@
 package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
+import com.ajou.muscleup.dto.attendance.AdminAttendanceLogResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceRankingItemResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
@@ -221,6 +222,25 @@ public class AttendanceServiceImpl implements AttendanceService {
         return attendanceLogRepository
                 .findBySharedTrueOrderByReportCountDescUpdatedAtDesc(PageRequest.of(safePage, safeSize))
                 .map(AttendanceShareResponse::from);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminAttendanceLogResponse> listLogsForAdmin(
+            int page,
+            int size,
+            String query,
+            Boolean didWorkout,
+            Boolean shared,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        String normalizedQuery = (query == null || query.isBlank()) ? null : query.trim();
+        return attendanceLogRepository
+                .searchForAdmin(normalizedQuery, didWorkout, shared, fromDate, toDate, PageRequest.of(safePage, safeSize))
+                .map(AdminAttendanceLogResponse::from);
     }
 
     @Override

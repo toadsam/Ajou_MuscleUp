@@ -15,10 +15,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.List;
@@ -122,6 +124,19 @@ public class AdminController {
             @RequestParam(value = "size", defaultValue = "20") int size
     ) {
         return ResponseEntity.ok(attendanceService.listSharedForAdmin(page, size));
+    }
+
+    @GetMapping("/attendance/logs")
+    public ResponseEntity<Page<com.ajou.muscleup.dto.attendance.AdminAttendanceLogResponse>> listAttendanceLogs(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "didWorkout", required = false) Boolean didWorkout,
+            @RequestParam(value = "shared", required = false) Boolean shared,
+            @RequestParam(value = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return ResponseEntity.ok(attendanceService.listLogsForAdmin(page, size, query, didWorkout, shared, from, to));
     }
 
     @PatchMapping("/attendance/shares/{id}/hidden")

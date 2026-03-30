@@ -214,6 +214,28 @@
   backdrop-filter: blur(4px);
 }
 
+.minimap-toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 16;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(2, 6, 23, 0.82);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  backdrop-filter: blur(4px);
+}
+
+.minimap-collapsed {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+  pointer-events: none;
+}
+
 .minimap-inner {
   position: relative;
   width: 100%;
@@ -1075,6 +1097,10 @@
   max-width: min(640px, calc(100% - 220px));
 }
 
+.hud-chip-toggle {
+  cursor: pointer;
+}
+
 .hud-chip {
   display: inline-flex;
   align-items: center;
@@ -1168,15 +1194,35 @@
 
 @media (max-width: 768px) {
   .lounge-hud {
-    max-width: calc(100% - 16px);
+    top: 10px;
+    left: 10px;
+    gap: 5px;
+    max-width: calc(100% - 20px);
   }
 
   .hud-chip {
     font-size: 10px;
+    padding: 4px 7px;
+    gap: 6px;
   }
 
   .hud-chip-wide {
-    min-width: 145px;
+    min-width: 118px;
+  }
+
+  .minimap {
+    top: 44px;
+    right: 10px;
+    width: 136px;
+    height: 90px;
+    padding: 6px;
+  }
+
+  .minimap-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 6px 9px;
+    font-size: 10px;
   }
 
   .npc-nameplate {
@@ -1221,7 +1267,7 @@
 
   .mobile-controls {
     left: 12px;
-    bottom: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
     z-index: 24;
   }
 

@@ -231,6 +231,8 @@ const LOUNGE_STORAGE_KEYS = {
   sidebarTab: "lounge_sidebar_tab_v1",
   mutedUsers: "lounge_muted_users_v1",
   movementPreset: "lounge_movement_preset_v1",
+  mobileMinimapOpen: "lounge_mobile_minimap_open_v1",
+  mobileHudDetailsOpen: "lounge_mobile_hud_details_open_v1",
 } as const;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -300,6 +302,8 @@ export default function Lounge() {
   const [movementPreset, setMovementPreset] = useState<MovementPresetKey>("classic");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortraitMobile, setIsPortraitMobile] = useState(false);
+  const [showMobileMinimap, setShowMobileMinimap] = useState(true);
+  const [showMobileHudDetails, setShowMobileHudDetails] = useState(false);
   const [selectedNpc, setSelectedNpc] = useState<Npc | null>(null);
   const [hoveredNpc, setHoveredNpc] = useState<Npc | null>(null);
   const [emoteMap, setEmoteMap] = useState<Record<string, EmoteEvent>>({});
@@ -451,6 +455,14 @@ export default function Lounge() {
     if (savedPreset === "classic" || savedPreset === "hardcore" || savedPreset === "casual") {
       setMovementPreset(savedPreset);
     }
+    const savedMobileMinimapOpen = localStorage.getItem(LOUNGE_STORAGE_KEYS.mobileMinimapOpen);
+    if (savedMobileMinimapOpen === "0" || savedMobileMinimapOpen === "1") {
+      setShowMobileMinimap(savedMobileMinimapOpen === "1");
+    }
+    const savedMobileHudDetailsOpen = localStorage.getItem(LOUNGE_STORAGE_KEYS.mobileHudDetailsOpen);
+    if (savedMobileHudDetailsOpen === "0" || savedMobileHudDetailsOpen === "1") {
+      setShowMobileHudDetails(savedMobileHudDetailsOpen === "1");
+    }
   }, []);
 
   useEffect(() => {
@@ -468,6 +480,14 @@ export default function Lounge() {
   useEffect(() => {
     localStorage.setItem(LOUNGE_STORAGE_KEYS.movementPreset, movementPreset);
   }, [movementPreset]);
+
+  useEffect(() => {
+    localStorage.setItem(LOUNGE_STORAGE_KEYS.mobileMinimapOpen, showMobileMinimap ? "1" : "0");
+  }, [showMobileMinimap]);
+
+  useEffect(() => {
+    localStorage.setItem(LOUNGE_STORAGE_KEYS.mobileHudDetailsOpen, showMobileHudDetails ? "1" : "0");
+  }, [showMobileHudDetails]);
 
   useEffect(() => {
     playersRef.current = players;
@@ -1995,7 +2015,7 @@ export default function Lounge() {
 
   return (
     <section
-      className={`${isImmersiveFullscreen ? "p-0" : "pt-28 pb-16 px-5 md:px-10"} bg-gradient-to-br from-slate-950 via-gray-950 to-black min-h-screen text-white lounge-root`}
+      className={`${isImmersiveFullscreen ? "p-0" : isMobile ? "pt-20 pb-8 px-3" : "pt-28 pb-16 px-5 md:px-10"} bg-gradient-to-br from-slate-950 via-gray-950 to-black min-h-screen text-white lounge-root`}
       data-quality={movementQuality}
     >
       <div
@@ -2021,7 +2041,7 @@ export default function Lounge() {
 
         <div className={`grid ${isImmersiveFullscreen ? "grid-cols-1 gap-0 h-full" : "lg:grid-cols-[1.4fr,0.6fr] gap-6"} lounge-main-grid`}>
           <div className="space-y-4">
-            {!isImmersiveFullscreen && (
+            {!isImmersiveFullscreen && !isMobile && (
               <div className="flex items-center justify-between text-sm text-gray-300">
                 <span>
                   상태:{" "}
@@ -2098,7 +2118,35 @@ export default function Lounge() {
               </div>
             )}
 
-            {!isImmersiveFullscreen && (
+            {!isImmersiveFullscreen && isMobile && (
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-300">
+                <button
+                  onClick={() => {
+                    const shell = loungeViewportShellRef.current;
+                    if (!shell) return;
+                    if (document.fullscreenElement) {
+                      void document.exitFullscreen().catch(() => {});
+                    } else {
+                      void shell.requestFullscreen().catch(() => {});
+                    }
+                  }}
+                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] text-white/85"
+                >
+                  전체화면
+                </button>
+                <button
+                  onClick={() => setShowHelp((prev) => !prev)}
+                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] text-white/75"
+                >
+                  도움말
+                </button>
+                <span className={`rounded-full border px-3 py-1.5 ${connected ? "border-emerald-300/30 text-emerald-200" : "border-rose-300/30 text-rose-200"}`}>
+                  {connected ? "연결됨" : "연결 끊김"} {pingMs !== null ? `| ${pingMs}ms` : ""}
+                </span>
+              </div>
+            )}
+
+            {!isImmersiveFullscreen && !isMobile && (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-3">
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="text-white/70">소셜</span>
@@ -2250,7 +2298,7 @@ export default function Lounge() {
                 ref={(element) => {
                   viewportRef.current = element;
                 }}
-                className={`relative w-full overflow-hidden ${isImmersiveFullscreen ? "h-screen rounded-none border-0" : "h-[78vh] rounded-2xl border border-white/10"} lounge-viewport`}
+                className={`relative w-full overflow-hidden ${isImmersiveFullscreen ? "h-[100dvh] rounded-none border-0" : isMobile ? "h-[68dvh] min-h-[360px] rounded-2xl border border-white/10" : "h-[78vh] rounded-2xl border border-white/10"} lounge-viewport`}
                 style={mapBackground}
                 onWheel={(event) => {
                   if (!event.ctrlKey) return;
@@ -2269,34 +2317,48 @@ export default function Lounge() {
                     <strong>{pingMs !== null ? `${pingMs}ms` : "..."}</strong>
                   </div>
                   <div className="hud-chip hud-chip-wide">
-                    <span className="hud-label">드라이브</span>
-                    <div className="hud-gauge">
-                      <div className="hud-gauge-fill" style={{ width: `${attendanceGauge}%` }} />
-                    </div>
-                    <strong>{attendanceGauge}%</strong>
-                  </div>
-                  <div className={`hud-chip ${isSprinting ? "hud-chip-active" : ""}`}>
-                    <span className="hud-label">시프트</span>
-                    <strong>{isSprinting ? "부스트" : "걷기"}</strong>
-                  </div>
-                  <div className="hud-chip">
-                    <span className="hud-label">프리셋</span>
-                    <strong>
-                      {{
-                        classic: "클래식",
-                        hardcore: "하드코어",
-                        casual: "캐주얼",
-                      }[movementPreset]}
-                    </strong>
-                  </div>
-                  <div className={`hud-chip ${onLadderRef.current ? "hud-chip-active" : ""}`}>
-                    <span className="hud-label">이동 모드</span>
-                    <strong>{onLadderRef.current ? "사다리" : "지상"}</strong>
-                  </div>
-                  <div className="hud-chip hud-chip-wide">
                     <span className="hud-label">상호작용</span>
                     <strong>{nearestInteractableLabel}</strong>
                   </div>
+                  {(!isMobile || showMobileHudDetails) && (
+                    <>
+                      <div className="hud-chip hud-chip-wide">
+                        <span className="hud-label">드라이브</span>
+                        <div className="hud-gauge">
+                          <div className="hud-gauge-fill" style={{ width: `${attendanceGauge}%` }} />
+                        </div>
+                        <strong>{attendanceGauge}%</strong>
+                      </div>
+                      <div className={`hud-chip ${isSprinting ? "hud-chip-active" : ""}`}>
+                        <span className="hud-label">시프트</span>
+                        <strong>{isSprinting ? "부스트" : "걷기"}</strong>
+                      </div>
+                      <div className="hud-chip">
+                        <span className="hud-label">프리셋</span>
+                        <strong>
+                          {{
+                            classic: "클래식",
+                            hardcore: "하드코어",
+                            casual: "캐주얼",
+                          }[movementPreset]}
+                        </strong>
+                      </div>
+                      <div className={`hud-chip ${onLadderRef.current ? "hud-chip-active" : ""}`}>
+                        <span className="hud-label">이동 모드</span>
+                        <strong>{onLadderRef.current ? "사다리" : "지상"}</strong>
+                      </div>
+                    </>
+                  )}
+                  {isMobile && (
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileHudDetails((prev) => !prev)}
+                      className="hud-chip hud-chip-toggle"
+                    >
+                      <span className="hud-label">HUD</span>
+                      <strong>{showMobileHudDetails ? "요약" : "상세"}</strong>
+                    </button>
+                  )}
                 </div>
                 {isImmersiveFullscreen && (
                   <>
@@ -2755,7 +2817,17 @@ export default function Lounge() {
                   )}
                 </div>
 
-                <div className="minimap">
+                {isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileMinimap((prev) => !prev)}
+                    className="minimap-toggle"
+                  >
+                    {showMobileMinimap ? "맵 숨기기" : "맵 보기"}
+                  </button>
+                )}
+
+                <div className={`minimap ${isMobile && !showMobileMinimap ? "minimap-collapsed" : ""}`}>
                   <div
                     ref={minimapInnerRef}
                     className="minimap-inner"

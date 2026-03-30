@@ -5,6 +5,7 @@ import AdminToast from "../components/admin/AdminToast";
 import { MediaPanel, StatCard, TopListCard, toChangingSet, type ActionCount, type Application, type AttendanceShareItem, type BragItem, type ProteinItem } from "../components/admin/AdminDashboardPanels";
 import { useAdminToast } from "../components/admin/useAdminToast";
 import { adminApi } from "../services/adminApi";
+import type { AdminAttendanceLogItem, AnalyticsEventItem, AuditLogItem } from "../services/adminApi";
 import { logEvent } from "../utils/analytics";
 
 type PageCount = { page: string; count: number };
@@ -37,11 +38,16 @@ type ScheduledJob = {
   ids: number[];
   payload: { status?: Application["status"]; hidden?: boolean; reason: string };
 };
+type AdminTab = "overview" | "behavior" | "moderation" | "attendance" | "operations";
 
 export default function Admin() {
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [status, setStatus] = useState<string>("점검 중...");
   const [actions, setActions] = useState<ActionCount[]>([]);
   const [pages, setPages] = useState<PageCount[]>([]);
+  const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEventItem[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [attendanceLogs, setAttendanceLogs] = useState<AdminAttendanceLogItem[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [gallery, setGallery] = useState<string[]>([]);
   const [proteins, setProteins] = useState<ProteinItem[]>([]);
@@ -55,6 +61,9 @@ export default function Admin() {
   const [loadingProteins, setLoadingProteins] = useState(false);
   const [loadingBrags, setLoadingBrags] = useState(false);
   const [loadingAttendanceShares, setLoadingAttendanceShares] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
+  const [loadingAttendanceLogs, setLoadingAttendanceLogs] = useState(false);
 
   const [changingStatusIds, setChangingStatusIds] = useState<Set<number>>(new Set());
   const [processingAttendanceId, setProcessingAttendanceId] = useState<number | null>(null);
@@ -84,12 +93,27 @@ export default function Admin() {
   const [pageGallery, setPageGallery] = useState(0);
   const [pageProteins, setPageProteins] = useState(0);
   const [pageBrags, setPageBrags] = useState(0);
+  const [pageAttendanceLogs, setPageAttendanceLogs] = useState(0);
   const [totalAppsPages, setTotalAppsPages] = useState(0);
   const [totalAttendancePages, setTotalAttendancePages] = useState(0);
   const [totalGalleryPages, setTotalGalleryPages] = useState(0);
   const [totalProteinPages, setTotalProteinPages] = useState(0);
   const [totalBragPages, setTotalBragPages] = useState(0);
+  const [totalAttendanceLogPages, setTotalAttendanceLogPages] = useState(0);
   const [role, setRole] = useState<string>("");
+  const [eventQuery, setEventQuery] = useState("");
+  const [eventActionFilter, setEventActionFilter] = useState("all");
+  const [eventPageFilter, setEventPageFilter] = useState("all");
+  const [auditQuery, setAuditQuery] = useState("");
+  const [attendanceQuery, setAttendanceQuery] = useState("");
+  const [attendanceDidWorkoutFilter, setAttendanceDidWorkoutFilter] = useState<"all" | "true" | "false">("all");
+  const [attendanceSharedFilter, setAttendanceSharedFilter] = useState<"all" | "true" | "false">("all");
+  const [attendanceFrom, setAttendanceFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().slice(0, 10);
+  });
+  const [attendanceTo, setAttendanceTo] = useState(() => new Date().toISOString().slice(0, 10));
 
   const { toast, showError, showSuccess, clearToast } = useAdminToast();
 
@@ -107,13 +131,40 @@ export default function Admin() {
     };
   }, [role]);
 
+  const filteredEvents = useMemo(() => {
+    const needle = eventQuery.trim().toLowerCase();
+    return analyticsEvents.filter((item) => {
+      if (eventActionFilter !== "all" && item.action !== eventActionFilter) return false;
+      if (eventPageFilter !== "all" && item.page !== eventPageFilter) return false;
+      if (!needle) return true;
+      return [item.action, item.page, item.metadata || "", item.userEmail || "", item.userNickname || ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [analyticsEvents, eventActionFilter, eventPageFilter, eventQuery]);
+
+  const filteredAuditLogs = useMemo(() => {
+    const needle = auditQuery.trim().toLowerCase();
+    if (!needle) return auditLogs;
+    return auditLogs.filter((item) =>
+      [item.action, item.resource, item.summary || "", item.metadata || "", item.userEmail || "", item.userNickname || ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [auditLogs, auditQuery]);
+
   useEffect(() => {
     void fetchSummary();
+    void loadAnalyticsEvents();
+    void loadAuditLogs();
     void loadApplications(pageApps);
     void loadGallery(pageGallery);
     void loadProteins(pageProteins);
     void loadBrags(pageBrags);
     void loadAttendanceShares(pageAttendance);
+    void loadAttendanceLogs(pageAttendanceLogs);
     void loadHealthSummary();
     void loadMe();
     logEvent("admin_dashboard", "page_view");
@@ -138,6 +189,9 @@ export default function Admin() {
   useEffect(() => {
     void loadAttendanceShares(pageAttendance);
   }, [pageAttendance]);
+  useEffect(() => {
+    void loadAttendanceLogs(pageAttendanceLogs);
+  }, [pageAttendanceLogs]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -177,7 +231,55 @@ export default function Admin() {
   };
 
   const loadSummaryAndHealth = async () => {
-    await Promise.all([fetchSummary(), loadHealthSummary()]);
+    await Promise.all([fetchSummary(), loadHealthSummary(), loadAnalyticsEvents(), loadAuditLogs(), loadAttendanceLogs(pageAttendanceLogs)]);
+  };
+
+  const loadAnalyticsEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      const data = await adminApi.getAnalyticsEvents(500);
+      setAnalyticsEvents(data ?? []);
+    } catch (e: any) {
+      showError(e?.message || "행동 이벤트를 불러오지 못했습니다.");
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  const loadAuditLogs = async () => {
+    try {
+      setLoadingAuditLogs(true);
+      const data = await adminApi.getAudit(500);
+      setAuditLogs(data ?? []);
+    } catch (e: any) {
+      showError(e?.message || "감사 로그를 불러오지 못했습니다.");
+    } finally {
+      setLoadingAuditLogs(false);
+    }
+  };
+
+  const loadAttendanceLogs = async (page = pageAttendanceLogs) => {
+    try {
+      setLoadingAttendanceLogs(true);
+      const didWorkout = attendanceDidWorkoutFilter === "all" ? null : attendanceDidWorkoutFilter === "true";
+      const shared = attendanceSharedFilter === "all" ? null : attendanceSharedFilter === "true";
+      const data = await adminApi.getAttendanceLogs({
+        page,
+        size: PAGE_SIZE,
+        query: attendanceQuery,
+        didWorkout,
+        shared,
+        from: attendanceFrom,
+        to: attendanceTo,
+      });
+      setAttendanceLogs(data.content ?? []);
+      setTotalAttendanceLogPages(data.totalPages ?? 1);
+      setPageAttendanceLogs(data.number ?? page);
+    } catch (e: any) {
+      showError(e?.message || "출석 원본 로그를 불러오지 못했습니다.");
+    } finally {
+      setLoadingAttendanceLogs(false);
+    }
   };
 
   const loadMe = async () => {
@@ -586,6 +688,10 @@ export default function Admin() {
   };
 
   const statuses: Application["status"][] = ["PENDING", "REVIEWING", "APPROVED", "REJECTED"];
+  const applyAttendanceFilters = () => {
+    setPageAttendanceLogs(0);
+    void loadAttendanceLogs(0);
+  };
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -623,6 +729,29 @@ export default function Admin() {
           {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
         </header>
 
+        <div className="sticky top-16 z-20 overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/85 p-2 backdrop-blur">
+          <div className="flex min-w-max gap-2">
+            {([
+              ["overview", "개요"],
+              ["behavior", "행동 추적"],
+              ["moderation", "검수/콘텐츠"],
+              ["attendance", "출석 기록"],
+              ["operations", "운영 자동화"],
+            ] as Array<[AdminTab, string]>).map(([tab, label]) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeTab === tab ? "bg-cyan-400 text-slate-950" : "bg-white/10 text-gray-100 hover:bg-white/20"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {activeTab === "overview" && (
+        <>
         <div className="grid gap-4 md:grid-cols-4">
           <StatCard title="액션 이벤트" value={actions.length} desc="최근 30일 이벤트 종류" accent="from-pink-500 to-orange-400" />
           <StatCard title="페이지 이벤트" value={pages.length} desc="최근 30일 페이지 종류" accent="from-emerald-400 to-cyan-400" />
@@ -687,8 +816,10 @@ export default function Admin() {
             </div>
           </MediaPanel>
         </div>
+        </>
+        )}
 
-        {undoAction && (
+        {(activeTab === "operations" || activeTab === "moderation" || activeTab === "attendance") && undoAction && (
           <div className="rounded-2xl border border-amber-300/40 bg-amber-500/10 p-4">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm text-amber-100">최근 작업: {undoAction.label}</p>
@@ -697,7 +828,7 @@ export default function Admin() {
           </div>
         )}
 
-        {bulkProgress && (
+        {(activeTab === "operations" || activeTab === "moderation" || activeTab === "attendance") && bulkProgress && (
           <div className="rounded-2xl border border-cyan-300/30 bg-cyan-500/10 p-4">
             <p className="text-sm font-semibold text-cyan-100">진행 중: {bulkProgress.label}</p>
             <p className="mt-1 text-xs text-cyan-100">{bulkProgress.done}/{bulkProgress.total} 완료 · 실패 {bulkProgress.failed}</p>
@@ -707,6 +838,83 @@ export default function Admin() {
           </div>
         )}
 
+        {activeTab === "behavior" && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <MediaPanel title="행동 이벤트 추적" description="유저 행동 로그 검색/필터" loading={loadingEvents} hasData={filteredEvents.length > 0} onRefresh={() => void loadAnalyticsEvents()} emptyMessage="행동 로그가 없습니다.">
+              <div className="mb-3 grid gap-2 md:grid-cols-2">
+                <input value={eventQuery} onChange={(e) => setEventQuery(e.target.value)} placeholder="유저/메타데이터 검색" className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
+                <select value={eventActionFilter} onChange={(e) => setEventActionFilter(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                  <option value="all">모든 액션</option>
+                  {[...new Set(analyticsEvents.map((item) => item.action))].slice(0, 120).map((action) => (
+                    <option key={action} value={action}>{action}</option>
+                  ))}
+                </select>
+                <select value={eventPageFilter} onChange={(e) => setEventPageFilter(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm md:col-span-2">
+                  <option value="all">모든 페이지</option>
+                  {[...new Set(analyticsEvents.map((item) => item.page))].slice(0, 120).map((pageName) => (
+                    <option key={pageName} value={pageName}>{pageName}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                {filteredEvents.slice(0, 220).map((item) => (
+                  <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                    <p className="text-sm font-semibold text-white">{item.action} · {item.page}</p>
+                    <p className="text-xs text-gray-300">{item.userNickname || "익명"} {item.userEmail ? `(${item.userEmail})` : ""} · {new Date(item.createdAt).toLocaleString("ko-KR")}</p>
+                    {item.metadata ? <p className="mt-1 break-words text-xs text-gray-400">{item.metadata}</p> : null}
+                  </div>
+                ))}
+              </div>
+            </MediaPanel>
+
+            <MediaPanel title="감사 로그 추적" description="관리자 액션/사유 조회" loading={loadingAuditLogs} hasData={filteredAuditLogs.length > 0} onRefresh={() => void loadAuditLogs()} emptyMessage="감사 로그가 없습니다.">
+              <input value={auditQuery} onChange={(e) => setAuditQuery(e.target.value)} placeholder="액션/리소스/사용자 검색" className="mb-3 w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
+              <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                {filteredAuditLogs.slice(0, 220).map((item) => (
+                  <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                    <p className="text-sm font-semibold text-cyan-100">{item.action}</p>
+                    <p className="text-xs text-gray-300">{item.resource} · {item.userNickname || "익명"} · {new Date(item.createdAt).toLocaleString("ko-KR")}</p>
+                    {item.summary ? <p className="mt-1 text-xs text-gray-400">{item.summary}</p> : null}
+                  </div>
+                ))}
+              </div>
+            </MediaPanel>
+          </div>
+        )}
+
+        {activeTab === "operations" && (
+          <MediaPanel title="자동화 / 시스템 운영" description="예약 작업, 상태 점검, 이력 동기화" loading={false} hasData={true} onRefresh={() => void loadSummaryAndHealth()} emptyMessage="">
+            <div className="grid gap-2 md:grid-cols-2">
+              <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value as ScheduledJob["type"])} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                <option value="application_status">신청 상태 변경</option>
+                <option value="attendance_hidden">출석 공유 공개/비공개</option>
+              </select>
+              {scheduleType === "application_status" ? (
+                <select value={scheduleStatus} onChange={(e) => setScheduleStatus(e.target.value as Application["status"])} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                  {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ) : (
+                <select value={String(scheduleHidden)} onChange={(e) => setScheduleHidden(e.target.value === "true")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                  <option value="true">비공개</option>
+                  <option value="false">공개</option>
+                </select>
+              )}
+              <input type="datetime-local" value={scheduleDateTime} onChange={(e) => setScheduleDateTime(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
+              <button type="button" onClick={createSchedule} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950">예약 생성</button>
+              <button type="button" onClick={() => void executeDueSchedule()} className="rounded-lg border border-white/20 px-3 py-2 text-sm">지금 실행</button>
+            </div>
+            <div className="mt-3 space-y-1 text-xs">
+              {scheduledJobs.slice(0, 10).map((job) => (
+                <div key={job.id} className="rounded-md border border-white/10 bg-black/20 px-2 py-1">
+                  {new Date(job.executeAt).toLocaleString("ko-KR")} · {job.type} · {job.ids.length}건
+                </div>
+              ))}
+              {scheduledJobs.length === 0 && <p className="text-gray-400">예약 작업이 없습니다.</p>}
+            </div>
+          </MediaPanel>
+        )}
+
+        {activeTab === "moderation" && (
         <MediaPanel
           title="프로그램 신청"
           description="다중 선택 / 일괄 상태 변경 / CSV"
@@ -747,7 +955,9 @@ export default function Admin() {
           </div>
           <Pagination page={pageApps} totalPages={totalAppsPages} onChange={setPageApps} />
         </MediaPanel>
+        )}
 
+        {activeTab === "moderation" && (
         <div className="grid gap-6 lg:grid-cols-3">
           <MediaPanel
             title="갤러리 관리"
@@ -837,6 +1047,47 @@ export default function Admin() {
             <Pagination page={pageBrags} totalPages={totalBragPages} onChange={setPageBrags} />
           </MediaPanel>
         </div>
+        )}
+
+        {activeTab === "attendance" && (
+        <>
+        <MediaPanel
+          title="출석 원본 로그"
+          description="공유 여부와 무관한 전체 출석 로그 조회"
+          loading={loadingAttendanceLogs}
+          hasData={attendanceLogs.length > 0}
+          onRefresh={() => void loadAttendanceLogs(pageAttendanceLogs)}
+          emptyMessage="출석 로그가 없습니다."
+        >
+          <div className="mb-3 grid gap-2 md:grid-cols-3">
+            <input value={attendanceQuery} onChange={(e) => setAttendanceQuery(e.target.value)} placeholder="닉네임/이메일 검색" className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm md:col-span-2" />
+            <button type="button" onClick={applyAttendanceFilters} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950">필터 적용</button>
+            <select value={attendanceDidWorkoutFilter} onChange={(e) => setAttendanceDidWorkoutFilter(e.target.value as "all" | "true" | "false")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+              <option value="all">운동여부 전체</option>
+              <option value="true">운동함</option>
+              <option value="false">운동안함</option>
+            </select>
+            <select value={attendanceSharedFilter} onChange={(e) => setAttendanceSharedFilter(e.target.value as "all" | "true" | "false")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+              <option value="all">공유여부 전체</option>
+              <option value="true">공유됨</option>
+              <option value="false">미공유</option>
+            </select>
+            <div className="grid grid-cols-2 gap-2">
+              <input type="date" value={attendanceFrom} onChange={(e) => setAttendanceFrom(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
+              <input type="date" value={attendanceTo} onChange={(e) => setAttendanceTo(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+            {attendanceLogs.map((item) => (
+              <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm">
+                <p className="font-semibold text-white">{item.userNickname || "회원"} · {item.date}</p>
+                <p className="text-xs text-gray-300">{item.userEmail || "-"} · {item.didWorkout ? "운동함" : "운동안함"} · {item.shared ? "공유됨" : "미공유"}</p>
+                <p className="text-xs text-gray-400">응원 {item.cheerCount} · 신고 {item.reportCount} · 수정 {item.editCount}</p>
+              </div>
+            ))}
+          </div>
+          <Pagination page={pageAttendanceLogs} totalPages={totalAttendanceLogPages} onChange={setPageAttendanceLogs} />
+        </MediaPanel>
 
         <MediaPanel
           title="출석 공유 운영"
@@ -872,6 +1123,8 @@ export default function Admin() {
           </div>
           <Pagination page={pageAttendance} totalPages={totalAttendancePages} onChange={setPageAttendance} />
         </MediaPanel>
+        </>
+        )}
       </div>
 
       <AdminToast toast={toast} onClose={clearToast} />
