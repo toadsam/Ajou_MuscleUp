@@ -23,6 +23,11 @@ type ShareCardInput = {
   mediaFit?: ShareCardMediaFit;
   mediaPositionX?: number;
   mediaPositionY?: number;
+  mediaBrightness?: number;
+  mediaContrast?: number;
+  mediaSaturation?: number;
+  mediaWarmth?: number;
+  mediaBlur?: number;
   character?: ShareCardCharacter;
   characterPose?: ShareCardCharacterPose;
   characterLabel?: string | null;
@@ -292,10 +297,19 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
       const theme = input.theme ?? "sunset";
       const quoteStyle = input.quoteStyle ?? "glass";
       const showMeta = input.showMeta ?? true;
-      const scale = Math.max(1, Math.min(3, Math.round(input.scale ?? 1)));
+      const scale = Math.max(1, Math.min(4, Math.round(input.scale ?? 1)));
       const mediaFit = input.mediaFit ?? "cover";
       const mediaPosX = clamp(input.mediaPositionX ?? 50, 0, 100);
       const mediaPosY = clamp(input.mediaPositionY ?? 50, 0, 100);
+      const mediaBrightness = clamp(input.mediaBrightness ?? 100, 50, 180);
+      const mediaContrast = clamp(input.mediaContrast ?? 100, 50, 200);
+      const mediaSaturation = clamp(input.mediaSaturation ?? 100, 50, 200);
+      const mediaWarmth = clamp(input.mediaWarmth ?? 0, 0, 100);
+      const mediaBlur = clamp(input.mediaBlur ?? 0, 0, 10);
+      const mediaFilter = `brightness(${mediaBrightness}%) contrast(${mediaContrast}%) saturate(${mediaSaturation}%) sepia(${Math.max(
+        0,
+        mediaWarmth / 100
+      )}) blur(${mediaBlur}px)`;
       const watermarkText = (input.watermarkText || "득근득근").trim() || "득근득근";
       const showTitle = input.showTitle ?? true;
       const showSubtitle = input.showSubtitle ?? true;
@@ -335,7 +349,9 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
             const drawH = img.height * ratioValue;
             const drawX = horizontalPad + (mediaWidth - drawW) / 2;
             const drawY = mediaTop + (mediaHeight - drawH) / 2;
+            ctx.filter = mediaFilter;
             ctx.drawImage(img, drawX, drawY, drawW, drawH);
+            ctx.filter = "none";
           } else {
             const ratioValue = Math.max(mediaWidth / img.width, mediaHeight / img.height);
             const drawW = img.width * ratioValue;
@@ -344,7 +360,9 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
             const overflowY = Math.max(0, drawH - mediaHeight);
             const drawX = horizontalPad - overflowX * (mediaPosX / 100);
             const drawY = mediaTop - overflowY * (mediaPosY / 100);
+            ctx.filter = mediaFilter;
             ctx.drawImage(img, drawX, drawY, drawW, drawH);
+            ctx.filter = "none";
           }
           ctx.restore();
 

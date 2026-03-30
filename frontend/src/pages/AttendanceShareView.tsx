@@ -4,6 +4,7 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import { defaultGrowthParams, type GrowthParams } from "../components/avatar/types";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
+  renderAttendanceShareCard,
   type ShareCardCharacter,
   type ShareCardCharacterPose,
   type ShareCardMediaFit,
@@ -129,21 +130,21 @@ const CHARACTER_OPTIONS: Array<{ id: ShareCardCharacter; label: string }> = [
 ];
 
 const CHARACTER_POSE_OPTIONS: Array<{ id: ShareCardCharacterPose; label: string; emoji: string }> = [
-  { id: "flex", label: "근육", emoji: "💪" },
-  { id: "wave", label: "인사", emoji: "👋" },
-  { id: "heart", label: "하트", emoji: "🫶" },
-  { id: "victory", label: "브이", emoji: "✌️" },
-  { id: "fire", label: "파워", emoji: "🔥" },
-  { id: "squat", label: "스쿼트", emoji: "🏋️" },
-  { id: "jump", label: "점프", emoji: "🕺" },
-  { id: "run", label: "러닝", emoji: "🏃" },
+  { id: "flex", label: "근육", emoji: "??" },
+  { id: "wave", label: "인사", emoji: "??" },
+  { id: "heart", label: "하트", emoji: "??" },
+  { id: "victory", label: "브이", emoji: "??" },
+  { id: "fire", label: "파워", emoji: "??" },
+  { id: "squat", label: "스쿼트", emoji: "???" },
+  { id: "jump", label: "점프", emoji: "??" },
+  { id: "run", label: "러닝", emoji: "??" },
 ];
 
 const CHARACTER_EXPRESSION_OPTIONS: Array<{ id: CharacterExpression; label: string; emoji: string }> = [
-  { id: "smile", label: "웃음", emoji: "😊" },
-  { id: "proud", label: "뿌듯", emoji: "😎" },
-  { id: "serious", label: "진지", emoji: "🧐" },
-  { id: "surprised", label: "놀람", emoji: "😮" },
+  { id: "smile", label: "웃음", emoji: "??" },
+  { id: "proud", label: "뿌듯", emoji: "??" },
+  { id: "serious", label: "진지", emoji: "??" },
+  { id: "surprised", label: "놀람", emoji: "??" },
 ];
 
 const TEXT_FONT_OPTIONS: Array<{ id: TextFontPreset; label: string }> = [
@@ -163,9 +164,9 @@ const TEXT_DECOR_OPTIONS: Array<{ id: TextDecorPreset; label: string }> = [
 
 const DECO_GLYPH: Record<DecoType, string> = {
   star: "★",
-  heart: "❤",
-  bolt: "⚡",
-  tape: "▭",
+  heart: "?",
+  bolt: "?",
+  tape: "?",
   mychar: "ME",
   deukgeun: "DG",
 };
@@ -185,7 +186,7 @@ const THEME_PACKS: Array<{
     label: "귀여움",
     theme: "mint",
     quoteStyle: "glass",
-    sticker: "✨",
+    sticker: "?",
     textFont: "cute",
     textDecor: "gradient",
     defaultDecos: [
@@ -198,7 +199,7 @@ const THEME_PACKS: Array<{
     label: "레트로",
     theme: "sunset",
     quoteStyle: "outline",
-    sticker: "🎞️",
+    sticker: "???",
     textFont: "retro",
     textDecor: "outline",
     defaultDecos: [
@@ -211,7 +212,7 @@ const THEME_PACKS: Array<{
     label: "헬스장 포스터",
     theme: "midnight",
     quoteStyle: "solid",
-    sticker: "💪",
+    sticker: "??",
     textFont: "gym",
     textDecor: "shadow",
     defaultDecos: [
@@ -224,7 +225,7 @@ const THEME_PACKS: Array<{
     label: "만화풍",
     theme: "sunset",
     quoteStyle: "outline",
-    sticker: "💥",
+    sticker: "??",
     textFont: "comic",
     textDecor: "outline",
     defaultDecos: [
@@ -234,7 +235,7 @@ const THEME_PACKS: Array<{
   },
 ];
 
-const STICKERS = ["", "🔥", "💪", "✨", "🚀", "🏆", "⚡", "🎯"];
+const STICKERS = ["", "??", "??", "?", "??", "??", "?", "??"];
 
 const DEFAULT_PRESET: SharePreset = {
   theme: "sunset",
@@ -370,12 +371,6 @@ function buildTemplatePool(data: ShareData | null): string[] {
   return Array.from(pool);
 }
 
-function extractBackgroundImageUrls(styleValue: string): string[] {
-  if (!styleValue || styleValue === "none") return [];
-  const matches = styleValue.matchAll(/url\((['"]?)(.*?)\1\)/g);
-  return Array.from(matches, (match) => match[2]).filter(Boolean);
-}
-
 function waitForImageUrl(url: string, timeoutMs = 7000, retryMs = 250): Promise<boolean> {
   return new Promise((resolve) => {
     const deadline = Date.now() + timeoutMs;
@@ -405,6 +400,12 @@ function waitForImageUrl(url: string, timeoutMs = 7000, retryMs = 250): Promise<
 
     attempt();
   });
+}
+
+function extractBackgroundImageUrls(styleValue: string): string[] {
+  if (!styleValue || styleValue === "none") return [];
+  const matches = styleValue.matchAll(/url\((['"]?)(.*?)\1\)/g);
+  return Array.from(matches, (match) => match[2]).filter(Boolean);
 }
 
 async function waitForCaptureAssets(root: HTMLElement): Promise<void> {
@@ -620,7 +621,7 @@ export default function AttendanceShareView() {
     0,
     photoFilter.warmth / 100
   )}) blur(${photoFilter.blur}px)`;
-  const expressionLabel = CHARACTER_EXPRESSION_OPTIONS.find((item) => item.id === characterExpression)?.emoji ?? "😊";
+  const expressionLabel = CHARACTER_EXPRESSION_OPTIONS.find((item) => item.id === characterExpression)?.emoji ?? "??";
   const isSectionOpen = (key: SectionKey) => openSections[key];
   const toggleSection = (key: SectionKey) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -856,27 +857,56 @@ export default function AttendanceShareView() {
     setCustomMessage(random);
   };
 
-  const quickShare = async () => {
-    if (!publicShareLink) return;
-    if (!mediaReady) return;
-    if (shareProgress !== "idle") return;
+  const buildShareImageBlob = async () => {
+    if (!data) throw new Error("공유 데이터를 찾을 수 없어요.");
+    return renderAttendanceShareCard({
+      date: data.date,
+      didWorkout: data.didWorkout,
+      workoutTypes: data.workoutTypes ?? [],
+      workoutIntensity: data.workoutIntensity ?? null,
+      memo: data.memo ?? null,
+      shareComment: customMessage || data.shareComment || null,
+      mediaUrl: captureMediaUrl,
+      nickname: data.authorNickname ?? null,
+      theme,
+      ratio,
+      quoteStyle,
+      sticker,
+      showMeta,
+      mediaFit,
+      mediaPositionX,
+      mediaPositionY,
+      mediaBrightness: photoFilter.brightness,
+      mediaContrast: photoFilter.contrast,
+      mediaSaturation: photoFilter.saturation,
+      mediaWarmth: photoFilter.warmth,
+      mediaBlur: photoFilter.blur,
+      character,
+      characterPose,
+      characterSize,
+      characterLabel: character === "me" ? (data.authorNickname || "내 캐릭터") : "득근이",
+      watermarkText: "득근득근",
+      cheerCount: data.cheerCount,
+      showTitle,
+      showSubtitle,
+      scale: exportScale,
+    });
+  };
+
+  const capturePreviewBlob = async () => {
+    const captureNode = previewCaptureRef.current;
+    if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
+    captureNode.classList.add("exporting");
     try {
-      setShareProgress("preparing_share");
-      const captureNode = previewCaptureRef.current;
-      if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
-      captureNode.classList.add("exporting");
       if (typeof document !== "undefined" && "fonts" in document) {
         await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
       }
       await waitForCaptureAssets(captureNode);
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      setShareProgress("sharing");
       const rect = captureNode.getBoundingClientRect();
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      const minScaleForTargetWidth = 2160 / Math.max(1, rect.width);
-      const dprBoost = exportScale * Math.min(dpr, 2);
-      const captureScale = Math.min(8, Math.max(minScaleForTargetWidth, dprBoost));
+      const baseWidth = exportScale >= 4 ? 2880 : exportScale === 3 ? 2160 : exportScale === 2 ? 1620 : 1080;
+      const captureScale = Math.min(10, Math.max(1, baseWidth / Math.max(1, rect.width)));
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: captureScale,
@@ -889,13 +919,30 @@ export default function AttendanceShareView() {
         windowHeight: document.documentElement.clientHeight,
         logging: false,
       });
-      captureNode.classList.remove("exporting");
-      const blob = await new Promise<Blob>((resolve, reject) => {
+      return await new Promise<Blob>((resolve, reject) => {
         rawCanvas.toBlob((file) => {
           if (!file) return reject(new Error("이미지 변환에 실패했어요."));
           resolve(file);
         }, "image/png");
       });
+    } finally {
+      captureNode.classList.remove("exporting");
+    }
+  };
+
+  const quickShare = async () => {
+    if (!publicShareLink) return;
+    if (!mediaReady) return;
+    if (shareProgress !== "idle") return;
+    try {
+      setShareProgress("preparing_share");
+      setShareProgress("sharing");
+      let blob: Blob;
+      try {
+        blob = await capturePreviewBlob();
+      } catch {
+        blob = await buildShareImageBlob();
+      }
       const imageFile = new File([blob], `attendance-share-${data?.date ?? "today"}.png`, { type: "image/png" });
       const nav = navigator as Navigator & { canShare?: (payload?: ShareData) => boolean };
       const canShareFile = Boolean(imageFile && nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
@@ -915,10 +962,6 @@ export default function AttendanceShareView() {
         alert("이 브라우저는 이미지 공유를 지원하지 않아 링크를 복사했어요.");
       }
     } catch {
-      const captureNode = previewCaptureRef.current;
-      if (captureNode) {
-        captureNode.classList.remove("exporting");
-      }
       alert("자동 공유가 차단되었거나 취소되었습니다. 아래 '원클릭 공유' 버튼을 눌러 주세요.");
     } finally {
       setShareProgress("idle");
@@ -929,47 +972,15 @@ export default function AttendanceShareView() {
     if (!data) return;
     if (!mediaReady) return;
     if (shareProgress !== "idle") return;
-    let captureNode: HTMLDivElement | null = null;
     try {
       setShareProgress("preparing_save");
-      captureNode = previewCaptureRef.current;
-      if (!captureNode) throw new Error("저장할 카드 영역을 찾을 수 없어요.");
-      captureNode.classList.add("exporting");
-      if (typeof document !== "undefined" && "fonts" in document) {
-        await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
-      }
-      await waitForCaptureAssets(captureNode);
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       setShareProgress("saving");
-      const rect = captureNode.getBoundingClientRect();
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      const minScaleForTargetWidth = 2160 / Math.max(1, rect.width);
-      const dprBoost = exportScale * Math.min(dpr, 2);
-      const captureScale = Math.min(8, Math.max(minScaleForTargetWidth, dprBoost));
-
-      const rawCanvas = await html2canvas(captureNode, {
-        backgroundColor: null,
-        scale: captureScale,
-        useCORS: true,
-        allowTaint: false,
-        ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
-        windowWidth: document.documentElement.clientWidth,
-        windowHeight: document.documentElement.clientHeight,
-        logging: false,
-      });
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        rawCanvas.toBlob((file) => {
-          if (!file) {
-            reject(new Error("이미지 변환에 실패했어요."));
-            return;
-          }
-          resolve(file);
-        }, "image/png");
-      });
-      captureNode.classList.remove("exporting");
+      let blob: Blob;
+      try {
+        blob = await capturePreviewBlob();
+      } catch {
+        blob = await buildShareImageBlob();
+      }
       const fileUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = fileUrl;
@@ -981,9 +992,6 @@ export default function AttendanceShareView() {
     } catch (e: any) {
       alert(e?.message || "이미지 저장에 실패했어요.");
     } finally {
-      if (captureNode) {
-        captureNode.classList.remove("exporting");
-      }
       setShareProgress("idle");
     }
   };
@@ -1279,7 +1287,7 @@ export default function AttendanceShareView() {
                 aria-expanded={customizeOpen}
               >
                 <span>{customizeOpen ? "꾸미기 옵션 닫기" : "꾸미기 옵션 펼치기"}</span>
-                <span className="chevron" aria-hidden="true">▾</span>
+                <span className="chevron" aria-hidden="true">?</span>
               </button>
             </div>
 
@@ -1311,7 +1319,7 @@ export default function AttendanceShareView() {
                   aria-expanded={advancedOpen}
                 >
                   <span>{advancedOpen ? "더보기 닫기" : "더보기"}</span>
-                  <span className="chevron" aria-hidden="true">▾</span>
+                  <span className="chevron" aria-hidden="true">?</span>
                 </button>
               </div>
             )}
@@ -1324,7 +1332,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("preset")}
                 >
                   <span>Preset</span>
-                  <span className="chevron" aria-hidden="true">▾</span>
+                  <span className="chevron" aria-hidden="true">?</span>
                 </button>
                 {isSectionOpen("preset") && (
                   <div className="control-section">
@@ -1343,7 +1351,7 @@ export default function AttendanceShareView() {
                 aria-expanded={isSectionOpen("themePack")}
               >
                 <span>프레임/테마팩</span>
-                <span className="chevron" aria-hidden="true">▾</span>
+                <span className="chevron" aria-hidden="true">?</span>
               </button>
               {isSectionOpen("themePack") && (
                 <div className="control-section">
@@ -1370,7 +1378,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("advancedCard")}
                 >
                   <span>고급 카드 설정</span>
-                  <span className="chevron" aria-hidden="true">▾</span>
+                  <span className="chevron" aria-hidden="true">?</span>
                 </button>
                 {isSectionOpen("advancedCard") && (
                   <div className="control-section">
@@ -1467,7 +1475,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("text")}
                 >
                   <span>텍스트 꾸미기</span>
-                  <span className="chevron" aria-hidden="true">▾</span>
+                  <span className="chevron" aria-hidden="true">?</span>
                 </button>
                 {isSectionOpen("text") && (
                   <div className="control-section">
@@ -1525,7 +1533,7 @@ export default function AttendanceShareView() {
                 aria-expanded={isSectionOpen("photo")}
               >
                 <span>사진 세부 설정</span>
-                <span className="chevron" aria-hidden="true">▾</span>
+                <span className="chevron" aria-hidden="true">?</span>
               </button>
               {isSectionOpen("photo") && (
                 <div className="control-section">
@@ -1625,7 +1633,7 @@ export default function AttendanceShareView() {
                 aria-expanded={isSectionOpen("character")}
               >
                 <span>캐릭터</span>
-                <span className="chevron" aria-hidden="true">▾</span>
+                <span className="chevron" aria-hidden="true">?</span>
               </button>
               {isSectionOpen("character") && (
                 <div className="control-section">
@@ -1720,7 +1728,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("deco")}
                 >
                   <span>배경 데코 레이어</span>
-                  <span className="chevron" aria-hidden="true">▾</span>
+                  <span className="chevron" aria-hidden="true">?</span>
                 </button>
                 {isSectionOpen("deco") && (
                   <div className="control-section">
@@ -1782,7 +1790,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("message")}
                 >
                   <span>Brag Message</span>
-                  <span className="chevron" aria-hidden="true">▾</span>
+                  <span className="chevron" aria-hidden="true">?</span>
                 </button>
                 {isSectionOpen("message") && (
                   <div className="control-section">
@@ -1863,3 +1871,6 @@ export default function AttendanceShareView() {
     </section>
   );
 }
+
+
+
