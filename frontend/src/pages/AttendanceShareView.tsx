@@ -872,9 +872,11 @@ export default function AttendanceShareView() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       setShareProgress("sharing");
+      const rect = captureNode.getBoundingClientRect();
+      const captureScale = Math.min(4, Math.max(exportScale, 1080 / Math.max(1, rect.width)));
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
-        scale: Math.min(exportScale, 2),
+        scale: captureScale,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
@@ -937,10 +939,12 @@ export default function AttendanceShareView() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       setShareProgress("saving");
+      const rect = captureNode.getBoundingClientRect();
+      const captureScale = Math.min(4, Math.max(exportScale, 1080 / Math.max(1, rect.width)));
 
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
-        scale: Math.min(exportScale, 2),
+        scale: captureScale,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
