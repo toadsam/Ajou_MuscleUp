@@ -1,6 +1,7 @@
 const DEFAULT_MAX_EDGE = 2048;
 const DEFAULT_QUALITY = 0.9;
 const MIN_IMAGE_BYTES = 1024 * 1024; // 1MB
+const DISABLE_UPLOAD_IMAGE_OPTIMIZATION = true;
 
 const isCompressibleImage = (file: File) =>
   file.type.startsWith("image/") &&
@@ -33,6 +34,7 @@ function getResizedDimensions(width: number, height: number, maxEdge: number) {
 }
 
 export async function optimizeUploadImage(file: File, maxEdge = DEFAULT_MAX_EDGE, quality = DEFAULT_QUALITY): Promise<File> {
+  if (DISABLE_UPLOAD_IMAGE_OPTIMIZATION) return file;
   if (!isCompressibleImage(file)) return file;
   if (file.size < MIN_IMAGE_BYTES) return file;
 

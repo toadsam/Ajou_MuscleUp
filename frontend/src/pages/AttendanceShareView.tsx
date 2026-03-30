@@ -86,7 +86,7 @@ type SharePreset = {
   textDecor: TextDecorPreset;
   showTitle: boolean;
   showSubtitle: boolean;
-  exportScale: 1 | 2 | 3;
+  exportScale: 1 | 2 | 3 | 4;
 };
 
 type ReactionStore = Record<string, { cheer?: boolean; report?: boolean }>;
@@ -253,7 +253,7 @@ const DEFAULT_PRESET: SharePreset = {
   textDecor: "gradient",
   showTitle: false,
   showSubtitle: false,
-  exportScale: 2,
+  exportScale: 4,
 };
 
 function loadPreset(): SharePreset {
@@ -468,7 +468,7 @@ export default function AttendanceShareView() {
   const [textDecor, setTextDecor] = useState<TextDecorPreset>(preset.textDecor);
   const [showTitle, setShowTitle] = useState<boolean>(preset.showTitle);
   const [showSubtitle, setShowSubtitle] = useState<boolean>(preset.showSubtitle);
-  const [exportScale, setExportScale] = useState<1 | 2 | 3>(preset.exportScale);
+  const [exportScale, setExportScale] = useState<1 | 2 | 3 | 4>(preset.exportScale);
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     preset: false,
     themePack: true,
@@ -491,9 +491,9 @@ export default function AttendanceShareView() {
   const [titlePos, setTitlePos] = useState({ x: 8, y: 12 });
   const [subtitlePos, setSubtitlePos] = useState({ x: 8, y: 20 });
   const [photoFilter, setPhotoFilter] = useState({
-    brightness: 100,
-    contrast: 100,
-    saturation: 100,
+    brightness: 106,
+    contrast: 108,
+    saturation: 112,
     warmth: 0,
     blur: 0,
   });
@@ -874,9 +874,9 @@ export default function AttendanceShareView() {
       setShareProgress("sharing");
       const rect = captureNode.getBoundingClientRect();
       const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      const minScaleForTargetWidth = 1440 / Math.max(1, rect.width);
+      const minScaleForTargetWidth = 2160 / Math.max(1, rect.width);
       const dprBoost = exportScale * Math.min(dpr, 2);
-      const captureScale = Math.min(5, Math.max(minScaleForTargetWidth, dprBoost));
+      const captureScale = Math.min(8, Math.max(minScaleForTargetWidth, dprBoost));
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: captureScale,
@@ -944,9 +944,9 @@ export default function AttendanceShareView() {
       setShareProgress("saving");
       const rect = captureNode.getBoundingClientRect();
       const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      const minScaleForTargetWidth = 1440 / Math.max(1, rect.width);
+      const minScaleForTargetWidth = 2160 / Math.max(1, rect.width);
       const dprBoost = exportScale * Math.min(dpr, 2);
-      const captureScale = Math.min(5, Math.max(minScaleForTargetWidth, dprBoost));
+      const captureScale = Math.min(8, Math.max(minScaleForTargetWidth, dprBoost));
 
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
@@ -1432,11 +1432,11 @@ export default function AttendanceShareView() {
                     </div>
                     <p className="control-subtitle mt-3">Export Quality</p>
                     <div className="choice-wrap">
-                      {[1, 2, 3].map((scale) => (
+                      {[1, 2, 3, 4].map((scale) => (
                         <button
                           key={scale}
                           className={`choice-btn ${exportScale === scale ? "active" : ""}`}
-                          onClick={() => setExportScale(scale as 1 | 2 | 3)}
+                          onClick={() => setExportScale(scale as 1 | 2 | 3 | 4)}
                           aria-label={`export ${scale}x`}
                           aria-pressed={exportScale === scale}
                         >
