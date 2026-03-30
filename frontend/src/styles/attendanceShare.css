@@ -169,7 +169,7 @@
 }
 
 .share-logo-image {
-  width: 86px;
+  width: 224px;
   height: auto;
   display: block;
   object-fit: contain;
@@ -441,7 +441,7 @@
 }
 
 .share-attendance-label {
-  font-size: 11px;
+  font-size: 28px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.7);
@@ -474,7 +474,7 @@
   margin-top: 2px;
   border-radius: 16px;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 38px;
   line-height: 1.4;
 }
 
@@ -493,7 +493,7 @@
 
 .share-meta {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 30px;
   color: rgba(255, 255, 255, 0.92);
 }
 
@@ -729,7 +729,7 @@
   }
 
   .share-logo-image {
-    width: 72px;
+    width: 188px;
   }
 
   .share-sticker {
@@ -769,8 +769,16 @@
   }
 
   .share-attendance-label {
-    font-size: 10px;
+    font-size: 24px;
     letter-spacing: 0.14em;
+  }
+
+  .share-quote {
+    font-size: 34px;
+  }
+
+  .share-meta {
+    font-size: 26px;
   }
 
   .action-list {
