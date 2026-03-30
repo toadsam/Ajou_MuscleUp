@@ -408,6 +408,12 @@ function extractBackgroundImageUrls(styleValue: string): string[] {
   return Array.from(matches, (match) => match[2]).filter(Boolean);
 }
 
+function getCaptureSizeByRatio(ratio: ShareCardRatio): { width: number; height: number } {
+  if (ratio === "square") return { width: 1080, height: 1080 };
+  if (ratio === "story") return { width: 1080, height: 1920 };
+  return { width: 1080, height: 1350 };
+}
+
 async function waitForCaptureAssets(root: HTMLElement): Promise<void> {
   const imageTasks: Promise<void>[] = [];
 
@@ -899,26 +905,54 @@ export default function AttendanceShareView() {
     const captureNode = previewCaptureRef.current;
     if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
     captureNode.classList.add("exporting");
+    const { width: targetWidth, height: targetHeight } = getCaptureSizeByRatio(ratio);
+    const captureScale = fromAttendance
+      ? effectiveExportScale >= 4
+        ? 3
+        : effectiveExportScale >= 3
+          ? 2.5
+          : 2
+      : effectiveExportScale >= 4
+        ? 2.4
+        : effectiveExportScale >= 3
+          ? 2
+          : 1.6;
+    const stage = document.createElement("div");
+    stage.setAttribute("data-capture-stage", "attendance-share");
+    stage.style.position = "fixed";
+    stage.style.left = "-100000px";
+    stage.style.top = "0";
+    stage.style.width = `${targetWidth}px`;
+    stage.style.height = `${targetHeight}px`;
+    stage.style.opacity = "0";
+    stage.style.pointerEvents = "none";
+    stage.style.overflow = "hidden";
+    stage.style.zIndex = "-1";
+
+    const clone = captureNode.cloneNode(true) as HTMLElement;
+    clone.classList.add("exporting");
+    clone.style.width = `${targetWidth}px`;
+    clone.style.height = `${targetHeight}px`;
+    clone.style.aspectRatio = `${targetWidth} / ${targetHeight}`;
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
     try {
       if (typeof document !== "undefined" && "fonts" in document) {
         await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
       }
-      await waitForCaptureAssets(captureNode);
+      await waitForCaptureAssets(clone);
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      const rect = captureNode.getBoundingClientRect();
-      const baseWidth = effectiveExportScale >= 4 ? 2880 : effectiveExportScale === 3 ? 2160 : effectiveExportScale === 2 ? 1620 : 1080;
-      const captureScale = Math.min(10, Math.max(1, baseWidth / Math.max(1, rect.width)));
-      const rawCanvas = await html2canvas(captureNode, {
+      const rawCanvas = await html2canvas(clone, {
         backgroundColor: null,
         scale: captureScale,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
-        windowWidth: document.documentElement.clientWidth,
-        windowHeight: document.documentElement.clientHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: targetWidth,
+        windowHeight: targetHeight,
         logging: false,
       });
       return await new Promise<Blob>((resolve, reject) => {
@@ -929,6 +963,7 @@ export default function AttendanceShareView() {
       });
     } finally {
       captureNode.classList.remove("exporting");
+      stage.remove();
     }
   };
 
