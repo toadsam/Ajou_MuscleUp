@@ -873,7 +873,10 @@ export default function AttendanceShareView() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       setShareProgress("sharing");
       const rect = captureNode.getBoundingClientRect();
-      const captureScale = Math.min(4, Math.max(exportScale, 1080 / Math.max(1, rect.width)));
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      const minScaleForTargetWidth = 1440 / Math.max(1, rect.width);
+      const dprBoost = exportScale * Math.min(dpr, 2);
+      const captureScale = Math.min(5, Math.max(minScaleForTargetWidth, dprBoost));
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: captureScale,
@@ -940,7 +943,10 @@ export default function AttendanceShareView() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       setShareProgress("saving");
       const rect = captureNode.getBoundingClientRect();
-      const captureScale = Math.min(4, Math.max(exportScale, 1080 / Math.max(1, rect.width)));
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      const minScaleForTargetWidth = 1440 / Math.max(1, rect.width);
+      const dprBoost = exportScale * Math.min(dpr, 2);
+      const captureScale = Math.min(5, Math.max(minScaleForTargetWidth, dprBoost));
 
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
@@ -1251,6 +1257,22 @@ export default function AttendanceShareView() {
                   saveButtonLabel
                 )}
               </button>
+              <div className="quick-toggle">
+                <p className="control-subtitle">사진 맞춤</p>
+                <div className="choice-wrap">
+                  {MEDIA_FIT_OPTIONS.map((option) => (
+                    <button
+                      key={`quick-media-fit-${option.id}`}
+                      className={`choice-btn ${mediaFit === option.id ? "active" : ""}`}
+                      onClick={() => setMediaFit(option.id)}
+                      aria-label={`media fit quick ${option.label}`}
+                      aria-pressed={mediaFit === option.id}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button
                 className={`choice-btn section-toggle quick-toggle ${customizeOpen ? "open" : ""}`}
                 onClick={() => setCustomizeOpen((prev) => !prev)}
@@ -1507,20 +1529,7 @@ export default function AttendanceShareView() {
               </button>
               {isSectionOpen("photo") && (
                 <div className="control-section">
-                  <p className="control-subtitle">사진 맞춤</p>
-                  <div className="choice-wrap">
-                    {MEDIA_FIT_OPTIONS.map((option) => (
-                      <button
-                        key={option.id}
-                        className={`choice-btn ${mediaFit === option.id ? "active" : ""}`}
-                        onClick={() => setMediaFit(option.id)}
-                        aria-label={`media fit ${option.label}`}
-                        aria-pressed={mediaFit === option.id}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
+                  <p className="control-subtitle">사진 위치</p>
                   <div className="range-grid mt-3">
                     <label className="range-label">
                       좌우 위치 {mediaPositionX}%
