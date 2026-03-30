@@ -875,6 +875,7 @@ export default function AttendanceShareView() {
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: Math.min(exportScale, 2),
+        foreignObjectRendering: true,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
@@ -941,6 +942,7 @@ export default function AttendanceShareView() {
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: Math.min(exportScale, 2),
+        foreignObjectRendering: true,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
@@ -1067,13 +1069,12 @@ export default function AttendanceShareView() {
           <div className="share-panel" aria-label="share preview panel">
             <div ref={previewCaptureRef} className={`share-preview ratio-${ratio}`}>
               {captureMediaUrl && (
-                <img
-                  src={captureMediaUrl}
-                  alt="attendance media"
-                  className="share-media"
+                <div
+                  className="share-media-bg"
                   style={{
-                    objectFit: mediaFit === "cover" ? "cover" : "contain",
-                    objectPosition: `${mediaPositionX}% ${mediaPositionY}%`,
+                    backgroundImage: `url("${captureMediaUrl}")`,
+                    backgroundSize: mediaFit === "cover" ? "cover" : "contain",
+                    backgroundPosition: `${mediaPositionX}% ${mediaPositionY}%`,
                     filter: mediaFilter,
                   }}
                 />
