@@ -474,14 +474,15 @@ export default function AttendanceShareView() {
     themePack: true,
     advancedCard: false,
     text: false,
-    photo: true,
-    character: true,
+    photo: false,
+    character: false,
     deco: false,
     message: false,
   });
   const [customMessage, setCustomMessage] = useState("");
   const [simpleMode, setSimpleMode] = useState(true);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [myCharacter, setMyCharacter] = useState<MyCharacterProfile | null>(null);
   const [myCharacterLoading, setMyCharacterLoading] = useState(false);
   const [themePack, setThemePack] = useState<ThemePackId | null>(null);
@@ -1244,6 +1245,39 @@ export default function AttendanceShareView() {
           </div>
 
           <div className="share-panel" aria-label="customization controls">
+            <div className="quick-action-dock">
+              <button className="action-btn primary quick-action-btn" onClick={quickShare} disabled={isActionDisabled} aria-label="quick share top">
+                {isActionDisabled ? (
+                  <span className="action-btn-loading">
+                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span>{shareButtonLabel}</span>
+                  </span>
+                ) : (
+                  shareButtonLabel
+                )}
+              </button>
+              <button className="action-btn quick-action-btn" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card top">
+                {isActionDisabled ? (
+                  <span className="action-btn-loading">
+                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span>{saveButtonLabel}</span>
+                  </span>
+                ) : (
+                  saveButtonLabel
+                )}
+              </button>
+              <button
+                className={`choice-btn section-toggle quick-toggle ${customizeOpen ? "open" : ""}`}
+                onClick={() => setCustomizeOpen((prev) => !prev)}
+                aria-expanded={customizeOpen}
+              >
+                <span>{customizeOpen ? "꾸미기 옵션 닫기" : "꾸미기 옵션 펼치기"}</span>
+                <span className="chevron" aria-hidden="true">▾</span>
+              </button>
+            </div>
+
+            {customizeOpen && (
+              <>
             <div className="control-row">
               <p className="control-title">UI 모드</p>
               <div className="choice-wrap">
@@ -1827,6 +1861,8 @@ export default function AttendanceShareView() {
                 </>
               )}
             </div>
+              </>
+            )}
           </div>
         </div>
       </div>
