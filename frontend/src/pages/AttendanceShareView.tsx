@@ -872,15 +872,12 @@ export default function AttendanceShareView() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       setShareProgress("sharing");
-      const rect = captureNode.getBoundingClientRect();
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: Math.min(exportScale, 2),
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
-        width: Math.max(1, Math.round(rect.width)),
-        height: Math.max(1, Math.round(rect.height)),
         scrollX: -window.scrollX,
         scrollY: -window.scrollY,
         windowWidth: document.documentElement.clientWidth,
@@ -928,24 +925,15 @@ export default function AttendanceShareView() {
     if (!mediaReady) return;
     if (shareProgress !== "idle") return;
     let captureNode: HTMLDivElement | null = null;
-    let prevInlineWidth = "";
-    let prevInlineHeight = "";
     try {
       setShareProgress("preparing_save");
       captureNode = previewCaptureRef.current;
       if (!captureNode) throw new Error("저장할 카드 영역을 찾을 수 없어요.");
-      prevInlineWidth = captureNode.style.width;
-      prevInlineHeight = captureNode.style.height;
       captureNode.classList.add("exporting");
       if (typeof document !== "undefined" && "fonts" in document) {
         await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
       }
       await waitForCaptureAssets(captureNode);
-      const rect = captureNode.getBoundingClientRect();
-      const captureWidth = Math.max(1, Math.round(rect.width));
-      const captureHeight = Math.max(1, Math.round(rect.height));
-      captureNode.style.width = `${captureWidth}px`;
-      captureNode.style.height = `${captureHeight}px`;
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       setShareProgress("saving");
@@ -956,8 +944,6 @@ export default function AttendanceShareView() {
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
-        width: captureWidth,
-        height: captureHeight,
         scrollX: -window.scrollX,
         scrollY: -window.scrollY,
         windowWidth: document.documentElement.clientWidth,
@@ -973,8 +959,6 @@ export default function AttendanceShareView() {
           resolve(file);
         }, "image/png");
       });
-      captureNode.style.width = prevInlineWidth;
-      captureNode.style.height = prevInlineHeight;
       captureNode.classList.remove("exporting");
       const fileUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -988,8 +972,6 @@ export default function AttendanceShareView() {
       alert(e?.message || "이미지 저장에 실패했어요.");
     } finally {
       if (captureNode) {
-        captureNode.style.width = prevInlineWidth;
-        captureNode.style.height = prevInlineHeight;
         captureNode.classList.remove("exporting");
       }
       setShareProgress("idle");
