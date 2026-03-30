@@ -875,7 +875,6 @@ export default function AttendanceShareView() {
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: Math.min(exportScale, 2),
-        foreignObjectRendering: true,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
@@ -942,7 +941,6 @@ export default function AttendanceShareView() {
       const rawCanvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale: Math.min(exportScale, 2),
-        foreignObjectRendering: true,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) => element.hasAttribute("data-html2canvas-ignore"),
