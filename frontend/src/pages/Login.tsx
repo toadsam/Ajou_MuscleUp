@@ -15,7 +15,7 @@ declare global {
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
-const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL ?? "https://ajou-muscle-up.vercel.app";
+const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL ?? "https://musclehub.co.kr";
 
 async function loginRequest(body: Record<string, unknown>, path: string) {
   const response = await fetch(`${API_BASE}/api/auth/${path}`, {
