@@ -15,7 +15,8 @@
   padding: 6.5rem 0 5rem;
   background: var(--lobby-bg);
   color: var(--lobby-ink);
-  overflow: hidden;
+  overflow: clip;
+  width: 100%;
 }
 
 .home-lobby-bg {
@@ -31,6 +32,7 @@
 
 .home-lobby-wrap {
   position: relative;
+  width: min(1200px, 100%);
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;

@@ -217,8 +217,8 @@ export default function Header() {
         isScrolled || isMenuOpen ? "bg-white/90 shadow-md backdrop-blur" : "bg-transparent"
       }`}
     >
-      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-[auto_1fr_auto] items-center px-4 py-3 sm:px-6 lg:flex lg:gap-8 lg:px-10">
-        <div className="flex items-center lg:flex-none lg:gap-4">
+      <div className="relative mx-auto flex w-full max-w-6xl items-center px-4 py-3 sm:px-6 lg:gap-8 lg:px-10">
+        <div className="flex w-[104px] items-center lg:w-auto lg:flex-none lg:gap-4">
           <button
             className={`flex flex-col gap-1.5 rounded-md border px-3 py-2 text-sm font-semibold transition lg:hidden ${
               isScrolled || isMenuOpen ? "border-gray-200 text-gray-800" : "border-white/60 text-white"
@@ -232,7 +232,10 @@ export default function Header() {
           </button>
         </div>
 
-        <Link to="/" className="flex items-center justify-self-center lg:static lg:ml-0 lg:translate-x-0 lg:justify-self-auto">
+        <Link
+          to="/"
+          className="absolute left-1/2 flex -translate-x-1/2 items-center lg:static lg:ml-0 lg:translate-x-0"
+        >
           <Logo isScrolled={isScrolled || isMenuOpen} />
         </Link>
 
@@ -285,7 +288,7 @@ export default function Header() {
           )}
         </nav>
 
-        <div className="flex items-center justify-self-end lg:hidden">
+        <div className="ml-auto flex w-[104px] items-center justify-end lg:hidden lg:w-auto">
           {user ? (
             <button
               onClick={handleLogout}
