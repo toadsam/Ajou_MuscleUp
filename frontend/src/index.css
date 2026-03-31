@@ -10,10 +10,19 @@
 @layer base {
   html {
     font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   body {
     @apply font-body bg-gray-900 text-white antialiased;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 
