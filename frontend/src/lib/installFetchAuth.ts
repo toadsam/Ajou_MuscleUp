@@ -12,6 +12,14 @@ function readUserRecord(): Record<string, unknown> | null {
   }
 }
 
+function clearUserRecord() {
+  try {
+    localStorage.removeItem("user");
+  } catch {
+    // ignore
+  }
+}
+
 function getAccessToken(): string | null {
   const user = readUserRecord();
   const token = user?.accessToken;
@@ -165,7 +173,12 @@ export async function bootstrapAuthSession(): Promise<boolean> {
       credentials: "include",
       headers: { [RETRY_HEADER]: "1" },
     });
-    if (!res.ok) return false;
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        clearUserRecord();
+      }
+      return false;
+    }
     try {
       const payload = (await res.json()) as { accessToken?: string };
       if (payload?.accessToken) {
@@ -176,6 +189,7 @@ export async function bootstrapAuthSession(): Promise<boolean> {
     }
     return true;
   } catch {
+    // Keep local user on temporary network errors.
     return false;
   }
 }

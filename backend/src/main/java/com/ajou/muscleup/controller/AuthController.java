@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,9 +37,6 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-
-    private static final long ACCESS_COOKIE_MAX_AGE = Duration.ofMinutes(15).getSeconds();
-    private static final long REFRESH_COOKIE_MAX_AGE = Duration.ofDays(14).getSeconds();
 
     private final EmailVerificationService emailSvc;
     private final UserService userService;
@@ -215,37 +211,40 @@ public class AuthController {
     }
 
     private ResponseCookie buildRefreshCookie(String token, boolean rememberMe) {
+        long refreshCookieMaxAge = Math.max(60, jwtUtil.getRefreshTokenExpirationMs() / 1000L);
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path("/");
         if (rememberMe) {
-            builder.maxAge(REFRESH_COOKIE_MAX_AGE);
+            builder.maxAge(refreshCookieMaxAge);
         }
         return builder.build();
     }
 
     private ResponseCookie buildAccessCookie(String token, boolean rememberMe) {
+        long accessCookieMaxAge = Math.max(60, jwtUtil.getAccessTokenExpirationMs() / 1000L);
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("accessToken", token)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path("/");
         if (rememberMe) {
-            builder.maxAge(ACCESS_COOKIE_MAX_AGE);
+            builder.maxAge(accessCookieMaxAge);
         }
         return builder.build();
     }
 
     private ResponseCookie buildRememberMeCookie(boolean rememberMe) {
+        long rememberCookieMaxAge = Math.max(60, jwtUtil.getRefreshTokenExpirationMs() / 1000L);
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("rememberMe", rememberMe ? "1" : "0")
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path("/");
         if (rememberMe) {
-            builder.maxAge(REFRESH_COOKIE_MAX_AGE);
+            builder.maxAge(rememberCookieMaxAge);
         }
         return builder.build();
     }

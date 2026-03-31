@@ -23,11 +23,11 @@ public class RefreshTokenService {
 
     @Transactional
     public String issueFor(User user) {
-        // 한 사용자에 대해 이전 토큰은 정리(단순화)
+        // Keep only one refresh token per user for simple session management.
         refreshTokenRepository.deleteByUser_Id(user.getId());
 
         String token = jwtUtil.generateRefreshToken(user.getEmail());
-        LocalDateTime expiresAt = LocalDateTime.now().plusDays(14); // JwtUtil과 동일 주기
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtUtil.getRefreshTokenExpirationMs() / 1000L);
 
         RefreshToken rt = RefreshToken.builder()
                 .user(user)
@@ -43,14 +43,12 @@ public class RefreshTokenService {
         RefreshToken current = refreshTokenRepository.findByToken(oldToken)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰"));
 
-        // 토큰 타입/유효성 검사
-        if (!jwtUtil.validateToken(oldToken) ||
-                (jwtUtil.getTokenType(oldToken) != null && !"refresh".equals(jwtUtil.getTokenType(oldToken)))) {
+        if (!jwtUtil.validateToken(oldToken)
+                || (jwtUtil.getTokenType(oldToken) != null && !"refresh".equals(jwtUtil.getTokenType(oldToken)))) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "리프레시 토큰 검증 실패");
         }
 
         User user = current.getUser();
-        // 기존 토큰 제거 후 신규 발급
         refreshTokenRepository.delete(current);
         return issueFor(user);
     }
@@ -62,4 +60,3 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteByUser_Id(user.getId());
     }
 }
-

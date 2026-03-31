@@ -15,15 +15,20 @@ import java.util.Date;
 public class JwtUtil {
 
     private final Key key;
+    private final long accessTokenExpirationMs;
+    private final long refreshTokenExpirationMs;
 
-    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000L * 60 * 15;            // 15 minutes
-    private static final long REFRESH_TOKEN_EXPIRATION_MS = 1000L * 60 * 60 * 24 * 14; // 14 days
-
-    public JwtUtil(@Value("${jwt.secret}") String secret) {
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.access-expiration-ms:900000}") long accessTokenExpirationMs,
+            @Value("${jwt.refresh-expiration-ms:7776000000}") long refreshTokenExpirationMs
+    ) {
         if (secret == null || secret.trim().length() < 32) {
             throw new IllegalStateException("JWT_SECRET must be at least 32 characters");
         }
         this.key = Keys.hmacShaKeyFor(secret.trim().getBytes(StandardCharsets.UTF_8));
+        this.accessTokenExpirationMs = Math.max(60_000L, accessTokenExpirationMs);
+        this.refreshTokenExpirationMs = Math.max(86_400_000L, refreshTokenExpirationMs);
     }
 
     // Access Token (email + role)
@@ -33,7 +38,7 @@ public class JwtUtil {
                 .claim("role", role)
                 .claim("type", "access")
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_MS))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -44,9 +49,17 @@ public class JwtUtil {
                 .setSubject(email)
                 .claim("type", "refresh")
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_MS))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public long getAccessTokenExpirationMs() {
+        return accessTokenExpirationMs;
+    }
+
+    public long getRefreshTokenExpirationMs() {
+        return refreshTokenExpirationMs;
     }
 
     // Extract email

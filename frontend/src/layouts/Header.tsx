@@ -6,6 +6,7 @@ interface UserState {
   email: string;
   nickname: string;
   role: string;
+  accessToken?: string;
 }
 
 interface NavLinkItem {
@@ -28,17 +29,69 @@ export default function Header() {
 
   const role = (user?.role || "").toUpperCase();
   const isAdmin = role === "ADMIN" || role === "ROLE_ADMIN";
+  const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
 
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser) as UserState);
-    }
+    const readLocalUser = (): UserState | null => {
+      try {
+        const savedUser = localStorage.getItem("user");
+        if (!savedUser) return null;
+        return JSON.parse(savedUser) as UserState;
+      } catch {
+        return null;
+      }
+    };
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    const syncAuthState = async () => {
+      const localUser = readLocalUser();
+      setUser(localUser);
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem("user");
+            setUser(null);
+          }
+          return;
+        }
+        const me = await res.json();
+        const nextUser: UserState = {
+          email: me?.email ?? "",
+          nickname: me?.nickname ?? localUser?.nickname ?? "회원",
+          role: me?.role ?? "",
+          accessToken: localUser?.accessToken,
+        };
+        localStorage.setItem("user", JSON.stringify(nextUser));
+        setUser(nextUser);
+      } catch {
+        // Keep current UI state when network is unstable.
+      }
+    };
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== "user") return;
+      setUser(readLocalUser());
+    };
+
+    const onFocus = () => {
+      void syncAuthState();
+    };
+
+    void syncAuthState();
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   useEffect(() => {
