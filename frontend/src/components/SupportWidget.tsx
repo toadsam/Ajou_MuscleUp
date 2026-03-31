@@ -6,19 +6,46 @@ type SupportChatResponse = {
   answer?: string;
 };
 
+type SupportInquiryResponse = {
+  id?: number;
+};
+
+type LocalUser = {
+  id?: number;
+  nickname?: string;
+  email?: string;
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const BOT_NAME = "득근이";
 const SUGGESTED_QUESTIONS = [
-  "인바디 분석 어디서 해요?",
-  "친구 채팅은 어디에서 해요?",
   "출석 체크는 어디서 하나요?",
+  "친구랑 1:1 채팅은 어디로 들어가요?",
+  "인바디 분석은 어디에서 해요?",
+  "AI 플래너로 운동 루틴 짜는 방법 알려줘",
+  "크루(모임) 만들려면 어디로 가야 해요?",
+  "랭킹은 어디에서 볼 수 있나요?",
+  "자랑방 글은 어디서 써요?",
+  "출석 공유 이미지 저장은 어디서 하나요?",
+  "내 캐릭터/외형 바꾸는 메뉴가 어디예요?",
+  "마이페이지는 어디에서 들어가요?",
+  "이벤트 신청은 어디에서 하나요?",
+  "단백질 공동구매/리뷰는 어디서 보나요?",
+  "로그인은 어디서 해요?",
+  "회원가입은 어디서 해요?",
+  "홈 화면으로 바로 가고 싶어요",
+  "득근득근 회장에게 하고 싶은 말 보내고 싶어요",
 ];
+
+const LINK_REGEX = /\[([^\]]+)\]\((\/[^)]+)\)/g;
 
 export default function SupportWidget() {
   const [open, setOpen] = useState(false);
   const [fabBottom, setFabBottom] = useState(24);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [chairmanMessage, setChairmanMessage] = useState("");
+  const [chairmanSending, setChairmanSending] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>(() => {
     const raw = localStorage.getItem("support_msgs");
     return raw ? (JSON.parse(raw) as Msg[]) : [];
@@ -47,7 +74,6 @@ export default function SupportWidget() {
         const rect = el.getBoundingClientRect();
         if (rect.width < vw * 0.45 || rect.height < 36) return false;
         if (rect.top < vh * 0.55) return false;
-        // Use visual position instead of parsing computed bottom (can be max()/env()).
         return rect.bottom >= vh - 28;
       });
 
@@ -92,19 +118,25 @@ export default function SupportWidget() {
     () => ({
       id: "greet",
       role: "system",
-      text: `안녕하세요, ${BOT_NAME}예요.\n궁금한 기능을 물어보시면 경로까지 빠르게 안내해드릴게요.`,
+      text: `안녕하세요, ${BOT_NAME}예요.\n궁금한 기능을 아래 질문 버튼으로 눌러도 바로 안내해드릴게요.`,
       at: Date.now(),
     }),
     []
   );
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
+  const appendUserMessage = (text: string) => {
+    setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", text, at: Date.now() }]);
+  };
+
+  const appendSystemMessage = (text: string) => {
+    setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "system", text, at: Date.now() }]);
+  };
+
+  const sendQuestion = async (rawText: string) => {
+    const text = rawText.trim();
     if (!text || sending) return;
 
-    setInput("");
-    setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", text, at: Date.now() }]);
+    appendUserMessage(text);
 
     try {
       setSending(true);
@@ -124,19 +156,49 @@ export default function SupportWidget() {
 
       const data = (await res.json()) as SupportChatResponse;
       const answer = data.answer?.trim() || `${BOT_NAME}: 질문을 정확히 이해하지 못했어요. 다른 표현으로 다시 물어봐 주세요.`;
-      setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "system", text: answer, at: Date.now() }]);
+      appendSystemMessage(answer);
     } catch (err: any) {
-      setMsgs((m) => [
-        ...m,
-        {
-          id: crypto.randomUUID(),
-          role: "system",
-          text: `${BOT_NAME}: 안내 응답에 잠깐 문제가 생겼어요. (${err?.message ?? "오류"})\n잠시 후 다시 시도해 주세요.`,
-          at: Date.now(),
-        },
-      ]);
+      appendSystemMessage(`${BOT_NAME}: 안내 응답에 잠깐 문제가 생겼어요. (${err?.message ?? "오류"})\n잠시 후 다시 시도해 주세요.`);
     } finally {
       setSending(false);
+    }
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || sending) return;
+    setInput("");
+    await sendQuestion(text);
+  };
+
+  const submitChairmanMessage = async () => {
+    const text = chairmanMessage.trim();
+    if (!text || chairmanSending) return;
+
+    const user = loadLocalUser();
+    try {
+      setChairmanSending(true);
+      const res = await fetch(`${API_BASE}/api/support/inquiries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: user?.nickname || "익명",
+          email: user?.email || null,
+          message: text,
+          page: `chairman-feedback:${window.location.pathname}`,
+          userId: user?.id ?? null,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await res.json() as SupportInquiryResponse;
+      setChairmanMessage("");
+      appendSystemMessage("회장님께 한마디를 전달했어요. 운영진이 확인 후 반영하겠습니다.");
+    } catch (err: any) {
+      appendSystemMessage(`회장님 메시지 전송에 실패했어요. (${err?.message ?? "오류"})`);
+    } finally {
+      setChairmanSending(false);
     }
   };
 
@@ -168,15 +230,15 @@ export default function SupportWidget() {
               <DeukgeunAvatar />
               <div className="min-w-0">
                 <p className="text-sm font-bold text-white">{BOT_NAME} 캐릭터</p>
-                <p className="mt-1 text-xs text-slate-200">경로 안내 특화 도우미입니다. 메뉴 위치를 빠르게 찾아드려요.</p>
+                <p className="mt-1 text-xs text-slate-200">어디로 들어가야 할지 헷갈릴 때, 버튼 누르면 바로 이동 경로를 알려드려요.</p>
               </div>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex max-h-24 flex-wrap gap-2 overflow-y-auto pr-1">
               {SUGGESTED_QUESTIONS.map((q) => (
                 <button
                   key={q}
                   type="button"
-                  onClick={() => setInput(q)}
+                  onClick={() => void sendQuestion(q)}
                   disabled={sending}
                   className="rounded-full border border-fuchsia-300/40 bg-fuchsia-500/10 px-3 py-1 text-xs text-fuchsia-100 hover:bg-fuchsia-500/20 disabled:opacity-50"
                 >
@@ -184,17 +246,36 @@ export default function SupportWidget() {
                 </button>
               ))}
             </div>
+
+            <div className="mt-3 rounded-xl border border-white/15 bg-white/5 p-2">
+              <p className="text-xs font-semibold text-pink-200">득근득근 회장에게 하고 싶은 말</p>
+              <textarea
+                value={chairmanMessage}
+                onChange={(e) => setChairmanMessage(e.target.value)}
+                placeholder="건의, 칭찬, 불편사항을 편하게 적어주세요."
+                className="mt-2 h-16 w-full resize-none rounded-lg bg-slate-900/70 px-2 py-1.5 text-xs text-white focus:outline-none"
+                disabled={chairmanSending}
+              />
+              <button
+                type="button"
+                onClick={() => void submitChairmanMessage()}
+                disabled={chairmanSending || !chairmanMessage.trim()}
+                className="mt-2 w-full rounded-lg bg-pink-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {chairmanSending ? "전송 중..." : "회장님께 전달하기"}
+              </button>
+            </div>
           </div>
 
           <div ref={paneRef} className="max-h-80 space-y-3 overflow-y-auto p-4 text-sm">
             {[greeting, ...msgs].map((m) => (
               <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-2 ${
+                  className={`max-w-[88%] whitespace-pre-wrap rounded-xl px-3 py-2 ${
                     m.role === "user" ? "bg-pink-600 text-white" : "bg-white/10 text-white"
                   }`}
                 >
-                  {m.text}
+                  {m.role === "system" ? <SystemMessageText text={m.text} /> : m.text}
                 </div>
               </div>
             ))}
@@ -217,7 +298,7 @@ export default function SupportWidget() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`예: ${BOT_NAME}, 인바디 분석 어디서 해요?`}
+              placeholder={`예: ${BOT_NAME}, 친구 채팅 어디서 해요?`}
               disabled={sending}
               className="flex-1 rounded-lg bg-gray-800/70 px-3 py-2 text-white focus:outline-none disabled:opacity-60"
             />
@@ -232,6 +313,57 @@ export default function SupportWidget() {
       )}
     </>
   );
+}
+
+function SystemMessageText({ text }: { text: string }) {
+  const links = extractLinks(text);
+  const normalizedText = text
+    .replace(LINK_REGEX, "$1")
+    .replace(/관련\s*경로\s*:/g, "바로 이동")
+    .trim();
+
+  return (
+    <div className="space-y-2">
+      <p className="whitespace-pre-wrap">{normalizedText}</p>
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {links.map((link) => (
+            <a
+              key={`${link.label}-${link.href}`}
+              href={link.href}
+              className="rounded-full border border-cyan-300/40 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100 hover:bg-cyan-500/20"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function extractLinks(text: string): Array<{ label: string; href: string }> {
+  const links: Array<{ label: string; href: string }> = [];
+  const seen = new Set<string>();
+  for (const match of text.matchAll(LINK_REGEX)) {
+    const label = (match[1] || "바로가기").trim();
+    const href = (match[2] || "/").trim();
+    const key = `${label}::${href}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    links.push({ label, href });
+  }
+  return links;
+}
+
+function loadLocalUser(): LocalUser | null {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    return JSON.parse(raw) as LocalUser;
+  } catch {
+    return null;
+  }
 }
 
 function DeukgeunAvatar() {
@@ -258,3 +390,4 @@ function DeukgeunAvatar() {
     </div>
   );
 }
+

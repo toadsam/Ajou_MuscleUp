@@ -1,13 +1,17 @@
 package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.analytics.AnalyticsSummaryResponse;
+import com.ajou.muscleup.dto.support.AdminInquiryResponse;
+import com.ajou.muscleup.dto.support.AdminInquiryStatusUpdateRequest;
 import com.ajou.muscleup.entity.ApplicationStatus;
+import com.ajou.muscleup.entity.InquiryStatus;
 import com.ajou.muscleup.repository.AiChatMessageRepository;
 import com.ajou.muscleup.repository.BragCommentRepository;
 import com.ajou.muscleup.repository.BragLikeRepository;
 import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.ProgramApplicationRepository;
 import com.ajou.muscleup.repository.ReviewRepository;
+import com.ajou.muscleup.repository.InquiryRepository;
 import com.ajou.muscleup.service.AnalyticsService;
 import com.ajou.muscleup.service.AttendanceService;
 import com.ajou.muscleup.service.AuditLogService;
@@ -19,6 +23,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +44,7 @@ public class AdminController {
     private final ReviewRepository reviewRepository;
     private final AiChatMessageRepository aiChatMessageRepository;
     private final ProgramApplicationRepository programApplicationRepository;
+    private final InquiryRepository inquiryRepository;
     private final AuditLogService auditLogService;
     private final AttendanceService attendanceService;
 
@@ -137,6 +145,45 @@ public class AdminController {
             @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         return ResponseEntity.ok(attendanceService.listLogsForAdmin(page, size, query, didWorkout, shared, from, to));
+    }
+
+    @GetMapping("/support/inquiries")
+    public ResponseEntity<Page<AdminInquiryResponse>> listSupportInquiries(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "chairmanOnly", defaultValue = "false") boolean chairmanOnly,
+            @RequestParam(value = "status", required = false) InquiryStatus status
+    ) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        String normalizedQuery = query == null ? null : query.trim();
+        if (normalizedQuery != null && normalizedQuery.isEmpty()) {
+            normalizedQuery = null;
+        }
+        return ResponseEntity.ok(
+                inquiryRepository
+                        .searchForAdmin(normalizedQuery, chairmanOnly, status, PageRequest.of(safePage, safeSize))
+                        .map(AdminInquiryResponse::from)
+        );
+    }
+
+    @PatchMapping("/support/inquiries/{id}/status")
+    public ResponseEntity<AdminInquiryResponse> updateSupportInquiryStatus(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody AdminInquiryStatusUpdateRequest request
+    ) {
+        var inquiry = inquiryRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inquiry not found"));
+        inquiry.setStatus(request.getStatus());
+        String nextNote = request.getAdminNote() == null ? null : request.getAdminNote().trim();
+        if (nextNote != null && nextNote.isEmpty()) {
+            nextNote = null;
+        }
+        inquiry.setAdminNote(nextNote);
+        inquiry.setHandledAt(LocalDateTime.now());
+        var saved = inquiryRepository.save(inquiry);
+        return ResponseEntity.ok(AdminInquiryResponse.from(saved));
     }
 
     @PatchMapping("/attendance/shares/{id}/hidden")

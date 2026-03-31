@@ -2,6 +2,7 @@ package com.ajou.muscleup.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "inquiries")
@@ -24,5 +25,14 @@ public class Inquiry extends BaseTimeEntity {
     private String page; // where the user opened the widget
 
     private Long userId; // optional, if logged in
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private InquiryStatus status;
+
+    @Column(length = 1000)
+    private String adminNote;
+
+    private LocalDateTime handledAt;
 }
 

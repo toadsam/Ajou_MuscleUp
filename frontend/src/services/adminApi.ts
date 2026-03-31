@@ -91,6 +91,20 @@ export type AuditLogItem = {
   createdAt: string;
 };
 
+export type SupportInquiryItem = {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  message: string;
+  page?: string | null;
+  userId?: number | null;
+  status: "OPEN" | "READ" | "IN_PROGRESS" | "RESOLVED";
+  adminNote?: string | null;
+  handledAt?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+};
+
 export type AdminRole = "ROLE_ADMIN" | "ADMIN" | "ROLE_CONTENT_ADMIN" | "CONTENT_ADMIN" | "ROLE_SUPPORT_ADMIN" | "SUPPORT_ADMIN" | string;
 
 export const adminQueryKeys = {
@@ -190,6 +204,28 @@ export const adminApi = {
         },
       })
       .then((res) => res.data),
+
+  getSupportInquiries: (params: {
+    page?: number;
+    size?: number;
+    query?: string;
+    chairmanOnly?: boolean;
+    status?: SupportInquiryItem["status"] | "all";
+  }) =>
+    api
+      .get<PagedResult<SupportInquiryItem>>("/api/admin/support/inquiries", {
+        params: {
+          page: params.page ?? 0,
+          size: params.size ?? 20,
+          query: params.query?.trim() || undefined,
+          chairmanOnly: params.chairmanOnly ?? false,
+          status: !params.status || params.status === "all" ? undefined : params.status,
+        },
+      })
+      .then((res) => res.data),
+
+  updateSupportInquiryStatus: (id: number, payload: { status: SupportInquiryItem["status"]; adminNote?: string }) =>
+    api.patch<SupportInquiryItem>(`/api/admin/support/inquiries/${id}/status`, payload).then((res) => res.data),
 
   setAttendanceHidden: (id: number, hidden: boolean) =>
     api.patch(`/api/admin/attendance/shares/${id}/hidden`, null, { params: { hidden } }),

@@ -4,6 +4,7 @@ import com.ajou.muscleup.dto.support.InquiryRequest;
 import com.ajou.muscleup.dto.support.InquiryResponse;
 import com.ajou.muscleup.dto.support.SupportChatRequest;
 import com.ajou.muscleup.dto.support.SupportChatResponse;
+import com.ajou.muscleup.entity.InquiryStatus;
 import com.ajou.muscleup.entity.Inquiry;
 import com.ajou.muscleup.repository.InquiryRepository;
 import com.ajou.muscleup.service.SupportChatService;
@@ -28,6 +29,7 @@ public class SupportController {
                 .message(req.getMessage())
                 .page(req.getPage())
                 .userId(req.getUserId())
+                .status(InquiryStatus.OPEN)
                 .build());
         return ResponseEntity.ok(InquiryResponse.from(saved));
     }

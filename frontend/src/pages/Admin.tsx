@@ -5,7 +5,7 @@ import AdminToast from "../components/admin/AdminToast";
 import { MediaPanel, StatCard, TopListCard, toChangingSet, type ActionCount, type Application, type AttendanceShareItem, type BragItem, type ProteinItem } from "../components/admin/AdminDashboardPanels";
 import { useAdminToast } from "../components/admin/useAdminToast";
 import { adminApi } from "../services/adminApi";
-import type { AdminAttendanceLogItem, AnalyticsEventItem, AuditLogItem } from "../services/adminApi";
+import type { AdminAttendanceLogItem, AnalyticsEventItem, AuditLogItem, SupportInquiryItem } from "../services/adminApi";
 import { logEvent } from "../utils/analytics";
 
 type PageCount = { page: string; count: number };
@@ -48,6 +48,7 @@ export default function Admin() {
   const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEventItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [attendanceLogs, setAttendanceLogs] = useState<AdminAttendanceLogItem[]>([]);
+  const [supportInquiries, setSupportInquiries] = useState<SupportInquiryItem[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [gallery, setGallery] = useState<string[]>([]);
   const [proteins, setProteins] = useState<ProteinItem[]>([]);
@@ -64,6 +65,7 @@ export default function Admin() {
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
   const [loadingAttendanceLogs, setLoadingAttendanceLogs] = useState(false);
+  const [loadingSupportInquiries, setLoadingSupportInquiries] = useState(false);
 
   const [changingStatusIds, setChangingStatusIds] = useState<Set<number>>(new Set());
   const [processingAttendanceId, setProcessingAttendanceId] = useState<number | null>(null);
@@ -94,18 +96,23 @@ export default function Admin() {
   const [pageProteins, setPageProteins] = useState(0);
   const [pageBrags, setPageBrags] = useState(0);
   const [pageAttendanceLogs, setPageAttendanceLogs] = useState(0);
+  const [pageSupportInquiries, setPageSupportInquiries] = useState(0);
   const [totalAppsPages, setTotalAppsPages] = useState(0);
   const [totalAttendancePages, setTotalAttendancePages] = useState(0);
   const [totalGalleryPages, setTotalGalleryPages] = useState(0);
   const [totalProteinPages, setTotalProteinPages] = useState(0);
   const [totalBragPages, setTotalBragPages] = useState(0);
   const [totalAttendanceLogPages, setTotalAttendanceLogPages] = useState(0);
+  const [totalSupportInquiryPages, setTotalSupportInquiryPages] = useState(0);
   const [role, setRole] = useState<string>("");
   const [eventQuery, setEventQuery] = useState("");
   const [eventActionFilter, setEventActionFilter] = useState("all");
   const [eventPageFilter, setEventPageFilter] = useState("all");
   const [auditQuery, setAuditQuery] = useState("");
   const [attendanceQuery, setAttendanceQuery] = useState("");
+  const [supportInquiryQuery, setSupportInquiryQuery] = useState("");
+  const [supportChairmanOnly, setSupportChairmanOnly] = useState(true);
+  const [supportStatusFilter, setSupportStatusFilter] = useState<SupportInquiryItem["status"] | "all">("all");
   const [attendanceDidWorkoutFilter, setAttendanceDidWorkoutFilter] = useState<"all" | "true" | "false">("all");
   const [attendanceSharedFilter, setAttendanceSharedFilter] = useState<"all" | "true" | "false">("all");
   const [attendanceFrom, setAttendanceFrom] = useState(() => {
@@ -165,6 +172,7 @@ export default function Admin() {
     void loadBrags(pageBrags);
     void loadAttendanceShares(pageAttendance);
     void loadAttendanceLogs(pageAttendanceLogs);
+    void loadSupportInquiries(pageSupportInquiries);
     void loadHealthSummary();
     void loadMe();
     logEvent("admin_dashboard", "page_view");
@@ -192,6 +200,9 @@ export default function Admin() {
   useEffect(() => {
     void loadAttendanceLogs(pageAttendanceLogs);
   }, [pageAttendanceLogs]);
+  useEffect(() => {
+    void loadSupportInquiries(pageSupportInquiries);
+  }, [pageSupportInquiries]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -231,7 +242,7 @@ export default function Admin() {
   };
 
   const loadSummaryAndHealth = async () => {
-    await Promise.all([fetchSummary(), loadHealthSummary(), loadAnalyticsEvents(), loadAuditLogs(), loadAttendanceLogs(pageAttendanceLogs)]);
+    await Promise.all([fetchSummary(), loadHealthSummary(), loadAnalyticsEvents(), loadAuditLogs(), loadAttendanceLogs(pageAttendanceLogs), loadSupportInquiries(pageSupportInquiries)]);
   };
 
   const loadAnalyticsEvents = async () => {
@@ -279,6 +290,42 @@ export default function Admin() {
       showError(e?.message || "출석 원본 로그를 불러오지 못했습니다.");
     } finally {
       setLoadingAttendanceLogs(false);
+    }
+  };
+
+  const loadSupportInquiries = async (page = pageSupportInquiries) => {
+    try {
+      setLoadingSupportInquiries(true);
+      const data = await adminApi.getSupportInquiries({
+        page,
+        size: PAGE_SIZE,
+        query: supportInquiryQuery,
+        chairmanOnly: supportChairmanOnly,
+        status: supportStatusFilter,
+      });
+      setSupportInquiries(data.content ?? []);
+      setTotalSupportInquiryPages(data.totalPages ?? 1);
+      setPageSupportInquiries(data.number ?? page);
+    } catch (e: any) {
+      showError(e?.message || "문의/제안 데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoadingSupportInquiries(false);
+    }
+  };
+
+  const updateSupportInquiryStatus = async (item: SupportInquiryItem, nextStatus: SupportInquiryItem["status"]) => {
+    const defaultNote = item.adminNote || "";
+    const note = window.prompt("관리 메모(선택)를 입력하세요.", defaultNote);
+    if (note === null) return;
+    try {
+      await adminApi.updateSupportInquiryStatus(item.id, {
+        status: nextStatus,
+        adminNote: note.trim() || undefined,
+      });
+      showSuccess("문의 상태를 업데이트했습니다.");
+      await loadSupportInquiries(pageSupportInquiries);
+    } catch (e: any) {
+      showError(e?.message || "문의 상태 업데이트에 실패했습니다.");
     }
   };
 
@@ -880,6 +927,53 @@ export default function Admin() {
               </div>
             </MediaPanel>
           </div>
+        )}
+
+        {activeTab === "behavior" && (
+          <MediaPanel title="문의/회장에게 한마디" description="챗봇 문의와 회장 메시지 조회" loading={loadingSupportInquiries} hasData={supportInquiries.length > 0} onRefresh={() => void loadSupportInquiries(pageSupportInquiries)} emptyMessage="수집된 문의가 없습니다.">
+            <div className="mb-3 grid gap-2 md:grid-cols-5">
+              <input value={supportInquiryQuery} onChange={(e) => setSupportInquiryQuery(e.target.value)} placeholder="이름/이메일/메시지 검색" className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm md:col-span-2" />
+              <select value={supportStatusFilter} onChange={(e) => setSupportStatusFilter(e.target.value as SupportInquiryItem["status"] | "all")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                <option value="all">모든 상태</option>
+                <option value="OPEN">OPEN</option>
+                <option value="READ">READ</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="RESOLVED">RESOLVED</option>
+              </select>
+              <label className="flex items-center gap-2 rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                <input type="checkbox" checked={supportChairmanOnly} onChange={(e) => setSupportChairmanOnly(e.target.checked)} />
+                회장 메시지만
+              </label>
+              <button type="button" onClick={() => { setPageSupportInquiries(0); void loadSupportInquiries(0); }} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950">검색</button>
+            </div>
+            <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+              {supportInquiries.map((item) => (
+                <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-white">{item.name || "익명"} {item.email ? `(${item.email})` : ""}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                      item.status === "RESOLVED" ? "bg-emerald-500/25 text-emerald-100" :
+                      item.status === "IN_PROGRESS" ? "bg-cyan-500/25 text-cyan-100" :
+                      item.status === "READ" ? "bg-amber-500/25 text-amber-100" :
+                      "bg-rose-500/25 text-rose-100"
+                    }`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300">{item.page || "-"} · {new Date(item.createdAt).toLocaleString("ko-KR")}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-gray-100">{item.message}</p>
+                  {item.adminNote ? <p className="mt-1 whitespace-pre-wrap text-xs text-cyan-100">메모: {item.adminNote}</p> : null}
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "READ")} className="rounded-full border border-white/20 px-2 py-1 text-[11px]">읽음</button>
+                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "IN_PROGRESS")} className="rounded-full border border-cyan-300/40 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-100">처리중</button>
+                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "RESOLVED")} className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">해결완료</button>
+                    {item.handledAt ? <span className="text-[11px] text-gray-400">처리일: {new Date(item.handledAt).toLocaleString("ko-KR")}</span> : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Pagination page={pageSupportInquiries} totalPages={totalSupportInquiryPages} onChange={setPageSupportInquiries} />
+          </MediaPanel>
         )}
 
         {activeTab === "operations" && (
