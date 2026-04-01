@@ -23,9 +23,6 @@ public class RefreshTokenService {
 
     @Transactional
     public String issueFor(User user) {
-        // Keep only one refresh token per user for simple session management.
-        refreshTokenRepository.deleteByUser_Id(user.getId());
-
         String token = jwtUtil.generateRefreshToken(user.getEmail());
         LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtUtil.getRefreshTokenExpirationMs() / 1000L);
 
@@ -48,9 +45,13 @@ public class RefreshTokenService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "리프레시 토큰 검증 실패");
         }
 
-        User user = current.getUser();
-        refreshTokenRepository.delete(current);
-        return issueFor(user);
+        String newToken = jwtUtil.generateRefreshToken(current.getUser().getEmail());
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtUtil.getRefreshTokenExpirationMs() / 1000L);
+
+        current.setToken(newToken);
+        current.setExpiresAt(expiresAt);
+        refreshTokenRepository.save(current);
+        return newToken;
     }
 
     @Transactional

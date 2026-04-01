@@ -31,7 +31,11 @@ function setStoredAccessToken(token: string) {
 }
 
 let refreshing = false;
-let waiters: Array<() => void> = [];
+let waiters: Array<(success: boolean) => void> = [];
+
+function isRefreshRequest(url?: string): boolean {
+  return typeof url === "string" && url.includes("/api/auth/refresh");
+}
 
 api.interceptors.request.use((config) => {
   const token = getStoredAccessToken();
@@ -48,12 +52,20 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error?.config;
-    if (!error?.response || error.response.status !== 401 || originalRequest?._retry) {
+    if (
+      !error?.response ||
+      error.response.status !== 401 ||
+      originalRequest?._retry ||
+      isRefreshRequest(originalRequest?.url)
+    ) {
       return Promise.reject(error);
     }
 
     if (refreshing) {
-      await new Promise<void>((resolve) => waiters.push(resolve));
+      const refreshed = await new Promise<boolean>((resolve) => waiters.push(resolve));
+      if (!refreshed) {
+        return Promise.reject(error);
+      }
       return api(originalRequest);
     }
 
@@ -64,10 +76,12 @@ api.interceptors.response.use(
       if (refreshRes.data?.accessToken) {
         setStoredAccessToken(refreshRes.data.accessToken);
       }
-      waiters.forEach((resolve) => resolve());
+      waiters.forEach((resolve) => resolve(true));
       waiters = [];
       return api(originalRequest);
     } catch (refreshError) {
+      waiters.forEach((resolve) => resolve(false));
+      waiters = [];
       localStorage.removeItem("user");
       window.location.href = "/login";
       return Promise.reject(refreshError);
