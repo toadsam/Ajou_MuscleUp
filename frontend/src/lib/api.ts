@@ -82,7 +82,8 @@ api.interceptors.response.use(
     } catch (refreshError) {
       waiters.forEach((resolve) => resolve(false));
       waiters = [];
-      localStorage.removeItem("user");
+      // Safari can intermittently miss refresh cookies even when local
+      // access token is still valid. Avoid immediate local sign-out here.
       return Promise.reject(refreshError);
     } finally {
       refreshing = false;
