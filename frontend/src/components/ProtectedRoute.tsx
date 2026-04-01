@@ -14,6 +14,19 @@ export default function ProtectedRoute({ children }: Props) {
 
   useEffect(() => {
     let mounted = true;
+    const existingRaw = localStorage.getItem("user");
+    let hasLocalSession = false;
+    if (existingRaw) {
+      try {
+        const existing = JSON.parse(existingRaw) as { accessToken?: string; email?: string };
+        hasLocalSession =
+          (typeof existing?.accessToken === "string" && existing.accessToken.length > 0) ||
+          (typeof existing?.email === "string" && existing.email.length > 0);
+      } catch {
+        hasLocalSession = false;
+      }
+    }
+
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
@@ -46,10 +59,26 @@ export default function ProtectedRoute({ children }: Props) {
           setAuthState("ok");
           return;
         }
-        localStorage.removeItem("user");
+        if (res.status === 401 || res.status === 403) {
+          if (hasLocalSession) {
+            setAuthState("ok");
+            return;
+          }
+          localStorage.removeItem("user");
+          setAuthState("unauthorized");
+          return;
+        }
+        if (hasLocalSession) {
+          setAuthState("ok");
+          return;
+        }
         setAuthState("unauthorized");
       } catch {
         if (!mounted) return;
+        if (hasLocalSession) {
+          setAuthState("ok");
+          return;
+        }
         localStorage.removeItem("user");
         setAuthState("unauthorized");
       }

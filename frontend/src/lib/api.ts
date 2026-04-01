@@ -83,7 +83,6 @@ api.interceptors.response.use(
       waiters.forEach((resolve) => resolve(false));
       waiters = [];
       localStorage.removeItem("user");
-      window.location.href = "/login";
       return Promise.reject(refreshError);
     } finally {
       refreshing = false;
