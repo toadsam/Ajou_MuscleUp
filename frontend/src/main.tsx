@@ -10,6 +10,23 @@ import { queryClient } from "./lib/queryClient";
 installFetchAuth();
 void bootstrapAuthSession();
 
+function isSafariBrowser() {
+  const ua = navigator.userAgent;
+  const hasSafari = /Safari/i.test(ua);
+  const excluded = /Chrome|CriOS|EdgiOS|FxiOS|OPiOS|SamsungBrowser/i.test(ua);
+  return hasSafari && !excluded;
+}
+
+async function disableServiceWorkerForSafari() {
+  if (!("serviceWorker" in navigator) || !isSafariBrowser()) return;
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  } catch {
+    // ignore
+  }
+}
+
 function showPwaUpdateToast(onConfirm: () => void) {
   const existing = document.getElementById("pwa-update-toast");
   if (existing) return;
@@ -65,12 +82,18 @@ function showPwaUpdateToast(onConfirm: () => void) {
   document.body.appendChild(toast);
 }
 
-const updateSW = registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    showPwaUpdateToast(() => updateSW(true));
-  },
-});
+void disableServiceWorkerForSafari();
+
+const updateSW = isSafariBrowser()
+  ? (() => {
+      // no-op on Safari
+    })
+  : registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        showPwaUpdateToast(() => updateSW(true));
+      },
+    });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
