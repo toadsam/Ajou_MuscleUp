@@ -45,13 +45,9 @@ public class RefreshTokenService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "리프레시 토큰 검증 실패");
         }
 
-        String newToken = jwtUtil.generateRefreshToken(current.getUser().getEmail());
-        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtUtil.getRefreshTokenExpirationMs() / 1000L);
-
-        current.setToken(newToken);
-        current.setExpiresAt(expiresAt);
-        refreshTokenRepository.save(current);
-        return newToken;
+        // Keep refresh token stable to prevent race-condition logouts when
+        // parallel requests trigger refresh at the same time.
+        return current.getToken();
     }
 
     @Transactional
