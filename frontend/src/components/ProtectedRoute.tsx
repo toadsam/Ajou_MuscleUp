@@ -16,14 +16,19 @@ export default function ProtectedRoute({ children }: Props) {
     let mounted = true;
     const existingRaw = localStorage.getItem("user");
     let hasLocalSession = false;
+    let existingAccessToken: string | null = null;
     if (existingRaw) {
       try {
         const existing = JSON.parse(existingRaw) as { accessToken?: string; email?: string };
+        if (typeof existing?.accessToken === "string" && existing.accessToken.length > 0) {
+          existingAccessToken = existing.accessToken;
+        }
         hasLocalSession =
-          (typeof existing?.accessToken === "string" && existing.accessToken.length > 0) ||
+          existingAccessToken !== null ||
           (typeof existing?.email === "string" && existing.email.length > 0);
       } catch {
         hasLocalSession = false;
+        existingAccessToken = null;
       }
     }
 
@@ -31,22 +36,11 @@ export default function ProtectedRoute({ children }: Props) {
       try {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
           credentials: "include",
+          headers: existingAccessToken ? { Authorization: `Bearer ${existingAccessToken}` } : undefined,
         });
         if (!mounted) return;
         if (res.ok) {
           const user = await res.json();
-          const existingRaw = localStorage.getItem("user");
-          let existingAccessToken: string | null = null;
-          if (existingRaw) {
-            try {
-              const existing = JSON.parse(existingRaw) as { accessToken?: string };
-              if (typeof existing?.accessToken === "string") {
-                existingAccessToken = existing.accessToken;
-              }
-            } catch {
-              existingAccessToken = null;
-            }
-          }
           localStorage.setItem(
             "user",
             JSON.stringify({

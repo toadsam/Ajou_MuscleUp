@@ -19,6 +19,29 @@ interface NavGroup {
   links: NavLinkItem[];
 }
 
+function readLocalUser(): UserState | null {
+  try {
+    const savedUser = localStorage.getItem("user");
+    if (!savedUser) return null;
+    return JSON.parse(savedUser) as UserState;
+  } catch {
+    return null;
+  }
+}
+
+function hasLocalSession(user: UserState | null): boolean {
+  if (!user) return false;
+  return Boolean(
+    (typeof user.accessToken === "string" && user.accessToken.length > 0) ||
+      (typeof user.email === "string" && user.email.length > 0),
+  );
+}
+
+function buildAuthHeaders(user: UserState | null): HeadersInit | undefined {
+  if (!user?.accessToken) return undefined;
+  return { Authorization: `Bearer ${user.accessToken}` };
+}
+
 export default function Header() {
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,16 +58,6 @@ export default function Header() {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
 
-    const readLocalUser = (): UserState | null => {
-      try {
-        const savedUser = localStorage.getItem("user");
-        if (!savedUser) return null;
-        return JSON.parse(savedUser) as UserState;
-      } catch {
-        return null;
-      }
-    };
-
     const syncAuthState = async () => {
       const localUser = readLocalUser();
       setUser(localUser);
@@ -52,9 +65,16 @@ export default function Header() {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
           credentials: "include",
           cache: "no-store",
+          headers: buildAuthHeaders(localUser),
         });
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
+            if (hasLocalSession(localUser)) {
+              // Safari may fail cookie reads intermittently even with a valid
+              // local access token. Keep local session until a real API auth
+              // failure path clears it.
+              return;
+            }
             localStorage.removeItem("user");
             setUser(null);
           }
