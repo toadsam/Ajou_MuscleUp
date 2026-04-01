@@ -13,6 +13,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -88,14 +89,24 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())
                 .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())
                 .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString())
-                .body(response);
+                .body(new LoginResponse(
+                        response.getToken(),
+                        response.getEmail(),
+                        response.getNickname(),
+                        response.getRole(),
+                        refreshToken
+                ));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenResponse> refresh(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
-            @CookieValue(name = "rememberMe", required = false) String rememberMeCookie
+            @CookieValue(name = "rememberMe", required = false) String rememberMeCookie,
+            HttpServletRequest request
     ) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            refreshToken = extractBearerToken(request);
+        }
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(401).build();
         }
@@ -114,7 +125,7 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(newRefresh, rememberMe).toString())
                 .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())
                 .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString())
-                .body(new AccessTokenResponse(accessToken));
+                .body(new AccessTokenResponse(accessToken, newRefresh));
     }
 
     @PostMapping("/logout")
@@ -185,7 +196,13 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())
                 .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())
                 .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString())
-                .body(response);
+                .body(new LoginResponse(
+                        response.getToken(),
+                        response.getEmail(),
+                        response.getNickname(),
+                        response.getRole(),
+                        refreshToken
+                ));
     }
 
     @GetMapping("/me")
@@ -221,6 +238,14 @@ public class AuthController {
             builder.maxAge(refreshCookieMaxAge);
         }
         return builder.build();
+    }
+
+    private String extractBearerToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null) return null;
+        if (!authHeader.startsWith("Bearer ")) return null;
+        String token = authHeader.substring(7);
+        return token == null || token.isBlank() ? null : token;
     }
 
     private ResponseCookie buildAccessCookie(String token, boolean rememberMe) {

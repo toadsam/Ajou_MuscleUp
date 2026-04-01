@@ -18,10 +18,19 @@ function getAccessToken(): string | null {
   return typeof token === "string" && token.length > 0 ? token : null;
 }
 
-function setAccessToken(token: string) {
+function getRefreshToken(): string | null {
+  const user = readUserRecord();
+  const token = user?.refreshToken;
+  return typeof token === "string" && token.length > 0 ? token : null;
+}
+
+function setTokens(accessToken: string, refreshToken?: string | null) {
   const user = readUserRecord();
   if (!user) return;
-  user.accessToken = token;
+  user.accessToken = accessToken;
+  if (typeof refreshToken === "string" && refreshToken.length > 0) {
+    user.refreshToken = refreshToken;
+  }
   localStorage.setItem("user", JSON.stringify(user));
 }
 
@@ -93,16 +102,22 @@ export function installFetchAuth() {
 
   async function refreshAccessToken(): Promise<boolean> {
     const refreshUrl = API_BASE ? `${API_BASE}/api/auth/refresh` : "/api/auth/refresh";
+    const refreshToken = getRefreshToken();
+    const headers: Record<string, string> = { [RETRY_HEADER]: "1" };
+    if (refreshToken) {
+      headers.Authorization = `Bearer ${refreshToken}`;
+    }
     const res = await originalFetch(refreshUrl, {
       method: "POST",
       credentials: "include",
-      headers: { [RETRY_HEADER]: "1" },
+      headers,
     });
     if (res.ok) {
       try {
-        const payload = (await res.json()) as { accessToken?: string };
-        if (payload?.accessToken) {
-          setAccessToken(payload.accessToken);
+        const payload = (await res.json()) as { accessToken?: string; token?: string; refreshToken?: string };
+        const accessToken = payload?.accessToken || payload?.token;
+        if (accessToken) {
+          setTokens(accessToken, payload?.refreshToken);
         }
       } catch {
         // ignore non-JSON refresh responses
@@ -159,11 +174,16 @@ export async function bootstrapAuthSession(): Promise<boolean> {
   const user = readUserRecord();
   if (!user) return false;
   const refreshUrl = API_BASE ? `${API_BASE}/api/auth/refresh` : "/api/auth/refresh";
+  const refreshToken = getRefreshToken();
+  const headers: Record<string, string> = { [RETRY_HEADER]: "1" };
+  if (refreshToken) {
+    headers.Authorization = `Bearer ${refreshToken}`;
+  }
   try {
     const res = await fetch(refreshUrl, {
       method: "POST",
       credentials: "include",
-      headers: { [RETRY_HEADER]: "1" },
+      headers,
     });
     if (!res.ok) {
       // Safari can fail early refresh-cookie reads right after navigation.
@@ -172,9 +192,10 @@ export async function bootstrapAuthSession(): Promise<boolean> {
       return false;
     }
     try {
-      const payload = (await res.json()) as { accessToken?: string };
-      if (payload?.accessToken) {
-        setAccessToken(payload.accessToken);
+      const payload = (await res.json()) as { accessToken?: string; token?: string; refreshToken?: string };
+      const accessToken = payload?.accessToken || payload?.token;
+      if (accessToken) {
+        setTokens(accessToken, payload?.refreshToken);
       }
     } catch {
       // ignore non-JSON refresh responses

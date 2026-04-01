@@ -17,18 +17,24 @@ export default function ProtectedRoute({ children }: Props) {
     const existingRaw = localStorage.getItem("user");
     let hasLocalSession = false;
     let existingAccessToken: string | null = null;
+    let existingRefreshToken: string | null = null;
     if (existingRaw) {
       try {
-        const existing = JSON.parse(existingRaw) as { accessToken?: string; email?: string };
+        const existing = JSON.parse(existingRaw) as { accessToken?: string; refreshToken?: string; email?: string };
         if (typeof existing?.accessToken === "string" && existing.accessToken.length > 0) {
           existingAccessToken = existing.accessToken;
         }
+        if (typeof existing?.refreshToken === "string" && existing.refreshToken.length > 0) {
+          existingRefreshToken = existing.refreshToken;
+        }
         hasLocalSession =
           existingAccessToken !== null ||
+          existingRefreshToken !== null ||
           (typeof existing?.email === "string" && existing.email.length > 0);
       } catch {
         hasLocalSession = false;
         existingAccessToken = null;
+        existingRefreshToken = null;
       }
     }
 
@@ -45,6 +51,7 @@ export default function ProtectedRoute({ children }: Props) {
             "user",
             JSON.stringify({
               accessToken: existingAccessToken,
+              refreshToken: existingRefreshToken,
               email: user?.email,
               nickname: user?.nickname,
               role: user?.role,

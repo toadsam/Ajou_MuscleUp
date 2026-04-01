@@ -7,6 +7,7 @@ interface UserState {
   nickname: string;
   role: string;
   accessToken?: string;
+  refreshToken?: string;
 }
 
 interface NavLinkItem {
@@ -86,6 +87,7 @@ export default function Header() {
           nickname: me?.nickname ?? localUser?.nickname ?? "회원",
           role: me?.role ?? "",
           accessToken: localUser?.accessToken,
+          refreshToken: localUser?.refreshToken,
         };
         localStorage.setItem("user", JSON.stringify(nextUser));
         setUser(nextUser);

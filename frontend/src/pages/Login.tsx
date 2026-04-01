@@ -5,6 +5,7 @@ interface LoginResponse {
   email: string;
   nickname: string;
   role: string;
+  refreshToken?: string;
 }
 
 declare global {
@@ -37,6 +38,7 @@ function storeSession(data: LoginResponse) {
     "user",
     JSON.stringify({
       accessToken: data.token,
+      refreshToken: data.refreshToken,
       email: data.email,
       nickname: data.nickname,
       role: data.role,

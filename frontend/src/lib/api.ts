@@ -18,12 +18,26 @@ function getStoredAccessToken(): string | null {
   }
 }
 
-function setStoredAccessToken(token: string) {
+function getStoredRefreshToken(): string | null {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { refreshToken?: string };
+    return parsed?.refreshToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function setStoredTokens(accessToken: string, refreshToken?: string | null) {
   try {
     const raw = localStorage.getItem("user");
     if (!raw) return;
     const parsed = JSON.parse(raw) as Record<string, unknown>;
-    parsed.accessToken = token;
+    parsed.accessToken = accessToken;
+    if (typeof refreshToken === "string" && refreshToken.length > 0) {
+      parsed.refreshToken = refreshToken;
+    }
     localStorage.setItem("user", JSON.stringify(parsed));
   } catch {
     // ignore storage errors
@@ -72,9 +86,17 @@ api.interceptors.response.use(
     refreshing = true;
     originalRequest._retry = true;
     try {
-      const refreshRes = await api.post<{ accessToken?: string }>("/api/auth/refresh");
-      if (refreshRes.data?.accessToken) {
-        setStoredAccessToken(refreshRes.data.accessToken);
+      const refreshToken = getStoredRefreshToken();
+      const refreshRes = await api.post<{ accessToken?: string; token?: string; refreshToken?: string }>(
+        "/api/auth/refresh",
+        undefined,
+        {
+          headers: refreshToken ? { Authorization: `Bearer ${refreshToken}` } : undefined,
+        },
+      );
+      const accessToken = refreshRes.data?.accessToken || refreshRes.data?.token;
+      if (accessToken) {
+        setStoredTokens(accessToken, refreshRes.data?.refreshToken);
       }
       waiters.forEach((resolve) => resolve(true));
       waiters = [];
