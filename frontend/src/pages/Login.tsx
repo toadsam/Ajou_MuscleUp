@@ -18,6 +18,13 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL ?? "https://musclehub.co.kr";
 
+function isSafariBrowser() {
+  const ua = navigator.userAgent;
+  const hasSafari = /Safari/i.test(ua);
+  const excluded = /Chrome|CriOS|EdgiOS|FxiOS|OPiOS|SamsungBrowser/i.test(ua);
+  return hasSafari && !excluded;
+}
+
 async function loginRequest(body: Record<string, unknown>, path: string) {
   const response = await fetch(`${API_BASE}/api/auth/${path}`, {
     method: "POST",
@@ -50,6 +57,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoadFailed, setGoogleLoadFailed] = useState(false);
+  const isSafari = isSafariBrowser();
   const isBlockedUserAgent = /wv|WebView|FBAN|FBAV|Instagram|Line|KAKAOTALK|NAVER|DaumApps/i.test(
     navigator.userAgent
   );
@@ -111,7 +119,10 @@ export default function Login() {
       return;
     }
 
-    if (!GOOGLE_CLIENT_ID) return;
+    if (!GOOGLE_CLIENT_ID || isSafari) {
+      if (isSafari) setGoogleLoadFailed(true);
+      return;
+    }
 
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
@@ -129,7 +140,7 @@ export default function Login() {
       window.clearTimeout(timeout);
       document.body.removeChild(script);
     };
-  }, []);
+  }, [isSafari]);
 
   useEffect(() => {
     if (!googleReady || !window.google || !GOOGLE_CLIENT_ID) return;
@@ -164,17 +175,21 @@ export default function Login() {
         </label>
 
         <div className="flex justify-center min-h-[42px] items-center">
-          {GOOGLE_CLIENT_ID ? (
+          {GOOGLE_CLIENT_ID && !isSafari ? (
             <div id="googleSignInButton" />
           ) : (
-            <p className="text-sm text-gray-400">Google Client ID가 설정되지 않았습니다.</p>
+            <p className="text-sm text-gray-400">
+              {GOOGLE_CLIENT_ID ? "Safari에서는 안정 모드 로그인을 사용합니다." : "Google Client ID가 설정되지 않았습니다."}
+            </p>
           )}
         </div>
 
         {googleLoadFailed && (
           <div className="space-y-3">
             <p className="text-center text-xs text-gray-400">
-              현재 브라우저 환경에서 Google 버튼을 불러오지 못했습니다.
+              {isSafari
+                ? "Safari 안정 모드로 로그인합니다."
+                : "현재 브라우저 환경에서 Google 버튼을 불러오지 못했습니다."}
             </p>
             {isBlockedUserAgent ? (
               <button
