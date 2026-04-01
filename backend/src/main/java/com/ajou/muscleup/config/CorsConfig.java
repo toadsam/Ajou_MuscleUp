@@ -18,9 +18,18 @@ public class CorsConfig {
       @Value("${cors.allowed-origins:http://localhost:5173}") List<String> allowedOrigins) {
     CorsConfiguration cfg = new CorsConfiguration();
     allowedOrigins.forEach(cfg::addAllowedOriginPattern);
-    cfg.addAllowedHeader("*");
-    cfg.addAllowedMethod("*");
+    cfg.setAllowedHeaders(List.of(
+        "Authorization",
+        "Content-Type",
+        "X-Requested-With",
+        "x-auth-retry",
+        "Cache-Control",
+        "Pragma"
+    ));
+    cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    cfg.setExposedHeaders(List.of("Set-Cookie"));
     cfg.setAllowCredentials(true);
+    cfg.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", cfg);
