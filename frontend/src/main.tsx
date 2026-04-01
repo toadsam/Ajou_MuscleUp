@@ -22,6 +22,15 @@ async function disableServiceWorkerForSafari() {
   try {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(registrations.map((registration) => registration.unregister()));
+    // Safari can keep a previously controlling SW alive for this tab until
+    // the next hard navigation. Force one reload only once to detach control.
+    if (navigator.serviceWorker.controller) {
+      const key = "safari_sw_detached_once";
+      if (sessionStorage.getItem(key) !== "1") {
+        sessionStorage.setItem(key, "1");
+        window.location.replace(window.location.href);
+      }
+    }
   } catch {
     // ignore
   }
