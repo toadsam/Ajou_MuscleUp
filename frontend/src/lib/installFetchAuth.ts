@@ -12,14 +12,6 @@ function readUserRecord(): Record<string, unknown> | null {
   }
 }
 
-function clearUserRecord() {
-  try {
-    localStorage.removeItem("user");
-  } catch {
-    // ignore
-  }
-}
-
 function getAccessToken(): string | null {
   const user = readUserRecord();
   const token = user?.accessToken;
@@ -174,9 +166,9 @@ export async function bootstrapAuthSession(): Promise<boolean> {
       headers: { [RETRY_HEADER]: "1" },
     });
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        clearUserRecord();
-      }
+      // Safari can fail early refresh-cookie reads right after navigation.
+      // Do not clear local user here; keep current access token and let
+      // normal API auth checks decide whether the session is actually invalid.
       return false;
     }
     try {
