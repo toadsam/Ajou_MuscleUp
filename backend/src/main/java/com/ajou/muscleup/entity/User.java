@@ -1,13 +1,17 @@
-// src/main/java/com/ajou/muscleup/entity/User.java
 package com.ajou.muscleup.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "users") // DB 테이블 이름
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,5 +30,15 @@ public class User {
     private String role = "USER";
 
     @Column(nullable = false, length = 30)
-    private String nickname;   // ✅ 이 필드가 있어야 함
+    private String nickname;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

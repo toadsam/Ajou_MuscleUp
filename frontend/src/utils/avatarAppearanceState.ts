@@ -7,6 +7,7 @@ export type AvatarAppearanceState = {
   customization?: AvatarCustomization;
   gender?: "MALE" | "FEMALE" | null;
   isResting?: boolean;
+  attendanceRisk?: "normal" | "warning" | "critical";
 };
 
 const keyBySeed = (seed: string) => `avatar-appearance-v1:${seed}`;
@@ -24,6 +25,12 @@ export const loadAppearanceBySeed = (seed: string): AvatarAppearanceState | null
       customization: parsed.customization ?? {},
       gender: parsed.gender === "FEMALE" ? "FEMALE" : parsed.gender === "MALE" ? "MALE" : null,
       isResting: typeof parsed.isResting === "boolean" ? parsed.isResting : false,
+      attendanceRisk:
+        parsed.attendanceRisk === "critical"
+          ? "critical"
+          : parsed.attendanceRisk === "warning"
+            ? "warning"
+            : "normal",
     };
   } catch {
     return null;

@@ -5,6 +5,7 @@ type Props = {
   gender?: "MALE" | "FEMALE" | null;
   mbti?: string | null;
   isResting?: boolean;
+  attendanceRisk?: "normal" | "warning" | "critical";
   seedFeatures: SeededFeatures;
   strokeColor: string;
   skinColor: string;
@@ -38,9 +39,15 @@ const faceRadii = [
   { rx: 14.8, ry: 14.8 },
 ];
 
-export default function Head({ gender = "MALE", mbti, isResting = false, seedFeatures, strokeColor, skinColor, hairColor }: Props) {
+export default function Head({ gender = "MALE", mbti, isResting = false, attendanceRisk = "normal", seedFeatures, strokeColor, skinColor, hairColor }: Props) {
   const baseEyeStyle = eyeByMbti(mbti) === "neutral" ? seedFeatures.eyeStyle : 0;
-  const expression = isResting ? "tired" : expressionByMbti(mbti);
+  const expression = isResting
+    ? "tired"
+    : attendanceRisk === "critical"
+      ? "panic"
+      : attendanceRisk === "warning"
+        ? "concerned"
+        : expressionByMbti(mbti);
   const face = faceRadii[seedFeatures.faceShape % faceRadii.length];
   const feminine = gender === "FEMALE";
   const faceRx = face.rx * seedFeatures.jawWidth * (feminine ? 0.78 : 1);
@@ -149,6 +156,22 @@ export default function Head({ gender = "MALE", mbti, isResting = false, seedFea
           <path d={`M ${72 - mouthHalf} 48.4 Q 72 45.2, ${72 + mouthHalf} 48.4`} stroke="#0f172a" strokeWidth={1.7} fill="none" strokeLinecap="round" />
           <path d={`M ${72 - eyeDist - 3.1} 38.7 Q ${72 - eyeDist} 39.7, ${72 - eyeDist + 3.1} 38.7`} stroke="#334155" strokeWidth={1.4} fill="none" strokeLinecap="round" opacity={0.8} />
           <path d={`M ${72 + eyeDist - 3.1} 38.7 Q ${72 + eyeDist} 39.7, ${72 + eyeDist + 3.1} 38.7`} stroke="#334155" strokeWidth={1.4} fill="none" strokeLinecap="round" opacity={0.8} />
+        </>
+      )}
+      {expression === "concerned" && (
+        <>
+          <path d={`M ${72 - mouthHalf} 48 Q 72 46.4, ${72 + mouthHalf} 48`} stroke="#7f1d1d" strokeWidth={1.8} fill="none" strokeLinecap="round" />
+          <path d={`M ${72 - eyeDist - 2.8} 33.8 L ${72 - eyeDist + 2.4} 32.6`} stroke="#7f1d1d" strokeWidth={1.6} strokeLinecap="round" />
+          <path d={`M ${72 + eyeDist - 2.4} 32.6 L ${72 + eyeDist + 2.8} 33.8`} stroke="#7f1d1d" strokeWidth={1.6} strokeLinecap="round" />
+        </>
+      )}
+      {expression === "panic" && (
+        <>
+          <ellipse cx={72} cy={48} rx={3.3} ry={2.5} fill="#7f1d1d" opacity={0.82} />
+          <path d={`M ${72 - eyeDist - 3.2} 34.4 L ${72 - eyeDist + 2.8} 31.8`} stroke="#7f1d1d" strokeWidth={1.8} strokeLinecap="round" />
+          <path d={`M ${72 + eyeDist - 2.8} 31.8 L ${72 + eyeDist + 3.2} 34.4`} stroke="#7f1d1d" strokeWidth={1.8} strokeLinecap="round" />
+          <path d={`M ${72 - eyeDist} 42 L ${72 - eyeDist} 44.4`} stroke="#0ea5e9" strokeWidth={1.3} strokeLinecap="round" opacity={0.75} />
+          <path d={`M ${72 + eyeDist} 42 L ${72 + eyeDist} 44.4`} stroke="#0ea5e9" strokeWidth={1.3} strokeLinecap="round" opacity={0.75} />
         </>
       )}
 

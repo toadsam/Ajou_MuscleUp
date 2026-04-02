@@ -43,6 +43,6 @@ public class MyPageServiceImpl implements MyPageService {
 
         List<AiChatLogItem> chats = aiChatHistoryService.getRecent(userEmail, null, 20);
 
-        return new MyPageResponse(user.getEmail(), user.getNickname(), comments, likes, chats);
+        return new MyPageResponse(user.getEmail(), user.getNickname(), user.getCreatedAt(), comments, likes, chats);
     }
 }

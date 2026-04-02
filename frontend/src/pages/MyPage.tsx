@@ -38,6 +38,7 @@ type AiChatLogItem = {
 type MyPageResponse = {
   email: string;
   nickname: string;
+  createdAt?: string | null;
   recentComments: BragComment[];
   recentLikes: BragPost[];
   recentAiChats: AiChatLogItem[];
@@ -108,6 +109,13 @@ type AttendanceSummary = {
   currentStreak: number;
   bestStreakInMonth?: number | null;
 };
+
+type AttendanceLogLite = {
+  date: string;
+  didWorkout: boolean;
+};
+
+type AttendanceRiskState = "normal" | "warning" | "critical";
 
 type Toast = { type: "success" | "error"; message: string };
 
@@ -183,6 +191,15 @@ const stageDescriptions = [
 
 type StatsForm = typeof emptyForm;
 const formatMonthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+const formatDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+const startOfWeekMonday = (date: Date) => {
+  const clone = new Date(date);
+  const day = (clone.getDay() + 6) % 7;
+  clone.setDate(clone.getDate() - day);
+  clone.setHours(0, 0, 0, 0);
+  return clone;
+};
 const skillToggleStorageKey = (email?: string | null) => `avatar-skill-toggle-v1:${email?.trim().toLowerCase() || "guest"}`;
 
 const loadSkillToggles = (email?: string | null): Record<string, boolean> => {
@@ -215,6 +232,7 @@ export default function MyPage() {
   const [rerollBurstNonce, setRerollBurstNonce] = useState(0);
   const [rerollCinematic, setRerollCinematic] = useState(false);
   const [attendanceCount, setAttendanceCount] = useState(0);
+  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLogLite[]>([]);
   const [customization, setCustomization] = useState<AvatarCustomization>({});
   const [skillEnabledMap, setSkillEnabledMap] = useState<Record<string, boolean>>({});
   const [isResting, setIsResting] = useState(false);
@@ -259,6 +277,23 @@ export default function MyPage() {
           setAttendanceCount(attendanceSummary.monthWorkoutCount ?? 0);
         } catch (e) {
           setAttendanceCount(0);
+        }
+        try {
+          const now = new Date();
+          const monthKeys = [0, 1, 2].map((offset) =>
+            formatMonthKey(new Date(now.getFullYear(), now.getMonth() - offset, 1)),
+          );
+          const monthLogs = await Promise.all(
+            monthKeys.map((key) => api<AttendanceLogLite[]>(`/api/attendance?month=${key}`)),
+          );
+          const dedup = new Map<string, AttendanceLogLite>();
+          monthLogs.flat().forEach((log) => {
+            if (!log?.date) return;
+            dedup.set(log.date, log);
+          });
+          setAttendanceLogs(Array.from(dedup.values()));
+        } catch {
+          setAttendanceLogs([]);
         }
         try {
           const rankRes = await api<RankSummary>("/api/rankings/characters?type=LEVEL&limit=1");
@@ -483,6 +518,47 @@ export default function MyPage() {
     [skillUnlocks, skillEnabledMap]
   );
 
+  const attendanceRiskState = useMemo<AttendanceRiskState>(() => {
+    if (isResting) return "normal";
+    const joinedAt = data?.createdAt ? new Date(data.createdAt) : null;
+    const workoutDates = new Set(
+      attendanceLogs.filter((log) => log.didWorkout).map((log) => log.date),
+    );
+    const weekStart = startOfWeekMonday(new Date());
+    const prevWeekStart = new Date(weekStart);
+    prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+    if (joinedAt && !Number.isNaN(joinedAt.getTime()) && joinedAt > prevWeekStart) return "normal";
+
+    const countWeek = (offsetWeeks: number) => {
+      const start = new Date(weekStart);
+      start.setDate(start.getDate() - offsetWeeks * 7);
+      let count = 0;
+      for (let i = 0; i < 7; i += 1) {
+        const cursor = new Date(start);
+        cursor.setDate(start.getDate() + i);
+        if (workoutDates.has(formatDateKey(cursor))) count += 1;
+      }
+      return count;
+    };
+
+    // Completed-week policy: judge by last week, not current in-progress week.
+    const prevWeekCount = countWeek(1);
+    if (prevWeekCount >= 3) return "normal";
+
+    const prev2WeekCount = countWeek(2);
+    if (prev2WeekCount < 3) return "critical";
+    return "warning";
+  }, [attendanceLogs, isResting, data?.createdAt]);
+
+  const attendanceRiskLabel =
+    attendanceRiskState === "critical"
+      ? "탈락위기"
+      : attendanceRiskState === "warning"
+        ? "경고"
+        : isResting
+          ? "회복/휴식 중"
+          : "활동 가능";
+
   const toggleSkillEnabled = (skillId: string) => {
     setSkillEnabledMap((prev) => ({ ...prev, [skillId]: !(prev[skillId] ?? true) }));
   };
@@ -500,8 +576,9 @@ export default function MyPage() {
       customization,
       gender: character.gender ?? stats?.gender ?? null,
       isResting,
+      attendanceRisk: attendanceRiskState,
     });
-  }, [character?.avatarSeed, character?.gender, evolutionBranch, activeSkillIds, customization, stats?.gender, isResting]);
+  }, [character?.avatarSeed, character?.gender, evolutionBranch, activeSkillIds, customization, stats?.gender, isResting, attendanceRiskState]);
 
   const toggleResting = async () => {
     if (!character) return;
@@ -571,7 +648,7 @@ export default function MyPage() {
                 <p className="mt-2 text-base font-bold text-white">
                   {character ? `${character.tier} · Stage ${character.evolutionStage}` : "준비 중"}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">{isResting ? "회복/휴식 중" : "활동 가능"}</p>
+                <p className="mt-1 text-xs text-gray-400">{attendanceRiskLabel}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">현재 랭크</p>
@@ -876,6 +953,7 @@ export default function MyPage() {
                 gender={character.gender ?? stats?.gender}
                 mbti={stats?.mbti}
                 isResting={isResting}
+                attendanceRisk={attendanceRiskState}
                 change={change}
                 customization={customization}
                 rerollBurstNonce={rerollBurstNonce}
@@ -907,7 +985,9 @@ export default function MyPage() {
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Condition</div>
-                  <div className={`font-semibold ${isResting ? "text-sky-200" : "text-white"}`}>{isResting ? "회복/휴식 중" : "활동 가능"}</div>
+                  <div className={`font-semibold ${attendanceRiskState === "critical" ? "text-rose-300" : attendanceRiskState === "warning" ? "text-amber-300" : isResting ? "text-sky-200" : "text-white"}`}>
+                    {attendanceRiskLabel}
+                  </div>
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 flex flex-wrap gap-6">

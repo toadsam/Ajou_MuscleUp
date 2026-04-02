@@ -42,6 +42,7 @@ type Props = {
   gender?: "MALE" | "FEMALE" | null;
   mbti?: string | null;
   isResting?: boolean;
+  attendanceRisk?: "normal" | "warning" | "critical";
   change?: ChangeState | null;
   customization?: AvatarCustomization | null;
   rerollBurstNonce?: number;
@@ -57,6 +58,7 @@ export default function CharacterCard({
   gender,
   mbti,
   isResting = false,
+  attendanceRisk = "normal",
   change,
   customization,
   rerollBurstNonce = 0,
@@ -92,6 +94,7 @@ export default function CharacterCard({
             gender={gender}
             mbti={mbti}
             isResting={isResting}
+            attendanceRisk={attendanceRisk}
             size={156}
             customization={customization}
             evolutionBranch={evolutionBranch}

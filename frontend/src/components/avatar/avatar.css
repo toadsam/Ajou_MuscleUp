@@ -71,6 +71,39 @@
   animation-delay: 1.2s;
 }
 
+.avatar-risk-warning {
+  filter: saturate(1.06) brightness(0.97);
+}
+
+.avatar-risk-critical {
+  filter: saturate(1.18) brightness(0.94) contrast(1.06);
+}
+
+.avatar-risk-banner {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-4deg);
+  z-index: 2;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+}
+
+.avatar-risk-banner.warning {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.96), rgba(234, 88, 12, 0.9));
+  color: #ffedd5;
+}
+
+.avatar-risk-banner.critical {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.96), rgba(220, 38, 38, 0.92));
+  color: #ffe4e6;
+}
+
 .avatar-motion-energetic {
   animation: avatar-energetic 1.8s ease-in-out infinite;
 }

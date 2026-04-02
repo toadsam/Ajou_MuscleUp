@@ -4,6 +4,7 @@ import com.ajou.muscleup.dto.ai.AiChatLogItem;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -11,6 +12,7 @@ import java.util.List;
 public class MyPageResponse {
     private String email;
     private String nickname;
+    private LocalDateTime createdAt;
 
     private List<BragCommentResponse> recentComments;
     private List<BragPostResponse> recentLikes;

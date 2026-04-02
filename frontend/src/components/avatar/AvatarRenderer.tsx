@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+﻿import { useEffect, useId, useState } from "react";
 import Arms from "./Arms";
 import Effects from "./Effects";
 import Head from "./Head";
@@ -21,6 +21,7 @@ type Props = {
   gender?: "MALE" | "FEMALE" | null;
   mbti?: string | null;
   isResting?: boolean;
+  attendanceRisk?: "normal" | "warning" | "critical";
   size?: number;
   customization?: AvatarCustomization | null;
   evolutionBranch?: EvolutionBranch | null;
@@ -52,6 +53,7 @@ export default function AvatarRenderer({
   gender,
   mbti,
   isResting = false,
+  attendanceRisk = "normal",
   size = 176,
   customization,
   evolutionBranch,
@@ -84,6 +86,11 @@ export default function AvatarRenderer({
   const resolvedCustomization = customization ?? persistedAppearance?.customization ?? null;
   const resolvedGender = gender ?? persistedAppearance?.gender ?? "MALE";
   const resolvedResting = isResting ?? persistedAppearance?.isResting ?? false;
+  const resolvedAttendanceRisk = resolvedResting
+    ? "normal"
+    : attendanceRisk !== "normal"
+      ? attendanceRisk
+      : persistedAppearance?.attendanceRisk ?? "normal";
 
   const rawGrowth = growthParams ?? defaultGrowthParams;
   const growth = resolvedBranch ? amplifyGrowthParams(rawGrowth, resolvedBranch, resolvedSkillCount) : rawGrowth;
@@ -120,16 +127,23 @@ export default function AvatarRenderer({
 
   return (
     <div
-      className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${resolvedGender === "FEMALE" ? "avatar-gender-female" : "avatar-gender-male"} ${resolvedResting ? "avatar-resting" : ""} ${tierPreset.burst ? "avatar-master-burst" : ""}`}
+      className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${resolvedGender === "FEMALE" ? "avatar-gender-female" : "avatar-gender-male"} ${resolvedResting ? "avatar-resting" : ""} ${resolvedAttendanceRisk === "warning" ? "avatar-risk-warning" : ""} ${resolvedAttendanceRisk === "critical" ? "avatar-risk-critical" : ""} ${tierPreset.burst ? "avatar-master-burst" : ""}`}
       style={{ width: size, height: size }}
     >
       {resolvedResting && (
         <>
-          <div className="avatar-rest-banner">휴식 중</div>
+          <div className="avatar-rest-banner">{"\uD734\uC2DD \uC911"}</div>
           <div className="avatar-rest-cloud cloud-left" aria-hidden="true" />
           <div className="avatar-rest-cloud cloud-right" aria-hidden="true" />
         </>
       )}
+      {!resolvedResting && resolvedAttendanceRisk === "warning" && (
+        <div className="avatar-risk-banner warning">{"\uACBD\uACE0"}</div>
+      )}
+      {!resolvedResting && resolvedAttendanceRisk === "critical" && (
+        <div className="avatar-risk-banner critical">{"\uD0C8\uB77D\uC704\uAE30"}</div>
+      )}
+
       <svg
         viewBox="0 0 144 192"
         width={size}
@@ -196,6 +210,7 @@ export default function AvatarRenderer({
             gender={resolvedGender}
             mbti={mbti}
             isResting={resolvedResting}
+            attendanceRisk={resolvedAttendanceRisk}
             seedFeatures={seedFeatures}
             strokeColor={strokeColor}
             skinColor={tone.skin}
@@ -259,3 +274,4 @@ export default function AvatarRenderer({
     </div>
   );
 }
+

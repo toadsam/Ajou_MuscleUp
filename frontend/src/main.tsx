@@ -36,6 +36,29 @@ async function disableServiceWorkerForSafari() {
   }
 }
 
+async function disableServiceWorkerInDev() {
+  if (!import.meta.env.DEV) return;
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    if (registrations.length === 0) return;
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+    if ("caches" in window) {
+      const cacheKeys = await caches.keys();
+      await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+    }
+    if (navigator.serviceWorker.controller) {
+      const key = "dev_sw_detached_once_v2";
+      if (sessionStorage.getItem(key) !== "1") {
+        sessionStorage.setItem(key, "1");
+        window.location.replace(window.location.href);
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
 function showPwaUpdateToast(onConfirm: () => void) {
   const existing = document.getElementById("pwa-update-toast");
   if (existing) return;
@@ -92,6 +115,7 @@ function showPwaUpdateToast(onConfirm: () => void) {
 }
 
 void disableServiceWorkerForSafari();
+void disableServiceWorkerInDev();
 
 const updateSW = isSafariBrowser()
   ? (() => {
