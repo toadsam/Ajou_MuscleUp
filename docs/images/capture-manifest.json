@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-05-06T15:52:29.864Z",
+  "captured": [
+    {
+      "fileName": "home.png",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "fileName": "login.png",
+      "url": "http://localhost:5173/login"
+    },
+    {
+      "fileName": "signup.png",
+      "url": "http://localhost:5173/register"
+    },
+    {
+      "fileName": "programs.png",
+      "url": "http://localhost:5173/programs"
+    },
+    {
+      "fileName": "member-home.png",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "fileName": "attendance.png",
+      "url": "http://localhost:5173/attendance"
+    },
+    {
+      "fileName": "mypage.png",
+      "url": "http://localhost:5173/mypage"
+    },
+    {
+      "fileName": "rankings.png",
+      "url": "http://localhost:5173/rankings"
+    },
+    {
+      "fileName": "brag-list.png",
+      "url": "http://localhost:5173/brag"
+    },
+    {
+      "fileName": "brag-write.png",
+      "url": "http://localhost:5173/brag/write"
+    },
+    {
+      "fileName": "protein-list.png",
+      "url": "http://localhost:5173/protein"
+    },
+    {
+      "fileName": "reviews.png",
+      "url": "http://localhost:5173/reviews"
+    },
+    {
+      "fileName": "ai-fitness.png",
+      "url": "http://localhost:5173/ai"
+    },
+    {
+      "fileName": "inbody-consult.png",
+      "url": "http://localhost:5173/ai/inbody"
+    },
+    {
+      "fileName": "crew-hub.png",
+      "url": "http://localhost:5173/crew"
+    },
+    {
+      "fileName": "friends.png",
+      "url": "http://localhost:5173/friends"
+    },
+    {
+      "fileName": "lounge.png",
+      "url": "http://localhost:5173/lounge"
+    },
+    {
+      "fileName": "events.png",
+      "url": "http://localhost:5173/events"
+    },
+    {
+      "fileName": "admin-dashboard.png",
+      "url": "http://localhost:5173/admin"
+    },
+    {
+      "fileName": "admin-events.png",
+      "url": "http://localhost:5173/admin/events"
+    },
+    {
+      "fileName": "admin-history.png",
+      "url": "http://localhost:5173/admin/history"
+    }
+  ]
+}
