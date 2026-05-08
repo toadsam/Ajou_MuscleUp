@@ -8,10 +8,13 @@
 |---|---|
 | `service-introduction.md` | 득근득근의 서비스 목적, 주요 기능, 사용자별 가치, 시스템 구성, 기대 효과를 정리한 발표/제출용 소개 문서입니다. |
 | `user-guide.md` | 실제 사용자가 화면을 따라가며 기능을 사용할 수 있도록 작성한 사용 설명서입니다. |
+| `technical-beginner-guide.md` | 프론트엔드, 백엔드, DB, 인증, API, 관리자 기능, 실시간 서버를 초보자도 이해할 수 있게 풀어쓴 기술 상세 설명서입니다. |
 | `service-introduction.html` | `service-introduction.md`를 제출용 HTML 형식으로 변환한 문서입니다. 목차, 표, 이미지 캡션, 인쇄용 스타일이 포함됩니다. |
 | `user-guide.html` | `user-guide.md`를 제출용 HTML 형식으로 변환한 문서입니다. |
+| `technical-beginner-guide.html` | `technical-beginner-guide.md`를 제출용 HTML 형식으로 변환한 문서입니다. |
 | `service-introduction.pdf` | 서비스 소개 HTML을 PDF로 출력한 파일입니다. |
 | `user-guide.pdf` | 사용 설명서 HTML을 PDF로 출력한 파일입니다. |
+| `technical-beginner-guide.pdf` | 초보자용 기술 상세 설명서 HTML을 PDF로 출력한 파일입니다. |
 | `images/` | 실제 실행 화면을 Playwright로 캡처한 PNG 이미지가 저장된 폴더입니다. |
 | `scripts/` | 화면 캡처와 HTML/PDF 생성을 재실행할 수 있는 문서 생성 보조 스크립트가 저장된 폴더입니다. |
 | `capture-report.md` | 실행 환경, 캡처 도구, 접근 URL, 캡처 화면, 제외한 기능, 민감정보 검토 결과를 기록한 보고서입니다. |
@@ -42,12 +45,14 @@ HTML 문서는 브라우저에서 바로 열람할 수 있습니다.
 
 - `docs/service-introduction.pdf`
 - `docs/user-guide.pdf`
+- `docs/technical-beginner-guide.pdf`
 - `docs/capture-report.md`
 
 보조 제출 또는 검토 파일:
 
 - `docs/service-introduction.html`
 - `docs/user-guide.html`
+- `docs/technical-beginner-guide.html`
 - `docs/images/`
 
 Markdown 원본은 발표 자료 작성, 문구 수정, GitHub 제출용으로 활용할 수 있습니다.

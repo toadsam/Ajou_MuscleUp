@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>득근득근 초보자용 기술 완전 설명서</title>
+  <style>
+    @page { size: A4; margin: 13mm; }
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5d6b82;
+      --line: #d8e1ef;
+      --soft: #f5f8fc;
+      --accent: #0969da;
+      --accent-ink: #07488f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef3f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      line-height: 1.68;
+    }
+    .page {
+      max-width: 1080px;
+      margin: 32px auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 50px rgba(18, 38, 63, 0.12);
+    }
+    .cover {
+      padding: 42px 52px 30px;
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 88% 18%, rgba(9, 105, 218, 0.16), transparent 28%),
+        linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+    }
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      border: 1px solid #b8d5fb;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--accent-ink);
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .cover p {
+      max-width: 760px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .cover-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .cover-pills span {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #26364d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    main { padding: 30px 52px 52px; }
+    h1, h2, h3 { line-height: 1.28; letter-spacing: 0; }
+    h1 { margin: 0; font-size: 34px; }
+    h2 {
+      margin: 40px 0 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 23px;
+    }
+    h3 {
+      margin: 28px 0 10px;
+      font-size: 18px;
+      color: var(--accent-ink);
+    }
+    p { margin: 10px 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    nav.toc {
+      margin: 24px 0 8px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 18px;
+    }
+    nav.toc::before {
+      content: "목차";
+      grid-column: 1 / -1;
+      margin-bottom: 8px;
+      color: #173b66;
+      font-weight: 800;
+    }
+    nav.toc a {
+      color: #254166;
+      text-decoration: none;
+      font-size: 13px;
+      padding: 4px 0;
+      break-inside: avoid;
+    }
+    table {
+      width: 100%;
+      margin: 16px 0 22px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      vertical-align: top;
+    }
+    th {
+      background: #edf4ff;
+      color: #173b66;
+      font-weight: 700;
+      text-align: left;
+    }
+    tr:nth-child(even) td { background: #fafcff; }
+    ul, ol { padding-left: 24px; }
+    li { margin: 4px 0; }
+    strong { font-weight: 750; color: #0f2f67; }
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #eef2f7;
+      color: #26364d;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 0.92em;
+    }
+    pre {
+      margin: 14px 0 20px;
+      padding: 14px 16px;
+      border: 1px solid #273449;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e5edf8;
+      overflow-x: auto;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    pre code {
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      color: inherit;
+      font-size: inherit;
+    }
+    figure {
+      margin: 20px 0 30px;
+      break-inside: avoid;
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      max-width: 960px;
+      height: auto;
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(18, 38, 63, 0.12);
+    }
+    figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+    blockquote {
+      margin: 16px 0;
+      padding: 12px 16px;
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+    }
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; border: 0; box-shadow: none; max-width: none; }
+      .cover, main { padding-left: 0; padding-right: 0; }
+      h2, h3, figure, table { break-inside: avoid; }
+      nav.toc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      figure img { max-height: 62vh; object-fit: contain; }
+    }
+    @media (max-width: 780px) {
+      .page { margin: 0; border: 0; }
+      .cover, main { padding-left: 22px; padding-right: 22px; }
+      nav.toc { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <article class="page">
+    <header class="cover">
+      <span class="cover-badge">Technical Beginner Guide</span>
+      <h1>득근득근 초보자용 기술 완전 설명서</h1>
+      <p>프론트엔드, 백엔드, DB, 인증, API, 관리자 기능, 실시간 서버를 초보자도 이해할 수 있게 풀어쓴 기술 문서입니다.</p>
+      <div class="cover-pills"><span>React</span><span>Spring Boot</span><span>DB</span><span>JWT</span><span>Socket.IO</span><span>API</span></div>
+      <nav class="toc"><a href="#1-이-문서는-누구를-위한-문서인가">1. 이 문서는 누구를 위한 문서인가</a><a href="#2-득근득근을-기술적으로-한-문장으로-말하면">2. 득근득근을 기술적으로 한 문장으로 말하면</a><a href="#3-전체-구조를-먼저-그림으로-이해하기">3. 전체 구조를 먼저 그림으로 이해하기</a><a href="#4-프로젝트-폴더-구조">4. 프로젝트 폴더 구조</a><a href="#5-기술-스택-한눈에-보기">5. 기술 스택 한눈에 보기</a><a href="#6-프론트엔드는-무엇을-하나">6. 프론트엔드는 무엇을 하나</a><a href="#7-프론트엔드-주요-파일">7. 프론트엔드 주요 파일</a><a href="#8-프론트엔드-라우트-구조">8. 프론트엔드 라우트 구조</a><a href="#9-로그인-보호-화면은-어떻게-막는가">9. 로그인 보호 화면은 어떻게 막는가</a><a href="#10-백엔드는-무엇을-하나">10. 백엔드는 무엇을 하나</a><a href="#11-백엔드-주요-폴더">11. 백엔드 주요 폴더</a><a href="#12-api는-무엇인가">12. API는 무엇인가</a><a href="#13-주요-api-그룹">13. 주요 API 그룹</a><a href="#14-db는-무엇을-저장하는가">14. DB는 무엇을 저장하는가</a><a href="#15-사용자와-권한-구조">15. 사용자와 권한 구조</a><a href="#16-인증-구조를-쉬운-말로-이해하기">16. 인증 구조를 쉬운 말로 이해하기</a><a href="#17-백엔드-보안-설정">17. 백엔드 보안 설정</a><a href="#18-프론트엔드-인증-보조-구조">18. 프론트엔드 인증 보조 구조</a><a href="#19-회원가입과-로그인-흐름">19. 회원가입과 로그인 흐름</a><a href="#20-출석-체크-기능의-내부-흐름">20. 출석 체크 기능의 내부 흐름</a><a href="#21-마이페이지와-캐릭터-성장-구조">21. 마이페이지와 캐릭터 성장 구조</a><a href="#22-랭킹-기능-구조">22. 랭킹 기능 구조</a><a href="#23-ai-맞춤-운동-플래너-구조">23. AI 맞춤 운동 플래너 구조</a><a href="#24-인바디-ai-상담-구조">24. 인바디 AI 상담 구조</a><a href="#25-운동-자랑-게시판-구조">25. 운동 자랑 게시판 구조</a><a href="#26-단백질-공동구매와-리뷰-구조">26. 단백질 공동구매와 리뷰 구조</a><a href="#27-크루와-챌린지-구조">27. 크루와 챌린지 구조</a><a href="#28-친구와-친구-채팅-구조">28. 친구와 친구 채팅 구조</a><a href="#29-실시간-라운지-구조">29. 실시간 라운지 구조</a><a href="#30-이벤트와-관리자-이벤트-cms-구조">30. 이벤트와 관리자 이벤트 CMS 구조</a><a href="#31-관리자-대시보드-구조">31. 관리자 대시보드 구조</a><a href="#32-감사-로그는-왜-필요한가">32. 감사 로그는 왜 필요한가</a><a href="#33-파일-업로드-구조">33. 파일 업로드 구조</a><a href="#34-분석-이벤트-구조">34. 분석 이벤트 구조</a><a href="#35-프로그램-신청-구조">35. 프로그램 신청 구조</a><a href="#36-고객지원-구조">36. 고객지원 구조</a><a href="#37-cors는-왜-필요한가">37. CORS는 왜 필요한가</a><a href="#38-환경변수와-설정-파일">38. 환경변수와 설정 파일</a><a href="#39-로컬-실행-구조">39. 로컬 실행 구조</a><a href="#40-사용자가-버튼을-누르면-내부에서-생기는-일">40. 사용자가 버튼을 누르면 내부에서 생기는 일</a><a href="#41-기능별-내부-흐름-요약">41. 기능별 내부 흐름 요약</a><a href="#42-배포할-때-필요한-것">42. 배포할 때 필요한 것</a><a href="#43-pwa와-서비스-워커">43. PWA와 서비스 워커</a><a href="#44-실제-구현되지-않은-것으로-확인한-기능">44. 실제 구현되지 않은 것으로 확인한 기능</a><a href="#45-초보자를-위한-핵심-용어-정리">45. 초보자를 위한 핵심 용어 정리</a><a href="#46-전체를-다시-아주-짧게-요약">46. 전체를 다시 아주 짧게 요약</a></nav>
+    </header>
+    <main>
+      <h1 id="득근득근-초보자용-기술-완전-설명서">득근득근 초보자용 기술 완전 설명서</h1>
+<p>이 문서는 득근득근 프로젝트를 처음 보는 사람도 기술 구조를 이해할 수 있도록 작성한 설명서입니다. 개발을 막 배우는 사람, 발표 심사자, 프로젝트 인수자가 “화면에서 보이는 기능이 내부 코드와 DB에서 어떻게 움직이는지” 따라갈 수 있도록 최대한 쉬운 말로 정리했습니다.</p>
+<figure><img src="images/home.png" alt="득근득근 홈 화면"><figcaption>득근득근 홈 화면</figcaption></figure>
+<h2 id="1-이-문서는-누구를-위한-문서인가">1. 이 문서는 누구를 위한 문서인가</h2>
+<p>이 문서는 다음 사람을 위해 작성했습니다.</p>
+<table><thead><tr><th>대상</th><th>이 문서에서 얻을 수 있는 것</th></tr></thead><tbody><tr><td>개발 초보자</td><td>프론트엔드, 백엔드, DB, API, 인증이 각각 무슨 일을 하는지 이해할 수 있습니다.</td></tr><tr><td>발표 심사자</td><td>득근득근이 단순 화면이 아니라 서버, DB, 권한, 관리자 기능을 갖춘 서비스라는 점을 확인할 수 있습니다.</td></tr><tr><td>프로젝트 인수자</td><td>어느 폴더와 파일을 보면 어떤 기능을 이해할 수 있는지 빠르게 파악할 수 있습니다.</td></tr><tr><td>유지보수 담당자</td><td>기능별로 화면, API, 서비스, 엔티티가 어떻게 연결되는지 확인할 수 있습니다.</td></tr></tbody></table>
+<p>이 문서는 실제 코드에서 확인한 내용만 설명합니다. 별도 트레이너/코치 역할, 전통적인 운동 루틴 CRUD, 결제 기능처럼 코드에서 전용 화면이나 흐름을 확인하지 못한 기능은 구현 기능처럼 설명하지 않습니다.</p>
+<h2 id="2-득근득근을-기술적으로-한-문장으로-말하면">2. 득근득근을 기술적으로 한 문장으로 말하면</h2>
+<p>득근득근은 React 프론트엔드, Spring Boot 백엔드, 관계형 DB, JWT 인증, Socket.IO 실시간 서버를 조합해 사용자의 운동 출석, 캐릭터 성장, AI 운동 상담, 커뮤니티, 공동구매, 크루, 친구, 이벤트, 관리자 운영 기능을 제공하는 웹 서비스입니다.</p>
+<p>쉽게 말하면 다음 네 부분이 함께 움직입니다.</p>
+<table><thead><tr><th>부분</th><th>쉬운 설명</th><th>실제 프로젝트 위치</th></tr></thead><tbody><tr><td>프론트엔드</td><td>사용자가 보는 화면</td><td><code>frontend/</code></td></tr><tr><td>백엔드</td><td>화면의 요청을 처리하는 서버</td><td><code>backend/</code></td></tr><tr><td>DB</td><td>사용자와 서비스 데이터를 저장하는 곳</td><td>Spring Data JPA 엔티티와 DB</td></tr><tr><td>실시간 서버</td><td>라운지와 친구 채팅처럼 즉시 주고받는 기능</td><td><code>realtime/</code></td></tr></tbody></table>
+<h2 id="3-전체-구조를-먼저-그림으로-이해하기">3. 전체 구조를 먼저 그림으로 이해하기</h2>
+<p>웹 서비스는 보통 “화면만 있는 것”이 아닙니다. 사용자가 보는 화면 뒤에는 서버와 DB가 있습니다.</p>
+<pre><code class="language-text">사용자 브라우저
+  |
+  | 1. 화면 접속, 버튼 클릭, 입력
+  v
+React 프론트엔드
+  |
+  | 2. /api/... 주소로 데이터 요청
+  v
+Spring Boot 백엔드
+  |
+  | 3. 권한 확인, 비즈니스 로직 처리
+  v
+DB
+  |
+  | 4. 사용자, 출석, 게시글, 이벤트 등 저장/조회
+  v
+Spring Boot 백엔드
+  |
+  | 5. JSON 응답 반환
+  v
+React 프론트엔드
+  |
+  | 6. 응답을 화면에 표시
+  v
+사용자 브라우저</code></pre>
+<p>실시간 라운지는 조금 다릅니다. 일반 API는 “요청하고 응답받는 방식”이지만, 실시간 기능은 Socket.IO 연결을 열어 두고 서버가 즉시 이벤트를 보내는 방식입니다.</p>
+<pre><code class="language-text">브라우저 라운지 화면
+  &lt;==== Socket.IO 연결 유지 ====&gt;
+realtime 서버
+
+사용자가 이동함 -&gt; player:move 이벤트 전송
+다른 사용자가 채팅함 -&gt; chat:message 이벤트 수신
+다른 사용자가 이모트 사용 -&gt; social:emote 이벤트 수신</code></pre>
+<h2 id="4-프로젝트-폴더-구조">4. 프로젝트 폴더 구조</h2>
+<p>득근득근 저장소는 크게 네 영역으로 나눌 수 있습니다.</p>
+<table><thead><tr><th>폴더/파일</th><th>역할</th></tr></thead><tbody><tr><td><code>frontend/</code></td><td>React, Vite, TypeScript 기반 화면 코드가 들어 있습니다.</td></tr><tr><td><code>backend/</code></td><td>Java 17, Spring Boot 기반 API 서버 코드가 들어 있습니다.</td></tr><tr><td><code>realtime/</code></td><td>Node.js, Socket.IO 기반 실시간 라운지 서버 코드가 들어 있습니다.</td></tr><tr><td><code>docs/</code></td><td>제출용 문서, 사용 설명서, 화면 캡처, 문서 생성 스크립트가 들어 있습니다.</td></tr><tr><td><code>README.md</code></td><td>프로젝트 개요와 실행 관련 안내가 들어 있습니다.</td></tr></tbody></table>
+<p>처음 코드를 보는 사람은 다음 순서로 보면 이해하기 쉽습니다.</p>
+<ol>
+<li><code>frontend/src/App.tsx</code>: 어떤 화면 주소가 있는지 확인합니다.</li>
+<li><code>frontend/src/pages/</code>: 실제 화면 컴포넌트를 확인합니다.</li>
+<li><code>backend/src/main/java/com/ajou/muscleup/controller/</code>: 화면이 호출하는 API를 확인합니다.</li>
+<li><code>backend/src/main/java/com/ajou/muscleup/service/</code>: API가 실제로 어떤 일을 하는지 확인합니다.</li>
+<li><code>backend/src/main/java/com/ajou/muscleup/entity/</code>: DB에 어떤 데이터가 저장되는지 확인합니다.</li>
+<li><code>realtime/src/server.ts</code>: 실시간 라운지와 친구 실시간 이벤트를 확인합니다.</li>
+</ol>
+<h2 id="5-기술-스택-한눈에-보기">5. 기술 스택 한눈에 보기</h2>
+<table><thead><tr><th>영역</th><th>사용 기술</th><th>왜 필요한가</th></tr></thead><tbody><tr><td>프론트엔드</td><td>React 19</td><td>화면을 컴포넌트 단위로 만들기 위해 사용합니다.</td></tr><tr><td>프론트엔드 빌드</td><td>Vite</td><td>개발 서버와 빌드를 빠르게 실행하기 위해 사용합니다.</td></tr><tr><td>언어</td><td>TypeScript</td><td>화면 코드에서 데이터 타입을 더 안전하게 다루기 위해 사용합니다.</td></tr><tr><td>라우팅</td><td>React Router</td><td><code>/login</code>, <code>/mypage</code>, <code>/admin</code>처럼 주소별 화면을 연결합니다.</td></tr><tr><td>서버 상태</td><td>TanStack Query</td><td>관리자 화면 등에서 API 데이터를 캐싱하고 새로고침하기 위해 사용합니다.</td></tr><tr><td>HTTP 통신</td><td>Axios, Fetch</td><td>프론트엔드가 백엔드 API를 호출할 때 사용합니다.</td></tr><tr><td>스타일</td><td>Tailwind CSS, CSS 파일</td><td>화면 디자인과 반응형 레이아웃을 구성합니다.</td></tr><tr><td>차트</td><td>Recharts</td><td>통계성 데이터를 시각화할 때 사용합니다.</td></tr><tr><td>PWA</td><td>vite-plugin-pwa</td><td>서비스 워커와 앱 업데이트 알림을 지원합니다.</td></tr><tr><td>백엔드</td><td>Spring Boot 3.5.5</td><td>API 서버, 인증, DB 연동을 구현합니다.</td></tr><tr><td>언어</td><td>Java 17</td><td>백엔드 서버 코드를 작성합니다.</td></tr><tr><td>DB 접근</td><td>Spring Data JPA</td><td>Java 엔티티를 DB 테이블과 연결합니다.</td></tr><tr><td>보안</td><td>Spring Security</td><td>로그인 여부와 관리자 권한을 검사합니다.</td></tr><tr><td>인증 토큰</td><td>JWT</td><td>로그인 상태를 서버와 브라우저가 안전하게 확인합니다.</td></tr><tr><td>DB</td><td>MySQL 또는 PostgreSQL</td><td>로컬은 MySQL, 운영 설정은 PostgreSQL도 사용할 수 있게 되어 있습니다.</td></tr><tr><td>파일 처리</td><td>로컬 업로드, S3 설정</td><td>이미지/파일 업로드와 프록시 조회를 처리합니다.</td></tr><tr><td>AI</td><td>OpenAI 연동 구조</td><td>운동 분석, 루틴 제안, 인바디 상담에 사용됩니다.</td></tr><tr><td>PDF</td><td>Apache PDFBox, jsPDF</td><td>인바디 PDF 읽기와 프론트엔드 PDF 출력에 사용됩니다.</td></tr><tr><td>실시간</td><td>Socket.IO</td><td>라운지 위치 동기화, 채팅, 이모트, 음성 조각 전송에 사용됩니다.</td></tr></tbody></table>
+<h2 id="6-프론트엔드는-무엇을-하나">6. 프론트엔드는 무엇을 하나</h2>
+<p>프론트엔드는 사용자가 직접 보는 화면입니다. 사용자가 버튼을 누르고, 글을 입력하고, 메뉴를 이동하는 모든 부분이 프론트엔드에서 시작됩니다.</p>
+<p>득근득근의 프론트엔드는 <code>frontend/src/App.tsx</code>에서 전체 화면 주소를 관리합니다. 예를 들어 <code>/attendance</code> 주소로 들어가면 출석 화면이 열리고, <code>/admin</code> 주소로 들어가면 관리자 대시보드가 열립니다.</p>
+<p>프론트엔드가 하는 일은 크게 네 가지입니다.</p>
+<table><thead><tr><th>역할</th><th>설명</th></tr></thead><tbody><tr><td>화면 표시</td><td>홈, 로그인, 마이페이지, 출석, AI, 게시판, 관리자 화면을 보여줍니다.</td></tr><tr><td>사용자 입력 수집</td><td>회원가입 정보, 출석 메모, 게시글 내용, AI 상담 입력 등을 받습니다.</td></tr><tr><td>API 호출</td><td>입력한 내용을 백엔드로 보내고, 백엔드가 준 데이터를 받아옵니다.</td></tr><tr><td>상태 관리</td><td>로그인 사용자 정보, 로딩 상태, 오류 메시지, API 응답 데이터를 관리합니다.</td></tr></tbody></table>
+<h2 id="7-프론트엔드-주요-파일">7. 프론트엔드 주요 파일</h2>
+<table><thead><tr><th>파일</th><th>초보자용 설명</th></tr></thead><tbody><tr><td><code>frontend/src/main.tsx</code></td><td>React 앱을 실제 HTML 화면에 붙이는 시작점입니다. 인증 fetch 설치와 PWA 업데이트 처리도 여기서 시작합니다.</td></tr><tr><td><code>frontend/src/App.tsx</code></td><td>전체 라우트 표입니다. 어떤 주소가 어떤 화면을 보여주는지 이 파일에 모여 있습니다.</td></tr><tr><td><code>frontend/src/layouts/Header.tsx</code></td><td>상단 메뉴입니다. 로그인 상태와 관리자 여부에 따라 보이는 메뉴가 달라집니다.</td></tr><tr><td><code>frontend/src/components/ProtectedRoute.tsx</code></td><td>로그인한 사용자만 들어갈 수 있는 화면을 보호합니다.</td></tr><tr><td><code>frontend/src/components/AdminRoute.tsx</code></td><td>관리자만 들어갈 수 있는 화면을 보호합니다.</td></tr><tr><td><code>frontend/src/lib/api.ts</code></td><td>Axios API 클라이언트입니다. Access Token을 요청 헤더에 붙이고 401 응답 시 토큰 갱신을 시도합니다.</td></tr><tr><td><code>frontend/src/lib/installFetchAuth.ts</code></td><td>Fetch 요청에도 인증 토큰을 자동으로 붙이도록 브라우저 fetch를 감쌉니다.</td></tr><tr><td><code>frontend/src/services/adminApi.ts</code></td><td>관리자 화면에서 호출하는 API 함수들이 모여 있습니다.</td></tr><tr><td><code>frontend/src/services/eventApi.ts</code></td><td>이벤트 화면에서 호출하는 API 함수들이 모여 있습니다.</td></tr><tr><td><code>frontend/src/services/crewApi.ts</code></td><td>크루/챌린지 화면에서 호출하는 API 함수들이 모여 있습니다.</td></tr><tr><td><code>frontend/src/services/friendApi.ts</code></td><td>친구와 친구 채팅 API 함수들이 모여 있습니다.</td></tr></tbody></table>
+<h2 id="8-프론트엔드-라우트-구조">8. 프론트엔드 라우트 구조</h2>
+<p>라우트는 “주소와 화면의 연결표”입니다. <code>frontend/src/App.tsx</code>에 실제 구현된 주요 라우트는 다음과 같습니다.</p>
+<table><thead><tr><th>주소</th><th>화면</th><th>권한</th></tr></thead><tbody><tr><td><code>/</code></td><td>홈</td><td>누구나 접근</td></tr><tr><td><code>/login</code></td><td>로그인</td><td>누구나 접근</td></tr><tr><td><code>/register</code></td><td>회원가입</td><td>누구나 접근</td></tr><tr><td><code>/programs</code></td><td>프로그램 목록/신청</td><td>누구나 접근</td></tr><tr><td><code>/events</code></td><td>이벤트 목록</td><td>누구나 접근</td></tr><tr><td><code>/events/:id</code></td><td>이벤트 상세</td><td>누구나 접근</td></tr><tr><td><code>/members</code></td><td>멤버 소개</td><td>누구나 접근</td></tr><tr><td><code>/gallery</code></td><td>갤러리</td><td>누구나 접근</td></tr><tr><td><code>/about</code></td><td>소개</td><td>누구나 접근</td></tr><tr><td><code>/attendance/share/:slug</code></td><td>출석 공유 페이지</td><td>누구나 접근</td></tr><tr><td><code>/ai/share/:slug</code></td><td>AI 상담 공유 페이지</td><td>누구나 접근</td></tr><tr><td><code>/mypage</code></td><td>마이페이지</td><td>로그인 필요</td></tr><tr><td><code>/attendance</code></td><td>출석 체크</td><td>로그인 필요</td></tr><tr><td><code>/rankings</code></td><td>랭킹</td><td>로그인 필요</td></tr><tr><td><code>/ai</code></td><td>AI 맞춤 운동 플래너</td><td>로그인 필요</td></tr><tr><td><code>/ai/inbody</code></td><td>AI 인바디 상담</td><td>로그인 필요</td></tr><tr><td><code>/brag</code></td><td>운동 자랑 목록</td><td>로그인 필요</td></tr><tr><td><code>/brag/write</code></td><td>운동 자랑 작성</td><td>로그인 필요</td></tr><tr><td><code>/brag/:id</code></td><td>운동 자랑 상세</td><td>로그인 필요</td></tr><tr><td><code>/protein</code></td><td>단백질 공동구매</td><td>로그인 필요</td></tr><tr><td><code>/protein/write</code></td><td>공동구매 글 작성</td><td>로그인 필요</td></tr><tr><td><code>/proteins/:id</code></td><td>공동구매 상세</td><td>화면 라우트는 공개, API 권한은 기능별 적용</td></tr><tr><td><code>/reviews</code></td><td>리뷰 목록</td><td>로그인 필요</td></tr><tr><td><code>/reviews/write</code></td><td>리뷰 작성</td><td>로그인 필요</td></tr><tr><td><code>/crew</code></td><td>크루 허브</td><td>로그인 필요</td></tr><tr><td><code>/crew/:crewId/challenges</code></td><td>크루 챌린지</td><td>로그인 필요</td></tr><tr><td><code>/crew/:crewId/lobby</code></td><td>크루 로비</td><td>로그인 필요</td></tr><tr><td><code>/crew/:crewId/highlights</code></td><td>크루 하이라이트</td><td>로그인 필요</td></tr><tr><td><code>/friends</code></td><td>친구</td><td>로그인 필요</td></tr><tr><td><code>/lounge</code></td><td>실시간 라운지</td><td>로그인 필요</td></tr><tr><td><code>/admin</code></td><td>관리자 대시보드</td><td>관리자 필요</td></tr><tr><td><code>/admin/events</code></td><td>관리자 이벤트 목록</td><td>관리자 필요</td></tr><tr><td><code>/admin/events/new</code></td><td>관리자 이벤트 생성</td><td>관리자 필요</td></tr><tr><td><code>/admin/events/:id/edit</code></td><td>관리자 이벤트 수정</td><td>관리자 필요</td></tr><tr><td><code>/admin/history</code></td><td>관리자 히스토리/감사 로그</td><td>관리자 필요</td></tr><tr><td><code>/forbidden</code></td><td>권한 없음 안내</td><td>누구나 접근</td></tr></tbody></table>
+<figure><img src="images/member-home.png" alt="회원 홈 화면"><figcaption>회원 홈 화면</figcaption></figure>
+<h2 id="9-로그인-보호-화면은-어떻게-막는가">9. 로그인 보호 화면은 어떻게 막는가</h2>
+<p>로그인이 필요한 화면은 <code>ProtectedRoute</code>로 감싸져 있습니다.</p>
+<p>초보자 관점에서 보면 <code>ProtectedRoute</code>는 문 앞의 경비원입니다.</p>
+<pre><code class="language-text">사용자가 /mypage 접속
+  |
+  v
+ProtectedRoute가 localStorage와 /api/auth/me 확인
+  |
+  |-- 로그인 정보 있음 -&gt; 마이페이지 표시
+  |
+  |-- 로그인 정보 없음 -&gt; /login으로 이동</code></pre>
+<p>관리자 화면은 <code>AdminRoute</code>가 한 번 더 검사합니다.</p>
+<pre><code class="language-text">사용자가 /admin 접속
+  |
+  v
+AdminRoute가 localStorage의 role 확인
+  |
+  |-- ADMIN 또는 ROLE_ADMIN 아님 -&gt; /forbidden으로 이동
+  |
+  v
+/api/auth/me 호출로 서버에서도 관리자 확인
+  |
+  |-- 관리자 맞음 -&gt; 관리자 화면 표시
+  |
+  |-- 관리자 아님 -&gt; /forbidden으로 이동</code></pre>
+<p>이 구조가 중요한 이유는 브라우저 화면에서 메뉴를 숨기는 것만으로는 보안이 충분하지 않기 때문입니다. 득근득근은 프론트엔드 라우트에서 1차로 막고, 백엔드 Spring Security에서 2차로 막습니다.</p>
+<h2 id="10-백엔드는-무엇을-하나">10. 백엔드는 무엇을 하나</h2>
+<p>백엔드는 화면 뒤에서 실제 데이터를 처리하는 서버입니다.</p>
+<p>프론트엔드는 “출석 저장해 주세요”라고 요청할 뿐이고, 백엔드는 다음 일을 합니다.</p>
+<ol>
+<li>이 사용자가 로그인했는지 확인합니다.</li>
+<li>이 사용자가 해당 기능을 사용할 권한이 있는지 확인합니다.</li>
+<li>요청 데이터가 올바른지 확인합니다.</li>
+<li>DB에서 기존 데이터를 조회합니다.</li>
+<li>새 데이터를 저장하거나 수정합니다.</li>
+<li>결과를 JSON 형태로 프론트엔드에 돌려줍니다.</li>
+</ol>
+<p>득근득근 백엔드는 Spring Boot로 구성되어 있고, 코드는 보통 다음 흐름으로 나뉩니다.</p>
+<pre><code class="language-text">Controller
+  |
+  | 요청 받기
+  v
+Service
+  |
+  | 실제 기능 로직 처리
+  v
+Repository
+  |
+  | DB 조회/저장
+  v
+Entity
+  |
+  | DB 테이블과 연결되는 데이터 구조</code></pre>
+<h2 id="11-백엔드-주요-폴더">11. 백엔드 주요 폴더</h2>
+<table><thead><tr><th>폴더</th><th>역할</th></tr></thead><tbody><tr><td><code>backend/src/main/java/com/ajou/muscleup/controller/</code></td><td>API 주소를 정의합니다. 프론트엔드가 호출하는 입구입니다.</td></tr><tr><td><code>backend/src/main/java/com/ajou/muscleup/service/</code></td><td>실제 기능 로직이 들어 있습니다.</td></tr><tr><td><code>backend/src/main/java/com/ajou/muscleup/repository/</code></td><td>DB에 접근하는 코드입니다.</td></tr><tr><td><code>backend/src/main/java/com/ajou/muscleup/entity/</code></td><td>DB 테이블과 연결되는 Java 클래스입니다.</td></tr><tr><td><code>backend/src/main/java/com/ajou/muscleup/dto/</code></td><td>API 요청/응답에 사용하는 데이터 모양입니다.</td></tr><tr><td><code>backend/src/main/java/com/ajou/muscleup/config/</code></td><td>보안, CORS, JWT, 감사 로그, 스케줄링 같은 설정이 들어 있습니다.</td></tr><tr><td><code>backend/src/main/resources/</code></td><td>DB, 메일, OAuth, OpenAI, CORS, S3 같은 환경 설정 파일이 들어 있습니다.</td></tr></tbody></table>
+<h2 id="12-api는-무엇인가">12. API는 무엇인가</h2>
+<p>API는 프론트엔드와 백엔드가 대화하는 약속입니다.</p>
+<p>예를 들어 출석 체크 화면에서 저장 버튼을 누르면 프론트엔드는 백엔드에 이런 의미의 요청을 보냅니다.</p>
+<pre><code class="language-text">&quot;이 사용자가 오늘 운동했는지, 어떤 메모를 썼는지 저장해 주세요.&quot;</code></pre>
+<p>백엔드는 요청을 처리한 뒤 이런 의미의 응답을 돌려줍니다.</p>
+<pre><code class="language-text">&quot;저장했습니다. 현재 출석 기록은 이런 상태입니다.&quot;</code></pre>
+<p>실제 웹에서는 사람이 읽는 문장이 아니라 HTTP 주소, 메서드, JSON 데이터로 주고받습니다.</p>
+<table><thead><tr><th>개념</th><th>쉬운 설명</th></tr></thead><tbody><tr><td>HTTP 메서드</td><td>무엇을 하려는 요청인지 나타냅니다. GET은 조회, POST는 생성, PUT/PATCH는 수정, DELETE는 삭제에 가깝습니다.</td></tr><tr><td>URL</td><td>어떤 기능을 호출하는지 나타내는 주소입니다. 예: <code>/api/attendance/summary</code></td></tr><tr><td>Request Body</td><td>서버로 보내는 입력 데이터입니다.</td></tr><tr><td>Response Body</td><td>서버가 돌려주는 결과 데이터입니다.</td></tr><tr><td>Status Code</td><td>성공/실패를 숫자로 알려줍니다. 200은 성공, 401은 로그인 필요, 403은 권한 없음입니다.</td></tr></tbody></table>
+<h2 id="13-주요-api-그룹">13. 주요 API 그룹</h2>
+<p>득근득근 백엔드 컨트롤러에서 확인한 주요 API 그룹은 다음과 같습니다.</p>
+<table><thead><tr><th>API 그룹</th><th>주요 주소</th><th>담당 기능</th></tr></thead><tbody><tr><td>인증</td><td><code>/api/auth/...</code></td><td>이메일 인증, 로그인, 토큰 갱신, 로그아웃, 내 정보 조회, Google 로그인</td></tr><tr><td>회원가입</td><td><code>/api/users/register</code></td><td>사용자 계정 생성</td></tr><tr><td>출석</td><td><code>/api/attendance/...</code></td><td>오늘 출석, 출석 목록, 요약, 공유, 응원, 신고, 랭킹</td></tr><tr><td>마이페이지</td><td><code>/api/mypage</code>, <code>/api/mypage/stats</code></td><td>회원 통계와 신체/운동 수치 관리</td></tr><tr><td>캐릭터</td><td><code>/api/character/...</code></td><td>캐릭터 프로필, 평가, 공개 여부, 휴식 상태, 재생성</td></tr><tr><td>랭킹</td><td><code>/api/rankings/characters</code></td><td>캐릭터 랭킹</td></tr><tr><td>AI</td><td><code>/api/ai/...</code></td><td>체성 분석, 루틴 제안, 상담, 인바디 상담, PDF 리포트, 공유</td></tr><tr><td>운동 자랑</td><td><code>/api/brags/...</code></td><td>게시글 작성/조회/수정/삭제, 댓글, 좋아요</td></tr><tr><td>단백질 공동구매</td><td><code>/api/proteins/...</code></td><td>공동구매 글, 신청, 참여 상태, 채팅</td></tr><tr><td>리뷰</td><td><code>/api/reviews/...</code></td><td>리뷰 작성/조회/수정/삭제</td></tr><tr><td>크루</td><td><code>/api/crew/...</code></td><td>크루 생성, 가입, 초대코드, 가입 요청, 챌린지</td></tr><tr><td>친구</td><td><code>/api/friends/...</code></td><td>친구 요청, 수락/거절, 친구 목록, 채팅 메시지</td></tr><tr><td>라운지</td><td><code>/api/lounge/profile</code></td><td>실시간 라운지에 입장할 때 필요한 사용자 프로필</td></tr><tr><td>이벤트</td><td><code>/api/events/...</code></td><td>공개 이벤트 목록/상세, 조회/클릭 기록, 활성 이벤트</td></tr><tr><td>파일</td><td><code>/api/files/...</code></td><td>파일 업로드, 삭제, 프록시, 목록 조회</td></tr><tr><td>고객지원</td><td><code>/api/support/...</code></td><td>문의 등록, 지원 채팅</td></tr><tr><td>분석</td><td><code>/api/analytics/events</code></td><td>프론트엔드 행동 이벤트 기록</td></tr><tr><td>관리자</td><td><code>/api/admin/...</code></td><td>관리자 대시보드, 신청 관리, 출석 공유 관리, 문의 관리, 콘텐츠 삭제, 감사 로그</td></tr><tr><td>관리자 이벤트</td><td><code>/api/admin/events/...</code></td><td>이벤트 생성, 수정, 삭제, 상태 변경, 배너/고정 설정</td></tr></tbody></table>
+<h2 id="14-db는-무엇을-저장하는가">14. DB는 무엇을 저장하는가</h2>
+<p>DB는 서비스의 기억장치입니다. 사용자가 새로고침해도 출석 기록과 게시글이 남아 있는 이유는 DB에 저장되기 때문입니다.</p>
+<p>득근득근은 Spring Data JPA를 사용합니다. JPA에서는 Java 클래스인 <code>Entity</code>가 DB 테이블과 연결됩니다.</p>
+<p>예를 들어 <code>User.java</code>는 사용자 테이블과 연결됩니다.</p>
+<table><thead><tr><th>Entity</th><th>저장하는 정보</th></tr></thead><tbody><tr><td><code>User</code></td><td>이름, 이메일, 비밀번호 해시, 역할, 닉네임, 생성일</td></tr><tr><td><code>EmailVerification</code></td><td>이메일 인증 코드와 인증 상태</td></tr><tr><td><code>RefreshToken</code></td><td>로그인 연장에 쓰는 리프레시 토큰</td></tr><tr><td><code>UserBodyStats</code></td><td>벤치프레스, 스쿼트, 데드리프트 등 사용자의 신체/운동 수치</td></tr><tr><td><code>AttendanceLog</code></td><td>날짜별 운동 여부, 메모, 운동 종류, 강도, 미디어, 공유 상태</td></tr><tr><td><code>CharacterProfile</code></td><td>캐릭터 레벨, 티어, 진화 단계, 공개 여부, 아바타 설정</td></tr><tr><td><code>CharacterEvolutionHistory</code></td><td>캐릭터 성장/진화 이력</td></tr><tr><td><code>AiChatMessage</code></td><td>AI 상담 메시지와 공유 정보</td></tr><tr><td><code>BragPost</code></td><td>운동 자랑 게시글</td></tr><tr><td><code>BragComment</code></td><td>운동 자랑 댓글</td></tr><tr><td><code>BragLike</code></td><td>운동 자랑 좋아요</td></tr><tr><td><code>Protein</code></td><td>단백질 공동구매 글</td></tr><tr><td><code>ProteinShareApplication</code></td><td>공동구매 참여 신청</td></tr><tr><td><code>ProteinShareMessage</code></td><td>공동구매 채팅 메시지</td></tr><tr><td><code>Review</code></td><td>공동구매 리뷰</td></tr><tr><td><code>WorkoutCrew</code></td><td>크루 정보</td></tr><tr><td><code>WorkoutCrewMember</code></td><td>크루 멤버 정보</td></tr><tr><td><code>WorkoutCrewJoinRequest</code></td><td>크루 가입 요청</td></tr><tr><td><code>CrewChallenge</code></td><td>크루 챌린지</td></tr><tr><td><code>FriendRequest</code></td><td>친구 요청</td></tr><tr><td><code>Friendship</code></td><td>친구 관계</td></tr><tr><td><code>FriendChatRoom</code></td><td>친구 채팅방</td></tr><tr><td><code>FriendChatMessage</code></td><td>친구 채팅 메시지</td></tr><tr><td><code>CmsEvent</code></td><td>관리자 CMS 이벤트</td></tr><tr><td><code>Event</code></td><td>이벤트 진행 데이터</td></tr><tr><td><code>EventParticipant</code></td><td>이벤트 참여자</td></tr><tr><td><code>ProgramApplication</code></td><td>프로그램 신청</td></tr><tr><td><code>Inquiry</code></td><td>고객지원 문의</td></tr><tr><td><code>AnalyticsEvent</code></td><td>화면 행동 분석 이벤트</td></tr><tr><td><code>AuditLog</code></td><td>POST/PUT/PATCH/DELETE 요청 감사 기록</td></tr><tr><td><code>LoungeVisitLog</code></td><td>라운지 방문 기록</td></tr></tbody></table>
+<h2 id="15-사용자와-권한-구조">15. 사용자와 권한 구조</h2>
+<p>현재 코드에서 확인한 주요 서비스 역할은 다음과 같습니다.</p>
+<table><thead><tr><th>역할</th><th>DB/토큰 표현</th><th>할 수 있는 일</th></tr></thead><tbody><tr><td>비로그인 방문자</td><td>없음</td><td>홈, 로그인, 회원가입, 프로그램, 이벤트, 공개 공유 페이지 접근</td></tr><tr><td>일반 회원</td><td><code>USER</code> 또는 <code>ROLE_USER</code></td><td>출석, 마이페이지, AI, 게시글, 공동구매, 크루, 친구, 라운지 사용</td></tr><tr><td>관리자</td><td><code>ADMIN</code> 또는 <code>ROLE_ADMIN</code></td><td>일반 회원 기능 + 관리자 대시보드와 관리자 API 접근</td></tr></tbody></table>
+<p>코드에서 별도의 트레이너/코치/스태프/운영자 역할은 확인되지 않았습니다. 운영성 기능은 관리자 역할이 담당합니다.</p>
+<h2 id="16-인증-구조를-쉬운-말로-이해하기">16. 인증 구조를 쉬운 말로 이해하기</h2>
+<p>인증은 “너 누구야?”를 확인하는 과정입니다. 인가는 “너 이 기능 써도 돼?”를 확인하는 과정입니다.</p>
+<p>득근득근은 JWT 기반 인증을 사용합니다.</p>
+<table><thead><tr><th>용어</th><th>쉬운 설명</th></tr></thead><tbody><tr><td>Access Token</td><td>짧은 시간 동안 API 요청에 붙이는 출입증입니다.</td></tr><tr><td>Refresh Token</td><td>Access Token이 만료됐을 때 새 Access Token을 받기 위한 갱신권입니다.</td></tr><tr><td>Authorization Header</td><td>API 요청에 토큰을 붙이는 위치입니다. 예: <code>Bearer ...</code></td></tr><tr><td>Cookie</td><td>브라우저가 서버와 함께 주고받을 수 있는 저장 공간입니다.</td></tr><tr><td>localStorage</td><td>프론트엔드가 사용자 정보를 임시 저장하는 브라우저 저장 공간입니다.</td></tr></tbody></table>
+<p>로그인 후 흐름은 다음과 같습니다.</p>
+<pre><code class="language-text">사용자 로그인
+  |
+  v
+백엔드가 사용자 확인
+  |
+  v
+Access Token + Refresh Token 발급
+  |
+  v
+프론트엔드가 localStorage에 사용자 정보 저장
+  |
+  v
+API 호출 때 Authorization: Bearer AccessToken 추가
+  |
+  v
+백엔드 JwtAuthenticationFilter가 토큰 검사
+  |
+  v
+권한이 맞으면 API 실행</code></pre>
+<h2 id="17-백엔드-보안-설정">17. 백엔드 보안 설정</h2>
+<p><code>SecurityConfig.java</code>는 백엔드 보안의 핵심입니다.</p>
+<p>이 파일에서 정하는 것은 다음과 같습니다.</p>
+<table><thead><tr><th>설정</th><th>의미</th></tr></thead><tbody><tr><td>CSRF 비활성화</td><td>JWT 기반 API 서버 형태로 동작하게 합니다.</td></tr><tr><td>CORS 설정 연결</td><td>프론트엔드 주소에서 백엔드 API를 호출할 수 있게 합니다.</td></tr><tr><td>Session Stateless</td><td>서버 세션 대신 토큰으로 로그인 상태를 확인합니다.</td></tr><tr><td>공개 API 지정</td><td>로그인 없이 접근 가능한 API를 정합니다.</td></tr><tr><td>회원 API 지정</td><td><code>ROLE_USER</code>, <code>ROLE_ADMIN</code>이 접근 가능한 API를 정합니다.</td></tr><tr><td>관리자 API 지정</td><td><code>ROLE_ADMIN</code>만 접근 가능한 API를 정합니다.</td></tr><tr><td>JWT 필터 추가</td><td>모든 요청 전에 토큰을 검사합니다.</td></tr><tr><td>감사 로그 필터 추가</td><td>변경성 요청을 감사 로그로 남깁니다.</td></tr></tbody></table>
+<p>공개 API 예시는 다음과 같습니다.</p>
+<table><thead><tr><th>공개 API</th><th>이유</th></tr></thead><tbody><tr><td><code>/api/auth/**</code></td><td>로그인/회원가입/토큰 갱신에 필요합니다.</td></tr><tr><td><code>/api/users/register</code></td><td>회원가입에 필요합니다.</td></tr><tr><td><code>/api/programs/apply</code></td><td>프로그램 신청은 비로그인 사용자도 가능하게 되어 있습니다.</td></tr><tr><td><code>/api/events</code>, <code>/api/events/*</code></td><td>이벤트 목록과 상세는 공개 화면입니다.</td></tr><tr><td><code>/api/ai/share/**</code></td><td>공유 링크를 받은 사람이 볼 수 있어야 합니다.</td></tr><tr><td><code>/api/attendance/share/**</code></td><td>출석 공유 링크를 받은 사람이 볼 수 있어야 합니다.</td></tr></tbody></table>
+<p>관리자 API 예시는 다음과 같습니다.</p>
+<table><thead><tr><th>관리자 API</th><th>기능</th></tr></thead><tbody><tr><td><code>/api/admin/analytics/summary</code></td><td>관리자 대시보드 요약</td></tr><tr><td><code>/api/admin/programs/applications</code></td><td>프로그램 신청 목록</td></tr><tr><td><code>/api/admin/attendance/logs</code></td><td>출석 로그 목록</td></tr><tr><td><code>/api/admin/support/inquiries</code></td><td>문의 목록</td></tr><tr><td><code>/api/admin/events/**</code></td><td>이벤트 CMS 관리</td></tr><tr><td><code>/api/admin/audit</code></td><td>감사 로그 조회</td></tr></tbody></table>
+<h2 id="18-프론트엔드-인증-보조-구조">18. 프론트엔드 인증 보조 구조</h2>
+<p>득근득근 프론트엔드는 Axios와 Fetch를 모두 사용합니다. 그래서 인증 토큰을 두 방식 모두에 붙일 수 있도록 두 파일이 존재합니다.</p>
+<table><thead><tr><th>파일</th><th>역할</th></tr></thead><tbody><tr><td><code>frontend/src/lib/api.ts</code></td><td>Axios 요청에 Access Token을 붙이고, 401 응답이 오면 Refresh Token으로 갱신을 시도합니다.</td></tr><tr><td><code>frontend/src/lib/installFetchAuth.ts</code></td><td>Fetch 요청에도 Access Token을 붙이고, 401 응답 시 재시도할 수 있게 합니다.</td></tr></tbody></table>
+<p><code>main.tsx</code>에서는 앱 시작 시 다음 작업을 합니다.</p>
+<ol>
+<li><code>installFetchAuth()</code>를 호출해 fetch 인증 처리를 설치합니다.</li>
+<li><code>bootstrapAuthSession()</code>으로 기존 로그인 세션을 갱신하려고 시도합니다.</li>
+<li>React 앱을 화면에 렌더링합니다.</li>
+<li>PWA 서비스 워커 업데이트 알림을 등록합니다.</li>
+</ol>
+<h2 id="19-회원가입과-로그인-흐름">19. 회원가입과 로그인 흐름</h2>
+<p>회원가입은 프론트엔드의 <code>/register</code> 화면에서 시작됩니다.</p>
+<figure><img src="images/signup.png" alt="회원가입 화면"><figcaption>회원가입 화면</figcaption></figure>
+<p>기술 흐름은 다음과 같습니다.</p>
+<pre><code class="language-text">/register 화면
+  |
+  | 이메일 인증 코드 요청
+  v
+POST /api/auth/email/send-code
+  |
+  | 인증 코드 확인
+  v
+POST /api/auth/email/verify
+  |
+  | 사용자 생성
+  v
+POST /api/users/register
+  |
+  v
+users 테이블에 사용자 저장</code></pre>
+<p>로그인은 <code>/login</code> 화면에서 시작됩니다.</p>
+<figure><img src="images/login.png" alt="로그인 화면"><figcaption>로그인 화면</figcaption></figure>
+<p>백엔드에는 <code>/api/auth/login</code>과 <code>/api/auth/google</code> 흐름이 구현되어 있습니다. 프론트엔드 로그인 화면은 Google 로그인 중심으로 구성되어 있고, 로컬 환경에서 Google Client ID가 없으면 설정 안내 문구가 표시됩니다.</p>
+<p>로그인 성공 후 백엔드는 Access Token과 Refresh Token을 발급합니다. 이후 프론트엔드는 API 호출마다 Access Token을 붙입니다.</p>
+<h2 id="20-출석-체크-기능의-내부-흐름">20. 출석 체크 기능의 내부 흐름</h2>
+<p>출석 체크는 득근득근의 핵심 기능 중 하나입니다. 사용자는 운동 여부, 운동 종류, 강도, 메모, 미디어, 공유 여부를 기록할 수 있습니다.</p>
+<figure><img src="images/attendance.png" alt="출석 체크 화면"><figcaption>출석 체크 화면</figcaption></figure>
+<p>내부 흐름은 다음과 같습니다.</p>
+<pre><code class="language-text">사용자가 /attendance 화면 접속
+  |
+  v
+프론트엔드가 /api/attendance, /api/attendance/summary 호출
+  |
+  v
+백엔드 AttendanceController
+  |
+  v
+AttendanceService
+  |
+  v
+AttendanceLogRepository
+  |
+  v
+attendance_logs 테이블 조회</code></pre>
+<p>사용자가 특정 날짜의 출석을 저장하면 다음 흐름이 됩니다.</p>
+<pre><code class="language-text">저장 버튼 클릭
+  |
+  v
+PUT /api/attendance/{date}
+  |
+  v
+JWT로 사용자 확인
+  |
+  v
+기존 날짜 기록이 있으면 수정, 없으면 생성
+  |
+  v
+AttendanceLog 저장
+  |
+  v
+캐릭터 성장/랭킹에 반영 가능한 데이터가 됨</code></pre>
+<p>출석 공유 기능은 <code>shareSlug</code>를 생성해 외부에서도 볼 수 있는 공유 주소를 만듭니다. 공유된 출석은 응원과 신고 카운트도 가질 수 있고, 관리자는 부적절한 공유를 숨길 수 있습니다.</p>
+<h2 id="21-마이페이지와-캐릭터-성장-구조">21. 마이페이지와 캐릭터 성장 구조</h2>
+<p>마이페이지는 사용자의 신체/운동 수치, 출석 기반 성장, 캐릭터 상태를 보여주는 화면입니다.</p>
+<figure><img src="images/mypage.png" alt="마이페이지 화면"><figcaption>마이페이지 화면</figcaption></figure>
+<p>관련 API와 데이터는 다음과 같습니다.</p>
+<table><thead><tr><th>화면 요소</th><th>API/Entity</th><th>설명</th></tr></thead><tbody><tr><td>내 정보</td><td><code>/api/auth/me</code>, <code>User</code></td><td>이메일, 닉네임, 역할 같은 기본 정보를 확인합니다.</td></tr><tr><td>운동 수치</td><td><code>/api/mypage/stats</code>, <code>UserBodyStats</code></td><td>벤치프레스, 스쿼트, 데드리프트, 체중 등을 저장합니다.</td></tr><tr><td>캐릭터</td><td><code>/api/character/me</code>, <code>CharacterProfile</code></td><td>레벨, 티어, 진화 단계, 공개 여부를 관리합니다.</td></tr><tr><td>캐릭터 평가</td><td><code>/api/character/evaluate</code></td><td>사용자의 기록을 기반으로 캐릭터 상태를 평가합니다.</td></tr><tr><td>랭킹</td><td><code>/api/rankings/characters</code></td><td>공개 캐릭터를 랭킹 화면에 표시합니다.</td></tr></tbody></table>
+<p>캐릭터 성장은 단순히 그림만 보여주는 기능이 아닙니다. 백엔드에는 <code>CharacterGrowthService</code>, <code>CharacterGrowthCalculator</code>, <code>CharacterEvolutionHistory</code>가 있어 캐릭터 프로필과 성장 이력을 관리하는 구조가 있습니다.</p>
+<h2 id="22-랭킹-기능-구조">22. 랭킹 기능 구조</h2>
+<p>랭킹 화면은 공개 설정된 캐릭터와 출석/성장 관련 데이터를 보여줍니다.</p>
+<figure><img src="images/rankings.png" alt="랭킹 화면"><figcaption>랭킹 화면</figcaption></figure>
+<p>기술적으로는 다음 흐름입니다.</p>
+<pre><code class="language-text">/rankings 화면
+  |
+  v
+GET /api/rankings/characters
+  |
+  v
+RankingController
+  |
+  v
+RankingService
+  |
+  v
+CharacterProfileRepository
+  |
+  v
+공개 캐릭터 목록과 점수 반환</code></pre>
+<p>이 기능은 일반 회원과 관리자가 접근할 수 있습니다. 비로그인 사용자는 <code>ProtectedRoute</code>에 의해 로그인 화면으로 이동합니다.</p>
+<h2 id="23-ai-맞춤-운동-플래너-구조">23. AI 맞춤 운동 플래너 구조</h2>
+<p>AI 화면은 세 가지 큰 흐름을 갖습니다.</p>
+<table><thead><tr><th>탭/기능</th><th>설명</th></tr></thead><tbody><tr><td>체성 분석</td><td>신체 정보와 목표를 입력해 AI 분석 결과를 받습니다.</td></tr><tr><td>루틴 설계</td><td>목표, 주간 운동 가능 횟수, 집중 부위, 장비 등을 입력해 4주 루틴 제안을 받습니다.</td></tr><tr><td>AI 상담</td><td>운동/식단 고민을 대화형으로 상담하고 상담 기록을 저장합니다.</td></tr></tbody></table>
+<figure><img src="images/ai-fitness.png" alt="AI 맞춤 운동 플래너 화면"><figcaption>AI 맞춤 운동 플래너 화면</figcaption></figure>
+<p>관련 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/ai/analyze</code></td><td>체성 분석</td></tr><tr><td><code>POST /api/ai/plan</code></td><td>맞춤 루틴 제안</td></tr><tr><td><code>POST /api/ai/chat</code></td><td>AI 상담</td></tr><tr><td><code>GET /api/ai/chat/history</code></td><td>상담 기록 조회</td></tr><tr><td><code>POST /api/ai/chat/history/{id}/share</code></td><td>상담 공유 링크 생성</td></tr><tr><td><code>DELETE /api/ai/chat/history/{id}/share</code></td><td>상담 공유 해제</td></tr><tr><td><code>GET /api/ai/share/{slug}</code></td><td>공유 상담 조회</td></tr></tbody></table>
+<p>초보자 관점에서 AI 기능은 이렇게 이해하면 됩니다.</p>
+<pre><code class="language-text">사용자가 목표와 몸 상태 입력
+  |
+  v
+프론트엔드가 백엔드 AI API 호출
+  |
+  v
+백엔드가 OpenAI API에 질문 구성
+  |
+  v
+OpenAI 응답 수신
+  |
+  v
+백엔드가 결과를 정리해 프론트엔드에 전달
+  |
+  v
+화면에 분석 결과 표시</code></pre>
+<p>API Key는 백엔드 환경변수로 관리되어야 하며, 프론트엔드나 문서에 실제 값을 노출하면 안 됩니다.</p>
+<h2 id="24-인바디-ai-상담-구조">24. 인바디 AI 상담 구조</h2>
+<p>인바디 상담 화면은 이미지/PDF 업로드 또는 직접 입력으로 상담을 시작할 수 있습니다.</p>
+<figure><img src="images/inbody-consult.png" alt="AI 인바디 상담 화면"><figcaption>AI 인바디 상담 화면</figcaption></figure>
+<p>관련 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/ai/inbody/consult</code></td><td>인바디 이미지/PDF 기반 상담</td></tr><tr><td><code>POST /api/ai/inbody/review-consult</code></td><td>확정값으로 재상담</td></tr><tr><td><code>POST /api/ai/inbody/report/pdf</code></td><td>상담 결과 PDF 생성</td></tr></tbody></table>
+<p>이 화면은 단순히 텍스트만 보여주는 기능이 아니라 다음 과정을 포함합니다.</p>
+<ol>
+<li>사용자가 인바디 이미지/PDF를 업로드하거나 수치를 직접 입력합니다.</li>
+<li>백엔드는 입력값을 상담 요청 데이터로 구성합니다.</li>
+<li>AI 응답을 받아 요약, 우선순위, 운동 방향, 식단 방향 같은 카드로 나눕니다.</li>
+<li>사용자는 오인식된 수치가 있으면 수정 후 재상담할 수 있습니다.</li>
+<li>필요하면 PDF 보고서로 저장할 수 있습니다.</li>
+</ol>
+<h2 id="25-운동-자랑-게시판-구조">25. 운동 자랑 게시판 구조</h2>
+<p>운동 자랑 기능은 운동 기록을 게시글 형태로 공유하는 커뮤니티 기능입니다.</p>
+<figure><img src="images/brag-list.png" alt="운동 자랑 목록 화면"><figcaption>운동 자랑 목록 화면</figcaption></figure>
+<p>주요 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/brags</code></td><td>게시글 작성</td></tr><tr><td><code>GET /api/brags</code></td><td>게시글 목록</td></tr><tr><td><code>GET /api/brags/{id}</code></td><td>게시글 상세</td></tr><tr><td><code>PUT /api/brags/{id}</code></td><td>게시글 수정</td></tr><tr><td><code>DELETE /api/brags/{id}</code></td><td>게시글 삭제</td></tr><tr><td><code>GET /api/brags/{id}/comments</code></td><td>댓글 목록</td></tr><tr><td><code>POST /api/brags/{id}/comments</code></td><td>댓글 작성</td></tr><tr><td><code>PATCH /api/brags/comments/{commentId}</code></td><td>댓글 수정</td></tr><tr><td><code>DELETE /api/brags/comments/{commentId}</code></td><td>댓글 삭제</td></tr><tr><td><code>POST /api/brags/{id}/like</code></td><td>좋아요 토글</td></tr><tr><td><code>GET /api/brags/{id}/like</code></td><td>좋아요 상태 확인</td></tr></tbody></table>
+<p>게시글 작성 화면에서는 제목, 운동 종목, 중량, 내용, 공개 범위, 미디어를 입력합니다.</p>
+<figure><img src="images/brag-write.png" alt="운동 자랑 작성 화면"><figcaption>운동 자랑 작성 화면</figcaption></figure>
+<p>관리자는 관리자 API를 통해 부적절한 게시글이나 댓글을 삭제할 수 있습니다.</p>
+<h2 id="26-단백질-공동구매와-리뷰-구조">26. 단백질 공동구매와 리뷰 구조</h2>
+<p>단백질 공동구매 화면은 결제 기능이 아니라 모집, 신청, 참여 상태, 채팅, 리뷰 중심으로 구현되어 있습니다.</p>
+<figure><img src="images/protein-list.png" alt="단백질 공동구매 화면"><figcaption>단백질 공동구매 화면</figcaption></figure>
+<p>관련 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/proteins</code></td><td>공동구매 글 작성</td></tr><tr><td><code>GET /api/proteins</code></td><td>공동구매 목록 조회</td></tr><tr><td><code>GET /api/proteins/{id}</code></td><td>공동구매 상세 조회</td></tr><tr><td><code>PUT /api/proteins/{id}</code></td><td>공동구매 글 수정, 관리자 권한</td></tr><tr><td><code>DELETE /api/proteins/{id}</code></td><td>공동구매 글 삭제, 관리자 권한</td></tr><tr><td><code>POST /api/proteins/{proteinId}/applications</code></td><td>참여 신청</td></tr><tr><td><code>GET /api/proteins/{proteinId}/applications/me</code></td><td>내 신청 상태</td></tr><tr><td><code>GET /api/proteins/{proteinId}/applications</code></td><td>신청 목록</td></tr><tr><td><code>PATCH /api/proteins/{proteinId}/applications/{appId}</code></td><td>신청 상태 변경</td></tr><tr><td><code>GET /api/proteins/{proteinId}/chat/messages</code></td><td>공동구매 채팅 조회</td></tr><tr><td><code>POST /api/proteins/{proteinId}/chat/messages</code></td><td>공동구매 채팅 작성</td></tr></tbody></table>
+<p>리뷰 화면은 공동구매 이용 후 후기를 남기는 기능입니다.</p>
+<figure><img src="images/reviews.png" alt="리뷰 화면"><figcaption>리뷰 화면</figcaption></figure>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/reviews</code></td><td>리뷰 작성</td></tr><tr><td><code>GET /api/reviews</code></td><td>리뷰 목록</td></tr><tr><td><code>PATCH /api/reviews/{id}</code></td><td>리뷰 수정</td></tr><tr><td><code>DELETE /api/reviews/{id}</code></td><td>리뷰 삭제</td></tr></tbody></table>
+<h2 id="27-크루와-챌린지-구조">27. 크루와 챌린지 구조</h2>
+<p>크루는 함께 운동하는 그룹을 만들고 참여하는 기능입니다.</p>
+<figure><img src="images/crew-hub.png" alt="크루/챌린지 화면"><figcaption>크루/챌린지 화면</figcaption></figure>
+<p>관련 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/crew/groups</code></td><td>크루 생성</td></tr><tr><td><code>GET /api/crew/groups</code></td><td>크루 목록</td></tr><tr><td><code>GET /api/crew/groups/{crewId}</code></td><td>크루 상세</td></tr><tr><td><code>POST /api/crew/groups/{crewId}/join</code></td><td>크루 가입 요청</td></tr><tr><td><code>DELETE /api/crew/groups/{crewId}/leave</code></td><td>크루 나가기</td></tr><tr><td><code>POST /api/crew/groups/join-by-code/{inviteCode}</code></td><td>초대 코드로 가입</td></tr><tr><td><code>GET /api/crew/groups/{crewId}/join-requests</code></td><td>가입 요청 목록</td></tr><tr><td><code>POST /api/crew/groups/{crewId}/join-requests/{requestId}/approve</code></td><td>가입 승인</td></tr><tr><td><code>POST /api/crew/groups/{crewId}/join-requests/{requestId}/reject</code></td><td>가입 거절</td></tr><tr><td><code>PUT /api/crew/groups/{crewId}</code></td><td>크루 수정</td></tr><tr><td><code>DELETE /api/crew/groups/{crewId}</code></td><td>크루 삭제</td></tr><tr><td><code>POST /api/crew/groups/{crewId}/challenges</code></td><td>챌린지 생성</td></tr><tr><td><code>PUT /api/crew/groups/{crewId}/challenges/{challengeId}</code></td><td>챌린지 수정</td></tr><tr><td><code>DELETE /api/crew/groups/{crewId}/challenges/{challengeId}</code></td><td>챌린지 삭제</td></tr></tbody></table>
+<p>크루에는 <code>WorkoutCrew</code>, <code>WorkoutCrewMember</code>, <code>WorkoutCrewJoinRequest</code>, <code>CrewChallenge</code> 같은 엔티티가 사용됩니다.</p>
+<h2 id="28-친구와-친구-채팅-구조">28. 친구와 친구 채팅 구조</h2>
+<p>친구 기능은 친구 요청, 수락/거절, 친구 목록, 1:1 채팅 메시지 조회/작성으로 구성됩니다.</p>
+<figure><img src="images/friends.png" alt="친구 화면"><figcaption>친구 화면</figcaption></figure>
+<p>관련 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/friends/requests</code></td><td>친구 요청</td></tr><tr><td><code>GET /api/friends/requests/incoming</code></td><td>받은 친구 요청</td></tr><tr><td><code>GET /api/friends/requests/outgoing</code></td><td>보낸 친구 요청</td></tr><tr><td><code>POST /api/friends/requests/{requestId}/accept</code></td><td>친구 요청 수락</td></tr><tr><td><code>POST /api/friends/requests/{requestId}/reject</code></td><td>친구 요청 거절</td></tr><tr><td><code>GET /api/friends</code></td><td>친구 목록</td></tr><tr><td><code>DELETE /api/friends/{friendId}</code></td><td>친구 삭제</td></tr><tr><td><code>GET /api/friends/chat/rooms</code></td><td>친구 채팅방 목록</td></tr><tr><td><code>GET /api/friends/chat/rooms/{friendId}/messages</code></td><td>친구 채팅 메시지 조회</td></tr><tr><td><code>POST /api/friends/chat/rooms/{friendId}/messages</code></td><td>친구 채팅 메시지 저장</td></tr></tbody></table>
+<p>추가로 실시간 서버에는 <code>friend:join</code>, <code>friend:subscribe</code>, <code>friend:send</code> 이벤트가 구현되어 있습니다. DB 저장은 백엔드 API가 담당하고, 즉시 화면에 알리는 역할은 Socket.IO가 보조합니다.</p>
+<h2 id="29-실시간-라운지-구조">29. 실시간 라운지 구조</h2>
+<p>라운지는 여러 사용자가 같은 공간에 들어와 위치, 채팅, 이모트, 스티커, 음성 조각, 따라가기 요청 등을 주고받는 화면입니다.</p>
+<figure><img src="images/lounge.png" alt="실시간 라운지 화면"><figcaption>실시간 라운지 화면</figcaption></figure>
+<p>실시간 서버는 <code>realtime/src/server.ts</code>에 구현되어 있습니다.</p>
+<p>주요 이벤트는 다음과 같습니다.</p>
+<table><thead><tr><th>이벤트</th><th>방향</th><th>의미</th></tr></thead><tbody><tr><td><code>lounge:join</code></td><td>브라우저 -&gt; 서버</td><td>사용자가 라운지에 입장합니다.</td></tr><tr><td><code>lounge:players</code></td><td>서버 -&gt; 브라우저</td><td>현재 접속자 목록과 위치를 전달합니다.</td></tr><tr><td><code>lounge:welcome</code></td><td>서버 -&gt; 브라우저</td><td>입장 성공과 맵 크기를 알려줍니다.</td></tr><tr><td><code>player:move</code></td><td>브라우저 -&gt; 서버</td><td>내 캐릭터 위치를 이동합니다.</td></tr><tr><td><code>chat:send</code></td><td>브라우저 -&gt; 서버</td><td>채팅 메시지를 보냅니다.</td></tr><tr><td><code>chat:message</code></td><td>서버 -&gt; 브라우저</td><td>채팅 메시지를 전체 라운지에 전파합니다.</td></tr><tr><td><code>chat:typing</code></td><td>양방향</td><td>입력 중 상태를 알립니다.</td></tr><tr><td><code>social:emote</code></td><td>양방향</td><td>이모트 사용을 알립니다.</td></tr><tr><td><code>social:sticker</code></td><td>양방향</td><td>스티커 사용을 알립니다.</td></tr><tr><td><code>voice:chunk</code></td><td>양방향</td><td>짧은 음성 데이터 조각을 전송합니다.</td></tr><tr><td><code>party:follow-request</code></td><td>양방향</td><td>따라가기 요청을 보냅니다.</td></tr><tr><td><code>party:teleport-request</code></td><td>양방향</td><td>순간이동 요청을 보냅니다.</td></tr><tr><td><code>ping:check</code></td><td>양방향</td><td>지연 시간을 확인합니다.</td></tr></tbody></table>
+<p>실시간 서버에는 <code>/status</code> HTTP 엔드포인트도 있습니다. 이 주소는 현재 방 이름과 접속자 수를 확인하는 데 사용됩니다.</p>
+<p>중요한 제한사항도 있습니다. 코드에 <code>TODO: Verify JWT/access token in realtime server (MVP skips).</code> 주석이 있어, 현재 실시간 서버 자체에서는 JWT 검증이 완성되어 있지 않습니다. 대신 프론트엔드 라운지 화면은 로그인 보호 라우트 안에 있습니다. 운영 환경에서 실시간 서버 보안을 강화하려면 Socket.IO 연결 단계에서 토큰 검증을 추가하는 것이 좋습니다.</p>
+<h2 id="30-이벤트와-관리자-이벤트-cms-구조">30. 이벤트와 관리자 이벤트 CMS 구조</h2>
+<p>일반 사용자는 이벤트 목록과 상세를 볼 수 있습니다.</p>
+<figure><img src="images/events.png" alt="이벤트 화면"><figcaption>이벤트 화면</figcaption></figure>
+<p>관련 공개 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>GET /api/events</code></td><td>공개 이벤트 목록</td></tr><tr><td><code>GET /api/events/{id}</code></td><td>이벤트 상세</td></tr><tr><td><code>POST /api/events/{id}/view</code></td><td>이벤트 조회 기록</td></tr><tr><td><code>POST /api/events/{id}/click</code></td><td>이벤트 클릭 기록</td></tr></tbody></table>
+<p>관리자는 이벤트를 직접 생성하고 수정할 수 있습니다.</p>
+<figure><img src="images/admin-events.png" alt="관리자 이벤트 관리 화면"><figcaption>관리자 이벤트 관리 화면</figcaption></figure>
+<p>관리자 이벤트 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>GET /api/admin/events</code></td><td>관리자 이벤트 목록</td></tr><tr><td><code>GET /api/admin/events/{id}</code></td><td>관리자 이벤트 상세</td></tr><tr><td><code>POST /api/admin/events</code></td><td>이벤트 생성</td></tr><tr><td><code>PUT /api/admin/events/{id}</code></td><td>이벤트 수정</td></tr><tr><td><code>DELETE /api/admin/events/{id}</code></td><td>이벤트 삭제</td></tr><tr><td><code>PATCH /api/admin/events/{id}/status</code></td><td>이벤트 상태 변경</td></tr><tr><td><code>PATCH /api/admin/events/{id}/main-banner</code></td><td>메인 배너 노출 변경</td></tr><tr><td><code>PATCH /api/admin/events/{id}/pin</code></td><td>고정 여부 변경</td></tr></tbody></table>
+<h2 id="31-관리자-대시보드-구조">31. 관리자 대시보드 구조</h2>
+<p>관리자 대시보드는 서비스 운영자가 보는 화면입니다. 일반 회원 화면과 달리 여러 데이터 목록과 상태 변경 기능을 제공합니다.</p>
+<figure><img src="images/admin-dashboard.png" alt="관리자 대시보드 화면"><figcaption>관리자 대시보드 화면</figcaption></figure>
+<p>주요 관리 기능은 다음과 같습니다.</p>
+<table><thead><tr><th>관리 항목</th><th>실제 API</th><th>설명</th></tr></thead><tbody><tr><td>대시보드 요약</td><td><code>/api/admin/analytics/summary</code></td><td>최근 행동 이벤트와 페이지별 데이터를 요약합니다.</td></tr><tr><td>행동 이벤트</td><td><code>/api/admin/analytics/events</code></td><td>프론트엔드에서 기록한 사용자 행동 이벤트를 조회합니다.</td></tr><tr><td>프로그램 신청</td><td><code>/api/admin/programs/applications</code></td><td>프로그램 신청 목록을 확인합니다.</td></tr><tr><td>신청 상태 변경</td><td><code>/api/admin/programs/applications/{id}/status</code></td><td>신청을 검토중, 승인, 거절 등으로 변경합니다.</td></tr><tr><td>출석 공유</td><td><code>/api/admin/attendance/shares</code></td><td>공유된 출석 기록을 확인합니다.</td></tr><tr><td>출석 로그</td><td><code>/api/admin/attendance/logs</code></td><td>사용자 출석 로그를 조회합니다.</td></tr><tr><td>문의</td><td><code>/api/admin/support/inquiries</code></td><td>고객 문의 목록을 확인합니다.</td></tr><tr><td>문의 상태 변경</td><td><code>/api/admin/support/inquiries/{id}/status</code></td><td>문의 상태와 관리자 메모를 수정합니다.</td></tr><tr><td>콘텐츠 삭제</td><td><code>/api/admin/brags/{id}</code>, <code>/api/admin/reviews/{id}</code></td><td>부적절한 게시글/리뷰를 삭제합니다.</td></tr><tr><td>AI 기록 삭제</td><td><code>/api/admin/ai/history/{id}</code></td><td>AI 상담 기록을 삭제합니다.</td></tr><tr><td>감사 로그</td><td><code>/api/admin/audit</code></td><td>변경성 요청 기록을 확인합니다.</td></tr><tr><td>수동 감사 로그</td><td><code>/api/admin/audit/manual</code></td><td>관리자가 직접 감사 로그를 남깁니다.</td></tr></tbody></table>
+<p>관리자 히스토리 화면은 감사 로그와 운영 기록 확인에 초점을 둡니다.</p>
+<figure><img src="images/admin-history.png" alt="관리자 히스토리 화면"><figcaption>관리자 히스토리 화면</figcaption></figure>
+<h2 id="32-감사-로그는-왜-필요한가">32. 감사 로그는 왜 필요한가</h2>
+<p>감사 로그는 “누가 언제 어떤 변경 요청을 했는지” 기록하는 기능입니다.</p>
+<p><code>AuditLogFilter.java</code>는 다음 HTTP 메서드를 기록 대상으로 봅니다.</p>
+<table><thead><tr><th>메서드</th><th>의미</th></tr></thead><tbody><tr><td>POST</td><td>새 데이터 생성</td></tr><tr><td>PUT</td><td>전체 수정</td></tr><tr><td>PATCH</td><td>일부 수정</td></tr><tr><td>DELETE</td><td>삭제</td></tr></tbody></table>
+<p>기록되는 내용은 요청 주소, 응답 상태, 사용자 이메일, IP, User-Agent 등입니다. 문서나 발표 자료에 실제 운영 로그를 넣을 때는 개인 식별 정보가 노출되지 않도록 마스킹해야 합니다.</p>
+<h2 id="33-파일-업로드-구조">33. 파일 업로드 구조</h2>
+<p>득근득근에는 <code>FileController</code>가 있어 파일 업로드, 삭제, 프록시 조회, 목록 조회를 처리합니다.</p>
+<p>관련 API는 다음과 같습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/files/upload</code></td><td>파일 업로드</td></tr><tr><td><code>DELETE /api/files</code></td><td>파일 삭제, 관리자 권한</td></tr><tr><td><code>GET /api/files/proxy</code></td><td>외부/저장소 파일 프록시 조회</td></tr><tr><td><code>GET /api/files/list</code></td><td>파일 목록</td></tr><tr><td><code>GET /api/files/list/paged</code></td><td>페이지네이션 파일 목록</td></tr></tbody></table>
+<p>운영 설정에는 S3 저장소 관련 환경변수도 있습니다. S3를 켜면 업로드 파일을 외부 객체 저장소에 둘 수 있고, 꺼져 있으면 로컬 업로드 구조를 사용할 수 있습니다.</p>
+<p>실제 운영에서는 업로드 파일에 민감정보가 포함되지 않도록 주의해야 합니다.</p>
+<h2 id="34-분석-이벤트-구조">34. 분석 이벤트 구조</h2>
+<p>분석 이벤트는 사용자의 화면 행동을 서버에 기록하는 기능입니다.</p>
+<p>프론트엔드에는 <code>frontend/src/utils/analytics.ts</code>가 있고, 백엔드에는 <code>AnalyticsController</code>, <code>AnalyticsService</code>, <code>AnalyticsEvent</code>가 있습니다.</p>
+<p>흐름은 다음과 같습니다.</p>
+<pre><code class="language-text">사용자가 페이지 이동 또는 버튼 클릭
+  |
+  v
+프론트엔드가 POST /api/analytics/events 호출
+  |
+  v
+백엔드가 page, action, metadata 저장
+  |
+  v
+관리자 대시보드에서 요약 조회</code></pre>
+<p>이 기능은 “어떤 화면이 많이 사용되는지”, “어떤 버튼이 많이 눌리는지”를 관리자에게 보여주는 기반이 됩니다.</p>
+<h2 id="35-프로그램-신청-구조">35. 프로그램 신청 구조</h2>
+<p>프로그램 신청은 <code>/programs</code> 화면에서 시작됩니다.</p>
+<figure><img src="images/programs.png" alt="프로그램 화면"><figcaption>프로그램 화면</figcaption></figure>
+<p>신청 API는 공개로 열려 있습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/programs/apply</code></td><td>프로그램 신청 등록</td></tr><tr><td><code>GET /api/admin/programs/applications</code></td><td>관리자 신청 목록 조회</td></tr><tr><td><code>PATCH /api/admin/programs/applications/{id}/status</code></td><td>관리자 신청 상태 변경</td></tr></tbody></table>
+<p>일반 사용자가 신청서를 제출하면 <code>ProgramApplication</code> 엔티티에 저장되고, 관리자는 관리자 대시보드에서 신청 목록과 상태를 관리합니다.</p>
+<h2 id="36-고객지원-구조">36. 고객지원 구조</h2>
+<p>고객지원은 문의 등록과 지원 채팅 형태로 구성되어 있습니다.</p>
+<table><thead><tr><th>API</th><th>기능</th></tr></thead><tbody><tr><td><code>POST /api/support/inquiries</code></td><td>문의 등록</td></tr><tr><td><code>POST /api/support/chat</code></td><td>지원 채팅</td></tr><tr><td><code>GET /api/admin/support/inquiries</code></td><td>관리자 문의 목록</td></tr><tr><td><code>PATCH /api/admin/support/inquiries/{id}/status</code></td><td>관리자 문의 상태 변경</td></tr></tbody></table>
+<p>중요한 점은 <code>/api/support/**</code>가 SecurityConfig에서 공개 API로 설정되어 있다는 것입니다. 따라서 문의 등록은 로그인하지 않은 방문자도 사용할 수 있는 구조입니다.</p>
+<h2 id="37-cors는-왜-필요한가">37. CORS는 왜 필요한가</h2>
+<p>CORS는 “프론트엔드 주소와 백엔드 주소가 달라도 요청을 허용할지” 정하는 브라우저 보안 규칙입니다.</p>
+<p>개발 환경에서는 보통 이런 식입니다.</p>
+<table><thead><tr><th>서버</th><th>주소 예시</th></tr></thead><tbody><tr><td>프론트엔드</td><td><code>http://localhost:5173</code></td></tr><tr><td>백엔드</td><td><code>http://localhost:8080</code></td></tr><tr><td>실시간 서버</td><td><code>http://localhost:4001</code></td></tr></tbody></table>
+<p>브라우저 입장에서는 5173에서 8080으로 요청하는 것이 서로 다른 출처입니다. 그래서 백엔드의 <code>CorsConfig.java</code>가 허용 출처, 허용 헤더, 허용 메서드를 설정합니다.</p>
+<p>허용 헤더에는 <code>Authorization</code>, <code>Content-Type</code>, <code>x-auth-retry</code> 등이 포함되어 있습니다. 이는 토큰 인증과 재시도 흐름에 필요합니다.</p>
+<h2 id="38-환경변수와-설정-파일">38. 환경변수와 설정 파일</h2>
+<p>득근득근은 환경에 따라 설정값을 바꿀 수 있게 되어 있습니다.</p>
+<table><thead><tr><th>설정 파일</th><th>용도</th></tr></thead><tbody><tr><td><code>application.properties</code></td><td>기본 백엔드 설정</td></tr><tr><td><code>application.properties.example</code></td><td>민감정보 없이 공유 가능한 예시 설정</td></tr><tr><td><code>application-local.example.properties</code></td><td>로컬 개발용 설정 예시</td></tr><tr><td><code>application-prod.properties</code></td><td>운영 환경 설정</td></tr></tbody></table>
+<p>운영에서 실제 값을 넣어야 하는 주요 항목은 다음과 같습니다.</p>
+<table><thead><tr><th>항목</th><th>설명</th></tr></thead><tbody><tr><td>DB 접속 정보</td><td>백엔드가 DB에 연결하기 위해 필요합니다.</td></tr><tr><td>JWT Secret</td><td>토큰 서명과 검증에 필요합니다. 실제 값은 절대 공개하면 안 됩니다.</td></tr><tr><td>Google OAuth Client ID/Secret</td><td>Google 로그인에 필요합니다.</td></tr><tr><td>OpenAI API Key</td><td>AI 기능에 필요합니다.</td></tr><tr><td>Mail 설정</td><td>이메일 인증 발송에 필요합니다.</td></tr><tr><td>CORS 허용 출처</td><td>배포된 프론트엔드 주소를 허용해야 합니다.</td></tr><tr><td>S3 설정</td><td>파일을 S3에 저장하려면 필요합니다.</td></tr></tbody></table>
+<p>문서에는 환경변수 이름만 설명하고 실제 값은 넣지 않습니다.</p>
+<h2 id="39-로컬-실행-구조">39. 로컬 실행 구조</h2>
+<p>개발 환경에서 전체 기능을 확인하려면 보통 세 서버가 필요합니다.</p>
+<table><thead><tr><th>서버</th><th>폴더</th><th>기본 포트</th><th>역할</th></tr></thead><tbody><tr><td>프론트엔드</td><td><code>frontend/</code></td><td>5173</td><td>사용자가 보는 화면</td></tr><tr><td>백엔드</td><td><code>backend/</code></td><td>8080</td><td>API 서버</td></tr><tr><td>실시간 서버</td><td><code>realtime/</code></td><td>4001</td><td>라운지/실시간 이벤트</td></tr></tbody></table>
+<p>일반적인 실행 순서는 다음과 같습니다.</p>
+<pre><code class="language-text">1. DB 실행
+2. backend 실행
+3. frontend 실행
+4. realtime 실행
+5. 브라우저에서 http://localhost:5173 접속</code></pre>
+<p>프론트엔드는 <code>npm run dev</code>, 백엔드는 Gradle 또는 IDE 실행, 실시간 서버는 <code>npm run dev</code> 또는 빌드 후 <code>npm start</code> 방식으로 실행할 수 있습니다.</p>
+<h2 id="40-사용자가-버튼을-누르면-내부에서-생기는-일">40. 사용자가 버튼을 누르면 내부에서 생기는 일</h2>
+<p>초보자가 가장 이해하기 어려운 부분은 “화면 버튼과 서버 코드가 어떻게 연결되는가”입니다. 예시로 출석 저장 버튼을 보겠습니다.</p>
+<pre><code class="language-text">1. 사용자가 출석 화면에서 운동 여부와 메모 입력
+2. 저장 버튼 클릭
+3. React 컴포넌트가 입력값을 객체로 만듦
+4. fetch 또는 axios가 /api/attendance/{date}로 PUT 요청
+5. 요청 헤더에 Access Token 추가
+6. 백엔드 JwtAuthenticationFilter가 토큰 검사
+7. SecurityConfig가 이 API에 USER 또는 ADMIN 권한이 있는지 확인
+8. AttendanceController가 요청을 받음
+9. AttendanceService가 저장 로직 처리
+10. AttendanceLogRepository가 DB에 저장
+11. 백엔드가 저장 결과를 JSON으로 응답
+12. React가 응답을 받아 화면 상태 갱신
+13. 사용자는 저장된 출석을 화면에서 확인</code></pre>
+<p>이 흐름은 대부분의 기능에도 비슷하게 적용됩니다.</p>
+<h2 id="41-기능별-내부-흐름-요약">41. 기능별 내부 흐름 요약</h2>
+<table><thead><tr><th>기능</th><th>프론트엔드 화면</th><th>백엔드 API</th><th>주요 DB</th></tr></thead><tbody><tr><td>회원가입</td><td><code>/register</code></td><td><code>/api/auth/email/...</code>, <code>/api/users/register</code></td><td><code>User</code>, <code>EmailVerification</code></td></tr><tr><td>로그인</td><td><code>/login</code></td><td><code>/api/auth/login</code>, <code>/api/auth/google</code></td><td><code>User</code>, <code>RefreshToken</code></td></tr><tr><td>출석</td><td><code>/attendance</code></td><td><code>/api/attendance/...</code></td><td><code>AttendanceLog</code></td></tr><tr><td>마이페이지</td><td><code>/mypage</code></td><td><code>/api/mypage</code>, <code>/api/mypage/stats</code>, <code>/api/character/me</code></td><td><code>UserBodyStats</code>, <code>CharacterProfile</code></td></tr><tr><td>랭킹</td><td><code>/rankings</code></td><td><code>/api/rankings/characters</code></td><td><code>CharacterProfile</code></td></tr><tr><td>AI</td><td><code>/ai</code>, <code>/ai/inbody</code></td><td><code>/api/ai/...</code></td><td><code>AiChatMessage</code></td></tr><tr><td>운동 자랑</td><td><code>/brag</code>, <code>/brag/write</code></td><td><code>/api/brags/...</code></td><td><code>BragPost</code>, <code>BragComment</code>, <code>BragLike</code></td></tr><tr><td>공동구매</td><td><code>/protein</code></td><td><code>/api/proteins/...</code></td><td><code>Protein</code>, <code>ProteinShareApplication</code>, <code>ProteinShareMessage</code></td></tr><tr><td>리뷰</td><td><code>/reviews</code></td><td><code>/api/reviews/...</code></td><td><code>Review</code></td></tr><tr><td>크루</td><td><code>/crew</code></td><td><code>/api/crew/...</code></td><td><code>WorkoutCrew</code>, <code>WorkoutCrewMember</code>, <code>CrewChallenge</code></td></tr><tr><td>친구</td><td><code>/friends</code></td><td><code>/api/friends/...</code></td><td><code>FriendRequest</code>, <code>Friendship</code>, <code>FriendChatMessage</code></td></tr><tr><td>라운지</td><td><code>/lounge</code></td><td><code>/api/lounge/profile</code>, Socket.IO</td><td><code>LoungeVisitLog</code>, 실시간 메모리 상태</td></tr><tr><td>이벤트</td><td><code>/events</code></td><td><code>/api/events/...</code></td><td><code>CmsEvent</code>, <code>Event</code>, <code>EventParticipant</code></td></tr><tr><td>관리자</td><td><code>/admin</code>, <code>/admin/history</code></td><td><code>/api/admin/...</code></td><td><code>AuditLog</code>, <code>AnalyticsEvent</code>, 여러 운영 데이터</td></tr></tbody></table>
+<h2 id="42-배포할-때-필요한-것">42. 배포할 때 필요한 것</h2>
+<p>배포는 “내 컴퓨터가 아니라 서버에서 서비스가 돌아가게 하는 것”입니다.</p>
+<p>득근득근을 정상 배포하려면 다음이 필요합니다.</p>
+<table><thead><tr><th>필요 요소</th><th>이유</th></tr></thead><tbody><tr><td>프론트엔드 정적 빌드</td><td>사용자가 접속하는 웹 화면입니다.</td></tr><tr><td>백엔드 서버</td><td>API 요청을 처리합니다.</td></tr><tr><td>DB</td><td>사용자, 출석, 게시글, 이벤트 데이터를 저장합니다.</td></tr><tr><td>실시간 서버</td><td>라운지와 실시간 채팅 이벤트를 처리합니다.</td></tr><tr><td>환경변수</td><td>DB, JWT, OAuth, OpenAI, 메일, CORS 설정에 필요합니다.</td></tr><tr><td>파일 저장소</td><td>업로드 파일을 안정적으로 저장하려면 필요합니다.</td></tr><tr><td>HTTPS</td><td>토큰과 로그인 정보를 안전하게 보호하기 위해 필요합니다.</td></tr></tbody></table>
+<p>배포 후 반드시 확인해야 할 것은 다음과 같습니다.</p>
+<ol>
+<li>프론트엔드가 백엔드 API 주소를 올바르게 바라보는지 확인합니다.</li>
+<li>백엔드 CORS가 실제 프론트엔드 도메인을 허용하는지 확인합니다.</li>
+<li>JWT Secret이 안전한 실제 값인지 확인합니다.</li>
+<li>DB 연결이 정상인지 확인합니다.</li>
+<li>Google OAuth 리디렉션/Client ID 설정이 실제 도메인과 맞는지 확인합니다.</li>
+<li>OpenAI API Key가 백엔드 환경변수에만 있는지 확인합니다.</li>
+<li>실시간 서버 주소가 프론트엔드 설정과 맞는지 확인합니다.</li>
+</ol>
+<h2 id="43-pwa와-서비스-워커">43. PWA와 서비스 워커</h2>
+<p>프론트엔드에는 <code>vite-plugin-pwa</code>가 설정되어 있습니다. PWA는 웹앱을 앱처럼 사용할 수 있게 도와주는 기술입니다.</p>
+<p><code>main.tsx</code>에서는 다음 처리가 있습니다.</p>
+<table><thead><tr><th>처리</th><th>설명</th></tr></thead><tbody><tr><td>서비스 워커 등록</td><td>새 버전이 있을 때 업데이트 알림을 띄웁니다.</td></tr><tr><td>Safari 예외 처리</td><td>Safari에서 서비스 워커 캐시가 문제를 만들 수 있어 별도 해제 로직이 있습니다.</td></tr><tr><td>개발 환경 캐시 제거</td><td>개발 중 오래된 서비스 워커 때문에 화면이 꼬이지 않도록 정리합니다.</td></tr></tbody></table>
+<p>초보자 관점에서는 “웹앱의 업데이트와 캐시를 관리하는 장치”라고 이해하면 됩니다.</p>
+<h2 id="44-실제-구현되지-않은-것으로-확인한-기능">44. 실제 구현되지 않은 것으로 확인한 기능</h2>
+<p>문서 신뢰성을 위해 구현된 것과 구현되지 않은 것을 구분해야 합니다.</p>
+<p>다음 기능은 코드와 라우트에서 전용 화면 또는 완성된 흐름을 확인하지 못했습니다.</p>
+<table><thead><tr><th>제외 기능</th><th>이유</th></tr></thead><tbody><tr><td>트레이너/코치 전용 화면</td><td>별도 역할, 전용 라우트, 전용 API를 확인하지 못했습니다.</td></tr><tr><td>운영자/스태프 전용 화면</td><td>관리자 외 별도 운영자/스태프 역할이 확인되지 않았습니다.</td></tr><tr><td>운동 종목 목록/운동 상세</td><td>전용 운동 카탈로그 화면과 API를 확인하지 못했습니다.</td></tr><tr><td>세트/중량/횟수 기반 운동 기록 CRUD</td><td>자랑 게시글의 운동 종목/중량 입력은 있으나 전용 운동 기록 CRUD와는 다릅니다.</td></tr><tr><td>전통적 루틴 생성/수정/삭제 CRUD</td><td>AI 루틴 제안은 있으나 사용자가 루틴을 DB에 저장·수정·삭제하는 전용 CRUD는 확인하지 못했습니다.</td></tr><tr><td>식단 기록 관리</td><td>AI 상담에서 식단 조언은 있으나 식단 기록 테이블/화면은 확인하지 못했습니다.</td></tr><tr><td>결제/환불</td><td>공동구매 모집과 신청은 있으나 실제 결제 처리는 확인하지 못했습니다.</td></tr><tr><td>관리자 사용자 계정 직접 관리 UI</td><td>관리자 대시보드에는 여러 운영 데이터 관리가 있으나 사용자 계정 CRUD UI는 확인하지 못했습니다.</td></tr></tbody></table>
+<h2 id="45-초보자를-위한-핵심-용어-정리">45. 초보자를 위한 핵심 용어 정리</h2>
+<table><thead><tr><th>용어</th><th>쉬운 설명</th></tr></thead><tbody><tr><td>프론트엔드</td><td>사용자가 보는 화면입니다.</td></tr><tr><td>백엔드</td><td>화면 뒤에서 데이터를 처리하는 서버입니다.</td></tr><tr><td>DB</td><td>데이터를 저장하는 장소입니다.</td></tr><tr><td>API</td><td>프론트엔드와 백엔드가 대화하는 약속입니다.</td></tr><tr><td>JSON</td><td>서버와 화면이 주고받는 데이터 형식입니다.</td></tr><tr><td>라우트</td><td>URL 주소와 화면을 연결하는 규칙입니다.</td></tr><tr><td>컴포넌트</td><td>React에서 화면을 나누는 작은 부품입니다.</td></tr><tr><td>Entity</td><td>DB 테이블과 연결되는 Java 클래스입니다.</td></tr><tr><td>Repository</td><td>DB에서 데이터를 가져오거나 저장하는 코드입니다.</td></tr><tr><td>Service</td><td>실제 기능 규칙을 처리하는 코드입니다.</td></tr><tr><td>Controller</td><td>API 요청을 처음 받는 코드입니다.</td></tr><tr><td>DTO</td><td>API 요청/응답에 사용하는 데이터 모양입니다.</td></tr><tr><td>JWT</td><td>로그인 상태를 확인하는 토큰입니다.</td></tr><tr><td>Access Token</td><td>API 요청에 사용하는 짧은 수명의 토큰입니다.</td></tr><tr><td>Refresh Token</td><td>Access Token을 다시 받기 위한 긴 수명의 토큰입니다.</td></tr><tr><td>CORS</td><td>서로 다른 주소의 프론트엔드와 백엔드 통신을 허용할지 정하는 규칙입니다.</td></tr><tr><td>PWA</td><td>웹을 앱처럼 사용할 수 있게 하는 기술입니다.</td></tr><tr><td>Socket.IO</td><td>실시간으로 데이터를 주고받는 기술입니다.</td></tr><tr><td>S3</td><td>파일을 저장하는 외부 객체 저장소입니다.</td></tr><tr><td>OAuth</td><td>Google 로그인처럼 외부 계정으로 로그인하는 방식입니다.</td></tr></tbody></table>
+<h2 id="46-전체를-다시-아주-짧게-요약">46. 전체를 다시 아주 짧게 요약</h2>
+<p>득근득근은 화면만 있는 프로젝트가 아니라 다음 구조를 가진 서비스입니다.</p>
+<pre><code class="language-text">React 화면
+  + Spring Boot API
+  + JPA 기반 DB 저장
+  + JWT 로그인/권한
+  + 관리자 운영 기능
+  + OpenAI 기반 AI 상담
+  + Socket.IO 실시간 라운지</code></pre>
+<p>사용자는 운동 출석, 캐릭터 성장, AI 상담, 커뮤니티, 공동구매, 크루, 친구, 라운지, 이벤트 기능을 사용합니다. 관리자는 프로그램 신청, 문의, 출석 공유, 콘텐츠, 이벤트, 감사 로그를 관리합니다.</p>
+<p>이 문서의 핵심은 하나입니다.</p>
+<p>득근득근은 사용자의 운동 활동을 기록하고, 시각화하고, 커뮤니티와 AI 기능으로 확장하며, 관리자가 운영 데이터를 확인할 수 있도록 프론트엔드, 백엔드, DB, 실시간 서버가 함께 동작하는 웹 서비스입니다.</p>
+
+    </main>
+  </article>
+</body>
+</html>
