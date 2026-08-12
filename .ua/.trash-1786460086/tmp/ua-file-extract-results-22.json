@@ -1,0 +1,23 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 0,
+  "filesSkipped": [
+    "frontend/src/styles/attendance.css",
+    "frontend/src/styles/attendanceShare.css",
+    "frontend/src/styles/characterEffects.css",
+    "frontend/src/styles/homeLobby.css",
+    "frontend/src/styles/lounge.css"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 0,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": []
+}

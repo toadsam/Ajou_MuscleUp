@@ -1,0 +1,2504 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 21,
+  "filesSkipped": [
+    "backend/src/main/resources/application.properties.example",
+    "backend/src/test/resources/application.properties",
+    "backend/uploads/2025/11/097cb7c5-61e3-44ef-8e70-ee7089e12e2d.webp",
+    "backend/uploads/2025/11/5e6a915e-c8d1-4961-a78c-e18e0d8566b6.webp"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 21,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 20,
+      "failed": 0,
+      "skipped": 1
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "AiChatResponse",
+          "startLine": 6,
+          "endLine": 10,
+          "methods": [],
+          "properties": [
+            "answer"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AiChatResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 23,
+      "nonEmptyLines": 20,
+      "classes": [
+        {
+          "name": "AiInbodyConsultResponse",
+          "startLine": 9,
+          "endLine": 23,
+          "methods": [],
+          "properties": [
+            "consultation",
+            "metrics",
+            "targets",
+            "dailyNutrition",
+            "structuredReport",
+            "weeklyCheckpoints",
+            "goalSource",
+            "confidence",
+            "reviewRequired",
+            "warnings",
+            "sourceType"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AiInbodyConsultResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 17,
+      "classes": [
+        {
+          "name": "AiInbodyPdfRequest",
+          "startLine": 8,
+          "endLine": 20,
+          "methods": [],
+          "properties": [
+            "memberName",
+            "consultation",
+            "metrics",
+            "targets",
+            "dailyNutrition",
+            "weeklyCheckpoints",
+            "warnings",
+            "goalSource",
+            "confidence",
+            "sourceType"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AiInbodyPdfRequest",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "AiInbodyReviewRequest",
+          "startLine": 7,
+          "endLine": 16,
+          "methods": [],
+          "properties": [
+            "metrics",
+            "goal",
+            "notes",
+            "goalIntensity",
+            "gender",
+            "age",
+            "heightCm"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AiInbodyReviewRequest",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "AiPlanRequest",
+          "startLine": 5,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "experienceLevel",
+            "availableDays",
+            "focusArea",
+            "equipment",
+            "preferredTime",
+            "notes"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AiPlanRequest",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "AiPlanResponse",
+          "startLine": 6,
+          "endLine": 10,
+          "methods": [],
+          "properties": [
+            "plan"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AiPlanResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 18,
+      "classes": [
+        {
+          "name": "CrewCompetitionEntryResponse",
+          "startLine": 6,
+          "endLine": 20,
+          "methods": [],
+          "properties": [
+            "rank",
+            "userId",
+            "nickname",
+            "score",
+            "attendanceScore",
+            "challengeScore",
+            "recentScore",
+            "bonusScore",
+            "attendanceRate",
+            "recentWorkoutDays",
+            "challengeAverageCompletion"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewCompetitionEntryResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "CrewKingTitleResponse",
+          "startLine": 6,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "title",
+            "userId",
+            "nickname",
+            "metric"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewKingTitleResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "FriendChatMessageCreateRequest",
+          "startLine": 8,
+          "endLine": 14,
+          "methods": [],
+          "properties": [
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendChatMessageCreateRequest",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "classes": [
+        {
+          "name": "FriendChatRoomResponse",
+          "startLine": 6,
+          "endLine": 12,
+          "methods": [],
+          "properties": [
+            "roomId",
+            "friendId",
+            "friendNickname"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendChatRoomResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "FriendRequestCreateRequest",
+          "startLine": 8,
+          "endLine": 14,
+          "methods": [],
+          "properties": [
+            "targetEmail"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendRequestCreateRequest",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "FriendSummaryResponse",
+          "startLine": 6,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "userId",
+            "email",
+            "nickname",
+            "character"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendSummaryResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 18,
+      "classes": [
+        {
+          "name": "BaseTimeEntity",
+          "startLine": 12,
+          "endLine": 20,
+          "methods": [],
+          "properties": [
+            "createdAt",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BaseTimeEntity",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "ApiErrorResponse",
+          "startLine": 7,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "status",
+            "code",
+            "message",
+            "timestamp",
+            "path"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ApiErrorResponse",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 42,
+      "nonEmptyLines": 38,
+      "functions": [
+        {
+          "name": "handleRSE",
+          "startLine": 14,
+          "endLine": 24,
+          "params": [
+            "e",
+            "request"
+          ]
+        },
+        {
+          "name": "handleValidation",
+          "startLine": 26,
+          "endLine": 41,
+          "params": [
+            "e",
+            "request"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "GlobalExceptionHandler",
+          "startLine": 11,
+          "endLine": 42,
+          "methods": [
+            "handleRSE",
+            "handleValidation"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "handleRSE",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "handleValidation",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "GlobalExceptionHandler",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "handleRSE",
+          "callee": "ResponseEntity.status(e.getStatusCode()).body",
+          "lineNumber": 16
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ResponseEntity.status",
+          "lineNumber": 16
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "e.getStatusCode",
+          "lineNumber": 16
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ApiErrorResponse.builder()\r\n                        .status(e.getStatusCode().value())\r\n                        .code(e.getStatusCode().toString())\r\n                        .message(e.getReason())\r\n                        .timestamp(LocalDateTime.now())\r\n                        .path(request.getRequestURI()).build",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ApiErrorResponse.builder()\r\n                        .status(e.getStatusCode().value())\r\n                        .code(e.getStatusCode().toString())\r\n                        .message(e.getReason())\r\n                        .timestamp(LocalDateTime.now()).path",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ApiErrorResponse.builder()\r\n                        .status(e.getStatusCode().value())\r\n                        .code(e.getStatusCode().toString())\r\n                        .message(e.getReason()).timestamp",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ApiErrorResponse.builder()\r\n                        .status(e.getStatusCode().value())\r\n                        .code(e.getStatusCode().toString()).message",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ApiErrorResponse.builder()\r\n                        .status(e.getStatusCode().value()).code",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ApiErrorResponse.builder().status",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "ApiErrorResponse.builder",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "e.getStatusCode().value",
+          "lineNumber": 18
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "e.getStatusCode",
+          "lineNumber": 18
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "e.getStatusCode().toString",
+          "lineNumber": 19
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "e.getStatusCode",
+          "lineNumber": 19
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "e.getReason",
+          "lineNumber": 20
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 21
+        },
+        {
+          "caller": "handleRSE",
+          "callee": "request.getRequestURI",
+          "lineNumber": 22
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "e.getBindingResult().getFieldErrors().stream()\r\n                .findFirst().map(fe -> fe.getField() + \" \" + fe.getDefaultMessage()).orElse",
+          "lineNumber": 31
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "e.getBindingResult().getFieldErrors().stream()\r\n                .findFirst().map",
+          "lineNumber": 31
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "e.getBindingResult().getFieldErrors().stream().findFirst",
+          "lineNumber": 31
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "e.getBindingResult().getFieldErrors().stream",
+          "lineNumber": 31
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "e.getBindingResult().getFieldErrors",
+          "lineNumber": 31
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "e.getBindingResult",
+          "lineNumber": 31
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "fe.getField",
+          "lineNumber": 32
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "fe.getDefaultMessage",
+          "lineNumber": 32
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ResponseEntity.badRequest().body",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ResponseEntity.badRequest",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ApiErrorResponse.builder()\r\n                .status(400)\r\n                .code(\"BAD_REQUEST\")\r\n                .message(msg)\r\n                .timestamp(LocalDateTime.now())\r\n                .path(request.getRequestURI()).build",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ApiErrorResponse.builder()\r\n                .status(400)\r\n                .code(\"BAD_REQUEST\")\r\n                .message(msg)\r\n                .timestamp(LocalDateTime.now()).path",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ApiErrorResponse.builder()\r\n                .status(400)\r\n                .code(\"BAD_REQUEST\")\r\n                .message(msg).timestamp",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ApiErrorResponse.builder()\r\n                .status(400)\r\n                .code(\"BAD_REQUEST\").message",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ApiErrorResponse.builder()\r\n                .status(400).code",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ApiErrorResponse.builder().status",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "ApiErrorResponse.builder",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 38
+        },
+        {
+          "caller": "handleValidation",
+          "callee": "request.getRequestURI",
+          "lineNumber": 39
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/EmailSender.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 42,
+      "nonEmptyLines": 34,
+      "functions": [
+        {
+          "name": "sendSimpleAsync",
+          "startLine": 25,
+          "endLine": 41,
+          "params": [
+            "to",
+            "subject",
+            "text"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EmailSender",
+          "startLine": 14,
+          "endLine": 42,
+          "methods": [
+            "sendSimpleAsync"
+          ],
+          "properties": [
+            "mailSender",
+            "from"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "sendSimpleAsync",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "EmailSender",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "mailSender.createMimeMessage",
+          "lineNumber": 28
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "new MimeMessageHelper",
+          "lineNumber": 29
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "helper.setFrom",
+          "lineNumber": 31
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "helper.setTo",
+          "lineNumber": 32
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "helper.setSubject",
+          "lineNumber": 33
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "helper.setText",
+          "lineNumber": 34
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "mailSender.send",
+          "lineNumber": 36
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "log.info",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "log.error",
+          "lineNumber": 39
+        },
+        {
+          "caller": "sendSimpleAsync",
+          "callee": "e.toString",
+          "lineNumber": 39
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/FriendService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 17,
+      "classes": [
+        {
+          "name": "FriendService",
+          "startLine": 6,
+          "endLine": 30,
+          "methods": [
+            "sendRequest",
+            "listIncoming",
+            "listOutgoing",
+            "acceptRequest",
+            "rejectRequest",
+            "listFriends",
+            "deleteFriend",
+            "areFriends",
+            "findFriendIds",
+            "listChatRooms",
+            "listMessages",
+            "sendMessage"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendService",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 287,
+      "nonEmptyLines": 265,
+      "functions": [
+        {
+          "name": "sendRequest",
+          "startLine": 25,
+          "endLine": 52,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "listIncoming",
+          "startLine": 54,
+          "endLine": 71,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "listOutgoing",
+          "startLine": 73,
+          "endLine": 90,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "acceptRequest",
+          "startLine": 92,
+          "endLine": 110,
+          "params": [
+            "email",
+            "requestId"
+          ]
+        },
+        {
+          "name": "rejectRequest",
+          "startLine": 112,
+          "endLine": 121,
+          "params": [
+            "email",
+            "requestId"
+          ]
+        },
+        {
+          "name": "listFriends",
+          "startLine": 123,
+          "endLine": 140,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "deleteFriend",
+          "startLine": 142,
+          "endLine": 152,
+          "params": [
+            "email",
+            "friendId"
+          ]
+        },
+        {
+          "name": "areFriends",
+          "startLine": 154,
+          "endLine": 165,
+          "params": [
+            "userAId",
+            "userBId"
+          ]
+        },
+        {
+          "name": "findFriendIds",
+          "startLine": 167,
+          "endLine": 176,
+          "params": [
+            "userId"
+          ]
+        },
+        {
+          "name": "listChatRooms",
+          "startLine": 178,
+          "endLine": 193,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "listMessages",
+          "startLine": 195,
+          "endLine": 212,
+          "params": [
+            "email",
+            "friendId",
+            "size"
+          ]
+        },
+        {
+          "name": "sendMessage",
+          "startLine": 214,
+          "endLine": 227,
+          "params": [
+            "email",
+            "friendId",
+            "content"
+          ]
+        },
+        {
+          "name": "saveFriendship",
+          "startLine": 229,
+          "endLine": 237,
+          "params": [
+            "userA",
+            "userB"
+          ]
+        },
+        {
+          "name": "getOrCreateRoom",
+          "startLine": 239,
+          "endLine": 247,
+          "params": [
+            "userA",
+            "userB"
+          ]
+        },
+        {
+          "name": "ensureFriends",
+          "startLine": 249,
+          "endLine": 253,
+          "params": [
+            "me",
+            "friend"
+          ]
+        },
+        {
+          "name": "requireUser",
+          "startLine": 255,
+          "endLine": 258,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "pickLow",
+          "startLine": 260,
+          "endLine": 262,
+          "params": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "name": "pickHigh",
+          "startLine": 264,
+          "endLine": 266,
+          "params": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "name": "buildCharacterSnapshotMap",
+          "startLine": 268,
+          "endLine": 277,
+          "params": [
+            "users"
+          ]
+        },
+        {
+          "name": "toCharacterSnapshot",
+          "startLine": 279,
+          "endLine": 286,
+          "params": [
+            "user"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "FriendServiceImpl",
+          "startLine": 14,
+          "endLine": 287,
+          "methods": [
+            "sendRequest",
+            "listIncoming",
+            "listOutgoing",
+            "acceptRequest",
+            "rejectRequest",
+            "listFriends",
+            "deleteFriend",
+            "areFriends",
+            "findFriendIds",
+            "listChatRooms",
+            "listMessages",
+            "sendMessage",
+            "saveFriendship",
+            "getOrCreateRoom",
+            "ensureFriends",
+            "requireUser",
+            "pickLow",
+            "pickHigh",
+            "buildCharacterSnapshotMap",
+            "toCharacterSnapshot"
+          ],
+          "properties": [
+            "userRepository",
+            "characterProfileRepository",
+            "friendRequestRepository",
+            "friendshipRepository",
+            "friendChatRoomRepository",
+            "friendChatMessageRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "sendRequest",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "listIncoming",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "listOutgoing",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "acceptRequest",
+          "line": 92,
+          "isDefault": false
+        },
+        {
+          "name": "rejectRequest",
+          "line": 112,
+          "isDefault": false
+        },
+        {
+          "name": "listFriends",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "deleteFriend",
+          "line": 142,
+          "isDefault": false
+        },
+        {
+          "name": "areFriends",
+          "line": 154,
+          "isDefault": false
+        },
+        {
+          "name": "findFriendIds",
+          "line": 167,
+          "isDefault": false
+        },
+        {
+          "name": "listChatRooms",
+          "line": 178,
+          "isDefault": false
+        },
+        {
+          "name": "listMessages",
+          "line": 195,
+          "isDefault": false
+        },
+        {
+          "name": "sendMessage",
+          "line": 214,
+          "isDefault": false
+        },
+        {
+          "name": "FriendServiceImpl",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "sendRequest",
+          "callee": "requireUser",
+          "lineNumber": 27
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "userRepository.findByEmail(request.getTargetEmail().trim()).orElseThrow",
+          "lineNumber": 28
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 28
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "request.getTargetEmail().trim",
+          "lineNumber": 28
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "request.getTargetEmail",
+          "lineNumber": 28
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 29
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "Objects.equals",
+          "lineNumber": 30
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "me.getId",
+          "lineNumber": 30
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "target.getId",
+          "lineNumber": 30
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 31
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "areFriends",
+          "lineNumber": 33
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "me.getId",
+          "lineNumber": 33
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "target.getId",
+          "lineNumber": 33
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 34
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "friendRequestRepository.findByRequesterAndReceiverAndStatus(me, target, FriendRequestStatus.PENDING).isPresent",
+          "lineNumber": 36
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "friendRequestRepository.findByRequesterAndReceiverAndStatus",
+          "lineNumber": 36
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "friendRequestRepository.findByRequesterAndReceiverAndStatus(target, me, FriendRequestStatus.PENDING).isPresent",
+          "lineNumber": 39
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "friendRequestRepository.findByRequesterAndReceiverAndStatus",
+          "lineNumber": 39
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 40
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "friendRequestRepository.save",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "FriendRequest.builder()\r\n                .requester(me)\r\n                .receiver(target)\r\n                .status(FriendRequestStatus.PENDING).build",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "FriendRequest.builder()\r\n                .requester(me)\r\n                .receiver(target).status",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "FriendRequest.builder()\r\n                .requester(me).receiver",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "FriendRequest.builder().requester",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "FriendRequest.builder",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "FriendRequestResponse.from",
+          "lineNumber": 47
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "toCharacterSnapshot",
+          "lineNumber": 49
+        },
+        {
+          "caller": "sendRequest",
+          "callee": "toCharacterSnapshot",
+          "lineNumber": 50
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "requireUser",
+          "lineNumber": 57
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "friendRequestRepository.findAllByReceiverAndStatusOrderByCreatedAtDesc",
+          "lineNumber": 58
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "buildCharacterSnapshotMap",
+          "lineNumber": 59
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "requests.stream()\r\n                        .flatMap(req -> java.util.stream.Stream.of(req.getRequester(), req.getReceiver())).toList",
+          "lineNumber": 60
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "requests.stream().flatMap",
+          "lineNumber": 60
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "requests.stream",
+          "lineNumber": 60
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "java.util.stream.Stream.of",
+          "lineNumber": 61
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "req.getRequester",
+          "lineNumber": 61
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "req.getReceiver",
+          "lineNumber": 61
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "requests.stream()\r\n                .map(req -> FriendRequestResponse.from(\r\n                        req,\r\n                        snapshots.get(req.getRequester().getId()),\r\n                        snapshots.get(req.getReceiver().getId())\r\n                )).toList",
+          "lineNumber": 64
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "requests.stream().map",
+          "lineNumber": 64
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "requests.stream",
+          "lineNumber": 64
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "FriendRequestResponse.from",
+          "lineNumber": 65
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "snapshots.get",
+          "lineNumber": 67
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "req.getRequester().getId",
+          "lineNumber": 67
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "req.getRequester",
+          "lineNumber": 67
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "snapshots.get",
+          "lineNumber": 68
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "req.getReceiver().getId",
+          "lineNumber": 68
+        },
+        {
+          "caller": "listIncoming",
+          "callee": "req.getReceiver",
+          "lineNumber": 68
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "requireUser",
+          "lineNumber": 76
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "friendRequestRepository.findAllByRequesterAndStatusOrderByCreatedAtDesc",
+          "lineNumber": 77
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "buildCharacterSnapshotMap",
+          "lineNumber": 78
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "requests.stream()\r\n                        .flatMap(req -> java.util.stream.Stream.of(req.getRequester(), req.getReceiver())).toList",
+          "lineNumber": 79
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "requests.stream().flatMap",
+          "lineNumber": 79
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "requests.stream",
+          "lineNumber": 79
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "java.util.stream.Stream.of",
+          "lineNumber": 80
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "req.getRequester",
+          "lineNumber": 80
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "req.getReceiver",
+          "lineNumber": 80
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "requests.stream()\r\n                .map(req -> FriendRequestResponse.from(\r\n                        req,\r\n                        snapshots.get(req.getRequester().getId()),\r\n                        snapshots.get(req.getReceiver().getId())\r\n                )).toList",
+          "lineNumber": 83
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "requests.stream().map",
+          "lineNumber": 83
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "requests.stream",
+          "lineNumber": 83
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "FriendRequestResponse.from",
+          "lineNumber": 84
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "snapshots.get",
+          "lineNumber": 86
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "req.getRequester().getId",
+          "lineNumber": 86
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "req.getRequester",
+          "lineNumber": 86
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "snapshots.get",
+          "lineNumber": 87
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "req.getReceiver().getId",
+          "lineNumber": 87
+        },
+        {
+          "caller": "listOutgoing",
+          "callee": "req.getReceiver",
+          "lineNumber": 87
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "requireUser",
+          "lineNumber": 94
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "friendRequestRepository.findById(requestId).orElseThrow",
+          "lineNumber": 95
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "friendRequestRepository.findById",
+          "lineNumber": 95
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 96
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "Objects.equals",
+          "lineNumber": 97
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.getReceiver().getId",
+          "lineNumber": 97
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.getReceiver",
+          "lineNumber": 97
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "me.getId",
+          "lineNumber": 97
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 98
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.getStatus",
+          "lineNumber": 100
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 101
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.setStatus",
+          "lineNumber": 103
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "saveFriendship",
+          "lineNumber": 104
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.getRequester",
+          "lineNumber": 104
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.getReceiver",
+          "lineNumber": 104
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "FriendRequestResponse.from",
+          "lineNumber": 105
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "toCharacterSnapshot",
+          "lineNumber": 107
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.getRequester",
+          "lineNumber": 107
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "toCharacterSnapshot",
+          "lineNumber": 108
+        },
+        {
+          "caller": "acceptRequest",
+          "callee": "req.getReceiver",
+          "lineNumber": 108
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "requireUser",
+          "lineNumber": 114
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "friendRequestRepository.findById(requestId).orElseThrow",
+          "lineNumber": 115
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "friendRequestRepository.findById",
+          "lineNumber": 115
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 116
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "Objects.equals",
+          "lineNumber": 117
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "req.getReceiver().getId",
+          "lineNumber": 117
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "req.getReceiver",
+          "lineNumber": 117
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "me.getId",
+          "lineNumber": 117
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 118
+        },
+        {
+          "caller": "rejectRequest",
+          "callee": "req.setStatus",
+          "lineNumber": 120
+        },
+        {
+          "caller": "listFriends",
+          "callee": "requireUser",
+          "lineNumber": 126
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendshipRepository.findAllByUser(me).stream()\r\n                .map(friendship -> Objects.equals(friendship.getUserLow().getId(), me.getId())\r\n                        ? friendship.getUserHigh() : friendship.getUserLow()).toList",
+          "lineNumber": 127
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendshipRepository.findAllByUser(me).stream().map",
+          "lineNumber": 127
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendshipRepository.findAllByUser(me).stream",
+          "lineNumber": 127
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendshipRepository.findAllByUser",
+          "lineNumber": 127
+        },
+        {
+          "caller": "listFriends",
+          "callee": "Objects.equals",
+          "lineNumber": 128
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendship.getUserLow().getId",
+          "lineNumber": 128
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendship.getUserLow",
+          "lineNumber": 128
+        },
+        {
+          "caller": "listFriends",
+          "callee": "me.getId",
+          "lineNumber": 128
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendship.getUserHigh",
+          "lineNumber": 129
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendship.getUserLow",
+          "lineNumber": 129
+        },
+        {
+          "caller": "listFriends",
+          "callee": "buildCharacterSnapshotMap",
+          "lineNumber": 131
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendUsers.stream()\r\n                .map(friend -> FriendSummaryResponse.builder()\r\n                        .userId(friend.getId())\r\n                        .email(friend.getEmail())\r\n                        .nickname(friend.getNickname())\r\n                        .character(snapshots.get(friend.getId()))\r\n                        .build()).toList",
+          "lineNumber": 132
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendUsers.stream().map",
+          "lineNumber": 132
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friendUsers.stream",
+          "lineNumber": 132
+        },
+        {
+          "caller": "listFriends",
+          "callee": "FriendSummaryResponse.builder()\r\n                        .userId(friend.getId())\r\n                        .email(friend.getEmail())\r\n                        .nickname(friend.getNickname())\r\n                        .character(snapshots.get(friend.getId())).build",
+          "lineNumber": 133
+        },
+        {
+          "caller": "listFriends",
+          "callee": "FriendSummaryResponse.builder()\r\n                        .userId(friend.getId())\r\n                        .email(friend.getEmail())\r\n                        .nickname(friend.getNickname()).character",
+          "lineNumber": 133
+        },
+        {
+          "caller": "listFriends",
+          "callee": "FriendSummaryResponse.builder()\r\n                        .userId(friend.getId())\r\n                        .email(friend.getEmail()).nickname",
+          "lineNumber": 133
+        },
+        {
+          "caller": "listFriends",
+          "callee": "FriendSummaryResponse.builder()\r\n                        .userId(friend.getId()).email",
+          "lineNumber": 133
+        },
+        {
+          "caller": "listFriends",
+          "callee": "FriendSummaryResponse.builder().userId",
+          "lineNumber": 133
+        },
+        {
+          "caller": "listFriends",
+          "callee": "FriendSummaryResponse.builder",
+          "lineNumber": 133
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friend.getId",
+          "lineNumber": 134
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friend.getEmail",
+          "lineNumber": 135
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friend.getNickname",
+          "lineNumber": 136
+        },
+        {
+          "caller": "listFriends",
+          "callee": "snapshots.get",
+          "lineNumber": 137
+        },
+        {
+          "caller": "listFriends",
+          "callee": "friend.getId",
+          "lineNumber": 137
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "requireUser",
+          "lineNumber": 144
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "userRepository.findById(friendId).orElseThrow",
+          "lineNumber": 145
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "userRepository.findById",
+          "lineNumber": 145
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 146
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "pickLow",
+          "lineNumber": 147
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "pickHigh",
+          "lineNumber": 148
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "friendshipRepository.findByUserLowAndUserHigh(low, high).orElseThrow",
+          "lineNumber": 149
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "friendshipRepository.findByUserLowAndUserHigh",
+          "lineNumber": 149
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 150
+        },
+        {
+          "caller": "deleteFriend",
+          "callee": "friendshipRepository.delete",
+          "lineNumber": 151
+        },
+        {
+          "caller": "areFriends",
+          "callee": "Objects.equals",
+          "lineNumber": 158
+        },
+        {
+          "caller": "areFriends",
+          "callee": "userRepository.findById(userAId).orElse",
+          "lineNumber": 159
+        },
+        {
+          "caller": "areFriends",
+          "callee": "userRepository.findById",
+          "lineNumber": 159
+        },
+        {
+          "caller": "areFriends",
+          "callee": "userRepository.findById(userBId).orElse",
+          "lineNumber": 160
+        },
+        {
+          "caller": "areFriends",
+          "callee": "userRepository.findById",
+          "lineNumber": 160
+        },
+        {
+          "caller": "areFriends",
+          "callee": "pickLow",
+          "lineNumber": 162
+        },
+        {
+          "caller": "areFriends",
+          "callee": "pickHigh",
+          "lineNumber": 163
+        },
+        {
+          "caller": "areFriends",
+          "callee": "friendshipRepository.findByUserLowAndUserHigh(low, high).isPresent",
+          "lineNumber": 164
+        },
+        {
+          "caller": "areFriends",
+          "callee": "friendshipRepository.findByUserLowAndUserHigh",
+          "lineNumber": 164
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "userRepository.findById(userId).orElse",
+          "lineNumber": 170
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "userRepository.findById",
+          "lineNumber": 170
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "List.of",
+          "lineNumber": 171
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendshipRepository.findAllByUser(me).stream()\r\n                .map(friendship -> Objects.equals(friendship.getUserLow().getId(), me.getId())\r\n                        ? friendship.getUserHigh().getId() : friendship.getUserLow().getId()).toList",
+          "lineNumber": 172
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendshipRepository.findAllByUser(me).stream().map",
+          "lineNumber": 172
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendshipRepository.findAllByUser(me).stream",
+          "lineNumber": 172
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendshipRepository.findAllByUser",
+          "lineNumber": 172
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "Objects.equals",
+          "lineNumber": 173
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendship.getUserLow().getId",
+          "lineNumber": 173
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendship.getUserLow",
+          "lineNumber": 173
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "me.getId",
+          "lineNumber": 173
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendship.getUserHigh().getId",
+          "lineNumber": 174
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendship.getUserHigh",
+          "lineNumber": 174
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendship.getUserLow().getId",
+          "lineNumber": 174
+        },
+        {
+          "caller": "findFriendIds",
+          "callee": "friendship.getUserLow",
+          "lineNumber": 174
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "requireUser",
+          "lineNumber": 181
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "friendChatRoomRepository.findAllByUser(me).stream()\r\n                .map(room -> {\r\n                    User friend = Objects.equals(room.getUserLow().getId(), me.getId())\r\n                            ? room.getUserHigh() : room.getUserLow();\r\n                    return FriendChatRoomResponse.builder()\r\n                            .roomId(room.getId())\r\n                            .friendId(friend.getId())\r\n                            .friendNickname(friend.getNickname())\r\n                            .build();\r\n                }).toList",
+          "lineNumber": 182
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "friendChatRoomRepository.findAllByUser(me).stream().map",
+          "lineNumber": 182
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "friendChatRoomRepository.findAllByUser(me).stream",
+          "lineNumber": 182
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "friendChatRoomRepository.findAllByUser",
+          "lineNumber": 182
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "Objects.equals",
+          "lineNumber": 184
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "room.getUserLow().getId",
+          "lineNumber": 184
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "room.getUserLow",
+          "lineNumber": 184
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "me.getId",
+          "lineNumber": 184
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "room.getUserHigh",
+          "lineNumber": 185
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "room.getUserLow",
+          "lineNumber": 185
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "FriendChatRoomResponse.builder()\r\n                            .roomId(room.getId())\r\n                            .friendId(friend.getId())\r\n                            .friendNickname(friend.getNickname()).build",
+          "lineNumber": 186
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "FriendChatRoomResponse.builder()\r\n                            .roomId(room.getId())\r\n                            .friendId(friend.getId()).friendNickname",
+          "lineNumber": 186
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "FriendChatRoomResponse.builder()\r\n                            .roomId(room.getId()).friendId",
+          "lineNumber": 186
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "FriendChatRoomResponse.builder().roomId",
+          "lineNumber": 186
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "FriendChatRoomResponse.builder",
+          "lineNumber": 186
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "room.getId",
+          "lineNumber": 187
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "friend.getId",
+          "lineNumber": 188
+        },
+        {
+          "caller": "listChatRooms",
+          "callee": "friend.getNickname",
+          "lineNumber": 189
+        },
+        {
+          "caller": "listMessages",
+          "callee": "requireUser",
+          "lineNumber": 198
+        },
+        {
+          "caller": "listMessages",
+          "callee": "userRepository.findById(friendId).orElseThrow",
+          "lineNumber": 199
+        },
+        {
+          "caller": "listMessages",
+          "callee": "userRepository.findById",
+          "lineNumber": 199
+        },
+        {
+          "caller": "listMessages",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 200
+        },
+        {
+          "caller": "listMessages",
+          "callee": "ensureFriends",
+          "lineNumber": 201
+        },
+        {
+          "caller": "listMessages",
+          "callee": "getOrCreateRoom",
+          "lineNumber": 202
+        },
+        {
+          "caller": "listMessages",
+          "callee": "Math.max",
+          "lineNumber": 203
+        },
+        {
+          "caller": "listMessages",
+          "callee": "Math.min",
+          "lineNumber": 203
+        },
+        {
+          "caller": "listMessages",
+          "callee": "friendChatMessageRepository\r\n                .findByRoomOrderByIdDesc(room, PageRequest.of(0, safeSize))\r\n                .stream()\r\n                .map(FriendChatMessageResponse::from).toList",
+          "lineNumber": 204
+        },
+        {
+          "caller": "listMessages",
+          "callee": "friendChatMessageRepository\r\n                .findByRoomOrderByIdDesc(room, PageRequest.of(0, safeSize))\r\n                .stream().map",
+          "lineNumber": 204
+        },
+        {
+          "caller": "listMessages",
+          "callee": "friendChatMessageRepository\r\n                .findByRoomOrderByIdDesc(room, PageRequest.of(0, safeSize)).stream",
+          "lineNumber": 204
+        },
+        {
+          "caller": "listMessages",
+          "callee": "friendChatMessageRepository.findByRoomOrderByIdDesc",
+          "lineNumber": 204
+        },
+        {
+          "caller": "listMessages",
+          "callee": "PageRequest.of",
+          "lineNumber": 205
+        },
+        {
+          "caller": "listMessages",
+          "callee": "new ArrayList<>",
+          "lineNumber": 209
+        },
+        {
+          "caller": "listMessages",
+          "callee": "Collections.reverse",
+          "lineNumber": 210
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "requireUser",
+          "lineNumber": 216
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "userRepository.findById(friendId).orElseThrow",
+          "lineNumber": 217
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "userRepository.findById",
+          "lineNumber": 217
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 218
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "ensureFriends",
+          "lineNumber": 219
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "getOrCreateRoom",
+          "lineNumber": 220
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "friendChatMessageRepository.save",
+          "lineNumber": 221
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "FriendChatMessage.builder()\r\n                .room(room)\r\n                .sender(me)\r\n                .content(content.trim()).build",
+          "lineNumber": 221
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "FriendChatMessage.builder()\r\n                .room(room)\r\n                .sender(me).content",
+          "lineNumber": 221
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "FriendChatMessage.builder()\r\n                .room(room).sender",
+          "lineNumber": 221
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "FriendChatMessage.builder().room",
+          "lineNumber": 221
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "FriendChatMessage.builder",
+          "lineNumber": 221
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "content.trim",
+          "lineNumber": 224
+        },
+        {
+          "caller": "sendMessage",
+          "callee": "FriendChatMessageResponse.from",
+          "lineNumber": 226
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "pickLow",
+          "lineNumber": 230
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "pickHigh",
+          "lineNumber": 231
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "friendshipRepository.findByUserLowAndUserHigh(low, high).isPresent",
+          "lineNumber": 232
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "friendshipRepository.findByUserLowAndUserHigh",
+          "lineNumber": 232
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "friendshipRepository.save",
+          "lineNumber": 233
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "Friendship.builder()\r\n                .userLow(low)\r\n                .userHigh(high).build",
+          "lineNumber": 233
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "Friendship.builder()\r\n                .userLow(low).userHigh",
+          "lineNumber": 233
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "Friendship.builder().userLow",
+          "lineNumber": 233
+        },
+        {
+          "caller": "saveFriendship",
+          "callee": "Friendship.builder",
+          "lineNumber": 233
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "pickLow",
+          "lineNumber": 240
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "pickHigh",
+          "lineNumber": 241
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "friendChatRoomRepository.findByUserLowAndUserHigh(low, high).orElseGet",
+          "lineNumber": 242
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "friendChatRoomRepository.findByUserLowAndUserHigh",
+          "lineNumber": 242
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "friendChatRoomRepository.save",
+          "lineNumber": 243
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "FriendChatRoom.builder()\r\n                        .userLow(low)\r\n                        .userHigh(high).build",
+          "lineNumber": 243
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "FriendChatRoom.builder()\r\n                        .userLow(low).userHigh",
+          "lineNumber": 243
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "FriendChatRoom.builder().userLow",
+          "lineNumber": 243
+        },
+        {
+          "caller": "getOrCreateRoom",
+          "callee": "FriendChatRoom.builder",
+          "lineNumber": 243
+        },
+        {
+          "caller": "ensureFriends",
+          "callee": "areFriends",
+          "lineNumber": 250
+        },
+        {
+          "caller": "ensureFriends",
+          "callee": "me.getId",
+          "lineNumber": 250
+        },
+        {
+          "caller": "ensureFriends",
+          "callee": "friend.getId",
+          "lineNumber": 250
+        },
+        {
+          "caller": "ensureFriends",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 251
+        },
+        {
+          "caller": "requireUser",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 256
+        },
+        {
+          "caller": "requireUser",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 256
+        },
+        {
+          "caller": "requireUser",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 257
+        },
+        {
+          "caller": "pickLow",
+          "callee": "a.getId",
+          "lineNumber": 261
+        },
+        {
+          "caller": "pickLow",
+          "callee": "b.getId",
+          "lineNumber": 261
+        },
+        {
+          "caller": "pickHigh",
+          "callee": "a.getId",
+          "lineNumber": 265
+        },
+        {
+          "caller": "pickHigh",
+          "callee": "b.getId",
+          "lineNumber": 265
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "users.isEmpty",
+          "lineNumber": 269
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "Map.of",
+          "lineNumber": 270
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "new HashMap<>",
+          "lineNumber": 272
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "characterProfileRepository.findAllByUserIn(users).forEach",
+          "lineNumber": 273
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "characterProfileRepository.findAllByUserIn",
+          "lineNumber": 273
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "result.put",
+          "lineNumber": 274
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "profile.getUser().getId",
+          "lineNumber": 274
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "profile.getUser",
+          "lineNumber": 274
+        },
+        {
+          "caller": "buildCharacterSnapshotMap",
+          "callee": "FriendCharacterResponse.from",
+          "lineNumber": 274
+        },
+        {
+          "caller": "toCharacterSnapshot",
+          "callee": "characterProfileRepository.findByUser(user)\r\n                .map(FriendCharacterResponse::from).orElse",
+          "lineNumber": 283
+        },
+        {
+          "caller": "toCharacterSnapshot",
+          "callee": "characterProfileRepository.findByUser(user).map",
+          "lineNumber": 283
+        },
+        {
+          "caller": "toCharacterSnapshot",
+          "callee": "characterProfileRepository.findByUser",
+          "lineNumber": 283
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 13,
+        "functionCount": 20,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ReviewService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 9,
+      "classes": [
+        {
+          "name": "ReviewService",
+          "startLine": 6,
+          "endLine": 11,
+          "methods": [
+            "create",
+            "listByProtein",
+            "update",
+            "delete"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ReviewService",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/test/java/com/ajou/muscleup/backend/BackendApplicationTests.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 9,
+      "functions": [
+        {
+          "name": "contextLoads",
+          "startLine": 9,
+          "endLine": 11,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "BackendApplicationTests",
+          "startLine": 6,
+          "endLine": 13,
+          "methods": [
+            "contextLoads"
+          ],
+          "properties": []
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/test/resources/inbody/sample-cases.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 282,
+      "nonEmptyLines": 282,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    }
+  ]
+}

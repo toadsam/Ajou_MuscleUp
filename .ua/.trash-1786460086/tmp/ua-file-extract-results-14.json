@@ -1,0 +1,1924 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 11,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 11,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 11,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "frontend/src/App.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 283,
+      "nonEmptyLines": 277,
+      "functions": [
+        {
+          "name": "RouteLoading",
+          "startLine": 48,
+          "endLine": 54,
+          "params": []
+        },
+        {
+          "name": "App",
+          "startLine": 56,
+          "endLine": 281,
+          "params": []
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/components/AdminRoute.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 64,
+      "nonEmptyLines": 53,
+      "functions": [
+        {
+          "name": "isAdminRole",
+          "startLine": 9,
+          "endLine": 12,
+          "params": [
+            "role"
+          ]
+        },
+        {
+          "name": "AdminRoute",
+          "startLine": 14,
+          "endLine": 64,
+          "params": [
+            "{ children }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AdminRoute",
+          "line": 14,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isAdminRole",
+          "callee": "(role || \"\").toUpperCase",
+          "lineNumber": 10
+        },
+        {
+          "caller": "AdminRoute",
+          "callee": "useState",
+          "lineNumber": 15
+        },
+        {
+          "caller": "AdminRoute",
+          "callee": "useEffect",
+          "lineNumber": 17
+        },
+        {
+          "caller": "verify",
+          "callee": "localStorage.getItem",
+          "lineNumber": 21
+        },
+        {
+          "caller": "verify",
+          "callee": "JSON.parse",
+          "lineNumber": 22
+        },
+        {
+          "caller": "verify",
+          "callee": "isAdminRole",
+          "lineNumber": 23
+        },
+        {
+          "caller": "verify",
+          "callee": "setAllowed",
+          "lineNumber": 24
+        },
+        {
+          "caller": "verify",
+          "callee": "adminApi.getMe",
+          "lineNumber": 29
+        },
+        {
+          "caller": "verify",
+          "callee": "setAllowed",
+          "lineNumber": 30
+        },
+        {
+          "caller": "verify",
+          "callee": "isAdminRole",
+          "lineNumber": 30
+        },
+        {
+          "caller": "verify",
+          "callee": "setAllowed",
+          "lineNumber": 32
+        },
+        {
+          "caller": "AdminRoute",
+          "callee": "verify",
+          "lineNumber": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/components/BetaNoticeModal.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 64,
+      "nonEmptyLines": 56,
+      "functions": [
+        {
+          "name": "getHideUntil",
+          "startLine": 6,
+          "endLine": 17,
+          "params": []
+        },
+        {
+          "name": "BetaNoticeModal",
+          "startLine": 19,
+          "endLine": 64,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BetaNoticeModal",
+          "line": 19,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getHideUntil",
+          "callee": "window.localStorage.getItem",
+          "lineNumber": 8
+        },
+        {
+          "caller": "getHideUntil",
+          "callee": "Number",
+          "lineNumber": 11
+        },
+        {
+          "caller": "getHideUntil",
+          "callee": "Number.isFinite",
+          "lineNumber": 12
+        },
+        {
+          "caller": "getHideUntil",
+          "callee": "window.localStorage.removeItem",
+          "lineNumber": 13
+        },
+        {
+          "caller": "BetaNoticeModal",
+          "callee": "useState",
+          "lineNumber": 20
+        },
+        {
+          "caller": "BetaNoticeModal",
+          "callee": "useEffect",
+          "lineNumber": 22
+        },
+        {
+          "caller": "BetaNoticeModal",
+          "callee": "getHideUntil",
+          "lineNumber": 23
+        },
+        {
+          "caller": "BetaNoticeModal",
+          "callee": "Date.now",
+          "lineNumber": 24
+        },
+        {
+          "caller": "BetaNoticeModal",
+          "callee": "setOpen",
+          "lineNumber": 25
+        },
+        {
+          "caller": "closeForToday",
+          "callee": "Date.now",
+          "lineNumber": 29
+        },
+        {
+          "caller": "closeForToday",
+          "callee": "window.localStorage.setItem",
+          "lineNumber": 30
+        },
+        {
+          "caller": "closeForToday",
+          "callee": "String",
+          "lineNumber": 30
+        },
+        {
+          "caller": "closeForToday",
+          "callee": "setOpen",
+          "lineNumber": 31
+        },
+        {
+          "caller": "BetaNoticeModal",
+          "callee": "setOpen",
+          "lineNumber": 48
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/components/ProtectedRoute.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 102,
+      "nonEmptyLines": 92,
+      "functions": [
+        {
+          "name": "ProtectedRoute",
+          "startLine": 12,
+          "endLine": 102,
+          "params": [
+            "{ children }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProtectedRoute",
+          "line": 12,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ProtectedRoute",
+          "callee": "useState",
+          "lineNumber": 13
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "useEffect",
+          "lineNumber": 15
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "localStorage.getItem",
+          "lineNumber": 17
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "JSON.parse",
+          "lineNumber": 23
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "(async () => {\n      try {\n        const res = await fetch(`${API_BASE}/api/auth/me`, {\n          credentials: \"include\",\n          headers: existingAccessToken ? { Authorization: `Bearer ${existingAccessToken}` } : undefined,\n        });\n        if (!mounted) return;\n        if (res.ok) {\n          const user = await res.json();\n          localStorage.setItem(\n            \"user\",\n            JSON.stringify({\n              accessToken: existingAccessToken,\n              refreshToken: existingRefreshToken,\n              email: user?.email,\n              nickname: user?.nickname,\n              role: user?.role,\n            })\r\n          );\r\n          setAuthState(\"ok\");\n          return;\n        }\n        if (res.status === 401 || res.status === 403) {\n          if (hasLocalSession) {\n            setAuthState(\"ok\");\n            return;\n          }\n          localStorage.removeItem(\"user\");\n          setAuthState(\"unauthorized\");\n          return;\n        }\n        if (hasLocalSession) {\n          setAuthState(\"ok\");\n          return;\n        }\n        setAuthState(\"unauthorized\");\n      } catch {\n        if (!mounted) return;\n        if (hasLocalSession) {\n          setAuthState(\"ok\");\n          return;\n        }\n        localStorage.removeItem(\"user\");\n        setAuthState(\"unauthorized\");\n      }\n    })",
+          "lineNumber": 41
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "fetch",
+          "lineNumber": 43
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "res.json",
+          "lineNumber": 49
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "localStorage.setItem",
+          "lineNumber": 50
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "JSON.stringify",
+          "lineNumber": 52
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "setAuthState",
+          "lineNumber": 60
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "setAuthState",
+          "lineNumber": 65
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "localStorage.removeItem",
+          "lineNumber": 68
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "setAuthState",
+          "lineNumber": 69
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "setAuthState",
+          "lineNumber": 73
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "setAuthState",
+          "lineNumber": 76
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "setAuthState",
+          "lineNumber": 80
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "localStorage.removeItem",
+          "lineNumber": 83
+        },
+        {
+          "caller": "ProtectedRoute",
+          "callee": "setAuthState",
+          "lineNumber": 84
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/components/SupportWidget.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 393,
+      "nonEmptyLines": 355,
+      "functions": [
+        {
+          "name": "SupportWidget",
+          "startLine": 42,
+          "endLine": 316,
+          "params": []
+        },
+        {
+          "name": "SystemMessageText",
+          "startLine": 318,
+          "endLine": 343,
+          "params": [
+            "{ text }"
+          ]
+        },
+        {
+          "name": "extractLinks",
+          "startLine": 345,
+          "endLine": 357,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "loadLocalUser",
+          "startLine": 359,
+          "endLine": 367,
+          "params": []
+        },
+        {
+          "name": "DeukgeunAvatar",
+          "startLine": 369,
+          "endLine": 392,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SupportWidget",
+          "line": 42,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "SupportWidget",
+          "callee": "useState",
+          "lineNumber": 43
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useState",
+          "lineNumber": 44
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useState",
+          "lineNumber": 45
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useState",
+          "lineNumber": 46
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useState",
+          "lineNumber": 47
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useState",
+          "lineNumber": 48
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useState",
+          "lineNumber": 49
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "localStorage.getItem",
+          "lineNumber": 50
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "JSON.parse",
+          "lineNumber": 51
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useRef",
+          "lineNumber": 53
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useEffect",
+          "lineNumber": 55
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "localStorage.setItem",
+          "lineNumber": 56
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "JSON.stringify",
+          "lineNumber": 56
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useEffect",
+          "lineNumber": 59
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useEffect",
+          "lineNumber": 65
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "Array.from(document.querySelectorAll<HTMLElement>(\"body *\")).filter",
+          "lineNumber": 69
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "Array.from",
+          "lineNumber": 69
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "document.querySelectorAll",
+          "lineNumber": 69
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "window.getComputedStyle",
+          "lineNumber": 71
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "el.getBoundingClientRect",
+          "lineNumber": 74
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "Math.max",
+          "lineNumber": 81
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "fixedNodes.map",
+          "lineNumber": 82
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "el.getBoundingClientRect",
+          "lineNumber": 83
+        },
+        {
+          "caller": "detectBottomDockHeight",
+          "callee": "Math.max",
+          "lineNumber": 84
+        },
+        {
+          "caller": "updateFabOffset",
+          "callee": "setFabBottom",
+          "lineNumber": 91
+        },
+        {
+          "caller": "updateFabOffset",
+          "callee": "detectBottomDockHeight",
+          "lineNumber": 94
+        },
+        {
+          "caller": "updateFabOffset",
+          "callee": "Math.min",
+          "lineNumber": 95
+        },
+        {
+          "caller": "updateFabOffset",
+          "callee": "setFabBottom",
+          "lineNumber": 96
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "updateFabOffset",
+          "lineNumber": 99
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "window.addEventListener",
+          "lineNumber": 100
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "window.addEventListener",
+          "lineNumber": 101
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "observer.observe",
+          "lineNumber": 103
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "window.removeEventListener",
+          "lineNumber": 111
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "window.removeEventListener",
+          "lineNumber": 112
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "observer.disconnect",
+          "lineNumber": 113
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "useMemo",
+          "lineNumber": 117
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "Date.now",
+          "lineNumber": 122
+        },
+        {
+          "caller": "appendUserMessage",
+          "callee": "setMsgs",
+          "lineNumber": 128
+        },
+        {
+          "caller": "appendUserMessage",
+          "callee": "crypto.randomUUID",
+          "lineNumber": 128
+        },
+        {
+          "caller": "appendUserMessage",
+          "callee": "Date.now",
+          "lineNumber": 128
+        },
+        {
+          "caller": "appendSystemMessage",
+          "callee": "setMsgs",
+          "lineNumber": 132
+        },
+        {
+          "caller": "appendSystemMessage",
+          "callee": "crypto.randomUUID",
+          "lineNumber": 132
+        },
+        {
+          "caller": "appendSystemMessage",
+          "callee": "Date.now",
+          "lineNumber": 132
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "rawText.trim",
+          "lineNumber": 136
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "appendUserMessage",
+          "lineNumber": 139
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "setSending",
+          "lineNumber": 142
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "fetch",
+          "lineNumber": 143
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "JSON.stringify",
+          "lineNumber": 147
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "res.json",
+          "lineNumber": 157
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "data.answer?.trim",
+          "lineNumber": 158
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "appendSystemMessage",
+          "lineNumber": 159
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "appendSystemMessage",
+          "lineNumber": 161
+        },
+        {
+          "caller": "sendQuestion",
+          "callee": "setSending",
+          "lineNumber": 163
+        },
+        {
+          "caller": "onSubmit",
+          "callee": "e.preventDefault",
+          "lineNumber": 168
+        },
+        {
+          "caller": "onSubmit",
+          "callee": "input.trim",
+          "lineNumber": 169
+        },
+        {
+          "caller": "onSubmit",
+          "callee": "setInput",
+          "lineNumber": 171
+        },
+        {
+          "caller": "onSubmit",
+          "callee": "sendQuestion",
+          "lineNumber": 172
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "chairmanMessage.trim",
+          "lineNumber": 176
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "loadLocalUser",
+          "lineNumber": 179
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "setChairmanSending",
+          "lineNumber": 181
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "fetch",
+          "lineNumber": 182
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "JSON.stringify",
+          "lineNumber": 186
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "res.json",
+          "lineNumber": 195
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "setChairmanMessage",
+          "lineNumber": 196
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "appendSystemMessage",
+          "lineNumber": 197
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "appendSystemMessage",
+          "lineNumber": 199
+        },
+        {
+          "caller": "submitChairmanMessage",
+          "callee": "setChairmanSending",
+          "lineNumber": 201
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "setOpen",
+          "lineNumber": 209
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "SUGGESTED_QUESTIONS.map",
+          "lineNumber": 237
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "sendQuestion",
+          "lineNumber": 241
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "setChairmanMessage",
+          "lineNumber": 254
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "submitChairmanMessage",
+          "lineNumber": 261
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "chairmanMessage.trim",
+          "lineNumber": 262
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "[greeting, ...msgs].map",
+          "lineNumber": 271
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "setInput",
+          "lineNumber": 300
+        },
+        {
+          "caller": "SupportWidget",
+          "callee": "input.trim",
+          "lineNumber": 306
+        },
+        {
+          "caller": "SystemMessageText",
+          "callee": "extractLinks",
+          "lineNumber": 319
+        },
+        {
+          "caller": "SystemMessageText",
+          "callee": "text\n    .replace(LINK_REGEX, \"$1\")\n    .replace(/관련\\s*경로\\s*:/g, \"바로 이동\")\n    .trim",
+          "lineNumber": 320
+        },
+        {
+          "caller": "SystemMessageText",
+          "callee": "text\n    .replace(LINK_REGEX, \"$1\")\n    .replace",
+          "lineNumber": 320
+        },
+        {
+          "caller": "SystemMessageText",
+          "callee": "text\n    .replace",
+          "lineNumber": 320
+        },
+        {
+          "caller": "SystemMessageText",
+          "callee": "links.map",
+          "lineNumber": 330
+        },
+        {
+          "caller": "extractLinks",
+          "callee": "text.matchAll",
+          "lineNumber": 348
+        },
+        {
+          "caller": "extractLinks",
+          "callee": "(match[1] || \"바로가기\").trim",
+          "lineNumber": 349
+        },
+        {
+          "caller": "extractLinks",
+          "callee": "(match[2] || \"/\").trim",
+          "lineNumber": 350
+        },
+        {
+          "caller": "extractLinks",
+          "callee": "seen.has",
+          "lineNumber": 352
+        },
+        {
+          "caller": "extractLinks",
+          "callee": "seen.add",
+          "lineNumber": 353
+        },
+        {
+          "caller": "extractLinks",
+          "callee": "links.push",
+          "lineNumber": 354
+        },
+        {
+          "caller": "loadLocalUser",
+          "callee": "localStorage.getItem",
+          "lineNumber": 361
+        },
+        {
+          "caller": "loadLocalUser",
+          "callee": "JSON.parse",
+          "lineNumber": 363
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/layouts/Footer.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 12,
+      "functions": [
+        {
+          "name": "Footer",
+          "startLine": 1,
+          "endLine": 13,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "Footer",
+          "line": 1,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Footer",
+          "callee": "rawUpdatedAt.includes",
+          "lineNumber": 3
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/layouts/Header.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 366,
+      "nonEmptyLines": 339,
+      "functions": [
+        {
+          "name": "readLocalUser",
+          "startLine": 23,
+          "endLine": 31,
+          "params": []
+        },
+        {
+          "name": "hasLocalSession",
+          "startLine": 33,
+          "endLine": 39,
+          "params": [
+            "user"
+          ]
+        },
+        {
+          "name": "buildAuthHeaders",
+          "startLine": 41,
+          "endLine": 44,
+          "params": [
+            "user"
+          ]
+        },
+        {
+          "name": "Header",
+          "startLine": 46,
+          "endLine": 366,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "Header",
+          "line": 46,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "readLocalUser",
+          "callee": "localStorage.getItem",
+          "lineNumber": 25
+        },
+        {
+          "caller": "readLocalUser",
+          "callee": "JSON.parse",
+          "lineNumber": 27
+        },
+        {
+          "caller": "hasLocalSession",
+          "callee": "Boolean",
+          "lineNumber": 35
+        },
+        {
+          "caller": "Header",
+          "callee": "useLocation",
+          "lineNumber": 47
+        },
+        {
+          "caller": "Header",
+          "callee": "useState",
+          "lineNumber": 48
+        },
+        {
+          "caller": "Header",
+          "callee": "useState",
+          "lineNumber": 49
+        },
+        {
+          "caller": "Header",
+          "callee": "useState",
+          "lineNumber": 50
+        },
+        {
+          "caller": "Header",
+          "callee": "useState",
+          "lineNumber": 51
+        },
+        {
+          "caller": "Header",
+          "callee": "useRef",
+          "lineNumber": 52
+        },
+        {
+          "caller": "Header",
+          "callee": "(user?.role || \"\").toUpperCase",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Header",
+          "callee": "useEffect",
+          "lineNumber": 58
+        },
+        {
+          "caller": "handleScroll",
+          "callee": "setIsScrolled",
+          "lineNumber": 59
+        },
+        {
+          "caller": "Header",
+          "callee": "window.addEventListener",
+          "lineNumber": 60
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "readLocalUser",
+          "lineNumber": 63
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "setUser",
+          "lineNumber": 64
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "fetch",
+          "lineNumber": 66
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "buildAuthHeaders",
+          "lineNumber": 69
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "hasLocalSession",
+          "lineNumber": 73
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "localStorage.removeItem",
+          "lineNumber": 79
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "setUser",
+          "lineNumber": 80
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "res.json",
+          "lineNumber": 84
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "localStorage.setItem",
+          "lineNumber": 92
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "JSON.stringify",
+          "lineNumber": 92
+        },
+        {
+          "caller": "syncAuthState",
+          "callee": "setUser",
+          "lineNumber": 93
+        },
+        {
+          "caller": "onStorage",
+          "callee": "setUser",
+          "lineNumber": 101
+        },
+        {
+          "caller": "onStorage",
+          "callee": "readLocalUser",
+          "lineNumber": 101
+        },
+        {
+          "caller": "onFocus",
+          "callee": "syncAuthState",
+          "lineNumber": 105
+        },
+        {
+          "caller": "Header",
+          "callee": "syncAuthState",
+          "lineNumber": 108
+        },
+        {
+          "caller": "Header",
+          "callee": "window.addEventListener",
+          "lineNumber": 109
+        },
+        {
+          "caller": "Header",
+          "callee": "window.addEventListener",
+          "lineNumber": 110
+        },
+        {
+          "caller": "Header",
+          "callee": "window.removeEventListener",
+          "lineNumber": 113
+        },
+        {
+          "caller": "Header",
+          "callee": "window.removeEventListener",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Header",
+          "callee": "window.removeEventListener",
+          "lineNumber": 115
+        },
+        {
+          "caller": "Header",
+          "callee": "useEffect",
+          "lineNumber": 119
+        },
+        {
+          "caller": "handleResize",
+          "callee": "setIsMenuOpen",
+          "lineNumber": 122
+        },
+        {
+          "caller": "Header",
+          "callee": "window.addEventListener",
+          "lineNumber": 126
+        },
+        {
+          "caller": "Header",
+          "callee": "window.removeEventListener",
+          "lineNumber": 127
+        },
+        {
+          "caller": "handleLogout",
+          "callee": "fetch",
+          "lineNumber": 132
+        },
+        {
+          "caller": "handleLogout",
+          "callee": "localStorage.removeItem",
+          "lineNumber": 139
+        },
+        {
+          "caller": "handleLogout",
+          "callee": "setUser",
+          "lineNumber": 140
+        },
+        {
+          "caller": "Header",
+          "callee": "useMemo",
+          "lineNumber": 145
+        },
+        {
+          "caller": "isActiveGroup",
+          "callee": "group.links.some",
+          "lineNumber": 195
+        },
+        {
+          "caller": "isActiveGroup",
+          "callee": "location.pathname.startsWith",
+          "lineNumber": 199
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "clearTimeout",
+          "lineNumber": 206
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "setOpenDropdown",
+          "lineNumber": 207
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "clearTimeout",
+          "lineNumber": 210
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "setTimeout",
+          "lineNumber": 211
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "setOpenDropdown",
+          "lineNumber": 211
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "group.links.map",
+          "lineNumber": 214
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "setOpenDropdown",
+          "lineNumber": 219
+        },
+        {
+          "caller": "renderDropdown",
+          "callee": "setOpenDropdown",
+          "lineNumber": 228
+        },
+        {
+          "caller": "Header",
+          "callee": "setIsMenuOpen",
+          "lineNumber": 248
+        },
+        {
+          "caller": "Header",
+          "callee": "navGroups.map",
+          "lineNumber": 265
+        },
+        {
+          "caller": "Header",
+          "callee": "clearTimeout",
+          "lineNumber": 270
+        },
+        {
+          "caller": "Header",
+          "callee": "setOpenDropdown",
+          "lineNumber": 271
+        },
+        {
+          "caller": "Header",
+          "callee": "clearTimeout",
+          "lineNumber": 274
+        },
+        {
+          "caller": "Header",
+          "callee": "setTimeout",
+          "lineNumber": 275
+        },
+        {
+          "caller": "Header",
+          "callee": "setOpenDropdown",
+          "lineNumber": 275
+        },
+        {
+          "caller": "Header",
+          "callee": "isActiveGroup",
+          "lineNumber": 280
+        },
+        {
+          "caller": "Header",
+          "callee": "renderDropdown",
+          "lineNumber": 289
+        },
+        {
+          "caller": "Header",
+          "callee": "navGroups.map",
+          "lineNumber": 334
+        },
+        {
+          "caller": "Header",
+          "callee": "group.links.map",
+          "lineNumber": 338
+        },
+        {
+          "caller": "Header",
+          "callee": "location.pathname.startsWith",
+          "lineNumber": 343
+        },
+        {
+          "caller": "Header",
+          "callee": "setIsMenuOpen",
+          "lineNumber": 345
+        },
+        {
+          "caller": "Header",
+          "callee": "setIsMenuOpen",
+          "lineNumber": 354
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/layouts/Logo.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 24,
+      "functions": [
+        {
+          "name": "Logo",
+          "startLine": 1,
+          "endLine": 25,
+          "params": [
+            "{ isScrolled }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Logo",
+          "line": 1,
+          "isDefault": true
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/lib/installFetchAuth.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 208,
+      "nonEmptyLines": 187,
+      "functions": [
+        {
+          "name": "readUserRecord",
+          "startLine": 4,
+          "endLine": 13,
+          "params": []
+        },
+        {
+          "name": "getAccessToken",
+          "startLine": 15,
+          "endLine": 19,
+          "params": []
+        },
+        {
+          "name": "getRefreshToken",
+          "startLine": 21,
+          "endLine": 25,
+          "params": []
+        },
+        {
+          "name": "setTokens",
+          "startLine": 27,
+          "endLine": 35,
+          "params": [
+            "accessToken",
+            "refreshToken"
+          ]
+        },
+        {
+          "name": "toHeadersObject",
+          "startLine": 39,
+          "endLine": 52,
+          "params": [
+            "headers"
+          ]
+        },
+        {
+          "name": "applyAuthHeader",
+          "startLine": 54,
+          "endLine": 66,
+          "params": [
+            "url",
+            "headers"
+          ]
+        },
+        {
+          "name": "hasRetryMarker",
+          "startLine": 68,
+          "endLine": 75,
+          "params": [
+            "input",
+            "init"
+          ]
+        },
+        {
+          "name": "isRefreshRequest",
+          "startLine": 77,
+          "endLine": 79,
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "isApiRequest",
+          "startLine": 81,
+          "endLine": 86,
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "resolveUrl",
+          "startLine": 88,
+          "endLine": 93,
+          "params": [
+            "input"
+          ]
+        },
+        {
+          "name": "installFetchAuth",
+          "startLine": 95,
+          "endLine": 171,
+          "params": []
+        },
+        {
+          "name": "bootstrapAuthSession",
+          "startLine": 173,
+          "endLine": 208,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "installFetchAuth",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "bootstrapAuthSession",
+          "line": 173,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "readUserRecord",
+          "callee": "localStorage.getItem",
+          "lineNumber": 6
+        },
+        {
+          "caller": "readUserRecord",
+          "callee": "JSON.parse",
+          "lineNumber": 8
+        },
+        {
+          "caller": "getAccessToken",
+          "callee": "readUserRecord",
+          "lineNumber": 16
+        },
+        {
+          "caller": "getRefreshToken",
+          "callee": "readUserRecord",
+          "lineNumber": 22
+        },
+        {
+          "caller": "setTokens",
+          "callee": "readUserRecord",
+          "lineNumber": 28
+        },
+        {
+          "caller": "setTokens",
+          "callee": "localStorage.setItem",
+          "lineNumber": 34
+        },
+        {
+          "caller": "setTokens",
+          "callee": "JSON.stringify",
+          "lineNumber": 34
+        },
+        {
+          "caller": "toHeadersObject",
+          "callee": "headers.forEach",
+          "lineNumber": 43
+        },
+        {
+          "caller": "toHeadersObject",
+          "callee": "Array.isArray",
+          "lineNumber": 48
+        },
+        {
+          "caller": "toHeadersObject",
+          "callee": "Object.fromEntries",
+          "lineNumber": 49
+        },
+        {
+          "caller": "applyAuthHeader",
+          "callee": "isApiRequest",
+          "lineNumber": 55
+        },
+        {
+          "caller": "applyAuthHeader",
+          "callee": "Object.keys(headers).some",
+          "lineNumber": 57
+        },
+        {
+          "caller": "applyAuthHeader",
+          "callee": "Object.keys",
+          "lineNumber": 57
+        },
+        {
+          "caller": "applyAuthHeader",
+          "callee": "key.toLowerCase",
+          "lineNumber": 57
+        },
+        {
+          "caller": "applyAuthHeader",
+          "callee": "getAccessToken",
+          "lineNumber": 60
+        },
+        {
+          "caller": "hasRetryMarker",
+          "callee": "toHeadersObject",
+          "lineNumber": 69
+        },
+        {
+          "caller": "hasRetryMarker",
+          "callee": "input.headers.get",
+          "lineNumber": 72
+        },
+        {
+          "caller": "isRefreshRequest",
+          "callee": "url.includes",
+          "lineNumber": 78
+        },
+        {
+          "caller": "isApiRequest",
+          "callee": "url.startsWith",
+          "lineNumber": 82
+        },
+        {
+          "caller": "isApiRequest",
+          "callee": "url.includes",
+          "lineNumber": 83
+        },
+        {
+          "caller": "isApiRequest",
+          "callee": "url.startsWith",
+          "lineNumber": 85
+        },
+        {
+          "caller": "resolveUrl",
+          "callee": "input.toString",
+          "lineNumber": 90
+        },
+        {
+          "caller": "resolveUrl",
+          "callee": "String",
+          "lineNumber": 92
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "window.fetch.bind",
+          "lineNumber": 100
+        },
+        {
+          "caller": "refreshAccessToken",
+          "callee": "getRefreshToken",
+          "lineNumber": 105
+        },
+        {
+          "caller": "refreshAccessToken",
+          "callee": "originalFetch",
+          "lineNumber": 110
+        },
+        {
+          "caller": "refreshAccessToken",
+          "callee": "res.json",
+          "lineNumber": 117
+        },
+        {
+          "caller": "refreshAccessToken",
+          "callee": "setTokens",
+          "lineNumber": 120
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "resolveUrl",
+          "lineNumber": 130
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "applyAuthHeader",
+          "lineNumber": 131
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "toHeadersObject",
+          "lineNumber": 131
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "isApiRequest",
+          "lineNumber": 132
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "originalFetch",
+          "lineNumber": 135
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "isApiRequest",
+          "lineNumber": 138
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "isRefreshRequest",
+          "lineNumber": 138
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "hasRetryMarker",
+          "lineNumber": 138
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "refreshAccessToken().finally",
+          "lineNumber": 141
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "refreshAccessToken",
+          "lineNumber": 141
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "toHeadersObject",
+          "lineNumber": 152
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "toHeadersObject",
+          "lineNumber": 153
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "applyAuthHeader",
+          "lineNumber": 154
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "originalFetch",
+          "lineNumber": 158
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "originalFetch",
+          "lineNumber": 161
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "toHeadersObject",
+          "lineNumber": 165
+        },
+        {
+          "caller": "installFetchAuth",
+          "callee": "applyAuthHeader",
+          "lineNumber": 166
+        },
+        {
+          "caller": "bootstrapAuthSession",
+          "callee": "readUserRecord",
+          "lineNumber": 174
+        },
+        {
+          "caller": "bootstrapAuthSession",
+          "callee": "getRefreshToken",
+          "lineNumber": 177
+        },
+        {
+          "caller": "bootstrapAuthSession",
+          "callee": "fetch",
+          "lineNumber": 183
+        },
+        {
+          "caller": "bootstrapAuthSession",
+          "callee": "res.json",
+          "lineNumber": 195
+        },
+        {
+          "caller": "bootstrapAuthSession",
+          "callee": "setTokens",
+          "lineNumber": 198
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 12,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/lib/queryClient.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 10,
+      "exports": [
+        {
+          "name": "queryClient",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 137,
+      "nonEmptyLines": 124,
+      "functions": [
+        {
+          "name": "isSafariBrowser",
+          "startLine": 13,
+          "endLine": 18,
+          "params": []
+        },
+        {
+          "name": "disableServiceWorkerForSafari",
+          "startLine": 20,
+          "endLine": 37,
+          "params": []
+        },
+        {
+          "name": "disableServiceWorkerInDev",
+          "startLine": 39,
+          "endLine": 60,
+          "params": []
+        },
+        {
+          "name": "showPwaUpdateToast",
+          "startLine": 62,
+          "endLine": 115,
+          "params": [
+            "onConfirm"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isSafariBrowser",
+          "callee": "/Safari/i.test",
+          "lineNumber": 15
+        },
+        {
+          "caller": "isSafariBrowser",
+          "callee": "/Chrome|CriOS|EdgiOS|FxiOS|OPiOS|SamsungBrowser/i.test",
+          "lineNumber": 16
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "isSafariBrowser",
+          "lineNumber": 21
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "navigator.serviceWorker.getRegistrations",
+          "lineNumber": 23
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "Promise.all",
+          "lineNumber": 24
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "registrations.map",
+          "lineNumber": 24
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "registration.unregister",
+          "lineNumber": 24
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "sessionStorage.getItem",
+          "lineNumber": 29
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "sessionStorage.setItem",
+          "lineNumber": 30
+        },
+        {
+          "caller": "disableServiceWorkerForSafari",
+          "callee": "window.location.replace",
+          "lineNumber": 31
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "navigator.serviceWorker.getRegistrations",
+          "lineNumber": 43
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "Promise.all",
+          "lineNumber": 45
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "registrations.map",
+          "lineNumber": 45
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "registration.unregister",
+          "lineNumber": 45
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "caches.keys",
+          "lineNumber": 47
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "Promise.all",
+          "lineNumber": 48
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "cacheKeys.map",
+          "lineNumber": 48
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "caches.delete",
+          "lineNumber": 48
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "sessionStorage.getItem",
+          "lineNumber": 52
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "sessionStorage.setItem",
+          "lineNumber": 53
+        },
+        {
+          "caller": "disableServiceWorkerInDev",
+          "callee": "window.location.replace",
+          "lineNumber": 54
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "document.getElementById",
+          "lineNumber": 63
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "document.createElement",
+          "lineNumber": 66
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "document.createElement",
+          "lineNumber": 85
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "document.createElement",
+          "lineNumber": 89
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "toast.remove",
+          "lineNumber": 96
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "document.createElement",
+          "lineNumber": 98
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "toast.remove",
+          "lineNumber": 107
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "onConfirm",
+          "lineNumber": 108
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "actions.appendChild",
+          "lineNumber": 111
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "actions.appendChild",
+          "lineNumber": 112
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "toast.appendChild",
+          "lineNumber": 113
+        },
+        {
+          "caller": "showPwaUpdateToast",
+          "callee": "document.body.appendChild",
+          "lineNumber": 114
+        },
+        {
+          "caller": "onNeedRefresh",
+          "callee": "showPwaUpdateToast",
+          "lineNumber": 127
+        },
+        {
+          "caller": "onNeedRefresh",
+          "callee": "updateSW",
+          "lineNumber": 127
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 0,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    }
+  ]
+}

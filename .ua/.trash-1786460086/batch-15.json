@@ -1,0 +1,291 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "type": "file",
+      "name": "FriendChatMessageResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "summary": "친구 1:1 채팅 메시지를 클라이언트에 내려줄 때 사용하는 응답 DTO로, FriendChatMessage 엔티티를 전송용 형태(발신자 ID·닉네임·본문·작성 시각)로 변환한다.",
+      "tags": ["dto", "serialization", "friend-chat", "response-model"],
+      "complexity": "simple",
+      "languageNotes": "Lombok @Builder와 정적 팩토리 메서드 from()을 조합한 전형적인 Spring Boot 응답 DTO 패턴으로, 엔티티를 API 경계 밖으로 노출하지 않는다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java:FriendChatMessageResponse",
+      "type": "class",
+      "name": "FriendChatMessageResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "lineRange": [8, 26],
+      "summary": "친구 채팅 메시지 응답 필드(id, senderId, senderNickname, content, createdAt)를 담는 불변 성격의 DTO 클래스.",
+      "tags": ["dto", "data-model", "friend-chat", "builder"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "lineRange": [17, 25],
+      "summary": "FriendChatMessage 엔티티를 받아 발신자 정보와 본문·작성 시각을 추출해 응답 DTO로 매핑하는 정적 팩토리 메서드.",
+      "tags": ["factory", "mapper", "serialization", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "type": "file",
+      "name": "FriendChatMessage.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "summary": "친구 1:1 채팅방에 오간 개별 메시지를 저장하는 JPA 엔티티로, 채팅방·발신자에 대한 지연 로딩 연관관계와 최대 1000자 본문을 가진다.",
+      "tags": ["entity", "data-model", "jpa", "friend-chat"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java:FriendChatMessage",
+      "type": "class",
+      "name": "FriendChatMessage",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "lineRange": [6, 28],
+      "summary": "friend_chat_messages 테이블에 매핑되는 엔티티. room·sender를 @ManyToOne(LAZY)으로 참조하고 BaseTimeEntity를 상속해 생성/수정 시각을 자동 관리한다.",
+      "tags": ["entity", "jpa", "data-model", "friend-chat"],
+      "complexity": "simple",
+      "languageNotes": "@ManyToOne(fetch = LAZY, optional = false) 설정으로 N+1 조회를 늦추면서도 NOT NULL 제약을 유지한다."
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "type": "file",
+      "name": "FriendChatRoom.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "summary": "두 사용자 사이의 1:1 친구 채팅방을 나타내는 JPA 엔티티로, (user_low_id, user_high_id) 유니크 제약으로 동일 쌍의 채팅방 중복 생성을 막는다.",
+      "tags": ["entity", "data-model", "jpa", "friend-chat"],
+      "complexity": "simple",
+      "languageNotes": "사용자 ID를 크기 순으로 low/high에 정규화해 저장하는 관례를 유니크 제약으로 강제하는 대칭 관계 모델링 기법."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java:FriendChatRoom",
+      "type": "class",
+      "name": "FriendChatRoom",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "lineRange": [6, 28],
+      "summary": "friend_chat_rooms 테이블에 매핑되는 엔티티로 userLow·userHigh 두 참여자를 지연 로딩으로 참조하며 BaseTimeEntity를 상속한다.",
+      "tags": ["entity", "jpa", "data-model", "friend-chat"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "type": "file",
+      "name": "FriendChatMessageRepository.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "summary": "친구 채팅 메시지 영속성 계층 인터페이스로, 특정 채팅방의 메시지를 최신순 페이징 조회하는 쿼리 메서드를 제공한다.",
+      "tags": ["repository", "data-access", "jpa", "friend-chat"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java:FriendChatMessageRepository",
+      "type": "class",
+      "name": "FriendChatMessageRepository",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "lineRange": [9, 11],
+      "summary": "JpaRepository를 확장한 인터페이스로 findByRoomOrderByIdDesc(room, Pageable)를 통해 채팅방 메시지를 역순 페이징 조회한다.",
+      "tags": ["repository", "data-access", "jpa", "pagination"],
+      "complexity": "simple",
+      "languageNotes": "Spring Data JPA의 메서드 이름 파생 쿼리(derived query)로 별도 구현 없이 조회 로직이 생성된다."
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "type": "file",
+      "name": "FriendChatRoomRepository.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "summary": "친구 채팅방 영속성 계층 인터페이스로, 두 사용자 쌍으로 방을 찾거나 특정 사용자가 참여한 모든 방을 최근 갱신순으로 조회한다.",
+      "tags": ["repository", "data-access", "jpa", "friend-chat"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java:FriendChatRoomRepository",
+      "type": "class",
+      "name": "FriendChatRoomRepository",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "lineRange": [11, 16],
+      "summary": "findByUserLowAndUserHigh 파생 쿼리와 @Query 기반 findAllByUser를 제공해 채팅방 조회·중복 방지 로직을 지원하는 JpaRepository 인터페이스.",
+      "tags": ["repository", "data-access", "jpa", "query"],
+      "complexity": "simple",
+      "languageNotes": "userLow/userHigh 어느 쪽이든 매칭되도록 JPQL @Query에서 :user 파라미터를 두 번 사용해 대칭 조회를 구현했다."
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java:FriendChatMessageResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java:from",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java:FriendChatMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java:FriendChatRoom",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java:FriendChatMessageRepository",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java:FriendChatRoomRepository",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java:FriendChatMessageResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java:from",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java:FriendChatMessage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java:FriendChatRoom",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java:FriendChatMessageRepository",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java:FriendChatRoomRepository",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java:FriendChatMessage",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java:BaseTimeEntity",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java:FriendChatRoom",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java:BaseTimeEntity",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

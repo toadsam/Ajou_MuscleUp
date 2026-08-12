@@ -1,0 +1,240 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+      "type": "file",
+      "name": "ReviewCreateRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+      "summary": "단백질 상품 리뷰 작성 요청 DTO로 대상 상품 ID, 별점, 본문을 전달하며 Bean Validation 제약이 적용되어 있습니다.",
+      "tags": ["dto", "validation", "review", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java:ReviewCreateRequest",
+      "type": "class",
+      "name": "ReviewCreateRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+      "lineRange": [5, 15],
+      "summary": "proteinId·rating·content 세 필드를 담은 리뷰 생성 요청 DTO 클래스입니다.",
+      "tags": ["dto", "review", "request"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "type": "file",
+      "name": "ReviewResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "summary": "리뷰 조회 응답 DTO로 작성자 ID·닉네임과 상품 ID를 평탄화해 담으며, Review 엔티티를 변환하는 정적 팩토리 from을 제공합니다.",
+      "tags": ["dto", "factory", "review", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java:ReviewResponse",
+      "type": "class",
+      "name": "ReviewResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "lineRange": [7, 23],
+      "summary": "id·userId·nickname·proteinId·rating·content·createdAt을 담는 리뷰 응답 DTO 클래스입니다.",
+      "tags": ["dto", "review", "serialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "lineRange": [12, 22],
+      "summary": "Review 엔티티에서 연관된 User·Protein 정보를 꺼내 빌더로 ReviewResponse를 생성하는 정적 팩토리 메서드입니다.",
+      "tags": ["factory", "mapping", "dto", "review"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+      "type": "file",
+      "name": "ReviewUpdateRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+      "summary": "리뷰 수정 요청 DTO로 별점과 본문만 받아 부분 갱신을 지원합니다.",
+      "tags": ["dto", "validation", "review", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java:ReviewUpdateRequest",
+      "type": "class",
+      "name": "ReviewUpdateRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+      "lineRange": [7, 13],
+      "summary": "rating·content 두 필드만 노출해 리뷰 수정 입력을 최소화한 요청 DTO 클래스입니다.",
+      "tags": ["dto", "review", "request"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "type": "file",
+      "name": "CrewChallenge.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "summary": "운동 크루 내부에서 진행하는 챌린지를 나타내는 JPA 엔티티로, 소속 크루·기간(시작일·종료일)·목표 운동 일수를 보관합니다.",
+      "tags": ["data-model", "entity", "jpa", "crew", "challenge"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java:CrewChallenge",
+      "type": "class",
+      "name": "CrewChallenge",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "lineRange": [7, 37],
+      "summary": "crew 연관관계와 title·description·startDate·endDate·targetWorkoutDays 필드를 가진 크루 챌린지 엔티티입니다.",
+      "tags": ["entity", "jpa", "crew", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "type": "file",
+      "name": "CrewJoinRequestStatus.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "summary": "크루 가입 신청의 상태(대기·승인·거절)를 표현하는 열거형으로, 가입 승인 워크플로 전반에서 상태 판별에 사용됩니다.",
+      "tags": ["data-model", "enum", "crew", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java:CrewJoinRequestStatus",
+      "type": "class",
+      "name": "CrewJoinRequestStatus",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "lineRange": [3, 7],
+      "summary": "크루 가입 신청 상태 상수를 정의한 enum 타입입니다.",
+      "tags": ["enum", "crew", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "type": "file",
+      "name": "EmailVerification.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "summary": "회원가입 이메일 인증코드를 저장하는 JPA 엔티티로, 코드·생성/만료 시각·인증 완료 여부·시도 횟수를 관리해 무차별 대입을 제한합니다.",
+      "tags": ["data-model", "entity", "jpa", "email-verification", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java:EmailVerification",
+      "type": "class",
+      "name": "EmailVerification",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "lineRange": [7, 32],
+      "summary": "email·code·createdAt·expireAt·verified·attempts 필드를 보유한 이메일 인증 엔티티입니다.",
+      "tags": ["entity", "jpa", "email-verification", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+      "type": "file",
+      "name": "Friendship.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+      "summary": "사용자 간 친구 관계를 저장하는 JPA 엔티티로, 양방향 관계를 한 행으로 관리하기 위해 userLow/userHigh로 ID 정규화를 적용합니다.",
+      "tags": ["data-model", "entity", "jpa", "social", "friendship"],
+      "complexity": "simple",
+      "languageNotes": "ID 크기 순으로 두 사용자 컬럼을 고정(userLow < userHigh)해 (A,B)와 (B,A) 중복 저장을 방지하는 정규화 패턴입니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/Friendship.java:Friendship",
+      "type": "class",
+      "name": "Friendship",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+      "lineRange": [6, 28],
+      "summary": "userLow·userHigh 두 사용자 연관관계로 친구 관계 한 쌍을 표현하는 엔티티입니다.",
+      "tags": ["entity", "jpa", "social", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "type": "file",
+      "name": "Protein.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "summary": "단백질 보충제 공유·판매 게시물을 나타내는 JPA 엔티티로, 소유자·가격·기간·목표·카테고리와 리뷰로부터 집계된 평균 평점을 보관합니다.",
+      "tags": ["data-model", "entity", "jpa", "protein"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/Protein.java:Protein",
+      "type": "class",
+      "name": "Protein",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "lineRange": [6, 26],
+      "summary": "owner 연관관계와 name·price·days·goal·imageUrl·description·category·avgRating 필드를 가진 단백질 상품 엔티티입니다.",
+      "tags": ["entity", "jpa", "protein", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+      "type": "file",
+      "name": "RefreshToken.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+      "summary": "사용자별 리프레시 토큰을 영속화하는 JPA 엔티티로, 토큰 문자열과 만료 시각을 저장해 회전(rotation)과 강제 폐기를 가능하게 합니다.",
+      "tags": ["data-model", "entity", "jpa", "security", "token"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java:RefreshToken",
+      "type": "class",
+      "name": "RefreshToken",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+      "lineRange": [8, 26],
+      "summary": "user 연관관계와 token·expiresAt 필드를 가진 리프레시 토큰 엔티티입니다.",
+      "tags": ["entity", "jpa", "token", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+      "type": "file",
+      "name": "Review.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+      "summary": "단백질 상품에 대한 사용자 리뷰를 저장하는 JPA 엔티티로, 작성자·대상 상품 연관관계와 별점·본문을 보관합니다.",
+      "tags": ["data-model", "entity", "jpa", "review"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/Review.java:Review",
+      "type": "class",
+      "name": "Review",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+      "lineRange": [7, 25],
+      "summary": "user·protein 연관관계와 rating·content 필드를 가진 리뷰 엔티티입니다.",
+      "tags": ["entity", "jpa", "review", "data-model"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java:ReviewCreateRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java:ReviewCreateRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java:ReviewResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java", "target": "function:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java:from", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java:ReviewResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java", "target": "function:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java:from", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/Review.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java:ReviewUpdateRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java:ReviewUpdateRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java:CrewChallenge", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java:CrewChallenge", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java:CrewJoinRequestStatus", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java:CrewJoinRequestStatus", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java:EmailVerification", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java:EmailVerification", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/Friendship.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/Friendship.java:Friendship", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/Friendship.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/Friendship.java:Friendship", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/Protein.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/Protein.java:Protein", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/Protein.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/Protein.java:Protein", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java:RefreshToken", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java:RefreshToken", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/Review.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/Review.java:Review", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/Review.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/Review.java:Review", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/Review.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/Protein.java", "type": "related", "direction": "forward", "weight": 0.5}
+  ]
+}

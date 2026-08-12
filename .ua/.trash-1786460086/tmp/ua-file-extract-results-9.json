@@ -1,0 +1,2387 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 14,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 14,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 14,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AdminEventController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 103,
+      "nonEmptyLines": 93,
+      "functions": [
+        {
+          "name": "list",
+          "startLine": 38,
+          "endLine": 48,
+          "params": [
+            "status",
+            "q",
+            "page",
+            "size"
+          ]
+        },
+        {
+          "name": "detail",
+          "startLine": 50,
+          "endLine": 53,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "create",
+          "startLine": 55,
+          "endLine": 64,
+          "params": [
+            "request",
+            "email"
+          ]
+        },
+        {
+          "name": "update",
+          "startLine": 66,
+          "endLine": 72,
+          "params": [
+            "id",
+            "request"
+          ]
+        },
+        {
+          "name": "delete",
+          "startLine": 74,
+          "endLine": 78,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "patchStatus",
+          "startLine": 80,
+          "endLine": 86,
+          "params": [
+            "id",
+            "request"
+          ]
+        },
+        {
+          "name": "patchMainBanner",
+          "startLine": 88,
+          "endLine": 94,
+          "params": [
+            "id",
+            "request"
+          ]
+        },
+        {
+          "name": "patchPin",
+          "startLine": 96,
+          "endLine": 102,
+          "params": [
+            "id",
+            "request"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AdminEventController",
+          "startLine": 31,
+          "endLine": 103,
+          "methods": [
+            "list",
+            "detail",
+            "create",
+            "update",
+            "delete",
+            "patchStatus",
+            "patchMainBanner",
+            "patchPin"
+          ],
+          "properties": [
+            "cmsEventService",
+            "userRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "list",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "detail",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "create",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "update",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "delete",
+          "line": 74,
+          "isDefault": false
+        },
+        {
+          "name": "patchStatus",
+          "line": 80,
+          "isDefault": false
+        },
+        {
+          "name": "patchMainBanner",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "patchPin",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "AdminEventController",
+          "line": 31,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "list",
+          "callee": "Math.max",
+          "lineNumber": 45
+        },
+        {
+          "caller": "list",
+          "callee": "Math.min",
+          "lineNumber": 45
+        },
+        {
+          "caller": "list",
+          "callee": "PageRequest.of",
+          "lineNumber": 46
+        },
+        {
+          "caller": "list",
+          "callee": "Math.max",
+          "lineNumber": 46
+        },
+        {
+          "caller": "list",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 47
+        },
+        {
+          "caller": "list",
+          "callee": "cmsEventService.getAdminList",
+          "lineNumber": 47
+        },
+        {
+          "caller": "detail",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 52
+        },
+        {
+          "caller": "detail",
+          "callee": "cmsEventService.getAdminDetail",
+          "lineNumber": 52
+        },
+        {
+          "caller": "create",
+          "callee": "userRepository.findByEmail(email)\r\n                .map(user -> user.getId()).orElseThrow",
+          "lineNumber": 60
+        },
+        {
+          "caller": "create",
+          "callee": "userRepository.findByEmail(email).map",
+          "lineNumber": 60
+        },
+        {
+          "caller": "create",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 60
+        },
+        {
+          "caller": "create",
+          "callee": "user.getId",
+          "lineNumber": 61
+        },
+        {
+          "caller": "create",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 62
+        },
+        {
+          "caller": "create",
+          "callee": "ResponseEntity.status(HttpStatus.CREATED).body",
+          "lineNumber": 63
+        },
+        {
+          "caller": "create",
+          "callee": "ResponseEntity.status",
+          "lineNumber": 63
+        },
+        {
+          "caller": "create",
+          "callee": "cmsEventService.create",
+          "lineNumber": 63
+        },
+        {
+          "caller": "update",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 71
+        },
+        {
+          "caller": "update",
+          "callee": "cmsEventService.update",
+          "lineNumber": 71
+        },
+        {
+          "caller": "delete",
+          "callee": "cmsEventService.delete",
+          "lineNumber": 76
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.noContent().build",
+          "lineNumber": 77
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.noContent",
+          "lineNumber": 77
+        },
+        {
+          "caller": "patchStatus",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 85
+        },
+        {
+          "caller": "patchStatus",
+          "callee": "cmsEventService.patchStatus",
+          "lineNumber": 85
+        },
+        {
+          "caller": "patchStatus",
+          "callee": "request.getStatus",
+          "lineNumber": 85
+        },
+        {
+          "caller": "patchMainBanner",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 93
+        },
+        {
+          "caller": "patchMainBanner",
+          "callee": "cmsEventService.patchMainBanner",
+          "lineNumber": 93
+        },
+        {
+          "caller": "patchMainBanner",
+          "callee": "request.getValue",
+          "lineNumber": 93
+        },
+        {
+          "caller": "patchPin",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 101
+        },
+        {
+          "caller": "patchPin",
+          "callee": "cmsEventService.patchPin",
+          "lineNumber": 101
+        },
+        {
+          "caller": "patchPin",
+          "callee": "request.getValue",
+          "lineNumber": 101
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 9,
+        "functionCount": 8,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/EventPublicController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 52,
+      "nonEmptyLines": 46,
+      "functions": [
+        {
+          "name": "list",
+          "startLine": 26,
+          "endLine": 36,
+          "params": [
+            "status",
+            "q",
+            "page",
+            "size"
+          ]
+        },
+        {
+          "name": "detail",
+          "startLine": 38,
+          "endLine": 41,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "increaseView",
+          "startLine": 43,
+          "endLine": 46,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "increaseClick",
+          "startLine": 48,
+          "endLine": 51,
+          "params": [
+            "id"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventPublicController",
+          "startLine": 20,
+          "endLine": 52,
+          "methods": [
+            "list",
+            "detail",
+            "increaseView",
+            "increaseClick"
+          ],
+          "properties": [
+            "cmsEventService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "list",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "detail",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "increaseView",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "increaseClick",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "EventPublicController",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "list",
+          "callee": "Math.max",
+          "lineNumber": 33
+        },
+        {
+          "caller": "list",
+          "callee": "Math.min",
+          "lineNumber": 33
+        },
+        {
+          "caller": "list",
+          "callee": "PageRequest.of",
+          "lineNumber": 34
+        },
+        {
+          "caller": "list",
+          "callee": "Math.max",
+          "lineNumber": 34
+        },
+        {
+          "caller": "list",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 35
+        },
+        {
+          "caller": "list",
+          "callee": "cmsEventService.getPublicList",
+          "lineNumber": 35
+        },
+        {
+          "caller": "detail",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 40
+        },
+        {
+          "caller": "detail",
+          "callee": "cmsEventService.getPublicDetail",
+          "lineNumber": 40
+        },
+        {
+          "caller": "increaseView",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 45
+        },
+        {
+          "caller": "increaseView",
+          "callee": "cmsEventService.increaseView",
+          "lineNumber": 45
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 50
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "cmsEventService.increaseClick",
+          "lineNumber": 50
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 35,
+      "nonEmptyLines": 32,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 22,
+          "endLine": 34,
+          "params": [
+            "event"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventAdminListResponse",
+          "startLine": 9,
+          "endLine": 35,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "title",
+            "status",
+            "startAt",
+            "endAt",
+            "isMainBanner",
+            "isPinned",
+            "priority",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "EventAdminListResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .status(event.getStatus())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .updatedAt(event.getUpdatedAt()).build",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .status(event.getStatus())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority()).updatedAt",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .status(event.getStatus())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned()).priority",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .status(event.getStatus())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .isMainBanner(event.isMainBanner()).isPinned",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .status(event.getStatus())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt()).isMainBanner",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .status(event.getStatus())\r\n                .startAt(event.getStartAt()).endAt",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .status(event.getStatus()).startAt",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle()).status",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder()\r\n                .id(event.getId()).title",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder().id",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "EventAdminListResponse.builder",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "event.getId",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "event.getTitle",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStatus",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStartAt",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "event.getEndAt",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "event.isMainBanner",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "event.isPinned",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "event.getPriority",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "event.getUpdatedAt",
+          "lineNumber": 32
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 54,
+      "nonEmptyLines": 51,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 32,
+          "endLine": 53,
+          "params": [
+            "event"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventDetailResponse",
+          "startLine": 10,
+          "endLine": 54,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "title",
+            "summary",
+            "content",
+            "thumbnailUrl",
+            "bannerUrl",
+            "startAt",
+            "endAt",
+            "status",
+            "isMainBanner",
+            "isPinned",
+            "priority",
+            "ctaText",
+            "ctaLink",
+            "tags",
+            "viewCount",
+            "clickCount",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "EventDetailResponse",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .ctaText(event.getCtaText())\r\n                .ctaLink(event.getCtaLink())\r\n                .tags(event.getTags())\r\n                .viewCount(event.getViewCount())\r\n                .clickCount(event.getClickCount())\r\n                .updatedAt(event.getUpdatedAt()).build",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .ctaText(event.getCtaText())\r\n                .ctaLink(event.getCtaLink())\r\n                .tags(event.getTags())\r\n                .viewCount(event.getViewCount())\r\n                .clickCount(event.getClickCount()).updatedAt",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .ctaText(event.getCtaText())\r\n                .ctaLink(event.getCtaLink())\r\n                .tags(event.getTags())\r\n                .viewCount(event.getViewCount()).clickCount",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .ctaText(event.getCtaText())\r\n                .ctaLink(event.getCtaLink())\r\n                .tags(event.getTags()).viewCount",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .ctaText(event.getCtaText())\r\n                .ctaLink(event.getCtaLink()).tags",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .ctaText(event.getCtaText()).ctaLink",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority()).ctaText",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned()).priority",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner()).isPinned",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus()).isMainBanner",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt()).status",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl())\r\n                .startAt(event.getStartAt()).endAt",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .bannerUrl(event.getBannerUrl()).startAt",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent())\r\n                .thumbnailUrl(event.getThumbnailUrl()).bannerUrl",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .content(event.getContent()).thumbnailUrl",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary()).content",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle()).summary",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder()\r\n                .id(event.getId()).title",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder().id",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "EventDetailResponse.builder",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "event.getId",
+          "lineNumber": 34
+        },
+        {
+          "caller": "from",
+          "callee": "event.getTitle",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "event.getSummary",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "event.getContent",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "event.getThumbnailUrl",
+          "lineNumber": 38
+        },
+        {
+          "caller": "from",
+          "callee": "event.getBannerUrl",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStartAt",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "event.getEndAt",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStatus",
+          "lineNumber": 42
+        },
+        {
+          "caller": "from",
+          "callee": "event.isMainBanner",
+          "lineNumber": 43
+        },
+        {
+          "caller": "from",
+          "callee": "event.isPinned",
+          "lineNumber": 44
+        },
+        {
+          "caller": "from",
+          "callee": "event.getPriority",
+          "lineNumber": 45
+        },
+        {
+          "caller": "from",
+          "callee": "event.getCtaText",
+          "lineNumber": 46
+        },
+        {
+          "caller": "from",
+          "callee": "event.getCtaLink",
+          "lineNumber": 47
+        },
+        {
+          "caller": "from",
+          "callee": "event.getTags",
+          "lineNumber": 48
+        },
+        {
+          "caller": "from",
+          "callee": "event.getViewCount",
+          "lineNumber": 49
+        },
+        {
+          "caller": "from",
+          "callee": "event.getClickCount",
+          "lineNumber": 50
+        },
+        {
+          "caller": "from",
+          "callee": "event.getUpdatedAt",
+          "lineNumber": 51
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 39,
+      "nonEmptyLines": 36,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 24,
+          "endLine": 38,
+          "params": [
+            "event"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventListItemResponse",
+          "startLine": 9,
+          "endLine": 39,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "title",
+            "summary",
+            "thumbnailUrl",
+            "startAt",
+            "endAt",
+            "status",
+            "isMainBanner",
+            "isPinned",
+            "priority",
+            "viewCount"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "EventListItemResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority())\r\n                .viewCount(event.getViewCount()).build",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned())\r\n                .priority(event.getPriority()).viewCount",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner())\r\n                .isPinned(event.isPinned()).priority",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus())\r\n                .isMainBanner(event.isMainBanner()).isPinned",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt())\r\n                .status(event.getStatus()).isMainBanner",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .startAt(event.getStartAt())\r\n                .endAt(event.getEndAt()).status",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl())\r\n                .startAt(event.getStartAt()).endAt",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary())\r\n                .thumbnailUrl(event.getThumbnailUrl()).startAt",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .summary(event.getSummary()).thumbnailUrl",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle()).summary",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder()\r\n                .id(event.getId()).title",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder().id",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "EventListItemResponse.builder",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "event.getId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "event.getTitle",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "event.getSummary",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "event.getThumbnailUrl",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStartAt",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "event.getEndAt",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStatus",
+          "lineNumber": 32
+        },
+        {
+          "caller": "from",
+          "callee": "event.isMainBanner",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "event.isPinned",
+          "lineNumber": 34
+        },
+        {
+          "caller": "from",
+          "callee": "event.getPriority",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "event.getViewCount",
+          "lineNumber": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 57,
+      "nonEmptyLines": 43,
+      "classes": [
+        {
+          "name": "EventSaveRequest",
+          "startLine": 12,
+          "endLine": 57,
+          "methods": [],
+          "properties": [
+            "title",
+            "summary",
+            "content",
+            "thumbnailUrl",
+            "bannerUrl",
+            "startAt",
+            "endAt",
+            "status",
+            "isMainBanner",
+            "isPinned",
+            "priority",
+            "ctaText",
+            "ctaLink",
+            "tags"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventSaveRequest",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventStatusPatchRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "EventStatusPatchRequest",
+          "startLine": 8,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventStatusPatchRequest",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventToggleRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "classes": [
+        {
+          "name": "EventToggleRequest",
+          "startLine": 7,
+          "endLine": 12,
+          "methods": [],
+          "properties": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventToggleRequest",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 9,
+      "classes": [
+        {
+          "name": "EventViewClickResponse",
+          "startLine": 6,
+          "endLine": 11,
+          "methods": [],
+          "properties": [
+            "id",
+            "count"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventViewClickResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 91,
+      "nonEmptyLines": 72,
+      "classes": [
+        {
+          "name": "CmsEvent",
+          "startLine": 24,
+          "endLine": 91,
+          "methods": [],
+          "properties": [
+            "id",
+            "title",
+            "summary",
+            "content",
+            "thumbnailUrl",
+            "bannerUrl",
+            "startAt",
+            "endAt",
+            "status",
+            "isMainBanner",
+            "isPinned",
+            "priority",
+            "ctaText",
+            "ctaLink",
+            "viewCount",
+            "clickCount",
+            "createdBy",
+            "tags"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CmsEvent",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "CmsEventStatus",
+          "startLine": 3,
+          "endLine": 9,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CmsEventStatus",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/CmsEventRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 61,
+      "nonEmptyLines": 54,
+      "classes": [
+        {
+          "name": "CmsEventRepository",
+          "startLine": 13,
+          "endLine": 61,
+          "methods": [
+            "findPublic",
+            "findPublicWithQuery",
+            "findAdmin",
+            "findAdminWithQuery",
+            "incrementView",
+            "incrementClick"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CmsEventRepository",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 36,
+      "nonEmptyLines": 23,
+      "classes": [
+        {
+          "name": "CmsEventService",
+          "startLine": 12,
+          "endLine": 36,
+          "methods": [
+            "getPublicList",
+            "getPublicDetail",
+            "increaseView",
+            "increaseClick",
+            "getAdminList",
+            "getAdminDetail",
+            "create",
+            "update",
+            "delete",
+            "patchStatus",
+            "patchMainBanner",
+            "patchPin"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CmsEventService",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 210,
+      "nonEmptyLines": 190,
+      "functions": [
+        {
+          "name": "getPublicList",
+          "startLine": 31,
+          "endLine": 43,
+          "params": [
+            "status",
+            "q",
+            "pageable"
+          ]
+        },
+        {
+          "name": "getPublicDetail",
+          "startLine": 45,
+          "endLine": 53,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "increaseView",
+          "startLine": 55,
+          "endLine": 64,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "increaseClick",
+          "startLine": 66,
+          "endLine": 75,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "getAdminList",
+          "startLine": 77,
+          "endLine": 85,
+          "params": [
+            "status",
+            "q",
+            "pageable"
+          ]
+        },
+        {
+          "name": "getAdminDetail",
+          "startLine": 87,
+          "endLine": 91,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "create",
+          "startLine": 93,
+          "endLine": 117,
+          "params": [
+            "request",
+            "adminId"
+          ]
+        },
+        {
+          "name": "update",
+          "startLine": 119,
+          "endLine": 139,
+          "params": [
+            "id",
+            "request"
+          ]
+        },
+        {
+          "name": "delete",
+          "startLine": 141,
+          "endLine": 145,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "patchStatus",
+          "startLine": 147,
+          "endLine": 153,
+          "params": [
+            "id",
+            "status"
+          ]
+        },
+        {
+          "name": "patchMainBanner",
+          "startLine": 155,
+          "endLine": 161,
+          "params": [
+            "id",
+            "value"
+          ]
+        },
+        {
+          "name": "patchPin",
+          "startLine": 163,
+          "endLine": 169,
+          "params": [
+            "id",
+            "value"
+          ]
+        },
+        {
+          "name": "withDefaultSort",
+          "startLine": 171,
+          "endLine": 184,
+          "params": [
+            "pageable"
+          ]
+        },
+        {
+          "name": "normalizeQuery",
+          "startLine": 186,
+          "endLine": 191,
+          "params": [
+            "q"
+          ]
+        },
+        {
+          "name": "blankToNull",
+          "startLine": 193,
+          "endLine": 198,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "validatePeriod",
+          "startLine": 200,
+          "endLine": 204,
+          "params": [
+            "request"
+          ]
+        },
+        {
+          "name": "getByIdOrThrow",
+          "startLine": 206,
+          "endLine": 209,
+          "params": [
+            "id"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CmsEventServiceImpl",
+          "startLine": 23,
+          "endLine": 210,
+          "methods": [
+            "getPublicList",
+            "getPublicDetail",
+            "increaseView",
+            "increaseClick",
+            "getAdminList",
+            "getAdminDetail",
+            "create",
+            "update",
+            "delete",
+            "patchStatus",
+            "patchMainBanner",
+            "patchPin",
+            "withDefaultSort",
+            "normalizeQuery",
+            "blankToNull",
+            "validatePeriod",
+            "getByIdOrThrow"
+          ],
+          "properties": [
+            "PUBLIC_STATUSES",
+            "cmsEventRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getPublicList",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "getPublicDetail",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "increaseView",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "increaseClick",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "getAdminList",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "getAdminDetail",
+          "line": 87,
+          "isDefault": false
+        },
+        {
+          "name": "create",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "update",
+          "line": 119,
+          "isDefault": false
+        },
+        {
+          "name": "delete",
+          "line": 141,
+          "isDefault": false
+        },
+        {
+          "name": "patchStatus",
+          "line": 147,
+          "isDefault": false
+        },
+        {
+          "name": "patchMainBanner",
+          "line": 155,
+          "isDefault": false
+        },
+        {
+          "name": "patchPin",
+          "line": 163,
+          "isDefault": false
+        },
+        {
+          "name": "CmsEventServiceImpl",
+          "line": 23,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getPublicList",
+          "callee": "PUBLIC_STATUSES.contains",
+          "lineNumber": 34
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 35
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "Set.of",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "normalizeQuery",
+          "lineNumber": 38
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "cmsEventRepository.findPublic",
+          "lineNumber": 40
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "withDefaultSort",
+          "lineNumber": 40
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "cmsEventRepository.findPublicWithQuery",
+          "lineNumber": 41
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "withDefaultSort",
+          "lineNumber": 41
+        },
+        {
+          "caller": "getPublicList",
+          "callee": "page.map",
+          "lineNumber": 42
+        },
+        {
+          "caller": "getPublicDetail",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 48
+        },
+        {
+          "caller": "getPublicDetail",
+          "callee": "PUBLIC_STATUSES.contains",
+          "lineNumber": 49
+        },
+        {
+          "caller": "getPublicDetail",
+          "callee": "event.getStatus",
+          "lineNumber": 49
+        },
+        {
+          "caller": "getPublicDetail",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 50
+        },
+        {
+          "caller": "getPublicDetail",
+          "callee": "EventDetailResponse.from",
+          "lineNumber": 52
+        },
+        {
+          "caller": "increaseView",
+          "callee": "cmsEventRepository.incrementView",
+          "lineNumber": 58
+        },
+        {
+          "caller": "increaseView",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 60
+        },
+        {
+          "caller": "increaseView",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 62
+        },
+        {
+          "caller": "increaseView",
+          "callee": "new EventViewClickResponse",
+          "lineNumber": 63
+        },
+        {
+          "caller": "increaseView",
+          "callee": "event.getId",
+          "lineNumber": 63
+        },
+        {
+          "caller": "increaseView",
+          "callee": "event.getViewCount",
+          "lineNumber": 63
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "cmsEventRepository.incrementClick",
+          "lineNumber": 69
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 71
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 73
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "new EventViewClickResponse",
+          "lineNumber": 74
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "event.getId",
+          "lineNumber": 74
+        },
+        {
+          "caller": "increaseClick",
+          "callee": "event.getClickCount",
+          "lineNumber": 74
+        },
+        {
+          "caller": "getAdminList",
+          "callee": "normalizeQuery",
+          "lineNumber": 80
+        },
+        {
+          "caller": "getAdminList",
+          "callee": "cmsEventRepository.findAdmin",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getAdminList",
+          "callee": "withDefaultSort",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getAdminList",
+          "callee": "cmsEventRepository.findAdminWithQuery",
+          "lineNumber": 83
+        },
+        {
+          "caller": "getAdminList",
+          "callee": "withDefaultSort",
+          "lineNumber": 83
+        },
+        {
+          "caller": "getAdminList",
+          "callee": "page.map",
+          "lineNumber": 84
+        },
+        {
+          "caller": "getAdminDetail",
+          "callee": "EventDetailResponse.from",
+          "lineNumber": 90
+        },
+        {
+          "caller": "getAdminDetail",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 90
+        },
+        {
+          "caller": "create",
+          "callee": "validatePeriod",
+          "lineNumber": 96
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned())\r\n                .priority(request.getPriority())\r\n                .ctaText(request.getCtaText().trim())\r\n                .ctaLink(request.getCtaLink().trim())\r\n                .viewCount(0L)\r\n                .clickCount(0L)\r\n                .createdBy(adminId)\r\n                .tags(request.getTags() == null ? List.of() : request.getTags()).build",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned())\r\n                .priority(request.getPriority())\r\n                .ctaText(request.getCtaText().trim())\r\n                .ctaLink(request.getCtaLink().trim())\r\n                .viewCount(0L)\r\n                .clickCount(0L)\r\n                .createdBy(adminId).tags",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned())\r\n                .priority(request.getPriority())\r\n                .ctaText(request.getCtaText().trim())\r\n                .ctaLink(request.getCtaLink().trim())\r\n                .viewCount(0L)\r\n                .clickCount(0L).createdBy",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned())\r\n                .priority(request.getPriority())\r\n                .ctaText(request.getCtaText().trim())\r\n                .ctaLink(request.getCtaLink().trim())\r\n                .viewCount(0L).clickCount",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned())\r\n                .priority(request.getPriority())\r\n                .ctaText(request.getCtaText().trim())\r\n                .ctaLink(request.getCtaLink().trim()).viewCount",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned())\r\n                .priority(request.getPriority())\r\n                .ctaText(request.getCtaText().trim()).ctaLink",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned())\r\n                .priority(request.getPriority()).ctaText",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner())\r\n                .isPinned(request.isPinned()).priority",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus())\r\n                .isMainBanner(request.isMainBanner()).isPinned",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt())\r\n                .status(request.getStatus()).isMainBanner",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt())\r\n                .endAt(request.getEndAt()).status",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl()))\r\n                .startAt(request.getStartAt()).endAt",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim())\r\n                .bannerUrl(blankToNull(request.getBannerUrl())).startAt",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent())\r\n                .thumbnailUrl(request.getThumbnailUrl().trim()).bannerUrl",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim())\r\n                .content(request.getContent()).thumbnailUrl",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim())\r\n                .summary(request.getSummary().trim()).content",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder()\r\n                .title(request.getTitle().trim()).summary",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder().title",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "CmsEvent.builder",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create",
+          "callee": "request.getTitle().trim",
+          "lineNumber": 98
+        },
+        {
+          "caller": "create",
+          "callee": "request.getTitle",
+          "lineNumber": 98
+        },
+        {
+          "caller": "create",
+          "callee": "request.getSummary().trim",
+          "lineNumber": 99
+        },
+        {
+          "caller": "create",
+          "callee": "request.getSummary",
+          "lineNumber": 99
+        },
+        {
+          "caller": "create",
+          "callee": "request.getContent",
+          "lineNumber": 100
+        },
+        {
+          "caller": "create",
+          "callee": "request.getThumbnailUrl().trim",
+          "lineNumber": 101
+        },
+        {
+          "caller": "create",
+          "callee": "request.getThumbnailUrl",
+          "lineNumber": 101
+        },
+        {
+          "caller": "create",
+          "callee": "blankToNull",
+          "lineNumber": 102
+        },
+        {
+          "caller": "create",
+          "callee": "request.getBannerUrl",
+          "lineNumber": 102
+        },
+        {
+          "caller": "create",
+          "callee": "request.getStartAt",
+          "lineNumber": 103
+        },
+        {
+          "caller": "create",
+          "callee": "request.getEndAt",
+          "lineNumber": 104
+        },
+        {
+          "caller": "create",
+          "callee": "request.getStatus",
+          "lineNumber": 105
+        },
+        {
+          "caller": "create",
+          "callee": "request.isMainBanner",
+          "lineNumber": 106
+        },
+        {
+          "caller": "create",
+          "callee": "request.isPinned",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create",
+          "callee": "request.getPriority",
+          "lineNumber": 108
+        },
+        {
+          "caller": "create",
+          "callee": "request.getCtaText().trim",
+          "lineNumber": 109
+        },
+        {
+          "caller": "create",
+          "callee": "request.getCtaText",
+          "lineNumber": 109
+        },
+        {
+          "caller": "create",
+          "callee": "request.getCtaLink().trim",
+          "lineNumber": 110
+        },
+        {
+          "caller": "create",
+          "callee": "request.getCtaLink",
+          "lineNumber": 110
+        },
+        {
+          "caller": "create",
+          "callee": "request.getTags",
+          "lineNumber": 114
+        },
+        {
+          "caller": "create",
+          "callee": "List.of",
+          "lineNumber": 114
+        },
+        {
+          "caller": "create",
+          "callee": "request.getTags",
+          "lineNumber": 114
+        },
+        {
+          "caller": "create",
+          "callee": "EventDetailResponse.from",
+          "lineNumber": 116
+        },
+        {
+          "caller": "create",
+          "callee": "cmsEventRepository.save",
+          "lineNumber": 116
+        },
+        {
+          "caller": "update",
+          "callee": "validatePeriod",
+          "lineNumber": 122
+        },
+        {
+          "caller": "update",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 123
+        },
+        {
+          "caller": "update",
+          "callee": "event.setTitle",
+          "lineNumber": 124
+        },
+        {
+          "caller": "update",
+          "callee": "request.getTitle().trim",
+          "lineNumber": 124
+        },
+        {
+          "caller": "update",
+          "callee": "request.getTitle",
+          "lineNumber": 124
+        },
+        {
+          "caller": "update",
+          "callee": "event.setSummary",
+          "lineNumber": 125
+        },
+        {
+          "caller": "update",
+          "callee": "request.getSummary().trim",
+          "lineNumber": 125
+        },
+        {
+          "caller": "update",
+          "callee": "request.getSummary",
+          "lineNumber": 125
+        },
+        {
+          "caller": "update",
+          "callee": "event.setContent",
+          "lineNumber": 126
+        },
+        {
+          "caller": "update",
+          "callee": "request.getContent",
+          "lineNumber": 126
+        },
+        {
+          "caller": "update",
+          "callee": "event.setThumbnailUrl",
+          "lineNumber": 127
+        },
+        {
+          "caller": "update",
+          "callee": "request.getThumbnailUrl().trim",
+          "lineNumber": 127
+        },
+        {
+          "caller": "update",
+          "callee": "request.getThumbnailUrl",
+          "lineNumber": 127
+        },
+        {
+          "caller": "update",
+          "callee": "event.setBannerUrl",
+          "lineNumber": 128
+        },
+        {
+          "caller": "update",
+          "callee": "blankToNull",
+          "lineNumber": 128
+        },
+        {
+          "caller": "update",
+          "callee": "request.getBannerUrl",
+          "lineNumber": 128
+        },
+        {
+          "caller": "update",
+          "callee": "event.setStartAt",
+          "lineNumber": 129
+        },
+        {
+          "caller": "update",
+          "callee": "request.getStartAt",
+          "lineNumber": 129
+        },
+        {
+          "caller": "update",
+          "callee": "event.setEndAt",
+          "lineNumber": 130
+        },
+        {
+          "caller": "update",
+          "callee": "request.getEndAt",
+          "lineNumber": 130
+        },
+        {
+          "caller": "update",
+          "callee": "event.setStatus",
+          "lineNumber": 131
+        },
+        {
+          "caller": "update",
+          "callee": "request.getStatus",
+          "lineNumber": 131
+        },
+        {
+          "caller": "update",
+          "callee": "event.setMainBanner",
+          "lineNumber": 132
+        },
+        {
+          "caller": "update",
+          "callee": "request.isMainBanner",
+          "lineNumber": 132
+        },
+        {
+          "caller": "update",
+          "callee": "event.setPinned",
+          "lineNumber": 133
+        },
+        {
+          "caller": "update",
+          "callee": "request.isPinned",
+          "lineNumber": 133
+        },
+        {
+          "caller": "update",
+          "callee": "event.setPriority",
+          "lineNumber": 134
+        },
+        {
+          "caller": "update",
+          "callee": "request.getPriority",
+          "lineNumber": 134
+        },
+        {
+          "caller": "update",
+          "callee": "event.setCtaText",
+          "lineNumber": 135
+        },
+        {
+          "caller": "update",
+          "callee": "request.getCtaText().trim",
+          "lineNumber": 135
+        },
+        {
+          "caller": "update",
+          "callee": "request.getCtaText",
+          "lineNumber": 135
+        },
+        {
+          "caller": "update",
+          "callee": "event.setCtaLink",
+          "lineNumber": 136
+        },
+        {
+          "caller": "update",
+          "callee": "request.getCtaLink().trim",
+          "lineNumber": 136
+        },
+        {
+          "caller": "update",
+          "callee": "request.getCtaLink",
+          "lineNumber": 136
+        },
+        {
+          "caller": "update",
+          "callee": "event.setTags",
+          "lineNumber": 137
+        },
+        {
+          "caller": "update",
+          "callee": "request.getTags",
+          "lineNumber": 137
+        },
+        {
+          "caller": "update",
+          "callee": "List.of",
+          "lineNumber": 137
+        },
+        {
+          "caller": "update",
+          "callee": "request.getTags",
+          "lineNumber": 137
+        },
+        {
+          "caller": "update",
+          "callee": "EventDetailResponse.from",
+          "lineNumber": 138
+        },
+        {
+          "caller": "update",
+          "callee": "cmsEventRepository.save",
+          "lineNumber": 138
+        },
+        {
+          "caller": "delete",
+          "callee": "cmsEventRepository.delete",
+          "lineNumber": 144
+        },
+        {
+          "caller": "delete",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 144
+        },
+        {
+          "caller": "patchStatus",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 150
+        },
+        {
+          "caller": "patchStatus",
+          "callee": "event.setStatus",
+          "lineNumber": 151
+        },
+        {
+          "caller": "patchStatus",
+          "callee": "EventDetailResponse.from",
+          "lineNumber": 152
+        },
+        {
+          "caller": "patchStatus",
+          "callee": "cmsEventRepository.save",
+          "lineNumber": 152
+        },
+        {
+          "caller": "patchMainBanner",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 158
+        },
+        {
+          "caller": "patchMainBanner",
+          "callee": "event.setMainBanner",
+          "lineNumber": 159
+        },
+        {
+          "caller": "patchMainBanner",
+          "callee": "EventDetailResponse.from",
+          "lineNumber": 160
+        },
+        {
+          "caller": "patchMainBanner",
+          "callee": "cmsEventRepository.save",
+          "lineNumber": 160
+        },
+        {
+          "caller": "patchPin",
+          "callee": "getByIdOrThrow",
+          "lineNumber": 166
+        },
+        {
+          "caller": "patchPin",
+          "callee": "event.setPinned",
+          "lineNumber": 167
+        },
+        {
+          "caller": "patchPin",
+          "callee": "EventDetailResponse.from",
+          "lineNumber": 168
+        },
+        {
+          "caller": "patchPin",
+          "callee": "cmsEventRepository.save",
+          "lineNumber": 168
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "pageable.getSort().isSorted",
+          "lineNumber": 172
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "pageable.getSort",
+          "lineNumber": 172
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "PageRequest.of",
+          "lineNumber": 175
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "pageable.getPageNumber",
+          "lineNumber": 176
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "pageable.getPageSize",
+          "lineNumber": 177
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "Sort.by",
+          "lineNumber": 178
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "Sort.Order.desc",
+          "lineNumber": 179
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "Sort.Order.desc",
+          "lineNumber": 180
+        },
+        {
+          "caller": "withDefaultSort",
+          "callee": "Sort.Order.desc",
+          "lineNumber": 181
+        },
+        {
+          "caller": "normalizeQuery",
+          "callee": "q.isBlank",
+          "lineNumber": 187
+        },
+        {
+          "caller": "normalizeQuery",
+          "callee": "q.trim",
+          "lineNumber": 190
+        },
+        {
+          "caller": "blankToNull",
+          "callee": "value.isBlank",
+          "lineNumber": 194
+        },
+        {
+          "caller": "blankToNull",
+          "callee": "value.trim",
+          "lineNumber": 197
+        },
+        {
+          "caller": "validatePeriod",
+          "callee": "request.getStartAt().isAfter",
+          "lineNumber": 201
+        },
+        {
+          "caller": "validatePeriod",
+          "callee": "request.getStartAt",
+          "lineNumber": 201
+        },
+        {
+          "caller": "validatePeriod",
+          "callee": "request.getEndAt",
+          "lineNumber": 201
+        },
+        {
+          "caller": "validatePeriod",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 202
+        },
+        {
+          "caller": "getByIdOrThrow",
+          "callee": "cmsEventRepository.findById(id).orElseThrow",
+          "lineNumber": 207
+        },
+        {
+          "caller": "getByIdOrThrow",
+          "callee": "cmsEventRepository.findById",
+          "lineNumber": 207
+        },
+        {
+          "caller": "getByIdOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 208
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 13,
+        "functionCount": 17,
+        "classCount": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/HealthController.java",
+      "type": "file",
+      "name": "HealthController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/HealthController.java",
+      "summary": "/ping과 /api/ping 두 경로로 응답하는 최소 헬스체크 컨트롤러로, 로드밸런서·모니터링·프론트엔드의 서버 가용성 확인에 사용됩니다. SecurityConfig에서 인증 없이 접근 가능하도록 열려 있습니다.",
+      "tags": ["api-handler", "health-check", "monitoring", "controller"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/HealthController.java:HealthController",
+      "type": "class",
+      "name": "HealthController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/HealthController.java",
+      "lineRange": [7, 15],
+      "summary": "ping/apiPing 두 엔드포인트만 노출하는 헬스체크용 REST 컨트롤러입니다.",
+      "tags": ["api-handler", "health-check", "monitoring"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/HelloController.java",
+      "type": "file",
+      "name": "HelloController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/HelloController.java",
+      "summary": "루트 경로(/)와 /hello에서 간단한 문자열을 돌려주는 스모크 테스트용 컨트롤러입니다. 배포 직후 서버가 실제로 떠 있는지 눈으로 확인하는 용도입니다.",
+      "tags": ["api-handler", "smoke-test", "controller", "development"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/HelloController.java:HelloController",
+      "type": "class",
+      "name": "HelloController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/HelloController.java",
+      "lineRange": [6, 18],
+      "summary": "home()과 hello() 두 개의 GET 엔드포인트로 고정 문자열을 반환하는 컨트롤러입니다.",
+      "tags": ["api-handler", "smoke-test", "controller"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java",
+      "type": "file",
+      "name": "ReviewController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java",
+      "summary": "/api/reviews 하위에서 단백질 제품(모임) 리뷰의 작성·목록 조회(페이징)·수정·삭제를 처리하는 REST 컨트롤러입니다. 인증 주체 이메일이 비어 있으면 401을 던지고, 실제 로직은 ReviewService에 위임합니다.",
+      "tags": ["api-handler", "controller", "review", "crud", "validation"],
+      "complexity": "moderate",
+      "languageNotes": "@AuthenticationPrincipal로 SecurityContext의 이메일을 직접 주입받고, @Valid로 요청 DTO 검증을 위임하는 Spring MVC 관용 구성입니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java:ReviewController",
+      "type": "class",
+      "name": "ReviewController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java",
+      "lineRange": [17, 60],
+      "summary": "ReviewService를 생성자 주입받아 리뷰 CRUD 4개 엔드포인트를 노출하고, requireEmail로 로그인 여부를 공통 검증하는 컨트롤러입니다.",
+      "tags": ["api-handler", "controller", "review", "crud"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java",
+      "type": "file",
+      "name": "AiAnalyzeRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java",
+      "summary": "AI 인바디 분석 요청 DTO로, 키·몸무게·체지방률·골격근량과 선택적 목표 텍스트를 문자열로 담아 전달합니다.",
+      "tags": ["dto", "ai", "request", "data-model", "inbody"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java:AiAnalyzeRequest",
+      "type": "class",
+      "name": "AiAnalyzeRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java",
+      "lineRange": [5, 12],
+      "summary": "Lombok @Getter로 접근자를 생성하는 인바디 분석 요청 DTO 클래스입니다. 모든 신체 지표를 String으로 받아 입력 누락과 단위 표기를 유연하게 수용합니다.",
+      "tags": ["dto", "ai", "data-model", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java",
+      "type": "file",
+      "name": "AiAnalyzeResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java",
+      "summary": "AI 인바디 분석 결과를 담는 응답 DTO로, LLM이 생성한 해설 텍스트 한 필드만 반환합니다.",
+      "tags": ["dto", "ai", "response", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java:AiAnalyzeResponse",
+      "type": "class",
+      "name": "AiAnalyzeResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java",
+      "lineRange": [6, 10],
+      "summary": "Lombok @Getter·@AllArgsConstructor로 구성된 불변형 응답 DTO로, explanation 필드에 분석 해설을 담습니다.",
+      "tags": ["dto", "ai", "data-model", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java",
+      "type": "file",
+      "name": "AiChatRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java",
+      "summary": "AI 챗 상담 요청 DTO로, 사용자 질문과 이전 대화·신체 정보 등 문맥 문자열을 함께 전달합니다.",
+      "tags": ["dto", "ai", "request", "chat", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java:AiChatRequest",
+      "type": "class",
+      "name": "AiChatRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java",
+      "lineRange": [5, 9],
+      "summary": "question과 context 두 필드를 Lombok @Getter로 노출하는 AI 챗 요청 DTO 클래스입니다.",
+      "tags": ["dto", "ai", "chat", "data-model", "lombok"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/HealthController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/HealthController.java:HealthController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/HealthController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/HealthController.java:HealthController",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/HelloController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/HelloController.java:HelloController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/HelloController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/HelloController.java:HelloController",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/ReviewService.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java:ReviewController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java:ReviewController",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java:ReviewController",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/ReviewService.java:ReviewService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java:AiAnalyzeRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java:AiAnalyzeRequest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java:AiAnalyzeResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java:AiAnalyzeResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java:AiChatRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java:AiChatRequest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

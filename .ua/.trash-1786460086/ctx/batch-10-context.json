@@ -1,0 +1,272 @@
+{
+  "batchIndex": 10,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "language": "java",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "language": "java",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "language": "java",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "language": "java",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "language": "java",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java",
+      "language": "java",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "language": "java",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "language": "java",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java",
+      "language": "java",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "language": "java",
+      "sizeLines": 579,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ]
+  },
+  "neighborMap": {
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+        "batchIndex": 7,
+        "symbols": [
+          "from",
+          "EventProgressResponse"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthService.java",
+        "batchIndex": 1,
+        "symbols": [
+          "applyAttendance",
+          "applyEventSuccess",
+          "CharacterGrowthService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+        "batchIndex": 1,
+        "symbols": [
+          "getOrCreateProfile",
+          "evaluate",
+          "updatePublic",
+          "updateResting",
+          "reroll",
+          "evaluateAndUpdate",
+          "CharacterServiceImpl"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+        "batchIndex": 8,
+        "symbols": [
+          "User"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+        "batchIndex": 8,
+        "symbols": [
+          "create",
+          "list",
+          "getDetail",
+          "join",
+          "joinByInviteCode",
+          "listJoinRequests",
+          "approveJoinRequest",
+          "rejectJoinRequest",
+          "leave",
+          "update",
+          "delete",
+          "kickMember",
+          "createChallenge",
+          "updateChallenge",
+          "deleteChallenge",
+          "CrewServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/LoungeServiceImpl.java",
+        "batchIndex": 7,
+        "symbols": [
+          "getProfile",
+          "LoungeServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/MetricsServiceImpl.java",
+        "batchIndex": 7,
+        "symbols": [
+          "getLobbyMetrics",
+          "MetricsServiceImpl"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+        "batchIndex": 2,
+        "symbols": [
+          "ping",
+          "summary",
+          "recentEvents",
+          "audit",
+          "forceDeleteBrag",
+          "forceDeleteComment",
+          "forceDeleteReview",
+          "forceDeleteAiHistory",
+          "listProgramApplications",
+          "updateProgramApplicationStatus",
+          "listAttendanceShares",
+          "listAttendanceLogs",
+          "listSupportInquiries",
+          "updateSupportInquiryStatus",
+          "setAttendanceShareHidden",
+          "manualAudit",
+          "AdminController"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+        "batchIndex": 7,
+        "symbols": [
+          "from",
+          "EventProgressResponse"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+        "batchIndex": 8,
+        "symbols": [
+          "User"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+        "batchIndex": 8,
+        "symbols": [
+          "UserRepository"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "projectRoot": "C:/Users/jk636/OneDrive/문서/GitHub/Whims-of-Wonder/Whims-of-Wonder/MetaverseProgramming/My project/Assets/Ajou_MuscleUp",
+  "batchFiles": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AdminEventController.java",
+      "language": "java",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/EventPublicController.java",
+      "language": "java",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "language": "java",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "language": "java",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "language": "java",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "language": "java",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventStatusPatchRequest.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventToggleRequest.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "language": "java",
+      "sizeLines": 91,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/CmsEventRepository.java",
+      "language": "java",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java",
+      "language": "java",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java",
+      "language": "java",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/controller/AdminEventController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventStatusPatchRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventToggleRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/EventPublicController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventStatusPatchRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventToggleRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/CmsEventRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CmsEventRepository.java"
+    ]
+  }
+}

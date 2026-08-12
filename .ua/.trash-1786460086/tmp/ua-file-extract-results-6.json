@@ -1,0 +1,2685 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 21,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 21,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 21,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/BragInteractionController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 60,
+      "nonEmptyLines": 51,
+      "functions": [
+        {
+          "name": "listComments",
+          "startLine": 22,
+          "endLine": 26,
+          "params": [
+            "email",
+            "postId"
+          ]
+        },
+        {
+          "name": "addComment",
+          "startLine": 28,
+          "endLine": 33,
+          "params": [
+            "email",
+            "postId",
+            "req"
+          ]
+        },
+        {
+          "name": "deleteComment",
+          "startLine": 35,
+          "endLine": 40,
+          "params": [
+            "email",
+            "commentId"
+          ]
+        },
+        {
+          "name": "updateComment",
+          "startLine": 42,
+          "endLine": 47,
+          "params": [
+            "email",
+            "commentId",
+            "req"
+          ]
+        },
+        {
+          "name": "toggleLike",
+          "startLine": 49,
+          "endLine": 53,
+          "params": [
+            "email",
+            "postId"
+          ]
+        },
+        {
+          "name": "likeStatus",
+          "startLine": 55,
+          "endLine": 59,
+          "params": [
+            "email",
+            "postId"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BragInteractionController",
+          "startLine": 16,
+          "endLine": 60,
+          "methods": [
+            "listComments",
+            "addComment",
+            "deleteComment",
+            "updateComment",
+            "toggleLike",
+            "likeStatus"
+          ],
+          "properties": [
+            "interactionService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "listComments",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "addComment",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "deleteComment",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "updateComment",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "toggleLike",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "likeStatus",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "BragInteractionController",
+          "line": 16,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "listComments",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 25
+        },
+        {
+          "caller": "listComments",
+          "callee": "interactionService.listComments",
+          "lineNumber": 25
+        },
+        {
+          "caller": "addComment",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 32
+        },
+        {
+          "caller": "addComment",
+          "callee": "interactionService.addComment",
+          "lineNumber": 32
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "interactionService.deleteComment",
+          "lineNumber": 38
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 39
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 39
+        },
+        {
+          "caller": "updateComment",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 46
+        },
+        {
+          "caller": "updateComment",
+          "callee": "interactionService.updateComment",
+          "lineNumber": 46
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 52
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "interactionService.toggleLike",
+          "lineNumber": 52
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 58
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "interactionService.likeStatus",
+          "lineNumber": 58
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 7,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/BragPostController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 69,
+      "nonEmptyLines": 60,
+      "functions": [
+        {
+          "name": "create",
+          "startLine": 25,
+          "endLine": 30,
+          "params": [
+            "email",
+            "req"
+          ]
+        },
+        {
+          "name": "list",
+          "startLine": 32,
+          "endLine": 39,
+          "params": [
+            "email",
+            "page",
+            "size"
+          ]
+        },
+        {
+          "name": "get",
+          "startLine": 41,
+          "endLine": 46,
+          "params": [
+            "email",
+            "id"
+          ]
+        },
+        {
+          "name": "update",
+          "startLine": 48,
+          "endLine": 54,
+          "params": [
+            "email",
+            "id",
+            "req"
+          ]
+        },
+        {
+          "name": "delete",
+          "startLine": 56,
+          "endLine": 62,
+          "params": [
+            "email",
+            "id"
+          ]
+        },
+        {
+          "name": "requireEmail",
+          "startLine": 64,
+          "endLine": 68,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BragPostController",
+          "startLine": 19,
+          "endLine": 69,
+          "methods": [
+            "create",
+            "list",
+            "get",
+            "update",
+            "delete",
+            "requireEmail"
+          ],
+          "properties": [
+            "bragPostService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "list",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "get",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "update",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "delete",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "BragPostController",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create",
+          "callee": "requireEmail",
+          "lineNumber": 28
+        },
+        {
+          "caller": "create",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 29
+        },
+        {
+          "caller": "create",
+          "callee": "bragPostService.create",
+          "lineNumber": 29
+        },
+        {
+          "caller": "list",
+          "callee": "requireEmail",
+          "lineNumber": 36
+        },
+        {
+          "caller": "list",
+          "callee": "PageRequest.of",
+          "lineNumber": 37
+        },
+        {
+          "caller": "list",
+          "callee": "Math.min",
+          "lineNumber": 37
+        },
+        {
+          "caller": "list",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 38
+        },
+        {
+          "caller": "list",
+          "callee": "bragPostService.list",
+          "lineNumber": 38
+        },
+        {
+          "caller": "get",
+          "callee": "requireEmail",
+          "lineNumber": 44
+        },
+        {
+          "caller": "get",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 45
+        },
+        {
+          "caller": "get",
+          "callee": "bragPostService.get",
+          "lineNumber": 45
+        },
+        {
+          "caller": "update",
+          "callee": "requireEmail",
+          "lineNumber": 52
+        },
+        {
+          "caller": "update",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 53
+        },
+        {
+          "caller": "update",
+          "callee": "bragPostService.update",
+          "lineNumber": 53
+        },
+        {
+          "caller": "delete",
+          "callee": "requireEmail",
+          "lineNumber": 59
+        },
+        {
+          "caller": "delete",
+          "callee": "bragPostService.delete",
+          "lineNumber": 60
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.noContent().build",
+          "lineNumber": 61
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.noContent",
+          "lineNumber": 61
+        },
+        {
+          "caller": "requireEmail",
+          "callee": "email.isBlank",
+          "lineNumber": 65
+        },
+        {
+          "caller": "requireEmail",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 66
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "BragCommentCreateRequest",
+          "startLine": 6,
+          "endLine": 10,
+          "methods": [],
+          "properties": [
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragCommentCreateRequest",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 27,
+      "nonEmptyLines": 23,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 18,
+          "endLine": 26,
+          "params": [
+            "c"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BragCommentResponse",
+          "startLine": 9,
+          "endLine": 27,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "content",
+            "authorNickname",
+            "authorEmail",
+            "createdAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "BragCommentResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "new BragCommentResponse",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "c.getId",
+          "lineNumber": 20
+        },
+        {
+          "caller": "from",
+          "callee": "c.getContent",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "c.getUser",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "c.getUser().getNickname",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "c.getUser",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "c.getUser",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "c.getUser().getEmail",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "c.getUser",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "c.getCreatedAt",
+          "lineNumber": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "BragCommentUpdateRequest",
+          "startLine": 6,
+          "endLine": 10,
+          "methods": [],
+          "properties": [
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragCommentUpdateRequest",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 9,
+      "classes": [
+        {
+          "name": "BragLikeResponse",
+          "startLine": 6,
+          "endLine": 11,
+          "methods": [],
+          "properties": [
+            "likeCount",
+            "liked"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragLikeResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 18,
+      "classes": [
+        {
+          "name": "BragPostCreateRequest",
+          "startLine": 10,
+          "endLine": 24,
+          "methods": [],
+          "properties": [
+            "title",
+            "content",
+            "mediaUrls",
+            "movement",
+            "weight",
+            "visibility"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragPostCreateRequest",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 45,
+      "nonEmptyLines": 40,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 26,
+          "endLine": 28,
+          "params": [
+            "post"
+          ]
+        },
+        {
+          "name": "from",
+          "startLine": 30,
+          "endLine": 44,
+          "params": [
+            "post",
+            "likeCount"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BragPostResponse",
+          "startLine": 11,
+          "endLine": 45,
+          "methods": [
+            "from",
+            "from"
+          ],
+          "properties": [
+            "id",
+            "title",
+            "content",
+            "movement",
+            "weight",
+            "mediaUrls",
+            "likeCount",
+            "authorNickname",
+            "authorEmail",
+            "createdAt",
+            "visibility"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "from",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "BragPostResponse",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "from",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "new BragPostResponse",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "post.getId",
+          "lineNumber": 32
+        },
+        {
+          "caller": "from",
+          "callee": "post.getTitle",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "post.getContent",
+          "lineNumber": 34
+        },
+        {
+          "caller": "from",
+          "callee": "post.getMovement",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "post.getWeight",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "post.getMediaUrls",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "post.getUser",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "post.getUser().getNickname",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "post.getUser",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "post.getUser",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "post.getUser().getEmail",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "post.getUser",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "post.getCreatedAt",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "post.getVisibility",
+          "lineNumber": 42
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 18,
+      "classes": [
+        {
+          "name": "BragPostUpdateRequest",
+          "startLine": 10,
+          "endLine": 24,
+          "methods": [],
+          "properties": [
+            "title",
+            "content",
+            "mediaUrls",
+            "movement",
+            "weight",
+            "visibility"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragPostUpdateRequest",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 20,
+      "classes": [
+        {
+          "name": "BragComment",
+          "startLine": 6,
+          "endLine": 25,
+          "methods": [],
+          "properties": [
+            "id",
+            "bragPost",
+            "user",
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragComment",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 22,
+      "classes": [
+        {
+          "name": "BragLike",
+          "startLine": 6,
+          "endLine": 26,
+          "methods": [],
+          "properties": [
+            "id",
+            "bragPost",
+            "user"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragLike",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 43,
+      "nonEmptyLines": 33,
+      "classes": [
+        {
+          "name": "BragPost",
+          "startLine": 9,
+          "endLine": 43,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "title",
+            "content",
+            "movement",
+            "weight",
+            "mediaUrls",
+            "visibility"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragPost",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "BragVisibility",
+          "startLine": 3,
+          "endLine": 6,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragVisibility",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 9,
+      "classes": [
+        {
+          "name": "BragCommentRepository",
+          "startLine": 8,
+          "endLine": 12,
+          "methods": [
+            "findByBragPost_IdOrderByCreatedAtAsc",
+            "findTop20ByUser_IdOrderByCreatedAtDesc",
+            "deleteByBragPost_Id"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragCommentRepository",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 15,
+      "classes": [
+        {
+          "name": "BragLikeRepository",
+          "startLine": 10,
+          "endLine": 20,
+          "methods": [
+            "existsByBragPost_IdAndUser_Id",
+            "deleteByBragPost_IdAndUser_Id",
+            "deleteByBragPost_Id",
+            "countByPostId",
+            "findRecentByUser"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragLikeRepository",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 15,
+      "classes": [
+        {
+          "name": "BragPostRepository",
+          "startLine": 10,
+          "endLine": 18,
+          "methods": [
+            "findAllByOrderByCreatedAtDesc",
+            "findByVisibilityOrUser_IdInOrderByCreatedAtDesc"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragPostRepository",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 14,
+      "classes": [
+        {
+          "name": "BragInteractionService",
+          "startLine": 10,
+          "endLine": 18,
+          "methods": [
+            "listComments",
+            "addComment",
+            "updateComment",
+            "deleteComment",
+            "toggleLike",
+            "likeStatus"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragInteractionService",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 130,
+      "nonEmptyLines": 117,
+      "functions": [
+        {
+          "name": "requireUser",
+          "startLine": 34,
+          "endLine": 37,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "requirePost",
+          "startLine": 39,
+          "endLine": 42,
+          "params": [
+            "postId"
+          ]
+        },
+        {
+          "name": "listComments",
+          "startLine": 44,
+          "endLine": 52,
+          "params": [
+            "userEmail",
+            "postId"
+          ]
+        },
+        {
+          "name": "addComment",
+          "startLine": 54,
+          "endLine": 65,
+          "params": [
+            "userEmail",
+            "postId",
+            "req"
+          ]
+        },
+        {
+          "name": "updateComment",
+          "startLine": 67,
+          "endLine": 78,
+          "params": [
+            "userEmail",
+            "commentId",
+            "req"
+          ]
+        },
+        {
+          "name": "deleteComment",
+          "startLine": 80,
+          "endLine": 89,
+          "params": [
+            "userEmail",
+            "commentId"
+          ]
+        },
+        {
+          "name": "toggleLike",
+          "startLine": 91,
+          "endLine": 104,
+          "params": [
+            "userEmail",
+            "postId"
+          ]
+        },
+        {
+          "name": "likeStatus",
+          "startLine": 106,
+          "endLine": 118,
+          "params": [
+            "userEmail",
+            "postId"
+          ]
+        },
+        {
+          "name": "isAdmin",
+          "startLine": 120,
+          "endLine": 122,
+          "params": [
+            "user"
+          ]
+        },
+        {
+          "name": "ensureCanView",
+          "startLine": 124,
+          "endLine": 129,
+          "params": [
+            "post",
+            "viewer"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BragInteractionServiceImpl",
+          "startLine": 24,
+          "endLine": 130,
+          "methods": [
+            "requireUser",
+            "requirePost",
+            "listComments",
+            "addComment",
+            "updateComment",
+            "deleteComment",
+            "toggleLike",
+            "likeStatus",
+            "isAdmin",
+            "ensureCanView"
+          ],
+          "properties": [
+            "commentRepository",
+            "likeRepository",
+            "postRepository",
+            "userRepository",
+            "friendService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "listComments",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "addComment",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "updateComment",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "deleteComment",
+          "line": 80,
+          "isDefault": false
+        },
+        {
+          "name": "toggleLike",
+          "line": 91,
+          "isDefault": false
+        },
+        {
+          "name": "likeStatus",
+          "line": 106,
+          "isDefault": false
+        },
+        {
+          "name": "BragInteractionServiceImpl",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "requireUser",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 35
+        },
+        {
+          "caller": "requireUser",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 35
+        },
+        {
+          "caller": "requireUser",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 36
+        },
+        {
+          "caller": "requirePost",
+          "callee": "postRepository.findById(postId).orElseThrow",
+          "lineNumber": 40
+        },
+        {
+          "caller": "requirePost",
+          "callee": "postRepository.findById",
+          "lineNumber": 40
+        },
+        {
+          "caller": "requirePost",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 41
+        },
+        {
+          "caller": "listComments",
+          "callee": "requireUser",
+          "lineNumber": 47
+        },
+        {
+          "caller": "listComments",
+          "callee": "requirePost",
+          "lineNumber": 48
+        },
+        {
+          "caller": "listComments",
+          "callee": "ensureCanView",
+          "lineNumber": 49
+        },
+        {
+          "caller": "listComments",
+          "callee": "commentRepository.findByBragPost_IdOrderByCreatedAtAsc(postId)\r\n                .stream().map(BragCommentResponse::from).toList",
+          "lineNumber": 50
+        },
+        {
+          "caller": "listComments",
+          "callee": "commentRepository.findByBragPost_IdOrderByCreatedAtAsc(postId)\r\n                .stream().map",
+          "lineNumber": 50
+        },
+        {
+          "caller": "listComments",
+          "callee": "commentRepository.findByBragPost_IdOrderByCreatedAtAsc(postId).stream",
+          "lineNumber": 50
+        },
+        {
+          "caller": "listComments",
+          "callee": "commentRepository.findByBragPost_IdOrderByCreatedAtAsc",
+          "lineNumber": 50
+        },
+        {
+          "caller": "addComment",
+          "callee": "requireUser",
+          "lineNumber": 56
+        },
+        {
+          "caller": "addComment",
+          "callee": "requirePost",
+          "lineNumber": 57
+        },
+        {
+          "caller": "addComment",
+          "callee": "ensureCanView",
+          "lineNumber": 58
+        },
+        {
+          "caller": "addComment",
+          "callee": "commentRepository.save",
+          "lineNumber": 59
+        },
+        {
+          "caller": "addComment",
+          "callee": "BragComment.builder()\r\n                .bragPost(post)\r\n                .user(user)\r\n                .content(req.getContent().trim()).build",
+          "lineNumber": 59
+        },
+        {
+          "caller": "addComment",
+          "callee": "BragComment.builder()\r\n                .bragPost(post)\r\n                .user(user).content",
+          "lineNumber": 59
+        },
+        {
+          "caller": "addComment",
+          "callee": "BragComment.builder()\r\n                .bragPost(post).user",
+          "lineNumber": 59
+        },
+        {
+          "caller": "addComment",
+          "callee": "BragComment.builder().bragPost",
+          "lineNumber": 59
+        },
+        {
+          "caller": "addComment",
+          "callee": "BragComment.builder",
+          "lineNumber": 59
+        },
+        {
+          "caller": "addComment",
+          "callee": "req.getContent().trim",
+          "lineNumber": 62
+        },
+        {
+          "caller": "addComment",
+          "callee": "req.getContent",
+          "lineNumber": 62
+        },
+        {
+          "caller": "addComment",
+          "callee": "BragCommentResponse.from",
+          "lineNumber": 64
+        },
+        {
+          "caller": "updateComment",
+          "callee": "requireUser",
+          "lineNumber": 69
+        },
+        {
+          "caller": "updateComment",
+          "callee": "commentRepository.findById(commentId).orElseThrow",
+          "lineNumber": 70
+        },
+        {
+          "caller": "updateComment",
+          "callee": "commentRepository.findById",
+          "lineNumber": 70
+        },
+        {
+          "caller": "updateComment",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 71
+        },
+        {
+          "caller": "updateComment",
+          "callee": "c.getUser().getId().equals",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateComment",
+          "callee": "c.getUser().getId",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateComment",
+          "callee": "c.getUser",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateComment",
+          "callee": "user.getId",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateComment",
+          "callee": "isAdmin",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateComment",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 73
+        },
+        {
+          "caller": "updateComment",
+          "callee": "c.setContent",
+          "lineNumber": 75
+        },
+        {
+          "caller": "updateComment",
+          "callee": "req.getContent().trim",
+          "lineNumber": 75
+        },
+        {
+          "caller": "updateComment",
+          "callee": "req.getContent",
+          "lineNumber": 75
+        },
+        {
+          "caller": "updateComment",
+          "callee": "commentRepository.save",
+          "lineNumber": 76
+        },
+        {
+          "caller": "updateComment",
+          "callee": "BragCommentResponse.from",
+          "lineNumber": 77
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "requireUser",
+          "lineNumber": 82
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "commentRepository.findById(commentId).orElseThrow",
+          "lineNumber": 83
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "commentRepository.findById",
+          "lineNumber": 83
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 84
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "c.getUser().getId().equals",
+          "lineNumber": 85
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "c.getUser().getId",
+          "lineNumber": 85
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "c.getUser",
+          "lineNumber": 85
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "user.getId",
+          "lineNumber": 85
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "isAdmin",
+          "lineNumber": 85
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 86
+        },
+        {
+          "caller": "deleteComment",
+          "callee": "commentRepository.delete",
+          "lineNumber": 88
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "requireUser",
+          "lineNumber": 93
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "requirePost",
+          "lineNumber": 94
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "ensureCanView",
+          "lineNumber": 95
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "likeRepository.existsByBragPost_IdAndUser_Id",
+          "lineNumber": 96
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "user.getId",
+          "lineNumber": 96
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "likeRepository.deleteByBragPost_IdAndUser_Id",
+          "lineNumber": 98
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "user.getId",
+          "lineNumber": 98
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "likeRepository.save",
+          "lineNumber": 100
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "BragLike.builder().bragPost(post).user(user).build",
+          "lineNumber": 100
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "BragLike.builder().bragPost(post).user",
+          "lineNumber": 100
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "BragLike.builder().bragPost",
+          "lineNumber": 100
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "BragLike.builder",
+          "lineNumber": 100
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "likeRepository.countByPostId",
+          "lineNumber": 102
+        },
+        {
+          "caller": "toggleLike",
+          "callee": "new BragLikeResponse",
+          "lineNumber": 103
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "likeRepository.countByPostId",
+          "lineNumber": 109
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "userEmail.isBlank",
+          "lineNumber": 110
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "new BragLikeResponse",
+          "lineNumber": 111
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "requireUser",
+          "lineNumber": 113
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "requirePost",
+          "lineNumber": 114
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "ensureCanView",
+          "lineNumber": 115
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "likeRepository.existsByBragPost_IdAndUser_Id",
+          "lineNumber": 116
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "user.getId",
+          "lineNumber": 116
+        },
+        {
+          "caller": "likeStatus",
+          "callee": "new BragLikeResponse",
+          "lineNumber": 117
+        },
+        {
+          "caller": "isAdmin",
+          "callee": "\"ADMIN\".equalsIgnoreCase",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isAdmin",
+          "callee": "user.getRole",
+          "lineNumber": 121
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "post.getVisibility",
+          "lineNumber": 125
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "post.getUser().getId().equals",
+          "lineNumber": 126
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "post.getUser().getId",
+          "lineNumber": 126
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "post.getUser",
+          "lineNumber": 126
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "viewer.getId",
+          "lineNumber": 126
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "friendService.areFriends",
+          "lineNumber": 127
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "post.getUser().getId",
+          "lineNumber": 127
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "post.getUser",
+          "lineNumber": 127
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "viewer.getId",
+          "lineNumber": 127
+        },
+        {
+          "caller": "ensureCanView",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 128
+        }
+      ],
+      "metrics": {
+        "importCount": 13,
+        "exportCount": 7,
+        "functionCount": 10,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragPostService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "BragPostService",
+          "startLine": 9,
+          "endLine": 15,
+          "methods": [
+            "create",
+            "list",
+            "get",
+            "update",
+            "delete"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BragPostService",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 137,
+      "nonEmptyLines": 119,
+      "functions": [
+        {
+          "name": "create",
+          "startLine": 32,
+          "endLine": 55,
+          "params": [
+            "userEmail",
+            "req"
+          ]
+        },
+        {
+          "name": "list",
+          "startLine": 57,
+          "endLine": 68,
+          "params": [
+            "userEmail",
+            "pageable"
+          ]
+        },
+        {
+          "name": "get",
+          "startLine": 70,
+          "endLine": 82,
+          "params": [
+            "id",
+            "userEmail"
+          ]
+        },
+        {
+          "name": "update",
+          "startLine": 84,
+          "endLine": 113,
+          "params": [
+            "id",
+            "userEmail",
+            "req"
+          ]
+        },
+        {
+          "name": "delete",
+          "startLine": 115,
+          "endLine": 126,
+          "params": [
+            "id",
+            "userEmail"
+          ]
+        },
+        {
+          "name": "canView",
+          "startLine": 128,
+          "endLine": 132,
+          "params": [
+            "post",
+            "viewer"
+          ]
+        },
+        {
+          "name": "isAdmin",
+          "startLine": 134,
+          "endLine": 136,
+          "params": [
+            "user"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BragPostServiceImpl",
+          "startLine": 23,
+          "endLine": 137,
+          "methods": [
+            "create",
+            "list",
+            "get",
+            "update",
+            "delete",
+            "canView",
+            "isAdmin"
+          ],
+          "properties": [
+            "bragPostRepository",
+            "userRepository",
+            "bragLikeRepository",
+            "friendService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "list",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "get",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "update",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "delete",
+          "line": 115,
+          "isDefault": false
+        },
+        {
+          "name": "BragPostServiceImpl",
+          "line": 23,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create",
+          "callee": "userRepository.findByEmail(userEmail).orElseThrow",
+          "lineNumber": 34
+        },
+        {
+          "caller": "create",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 34
+        },
+        {
+          "caller": "create",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 35
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMediaUrls",
+          "lineNumber": 37
+        },
+        {
+          "caller": "create",
+          "callee": "List.of",
+          "lineNumber": 38
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMediaUrls().stream()\r\n                .filter(url -> url != null && !url.isBlank())\r\n                .map(String::trim).collect",
+          "lineNumber": 39
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMediaUrls().stream()\r\n                .filter(url -> url != null && !url.isBlank()).map",
+          "lineNumber": 39
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMediaUrls().stream().filter",
+          "lineNumber": 39
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMediaUrls().stream",
+          "lineNumber": 39
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMediaUrls",
+          "lineNumber": 39
+        },
+        {
+          "caller": "create",
+          "callee": "url.isBlank",
+          "lineNumber": 40
+        },
+        {
+          "caller": "create",
+          "callee": "Collectors.toCollection",
+          "lineNumber": 42
+        },
+        {
+          "caller": "create",
+          "callee": "bragPostRepository.save",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder()\r\n                .user(user)\r\n                .title(req.getTitle().trim())\r\n                .content(req.getContent().trim())\r\n                .movement(req.getMovement() == null ? null : req.getMovement().trim())\r\n                .weight(req.getWeight() == null ? null : req.getWeight().trim())\r\n                .mediaUrls(media)\r\n                .visibility(req.getVisibility() == null ? BragVisibility.PUBLIC : req.getVisibility()).build",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder()\r\n                .user(user)\r\n                .title(req.getTitle().trim())\r\n                .content(req.getContent().trim())\r\n                .movement(req.getMovement() == null ? null : req.getMovement().trim())\r\n                .weight(req.getWeight() == null ? null : req.getWeight().trim())\r\n                .mediaUrls(media).visibility",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder()\r\n                .user(user)\r\n                .title(req.getTitle().trim())\r\n                .content(req.getContent().trim())\r\n                .movement(req.getMovement() == null ? null : req.getMovement().trim())\r\n                .weight(req.getWeight() == null ? null : req.getWeight().trim()).mediaUrls",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder()\r\n                .user(user)\r\n                .title(req.getTitle().trim())\r\n                .content(req.getContent().trim())\r\n                .movement(req.getMovement() == null ? null : req.getMovement().trim()).weight",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder()\r\n                .user(user)\r\n                .title(req.getTitle().trim())\r\n                .content(req.getContent().trim()).movement",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder()\r\n                .user(user)\r\n                .title(req.getTitle().trim()).content",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder()\r\n                .user(user).title",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder().user",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "BragPost.builder",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "req.getTitle().trim",
+          "lineNumber": 46
+        },
+        {
+          "caller": "create",
+          "callee": "req.getTitle",
+          "lineNumber": 46
+        },
+        {
+          "caller": "create",
+          "callee": "req.getContent().trim",
+          "lineNumber": 47
+        },
+        {
+          "caller": "create",
+          "callee": "req.getContent",
+          "lineNumber": 47
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMovement",
+          "lineNumber": 48
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMovement().trim",
+          "lineNumber": 48
+        },
+        {
+          "caller": "create",
+          "callee": "req.getMovement",
+          "lineNumber": 48
+        },
+        {
+          "caller": "create",
+          "callee": "req.getWeight",
+          "lineNumber": 49
+        },
+        {
+          "caller": "create",
+          "callee": "req.getWeight().trim",
+          "lineNumber": 49
+        },
+        {
+          "caller": "create",
+          "callee": "req.getWeight",
+          "lineNumber": 49
+        },
+        {
+          "caller": "create",
+          "callee": "req.getVisibility",
+          "lineNumber": 51
+        },
+        {
+          "caller": "create",
+          "callee": "req.getVisibility",
+          "lineNumber": 51
+        },
+        {
+          "caller": "create",
+          "callee": "BragPostResponse.from",
+          "lineNumber": 54
+        },
+        {
+          "caller": "list",
+          "callee": "userRepository.findByEmail(userEmail).orElseThrow",
+          "lineNumber": 60
+        },
+        {
+          "caller": "list",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 60
+        },
+        {
+          "caller": "list",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 61
+        },
+        {
+          "caller": "list",
+          "callee": "friendService.findFriendIds",
+          "lineNumber": 62
+        },
+        {
+          "caller": "list",
+          "callee": "user.getId",
+          "lineNumber": 62
+        },
+        {
+          "caller": "list",
+          "callee": "new ArrayList<>",
+          "lineNumber": 63
+        },
+        {
+          "caller": "list",
+          "callee": "allowedUserIds.add",
+          "lineNumber": 64
+        },
+        {
+          "caller": "list",
+          "callee": "user.getId",
+          "lineNumber": 64
+        },
+        {
+          "caller": "list",
+          "callee": "bragPostRepository\r\n                .findByVisibilityOrUser_IdInOrderByCreatedAtDesc(BragVisibility.PUBLIC, allowedUserIds, pageable).map",
+          "lineNumber": 65
+        },
+        {
+          "caller": "list",
+          "callee": "bragPostRepository.findByVisibilityOrUser_IdInOrderByCreatedAtDesc",
+          "lineNumber": 65
+        },
+        {
+          "caller": "list",
+          "callee": "BragPostResponse.from",
+          "lineNumber": 67
+        },
+        {
+          "caller": "list",
+          "callee": "bragLikeRepository.countByPostId",
+          "lineNumber": 67
+        },
+        {
+          "caller": "list",
+          "callee": "p.getId",
+          "lineNumber": 67
+        },
+        {
+          "caller": "get",
+          "callee": "userRepository.findByEmail(userEmail).orElseThrow",
+          "lineNumber": 73
+        },
+        {
+          "caller": "get",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 73
+        },
+        {
+          "caller": "get",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 74
+        },
+        {
+          "caller": "get",
+          "callee": "bragPostRepository.findById(id).orElseThrow",
+          "lineNumber": 75
+        },
+        {
+          "caller": "get",
+          "callee": "bragPostRepository.findById",
+          "lineNumber": 75
+        },
+        {
+          "caller": "get",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 76
+        },
+        {
+          "caller": "get",
+          "callee": "canView",
+          "lineNumber": 77
+        },
+        {
+          "caller": "get",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 78
+        },
+        {
+          "caller": "get",
+          "callee": "bragLikeRepository.countByPostId",
+          "lineNumber": 80
+        },
+        {
+          "caller": "get",
+          "callee": "BragPostResponse.from",
+          "lineNumber": 81
+        },
+        {
+          "caller": "update",
+          "callee": "userRepository.findByEmail(userEmail).orElseThrow",
+          "lineNumber": 86
+        },
+        {
+          "caller": "update",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 86
+        },
+        {
+          "caller": "update",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 87
+        },
+        {
+          "caller": "update",
+          "callee": "bragPostRepository.findById(id).orElseThrow",
+          "lineNumber": 89
+        },
+        {
+          "caller": "update",
+          "callee": "bragPostRepository.findById",
+          "lineNumber": 89
+        },
+        {
+          "caller": "update",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 90
+        },
+        {
+          "caller": "update",
+          "callee": "post.getUser().getId().equals",
+          "lineNumber": 92
+        },
+        {
+          "caller": "update",
+          "callee": "post.getUser().getId",
+          "lineNumber": 92
+        },
+        {
+          "caller": "update",
+          "callee": "post.getUser",
+          "lineNumber": 92
+        },
+        {
+          "caller": "update",
+          "callee": "user.getId",
+          "lineNumber": 92
+        },
+        {
+          "caller": "update",
+          "callee": "isAdmin",
+          "lineNumber": 92
+        },
+        {
+          "caller": "update",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 93
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMediaUrls",
+          "lineNumber": 96
+        },
+        {
+          "caller": "update",
+          "callee": "List.of",
+          "lineNumber": 97
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMediaUrls().stream()\r\n                .filter(url -> url != null && !url.isBlank())\r\n                .map(String::trim).collect",
+          "lineNumber": 98
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMediaUrls().stream()\r\n                .filter(url -> url != null && !url.isBlank()).map",
+          "lineNumber": 98
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMediaUrls().stream().filter",
+          "lineNumber": 98
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMediaUrls().stream",
+          "lineNumber": 98
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMediaUrls",
+          "lineNumber": 98
+        },
+        {
+          "caller": "update",
+          "callee": "url.isBlank",
+          "lineNumber": 99
+        },
+        {
+          "caller": "update",
+          "callee": "Collectors.toCollection",
+          "lineNumber": 101
+        },
+        {
+          "caller": "update",
+          "callee": "post.setTitle",
+          "lineNumber": 103
+        },
+        {
+          "caller": "update",
+          "callee": "req.getTitle().trim",
+          "lineNumber": 103
+        },
+        {
+          "caller": "update",
+          "callee": "req.getTitle",
+          "lineNumber": 103
+        },
+        {
+          "caller": "update",
+          "callee": "post.setContent",
+          "lineNumber": 104
+        },
+        {
+          "caller": "update",
+          "callee": "req.getContent().trim",
+          "lineNumber": 104
+        },
+        {
+          "caller": "update",
+          "callee": "req.getContent",
+          "lineNumber": 104
+        },
+        {
+          "caller": "update",
+          "callee": "post.setMovement",
+          "lineNumber": 105
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMovement",
+          "lineNumber": 105
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMovement().trim",
+          "lineNumber": 105
+        },
+        {
+          "caller": "update",
+          "callee": "req.getMovement",
+          "lineNumber": 105
+        },
+        {
+          "caller": "update",
+          "callee": "post.setWeight",
+          "lineNumber": 106
+        },
+        {
+          "caller": "update",
+          "callee": "req.getWeight",
+          "lineNumber": 106
+        },
+        {
+          "caller": "update",
+          "callee": "req.getWeight().trim",
+          "lineNumber": 106
+        },
+        {
+          "caller": "update",
+          "callee": "req.getWeight",
+          "lineNumber": 106
+        },
+        {
+          "caller": "update",
+          "callee": "post.setMediaUrls",
+          "lineNumber": 107
+        },
+        {
+          "caller": "update",
+          "callee": "post.setVisibility",
+          "lineNumber": 108
+        },
+        {
+          "caller": "update",
+          "callee": "req.getVisibility",
+          "lineNumber": 108
+        },
+        {
+          "caller": "update",
+          "callee": "req.getVisibility",
+          "lineNumber": 108
+        },
+        {
+          "caller": "update",
+          "callee": "bragPostRepository.save",
+          "lineNumber": 110
+        },
+        {
+          "caller": "update",
+          "callee": "bragLikeRepository.countByPostId",
+          "lineNumber": 111
+        },
+        {
+          "caller": "update",
+          "callee": "BragPostResponse.from",
+          "lineNumber": 112
+        },
+        {
+          "caller": "delete",
+          "callee": "userRepository.findByEmail(userEmail).orElseThrow",
+          "lineNumber": 117
+        },
+        {
+          "caller": "delete",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 117
+        },
+        {
+          "caller": "delete",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 118
+        },
+        {
+          "caller": "delete",
+          "callee": "bragPostRepository.findById(id).orElseThrow",
+          "lineNumber": 119
+        },
+        {
+          "caller": "delete",
+          "callee": "bragPostRepository.findById",
+          "lineNumber": 119
+        },
+        {
+          "caller": "delete",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 120
+        },
+        {
+          "caller": "delete",
+          "callee": "post.getUser().getId().equals",
+          "lineNumber": 122
+        },
+        {
+          "caller": "delete",
+          "callee": "post.getUser().getId",
+          "lineNumber": 122
+        },
+        {
+          "caller": "delete",
+          "callee": "post.getUser",
+          "lineNumber": 122
+        },
+        {
+          "caller": "delete",
+          "callee": "user.getId",
+          "lineNumber": 122
+        },
+        {
+          "caller": "delete",
+          "callee": "isAdmin",
+          "lineNumber": 122
+        },
+        {
+          "caller": "delete",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 123
+        },
+        {
+          "caller": "delete",
+          "callee": "bragPostRepository.delete",
+          "lineNumber": 125
+        },
+        {
+          "caller": "canView",
+          "callee": "post.getVisibility",
+          "lineNumber": 129
+        },
+        {
+          "caller": "canView",
+          "callee": "post.getUser().getId().equals",
+          "lineNumber": 130
+        },
+        {
+          "caller": "canView",
+          "callee": "post.getUser().getId",
+          "lineNumber": 130
+        },
+        {
+          "caller": "canView",
+          "callee": "post.getUser",
+          "lineNumber": 130
+        },
+        {
+          "caller": "canView",
+          "callee": "viewer.getId",
+          "lineNumber": 130
+        },
+        {
+          "caller": "canView",
+          "callee": "friendService.areFriends",
+          "lineNumber": 131
+        },
+        {
+          "caller": "canView",
+          "callee": "post.getUser().getId",
+          "lineNumber": 131
+        },
+        {
+          "caller": "canView",
+          "callee": "post.getUser",
+          "lineNumber": 131
+        },
+        {
+          "caller": "canView",
+          "callee": "viewer.getId",
+          "lineNumber": 131
+        },
+        {
+          "caller": "isAdmin",
+          "callee": "\"ADMIN\".equalsIgnoreCase",
+          "lineNumber": 135
+        },
+        {
+          "caller": "isAdmin",
+          "callee": "user.getRole",
+          "lineNumber": 135
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 6,
+        "functionCount": 7,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 48,
+      "nonEmptyLines": 40,
+      "functions": [
+        {
+          "name": "fetch",
+          "startLine": 30,
+          "endLine": 47,
+          "params": [
+            "userEmail"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "MyPageServiceImpl",
+          "startLine": 20,
+          "endLine": 48,
+          "methods": [
+            "fetch"
+          ],
+          "properties": [
+            "userRepository",
+            "commentRepository",
+            "likeRepository",
+            "bragPostService",
+            "aiChatHistoryService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "fetch",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "MyPageServiceImpl",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "fetch",
+          "callee": "userRepository.findByEmail(userEmail).orElseThrow",
+          "lineNumber": 32
+        },
+        {
+          "caller": "fetch",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 32
+        },
+        {
+          "caller": "fetch",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 33
+        },
+        {
+          "caller": "fetch",
+          "callee": "commentRepository.findTop20ByUser_IdOrderByCreatedAtDesc(user.getId())\r\n                .stream().map(BragCommentResponse::from).toList",
+          "lineNumber": 35
+        },
+        {
+          "caller": "fetch",
+          "callee": "commentRepository.findTop20ByUser_IdOrderByCreatedAtDesc(user.getId())\r\n                .stream().map",
+          "lineNumber": 35
+        },
+        {
+          "caller": "fetch",
+          "callee": "commentRepository.findTop20ByUser_IdOrderByCreatedAtDesc(user.getId()).stream",
+          "lineNumber": 35
+        },
+        {
+          "caller": "fetch",
+          "callee": "commentRepository.findTop20ByUser_IdOrderByCreatedAtDesc",
+          "lineNumber": 35
+        },
+        {
+          "caller": "fetch",
+          "callee": "user.getId",
+          "lineNumber": 35
+        },
+        {
+          "caller": "fetch",
+          "callee": "likeRepository.findRecentByUser(user.getId()).stream()\r\n                .limit(20)\r\n                .map(BragLike::getBragPost)\r\n                .map(p -> BragPostResponse.from(p, likeRepository.countByPostId(p.getId()))).toList",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "likeRepository.findRecentByUser(user.getId()).stream()\r\n                .limit(20)\r\n                .map(BragLike::getBragPost).map",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "likeRepository.findRecentByUser(user.getId()).stream()\r\n                .limit(20).map",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "likeRepository.findRecentByUser(user.getId()).stream().limit",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "likeRepository.findRecentByUser(user.getId()).stream",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "likeRepository.findRecentByUser",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "user.getId",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "BragPostResponse.from",
+          "lineNumber": 41
+        },
+        {
+          "caller": "fetch",
+          "callee": "likeRepository.countByPostId",
+          "lineNumber": 41
+        },
+        {
+          "caller": "fetch",
+          "callee": "p.getId",
+          "lineNumber": 41
+        },
+        {
+          "caller": "fetch",
+          "callee": "aiChatHistoryService.getRecent",
+          "lineNumber": 44
+        },
+        {
+          "caller": "fetch",
+          "callee": "new MyPageResponse",
+          "lineNumber": 46
+        },
+        {
+          "caller": "fetch",
+          "callee": "user.getEmail",
+          "lineNumber": 46
+        },
+        {
+          "caller": "fetch",
+          "callee": "user.getNickname",
+          "lineNumber": 46
+        },
+        {
+          "caller": "fetch",
+          "callee": "user.getCreatedAt",
+          "lineNumber": 46
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    }
+  ]
+}

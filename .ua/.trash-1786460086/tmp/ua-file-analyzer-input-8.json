@@ -1,0 +1,231 @@
+{
+  "projectRoot": "C:/Users/jk636/OneDrive/문서/GitHub/Whims-of-Wonder/Whims-of-Wonder/MetaverseProgramming/My project/Assets/Ajou_MuscleUp",
+  "batchFiles": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "language": "java",
+      "sizeLines": 44,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "language": "java",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java",
+      "language": "java",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendshipRepository.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java",
+      "language": "java",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "language": "java",
+      "sizeLines": 662,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "language": "java",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "language": "java",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java",
+      "language": "java",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java",
+      "language": "java",
+      "sizeLines": 75,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/UserService.java",
+      "language": "java",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/entity/User.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendshipRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Review.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinCreateUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java": [
+      "backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/UserService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/UserRegisterRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ]
+  }
+}

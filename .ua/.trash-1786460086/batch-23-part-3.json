@@ -1,0 +1,478 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "type": "file",
+      "name": "PostgresSchemaRepairRunner.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "summary": "애플리케이션 기동 시 PostgreSQL의 cms_events 테이블 컬럼이 bytea로 잘못 생성돼 있으면 varchar/text로 되돌리는 스키마 자가 복구 러너입니다. 실패해도 경고 로그만 남기고 부팅을 막지 않습니다.",
+      "tags": ["migration", "database", "startup", "postgresql", "schema-repair"],
+      "complexity": "moderate",
+      "languageNotes": "ApplicationRunner + JdbcTemplate로 information_schema를 조회해 조건부 DDL을 실행하는 방어적 마이그레이션 패턴입니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:PostgresSchemaRepairRunner",
+      "type": "class",
+      "name": "PostgresSchemaRepairRunner",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "lineRange": [11, 60],
+      "summary": "ApplicationRunner를 구현해 부팅 직후 실행되며, JdbcTemplate으로 컬럼 타입을 점검하고 필요할 때만 ALTER TABLE을 수행합니다.",
+      "tags": ["migration", "database", "startup", "runner"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:run",
+      "type": "function",
+      "name": "run",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "lineRange": [18, 27],
+      "summary": "cms_events 테이블의 title·summary·content 세 컬럼에 대해 복구 루틴을 순차 호출하고, 예외가 발생하면 경고 로그만 남기고 조용히 넘어갑니다.",
+      "tags": ["startup", "migration", "error-handling", "database"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:repairIfBytea",
+      "type": "function",
+      "name": "repairIfBytea",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "lineRange": [29, 59],
+      "summary": "information_schema.columns에서 대상 컬럼의 데이터 타입을 조회해 bytea인 경우에만 convert_from(UTF8)을 사용한 ALTER TABLE로 지정 타입으로 변환합니다.",
+      "tags": ["migration", "database", "sql", "idempotent"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/SchedulingConfig.java",
+      "type": "file",
+      "name": "SchedulingConfig.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/SchedulingConfig.java",
+      "summary": "@EnableScheduling만 선언한 설정 클래스로, scheduler 패키지의 @Scheduled 배치 작업(출석 마감, 랭킹 집계 등)이 주기적으로 실행되도록 스케줄러를 활성화합니다.",
+      "tags": ["configuration", "scheduler", "spring-config", "batch"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "type": "file",
+      "name": "SecurityConfig.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "summary": "Spring Security 필터 체인 전체를 구성하는 핵심 보안 설정으로, CSRF 비활성화·CORS 연결·무상태 세션 정책과 함께 40개 이상의 경로별 인가 규칙(permitAll / USER·ADMIN 롤)을 정의합니다. JWT 인증 필터와 감사 로그 필터를 체인에 삽입합니다.",
+      "tags": ["security", "configuration", "authorization", "jwt", "spring-config"],
+      "complexity": "complex",
+      "languageNotes": "SessionCreationPolicy.STATELESS + addFilterBefore(JwtAuthenticationFilter) 조합은 토큰 기반 REST API의 표준 구성이며, 공개 API와 보호 API를 requestMatchers 순서로 구분합니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java:SecurityConfig",
+      "type": "class",
+      "name": "SecurityConfig",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "lineRange": [20, 120],
+      "summary": "JwtAuthenticationFilter와 AuditLogFilter를 주입받아 SecurityFilterChain, PasswordEncoder(BCrypt), AuthenticationManager, 401/403 예외 핸들러 빈을 등록하는 보안 설정 클래스입니다.",
+      "tags": ["security", "configuration", "authorization", "spring-config"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java:securityFilterChain",
+      "type": "function",
+      "name": "securityFilterChain",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "lineRange": [52, 119],
+      "summary": "CSRF·폼로그인·HTTP Basic을 끄고 CORS와 무상태 세션을 적용한 뒤, 인증 없이 열어 둘 경로(헬스체크·인증·공유 링크·이벤트 조회 등)와 롤 기반 보호 경로(마이페이지·랭킹·크루·관리자 등)를 순서대로 선언하고 JWT·감사 로그 필터를 체인에 배치합니다.",
+      "tags": ["security", "authorization", "middleware", "routing", "configuration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java",
+      "type": "file",
+      "name": "WebMvcStaticConfig.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java",
+      "summary": "app.upload-dir 프로퍼티가 가리키는 로컬 업로드 디렉터리를 /uploads/** URL로 정적 서빙하도록 리소스 핸들러를 등록하는 WebMvc 설정입니다.",
+      "tags": ["configuration", "static-files", "web-mvc", "file-serving"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java:WebMvcStaticConfig",
+      "type": "class",
+      "name": "WebMvcStaticConfig",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java",
+      "lineRange": [10, 27],
+      "summary": "WebMvcConfigurer를 구현해 업로드 디렉터리를 정적 리소스 경로에 매핑하는 설정 클래스입니다.",
+      "tags": ["configuration", "web-mvc", "static-files"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java:addResourceHandlers",
+      "type": "function",
+      "name": "addResourceHandlers",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java",
+      "lineRange": [16, 26],
+      "summary": "업로드 경로를 절대 경로로 정규화하고 백슬래시를 슬래시로 치환한 뒤, /uploads/** 요청을 file: 프로토콜 위치로 연결합니다. Windows/Linux 경로 차이를 흡수합니다.",
+      "tags": ["static-files", "path-handling", "web-mvc", "cross-platform"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "type": "file",
+      "name": "FileController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "summary": "/api/files 하위의 파일 업로드·삭제·프록시 조회·목록/페이징 API를 제공하는 REST 컨트롤러입니다. app.s3.enabled 설정에 따라 AWS S3와 로컬 파일시스템 두 가지 스토리지 백엔드를 동일한 인터페이스로 전환해 처리합니다.",
+      "tags": ["api-handler", "file-upload", "storage", "s3", "controller"],
+      "complexity": "complex",
+      "languageNotes": "S3/로컬 이중 스토리지를 useS3() 분기로 감싸고, target.startsWith(root) 검사로 경로 탈출(Path Traversal)을 방어합니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:FileController",
+      "type": "class",
+      "name": "FileController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [32, 362],
+      "summary": "@Value로 주입받은 업로드 디렉터리와 S3 설정으로 스토리지 모드를 결정하고, S3Client를 조건부로 생성한 뒤 파일 관련 엔드포인트와 키/경로 변환 헬퍼를 모두 담고 있는 컨트롤러입니다.",
+      "tags": ["api-handler", "storage", "s3", "controller", "file-upload"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:upload",
+      "type": "function",
+      "name": "upload",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [71, 112],
+      "summary": "멀티파트 파일을 받아 폴더명을 정제하고 연/월 디렉터리와 UUID 파일명으로 경로를 만든 뒤, S3 모드면 PutObject로 업로드하고 아니면 로컬에 복사한 다음 접근 URL·원본명·크기를 반환합니다.",
+      "tags": ["api-handler", "file-upload", "s3", "endpoint"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:delete",
+      "type": "function",
+      "name": "delete",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [114, 143],
+      "summary": "전달된 경로/URL을 스토리지 키 또는 로컬 상대 경로로 변환해 파일을 삭제합니다. 로컬 모드에서는 정규화한 경로가 루트 밖을 벗어나지 않는지 검증해 경로 탈출을 차단합니다.",
+      "tags": ["api-handler", "storage", "security", "endpoint"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:proxy",
+      "type": "function",
+      "name": "proxy",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [145, 185],
+      "summary": "S3 또는 로컬에서 파일 바이트를 직접 읽어 Content-Type과 함께 응답하는 프록시 엔드포인트로, 비공개 버킷의 이미지도 인증 없는 공개 URL로 노출할 수 있게 합니다.",
+      "tags": ["api-handler", "proxy", "s3", "endpoint", "content-type"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:list",
+      "type": "function",
+      "name": "list",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [187, 215],
+      "summary": "지정 폴더의 파일을 최신순으로 최대 200개까지 조회해 접근 URL 목록으로 반환합니다. S3 모드는 ListObjectsV2, 로컬 모드는 Files.walk를 사용합니다.",
+      "tags": ["api-handler", "storage", "listing", "endpoint"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:listPaged",
+      "type": "function",
+      "name": "listPaged",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [217, 253],
+      "summary": "list와 동일한 조회 결과를 page/size 파라미터로 잘라 Spring Data의 Page 객체로 감싸 반환하는 페이지네이션 버전 엔드포인트입니다.",
+      "tags": ["api-handler", "pagination", "storage", "endpoint"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:toS3KeyFromPath",
+      "type": "function",
+      "name": "toS3KeyFromPath",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [281, 305],
+      "summary": "전체 URL, /uploads/ 접두 경로, 순수 상대 경로 등 다양한 입력 형태를 통일해 S3 오브젝트 키로 변환하는 헬퍼입니다.",
+      "tags": ["utility", "s3", "path-handling", "normalization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:toLocalRelativePath",
+      "type": "function",
+      "name": "toLocalRelativePath",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [307, 331],
+      "summary": "입력 경로나 URL에서 /uploads/ 이후 부분을 잘라내 로컬 업로드 루트 기준 상대 경로로 정규화합니다.",
+      "tags": ["utility", "path-handling", "normalization", "storage"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:listS3Objects",
+      "type": "function",
+      "name": "listS3Objects",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [333, 348],
+      "summary": "ListObjectsV2 요청을 연속 토큰으로 반복 호출해 지정 프리픽스 아래의 S3 오브젝트를 모두 수집합니다.",
+      "tags": ["utility", "s3", "pagination", "storage"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+      "type": "file",
+      "name": "FriendController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+      "summary": "/api/friends 하위의 친구 요청 전송·수락·거절, 친구 목록 조회·삭제, 1:1 채팅방 목록과 메시지 조회·전송을 담당하는 REST 컨트롤러입니다. 인증 주체(email)를 받아 FriendService로 위임합니다.",
+      "tags": ["api-handler", "controller", "social", "chat", "friend"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java:FriendController",
+      "type": "class",
+      "name": "FriendController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+      "lineRange": [12, 83],
+      "summary": "친구 관계와 친구 채팅 관련 10개 엔드포인트를 얇게 노출하고 실제 로직은 FriendService에 위임하는 컨트롤러입니다.",
+      "tags": ["api-handler", "controller", "social", "chat"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:PostgresSchemaRepairRunner",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:repairIfBytea",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:PostgresSchemaRepairRunner",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:run",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java:repairIfBytea",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java:SecurityConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java:securityFilterChain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java:SecurityConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java:SecurityConfig",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:JwtAuthenticationFilter",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java:WebMvcStaticConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java:addResourceHandlers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:FileController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:upload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:delete",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:proxy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:list",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:listPaged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:toS3KeyFromPath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:toLocalRelativePath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:listS3Objects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:FileController",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:delete",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:toS3KeyFromPath",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:proxy",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:toLocalRelativePath",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:list",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:listS3Objects",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:listPaged",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/FileController.java:listS3Objects",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/FriendService.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java:FriendController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java:FriendController",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/controller/FriendController.java:FriendController",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/FriendService.java:FriendService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

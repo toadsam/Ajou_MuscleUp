@@ -1,0 +1,1011 @@
+{
+  "batchIndex": 8,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "language": "java",
+      "sizeLines": 44,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "language": "java",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java",
+      "language": "java",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendshipRepository.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java",
+      "language": "java",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "language": "java",
+      "sizeLines": 662,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "language": "java",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "language": "java",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java",
+      "language": "java",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java",
+      "language": "java",
+      "sizeLines": 75,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/UserService.java",
+      "language": "java",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/entity/User.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendshipRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Review.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinCreateUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java": [
+      "backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/UserService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/UserRegisterRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ]
+  },
+  "neighborMap": {
+    "backend/src/main/java/com/ajou/muscleup/entity/User.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/config/AdminBootstrapRunner.java",
+        "batchIndex": 5,
+        "symbols": [
+          "run",
+          "AdminBootstrapRunner"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "send",
+          "verify",
+          "login",
+          "refresh",
+          "logout",
+          "googleLogin",
+          "me",
+          "AuthController"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/ProteinController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "create",
+          "update",
+          "delete",
+          "get",
+          "list",
+          "ProteinController"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+        "batchIndex": 5,
+        "symbols": [
+          "from",
+          "UserDTO"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java",
+        "batchIndex": 11,
+        "symbols": [
+          "AiChatMessageRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+        "batchIndex": 10,
+        "symbols": [
+          "AttendanceLogRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+        "batchIndex": 1,
+        "symbols": [
+          "CharacterProfileRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/EventParticipantRepository.java",
+        "batchIndex": 7,
+        "symbols": [
+          "EventParticipantRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+        "batchIndex": 15,
+        "symbols": [
+          "FriendChatRoomRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+        "batchIndex": 16,
+        "symbols": [
+          "FriendRequestRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java",
+        "batchIndex": 1,
+        "symbols": [
+          "UserBodyStatsRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java",
+        "batchIndex": 11,
+        "symbols": [
+          "save",
+          "getRecent",
+          "share",
+          "unshare",
+          "getSharedBySlug",
+          "AiChatHistoryService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java",
+        "batchIndex": 2,
+        "symbols": [
+          "recordEvent",
+          "summarySince",
+          "recentEvents",
+          "AnalyticsService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+        "batchIndex": 10,
+        "symbols": [
+          "upsertToday",
+          "upsertByDate",
+          "getMonthlyLogs",
+          "getSummary",
+          "shareByDate",
+          "unshareByDate",
+          "getSharedBySlug",
+          "addCheerBySlug",
+          "reportBySlug",
+          "getWeeklyStreakRanking",
+          "getMonthlyMediaRanking",
+          "listSharedForAdmin",
+          "listSharedForAdmin",
+          "listLogsForAdmin",
+          "setHiddenByAdmin",
+          "AttendanceServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java",
+        "batchIndex": 2,
+        "symbols": [
+          "log",
+          "recent",
+          "purgeOldLogs",
+          "AuditLogService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "listComments",
+          "addComment",
+          "updateComment",
+          "deleteComment",
+          "toggleLike",
+          "likeStatus",
+          "BragInteractionServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "create",
+          "list",
+          "get",
+          "update",
+          "delete",
+          "BragPostServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthService.java",
+        "batchIndex": 1,
+        "symbols": [
+          "applyAttendance",
+          "applyEventSuccess",
+          "CharacterGrowthService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+        "batchIndex": 1,
+        "symbols": [
+          "getOrCreateProfile",
+          "evaluate",
+          "updatePublic",
+          "updateResting",
+          "reroll",
+          "evaluateAndUpdate",
+          "CharacterServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/EventService.java",
+        "batchIndex": 7,
+        "symbols": [
+          "EventService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java",
+        "batchIndex": 7,
+        "symbols": [
+          "getActiveEvents",
+          "getActiveProgress",
+          "updateAttendanceProgress",
+          "refreshStatusesAndFinalize",
+          "EventServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/LoungeServiceImpl.java",
+        "batchIndex": 7,
+        "symbols": [
+          "getProfile",
+          "LoungeServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "fetch",
+          "MyPageServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+        "batchIndex": 12,
+        "symbols": [
+          "apply",
+          "getMyApplication",
+          "listApplications",
+          "updateStatus",
+          "getSummary",
+          "listMessages",
+          "postMessage",
+          "ProteinShareServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/StatsServiceImpl.java",
+        "batchIndex": 1,
+        "symbols": [
+          "getStats",
+          "upsertStats",
+          "StatsServiceImpl"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+        "batchIndex": 5,
+        "symbols": [
+          "CrewChallenge"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+        "batchIndex": 5,
+        "symbols": [
+          "EmailVerification"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendshipRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+        "batchIndex": 5,
+        "symbols": [
+          "Friendship"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+        "batchIndex": 5,
+        "symbols": [
+          "Protein"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+        "batchIndex": 12,
+        "symbols": [
+          "apply",
+          "getMyApplication",
+          "listApplications",
+          "updateStatus",
+          "getSummary",
+          "listMessages",
+          "postMessage",
+          "ProteinShareServiceImpl"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+        "batchIndex": 5,
+        "symbols": [
+          "RefreshToken"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+        "batchIndex": 5,
+        "symbols": [
+          "Review"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+        "batchIndex": 2,
+        "symbols": [
+          "ping",
+          "summary",
+          "recentEvents",
+          "audit",
+          "forceDeleteBrag",
+          "forceDeleteComment",
+          "forceDeleteReview",
+          "forceDeleteAiHistory",
+          "listProgramApplications",
+          "updateProgramApplicationStatus",
+          "listAttendanceShares",
+          "listAttendanceLogs",
+          "listSupportInquiries",
+          "updateSupportInquiryStatus",
+          "setAttendanceShareHidden",
+          "manualAudit",
+          "AdminController"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/config/AdminBootstrapRunner.java",
+        "batchIndex": 5,
+        "symbols": [
+          "run",
+          "AdminBootstrapRunner"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AdminEventController.java",
+        "batchIndex": 9,
+        "symbols": [
+          "list",
+          "detail",
+          "create",
+          "update",
+          "delete",
+          "patchStatus",
+          "patchMainBanner",
+          "patchPin",
+          "AdminEventController"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "send",
+          "verify",
+          "login",
+          "refresh",
+          "logout",
+          "googleLogin",
+          "me",
+          "AuthController"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/EventController.java",
+        "batchIndex": 7,
+        "symbols": [
+          "getActiveEvents",
+          "getMyActiveEvents",
+          "EventController"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/ProteinController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "create",
+          "update",
+          "delete",
+          "get",
+          "list",
+          "ProteinController"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java",
+        "batchIndex": 11,
+        "symbols": [
+          "save",
+          "getRecent",
+          "share",
+          "unshare",
+          "getSharedBySlug",
+          "AiChatHistoryService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java",
+        "batchIndex": 2,
+        "symbols": [
+          "recordEvent",
+          "summarySince",
+          "recentEvents",
+          "AnalyticsService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+        "batchIndex": 10,
+        "symbols": [
+          "upsertToday",
+          "upsertByDate",
+          "getMonthlyLogs",
+          "getSummary",
+          "shareByDate",
+          "unshareByDate",
+          "getSharedBySlug",
+          "addCheerBySlug",
+          "reportBySlug",
+          "getWeeklyStreakRanking",
+          "getMonthlyMediaRanking",
+          "listSharedForAdmin",
+          "listSharedForAdmin",
+          "listLogsForAdmin",
+          "setHiddenByAdmin",
+          "AttendanceServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java",
+        "batchIndex": 2,
+        "symbols": [
+          "log",
+          "recent",
+          "purgeOldLogs",
+          "AuditLogService"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "listComments",
+          "addComment",
+          "updateComment",
+          "deleteComment",
+          "toggleLike",
+          "likeStatus",
+          "BragInteractionServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "create",
+          "list",
+          "get",
+          "update",
+          "delete",
+          "BragPostServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+        "batchIndex": 1,
+        "symbols": [
+          "getOrCreateProfile",
+          "evaluate",
+          "updatePublic",
+          "updateResting",
+          "reroll",
+          "evaluateAndUpdate",
+          "CharacterServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/LoungeServiceImpl.java",
+        "batchIndex": 7,
+        "symbols": [
+          "getProfile",
+          "LoungeServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "fetch",
+          "MyPageServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+        "batchIndex": 12,
+        "symbols": [
+          "apply",
+          "getMyApplication",
+          "listApplications",
+          "updateStatus",
+          "getSummary",
+          "listMessages",
+          "postMessage",
+          "ProteinShareServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/RankingServiceImpl.java",
+        "batchIndex": 1,
+        "symbols": [
+          "getCharacterRankings",
+          "RankingServiceImpl"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/StatsServiceImpl.java",
+        "batchIndex": 1,
+        "symbols": [
+          "getStats",
+          "upsertStats",
+          "StatsServiceImpl"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+        "batchIndex": 5,
+        "symbols": [
+          "CrewJoinRequestStatus"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+        "batchIndex": 1,
+        "symbols": [
+          "CharacterProfile"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+        "batchIndex": 5,
+        "symbols": [
+          "CrewChallenge"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java",
+        "batchIndex": 13,
+        "symbols": [
+          "CrewJoinPolicy"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+        "batchIndex": 5,
+        "symbols": [
+          "CrewJoinRequestStatus"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java",
+        "batchIndex": 1,
+        "symbols": [
+          "WorkoutCrewMemberRole"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+        "batchIndex": 10,
+        "symbols": [
+          "AttendanceLogRepository"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+        "batchIndex": 1,
+        "symbols": [
+          "CharacterProfileRepository"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+        "batchIndex": 5,
+        "symbols": [
+          "EmailVerification"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "send",
+          "verify",
+          "login",
+          "refresh",
+          "logout",
+          "googleLogin",
+          "me",
+          "AuthController"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+        "batchIndex": 5,
+        "symbols": [
+          "Protein"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/ProteinController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "create",
+          "update",
+          "delete",
+          "get",
+          "list",
+          "ProteinController"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinCreateUpdateRequest.java",
+        "batchIndex": 5,
+        "symbols": [
+          "ProteinCreateUpdateRequest"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+        "batchIndex": 5,
+        "symbols": [
+          "Protein"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java",
+        "batchIndex": 5,
+        "symbols": [
+          "JwtUtil",
+          "generateAccessToken",
+          "generateRefreshToken",
+          "getAccessTokenExpirationMs",
+          "getRefreshTokenExpirationMs",
+          "getEmailFromToken",
+          "getRoleFromToken",
+          "getTokenType",
+          "validateToken",
+          "JwtUtil"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+        "batchIndex": 5,
+        "symbols": [
+          "RefreshToken"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "send",
+          "verify",
+          "login",
+          "refresh",
+          "logout",
+          "googleLogin",
+          "me",
+          "AuthController"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+        "batchIndex": 5,
+        "symbols": [
+          "ReviewCreateRequest"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+        "batchIndex": 5,
+        "symbols": [
+          "from",
+          "ReviewResponse"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+        "batchIndex": 5,
+        "symbols": [
+          "ReviewUpdateRequest"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+        "batchIndex": 5,
+        "symbols": [
+          "Protein"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+        "batchIndex": 5,
+        "symbols": [
+          "Review"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/UserService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+        "batchIndex": 5,
+        "symbols": [
+          "from",
+          "UserDTO"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/dto/UserRegisterRequest.java",
+        "batchIndex": 5,
+        "symbols": [
+          "UserRegisterRequest"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "send",
+          "verify",
+          "login",
+          "refresh",
+          "logout",
+          "googleLogin",
+          "me",
+          "AuthController"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/UserController.java",
+        "batchIndex": 5,
+        "symbols": [
+          "register",
+          "UserController"
+        ]
+      }
+    ]
+  }
+}

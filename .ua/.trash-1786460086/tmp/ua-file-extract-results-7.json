@@ -1,0 +1,1642 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 21,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 21,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 21,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/EventController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 45,
+      "nonEmptyLines": 40,
+      "functions": [
+        {
+          "name": "getActiveEvents",
+          "startLine": 26,
+          "endLine": 30,
+          "params": []
+        },
+        {
+          "name": "getMyActiveEvents",
+          "startLine": 32,
+          "endLine": 44,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventController",
+          "startLine": 17,
+          "endLine": 45,
+          "methods": [
+            "getActiveEvents",
+            "getMyActiveEvents"
+          ],
+          "properties": [
+            "KST",
+            "eventService",
+            "userRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getActiveEvents",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "getMyActiveEvents",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "EventController",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getActiveEvents",
+          "callee": "eventService.getActiveEvents",
+          "lineNumber": 28
+        },
+        {
+          "caller": "getActiveEvents",
+          "callee": "LocalDate.now",
+          "lineNumber": 28
+        },
+        {
+          "caller": "getActiveEvents",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 29
+        },
+        {
+          "caller": "getMyActiveEvents",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 36
+        },
+        {
+          "caller": "getMyActiveEvents",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 36
+        },
+        {
+          "caller": "getMyActiveEvents",
+          "callee": "new org.springframework.web.server.ResponseStatusException",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getMyActiveEvents",
+          "callee": "eventService.getActiveProgress",
+          "lineNumber": 42
+        },
+        {
+          "caller": "getMyActiveEvents",
+          "callee": "LocalDate.now",
+          "lineNumber": 42
+        },
+        {
+          "caller": "getMyActiveEvents",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 43
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/LoungeController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 21,
+      "functions": [
+        {
+          "name": "getProfile",
+          "startLine": 18,
+          "endLine": 23,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "LoungeController",
+          "startLine": 12,
+          "endLine": 24,
+          "methods": [
+            "getProfile"
+          ],
+          "properties": [
+            "loungeService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getProfile",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "LoungeController",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getProfile",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 22
+        },
+        {
+          "caller": "getProfile",
+          "callee": "loungeService.getProfile",
+          "lineNumber": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/MetricsController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 18,
+      "functions": [
+        {
+          "name": "getLobbyMetrics",
+          "startLine": 17,
+          "endLine": 20,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "MetricsController",
+          "startLine": 11,
+          "endLine": 21,
+          "methods": [
+            "getLobbyMetrics"
+          ],
+          "properties": [
+            "metricsService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getLobbyMetrics",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "MetricsController",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 19
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "metricsService.getLobbyMetrics",
+          "lineNumber": 19
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 33,
+      "nonEmptyLines": 30,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 21,
+          "endLine": 32,
+          "params": [
+            "participant"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventProgressResponse",
+          "startLine": 9,
+          "endLine": 33,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "eventId",
+            "title",
+            "startDate",
+            "endDate",
+            "requiredAttendanceCount",
+            "currentAttendanceCount",
+            "status",
+            "success"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "EventProgressResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId())\r\n                .title(participant.getEvent().getTitle())\r\n                .startDate(participant.getEvent().getStartDate())\r\n                .endDate(participant.getEvent().getEndDate())\r\n                .requiredAttendanceCount(participant.getEvent().getRequiredAttendanceCount())\r\n                .currentAttendanceCount(participant.getCurrentAttendanceCount())\r\n                .status(participant.getEvent().getStatus())\r\n                .success(participant.getSuccess()).build",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId())\r\n                .title(participant.getEvent().getTitle())\r\n                .startDate(participant.getEvent().getStartDate())\r\n                .endDate(participant.getEvent().getEndDate())\r\n                .requiredAttendanceCount(participant.getEvent().getRequiredAttendanceCount())\r\n                .currentAttendanceCount(participant.getCurrentAttendanceCount())\r\n                .status(participant.getEvent().getStatus()).success",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId())\r\n                .title(participant.getEvent().getTitle())\r\n                .startDate(participant.getEvent().getStartDate())\r\n                .endDate(participant.getEvent().getEndDate())\r\n                .requiredAttendanceCount(participant.getEvent().getRequiredAttendanceCount())\r\n                .currentAttendanceCount(participant.getCurrentAttendanceCount()).status",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId())\r\n                .title(participant.getEvent().getTitle())\r\n                .startDate(participant.getEvent().getStartDate())\r\n                .endDate(participant.getEvent().getEndDate())\r\n                .requiredAttendanceCount(participant.getEvent().getRequiredAttendanceCount()).currentAttendanceCount",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId())\r\n                .title(participant.getEvent().getTitle())\r\n                .startDate(participant.getEvent().getStartDate())\r\n                .endDate(participant.getEvent().getEndDate()).requiredAttendanceCount",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId())\r\n                .title(participant.getEvent().getTitle())\r\n                .startDate(participant.getEvent().getStartDate()).endDate",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId())\r\n                .title(participant.getEvent().getTitle()).startDate",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder()\r\n                .eventId(participant.getEvent().getId()).title",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder().eventId",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "EventProgressResponse.builder",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent().getId",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent().getTitle",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent().getStartDate",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent().getEndDate",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent().getRequiredAttendanceCount",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getCurrentAttendanceCount",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent().getStatus",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getEvent",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "participant.getSuccess",
+          "lineNumber": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/event/EventResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 28,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 20,
+          "endLine": 30,
+          "params": [
+            "event"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventResponse",
+          "startLine": 9,
+          "endLine": 31,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "title",
+            "description",
+            "startDate",
+            "endDate",
+            "requiredAttendanceCount",
+            "status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "EventResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .description(event.getDescription())\r\n                .startDate(event.getStartDate())\r\n                .endDate(event.getEndDate())\r\n                .requiredAttendanceCount(event.getRequiredAttendanceCount())\r\n                .status(event.getStatus()).build",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .description(event.getDescription())\r\n                .startDate(event.getStartDate())\r\n                .endDate(event.getEndDate())\r\n                .requiredAttendanceCount(event.getRequiredAttendanceCount()).status",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .description(event.getDescription())\r\n                .startDate(event.getStartDate())\r\n                .endDate(event.getEndDate()).requiredAttendanceCount",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .description(event.getDescription())\r\n                .startDate(event.getStartDate()).endDate",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle())\r\n                .description(event.getDescription()).startDate",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder()\r\n                .id(event.getId())\r\n                .title(event.getTitle()).description",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder()\r\n                .id(event.getId()).title",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder().id",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "EventResponse.builder",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "event.getId",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "event.getTitle",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "event.getDescription",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStartDate",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "event.getEndDate",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "event.getRequiredAttendanceCount",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "event.getStatus",
+          "lineNumber": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/lounge/LoungeProfileResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 14,
+      "classes": [
+        {
+          "name": "LoungeProfileResponse",
+          "startLine": 9,
+          "endLine": 16,
+          "methods": [],
+          "properties": [
+            "nickname",
+            "character",
+            "recentAttendanceCount",
+            "activeEvents"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "LoungeProfileResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/metrics/LobbyMetricsResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "classes": [
+        {
+          "name": "LobbyMetricsResponse",
+          "startLine": 6,
+          "endLine": 12,
+          "methods": [],
+          "properties": [
+            "loungeVisitCount",
+            "todayAttendanceCount",
+            "totalThreeLiftKg"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "LobbyMetricsResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/Event.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 29,
+      "classes": [
+        {
+          "name": "Event",
+          "startLine": 7,
+          "endLine": 37,
+          "methods": [],
+          "properties": [
+            "id",
+            "title",
+            "description",
+            "startDate",
+            "endDate",
+            "requiredAttendanceCount",
+            "status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Event",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/EventParticipant.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 38,
+      "nonEmptyLines": 31,
+      "classes": [
+        {
+          "name": "EventParticipant",
+          "startLine": 7,
+          "endLine": 38,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "event",
+            "joinedAt",
+            "currentAttendanceCount",
+            "success"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventParticipant",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/EventStatus.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 6,
+      "classes": [
+        {
+          "name": "EventStatus",
+          "startLine": 3,
+          "endLine": 7,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventStatus",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/LoungeVisitLog.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 29,
+      "classes": [
+        {
+          "name": "LoungeVisitLog",
+          "startLine": 17,
+          "endLine": 32,
+          "methods": [],
+          "properties": [
+            "id",
+            "user"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "LoungeVisitLog",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/EventParticipantRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 21,
+      "classes": [
+        {
+          "name": "EventParticipantRepository",
+          "startLine": 13,
+          "endLine": 25,
+          "methods": [
+            "findByUserAndEvent",
+            "findAllByEvent",
+            "findAllByUserAndEventStatus"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventParticipantRepository",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/EventRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "EventRepository",
+          "startLine": 9,
+          "endLine": 16,
+          "methods": [
+            "findAllByStatus",
+            "findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventRepository",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/LoungeVisitLogRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 4,
+      "classes": [
+        {
+          "name": "LoungeVisitLogRepository",
+          "startLine": 6,
+          "endLine": 6,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "LoungeVisitLogRepository",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/scheduler/EventScheduler.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "functions": [
+        {
+          "name": "refreshEventStatuses",
+          "startLine": 17,
+          "endLine": 20,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventScheduler",
+          "startLine": 10,
+          "endLine": 21,
+          "methods": [
+            "refreshEventStatuses"
+          ],
+          "properties": [
+            "KST",
+            "eventService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "refreshEventStatuses",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "EventScheduler",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "refreshEventStatuses",
+          "callee": "eventService.refreshStatusesAndFinalize",
+          "lineNumber": 19
+        },
+        {
+          "caller": "refreshEventStatuses",
+          "callee": "LocalDate.now",
+          "lineNumber": 19
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/EventService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 17,
+      "classes": [
+        {
+          "name": "EventService",
+          "startLine": 9,
+          "endLine": 22,
+          "methods": [
+            "getActiveEvents",
+            "getActiveProgress",
+            "updateAttendanceProgress",
+            "refreshStatusesAndFinalize"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "EventService",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 122,
+      "nonEmptyLines": 111,
+      "functions": [
+        {
+          "name": "getActiveEvents",
+          "startLine": 29,
+          "endLine": 36,
+          "params": [
+            "date"
+          ]
+        },
+        {
+          "name": "getActiveProgress",
+          "startLine": 38,
+          "endLine": 49,
+          "params": [
+            "user",
+            "date"
+          ]
+        },
+        {
+          "name": "updateAttendanceProgress",
+          "startLine": 51,
+          "endLine": 83,
+          "params": [
+            "user",
+            "date",
+            "previousDidWorkout",
+            "currentDidWorkout"
+          ]
+        },
+        {
+          "name": "refreshStatusesAndFinalize",
+          "startLine": 85,
+          "endLine": 99,
+          "params": [
+            "date"
+          ]
+        },
+        {
+          "name": "finalizeParticipants",
+          "startLine": 101,
+          "endLine": 111,
+          "params": [
+            "event"
+          ]
+        },
+        {
+          "name": "resolveStatus",
+          "startLine": 113,
+          "endLine": 121,
+          "params": [
+            "event",
+            "date"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EventServiceImpl",
+          "startLine": 20,
+          "endLine": 122,
+          "methods": [
+            "getActiveEvents",
+            "getActiveProgress",
+            "updateAttendanceProgress",
+            "refreshStatusesAndFinalize",
+            "finalizeParticipants",
+            "resolveStatus"
+          ],
+          "properties": [
+            "KST",
+            "eventRepository",
+            "participantRepository",
+            "characterGrowthService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getActiveEvents",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "getActiveProgress",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "updateAttendanceProgress",
+          "line": 51,
+          "isDefault": false
+        },
+        {
+          "name": "refreshStatusesAndFinalize",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "EventServiceImpl",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getActiveEvents",
+          "callee": "eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date)\r\n                .stream()\r\n                .map(EventResponse::from).toList",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getActiveEvents",
+          "callee": "eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date)\r\n                .stream().map",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getActiveEvents",
+          "callee": "eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date).stream",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getActiveEvents",
+          "callee": "eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participantRepository.findAllByUserAndEventStatus",
+          "lineNumber": 42
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participants.stream()\r\n                .filter(participant ->\r\n                        !date.isBefore(participant.getEvent().getStartDate())\r\n                                && !date.isAfter(participant.getEvent().getEndDate()))\r\n                .map(EventProgressResponse::from).toList",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participants.stream()\r\n                .filter(participant ->\r\n                        !date.isBefore(participant.getEvent().getStartDate())\r\n                                && !date.isAfter(participant.getEvent().getEndDate())).map",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participants.stream().filter",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participants.stream",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "date.isBefore",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participant.getEvent().getStartDate",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participant.getEvent",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "date.isAfter",
+          "lineNumber": 46
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participant.getEvent().getEndDate",
+          "lineNumber": 46
+        },
+        {
+          "caller": "getActiveProgress",
+          "callee": "participant.getEvent",
+          "lineNumber": 46
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "List.of",
+          "lineNumber": 60
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual",
+          "lineNumber": 64
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "new ArrayList<>",
+          "lineNumber": 65
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "event.getStatus",
+          "lineNumber": 67
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "event.setStatus",
+          "lineNumber": 68
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "eventRepository.save",
+          "lineNumber": 69
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "participantRepository.findByUserAndEvent(user, event).orElseGet",
+          "lineNumber": 71
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "participantRepository.findByUserAndEvent",
+          "lineNumber": 71
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "participantRepository.save",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "EventParticipant.builder()\r\n                            .user(user)\r\n                            .event(event)\r\n                            .joinedAt(LocalDateTime.now(KST))\r\n                            .currentAttendanceCount(0).build",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "EventParticipant.builder()\r\n                            .user(user)\r\n                            .event(event)\r\n                            .joinedAt(LocalDateTime.now(KST)).currentAttendanceCount",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "EventParticipant.builder()\r\n                            .user(user)\r\n                            .event(event).joinedAt",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "EventParticipant.builder()\r\n                            .user(user).event",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "EventParticipant.builder().user",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "EventParticipant.builder",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 75
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "Math.max",
+          "lineNumber": 78
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "participant.getCurrentAttendanceCount",
+          "lineNumber": 78
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "participant.setCurrentAttendanceCount",
+          "lineNumber": 79
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "progress.add",
+          "lineNumber": 80
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "EventProgressResponse.from",
+          "lineNumber": 80
+        },
+        {
+          "caller": "updateAttendanceProgress",
+          "callee": "participantRepository.save",
+          "lineNumber": 80
+        },
+        {
+          "caller": "refreshStatusesAndFinalize",
+          "callee": "eventRepository.findAll",
+          "lineNumber": 88
+        },
+        {
+          "caller": "refreshStatusesAndFinalize",
+          "callee": "resolveStatus",
+          "lineNumber": 90
+        },
+        {
+          "caller": "refreshStatusesAndFinalize",
+          "callee": "event.getStatus",
+          "lineNumber": 91
+        },
+        {
+          "caller": "refreshStatusesAndFinalize",
+          "callee": "event.setStatus",
+          "lineNumber": 92
+        },
+        {
+          "caller": "refreshStatusesAndFinalize",
+          "callee": "eventRepository.save",
+          "lineNumber": 93
+        },
+        {
+          "caller": "refreshStatusesAndFinalize",
+          "callee": "finalizeParticipants",
+          "lineNumber": 96
+        },
+        {
+          "caller": "finalizeParticipants",
+          "callee": "participantRepository.findAllByEvent",
+          "lineNumber": 102
+        },
+        {
+          "caller": "finalizeParticipants",
+          "callee": "participant.getCurrentAttendanceCount",
+          "lineNumber": 104
+        },
+        {
+          "caller": "finalizeParticipants",
+          "callee": "event.getRequiredAttendanceCount",
+          "lineNumber": 104
+        },
+        {
+          "caller": "finalizeParticipants",
+          "callee": "participant.setSuccess",
+          "lineNumber": 105
+        },
+        {
+          "caller": "finalizeParticipants",
+          "callee": "participantRepository.save",
+          "lineNumber": 106
+        },
+        {
+          "caller": "finalizeParticipants",
+          "callee": "characterGrowthService.applyEventSuccess",
+          "lineNumber": 108
+        },
+        {
+          "caller": "finalizeParticipants",
+          "callee": "participant.getUser",
+          "lineNumber": 108
+        },
+        {
+          "caller": "resolveStatus",
+          "callee": "date.isBefore",
+          "lineNumber": 114
+        },
+        {
+          "caller": "resolveStatus",
+          "callee": "event.getStartDate",
+          "lineNumber": 114
+        },
+        {
+          "caller": "resolveStatus",
+          "callee": "date.isAfter",
+          "lineNumber": 117
+        },
+        {
+          "caller": "resolveStatus",
+          "callee": "event.getEndDate",
+          "lineNumber": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 5,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/LoungeService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "LoungeService",
+          "startLine": 5,
+          "endLine": 7,
+          "methods": [
+            "getProfile"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "LoungeService",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/LoungeServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 52,
+      "nonEmptyLines": 46,
+      "functions": [
+        {
+          "name": "getProfile",
+          "startLine": 31,
+          "endLine": 51,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "LoungeServiceImpl",
+          "startLine": 20,
+          "endLine": 52,
+          "methods": [
+            "getProfile"
+          ],
+          "properties": [
+            "KST",
+            "userRepository",
+            "attendanceLogRepository",
+            "characterService",
+            "eventService",
+            "loungeVisitLogRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getProfile",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "LoungeServiceImpl",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getProfile",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 34
+        },
+        {
+          "caller": "getProfile",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 34
+        },
+        {
+          "caller": "getProfile",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 35
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LocalDate.now",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getProfile",
+          "callee": "today.minusDays",
+          "lineNumber": 38
+        },
+        {
+          "caller": "getProfile",
+          "callee": "attendanceLogRepository.countByUserAndDidWorkoutTrueAndDateBetween",
+          "lineNumber": 39
+        },
+        {
+          "caller": "getProfile",
+          "callee": "characterService.getOrCreateProfile",
+          "lineNumber": 41
+        },
+        {
+          "caller": "getProfile",
+          "callee": "eventService.getActiveProgress",
+          "lineNumber": 42
+        },
+        {
+          "caller": "getProfile",
+          "callee": "loungeVisitLogRepository.save",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeVisitLog.builder().user(user).build",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeVisitLog.builder().user",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeVisitLog.builder",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeProfileResponse.builder()\r\n                .nickname(user.getNickname())\r\n                .character(character)\r\n                .recentAttendanceCount(recentAttendanceCount)\r\n                .activeEvents(activeEvents).build",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeProfileResponse.builder()\r\n                .nickname(user.getNickname())\r\n                .character(character)\r\n                .recentAttendanceCount(recentAttendanceCount).activeEvents",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeProfileResponse.builder()\r\n                .nickname(user.getNickname())\r\n                .character(character).recentAttendanceCount",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeProfileResponse.builder()\r\n                .nickname(user.getNickname()).character",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeProfileResponse.builder().nickname",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getProfile",
+          "callee": "LoungeProfileResponse.builder",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getProfile",
+          "callee": "user.getNickname",
+          "lineNumber": 46
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/MetricsService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "MetricsService",
+          "startLine": 5,
+          "endLine": 7,
+          "methods": [
+            "getLobbyMetrics"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "MetricsService",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/MetricsServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 36,
+      "nonEmptyLines": 31,
+      "functions": [
+        {
+          "name": "getLobbyMetrics",
+          "startLine": 22,
+          "endLine": 35,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "MetricsServiceImpl",
+          "startLine": 13,
+          "endLine": 36,
+          "methods": [
+            "getLobbyMetrics"
+          ],
+          "properties": [
+            "KST",
+            "attendanceLogRepository",
+            "loungeVisitLogRepository",
+            "userBodyStatsRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getLobbyMetrics",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "MetricsServiceImpl",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "LocalDate.now",
+          "lineNumber": 25
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "loungeVisitLogRepository.count",
+          "lineNumber": 26
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "attendanceLogRepository.countByDate",
+          "lineNumber": 27
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "userBodyStatsRepository.sumThreeLiftTotal",
+          "lineNumber": 28
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "LobbyMetricsResponse.builder()\r\n                .loungeVisitCount(loungeVisitCount)\r\n                .todayAttendanceCount(todayAttendanceCount)\r\n                .totalThreeLiftKg(totalThreeLiftKg).build",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "LobbyMetricsResponse.builder()\r\n                .loungeVisitCount(loungeVisitCount)\r\n                .todayAttendanceCount(todayAttendanceCount).totalThreeLiftKg",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "LobbyMetricsResponse.builder()\r\n                .loungeVisitCount(loungeVisitCount).todayAttendanceCount",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "LobbyMetricsResponse.builder().loungeVisitCount",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getLobbyMetrics",
+          "callee": "LobbyMetricsResponse.builder",
+          "lineNumber": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    }
+  ]
+}

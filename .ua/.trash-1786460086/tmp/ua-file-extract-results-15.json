@@ -1,0 +1,272 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 5,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 23,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 17,
+          "endLine": 25,
+          "params": [
+            "msg"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "FriendChatMessageResponse",
+          "startLine": 8,
+          "endLine": 26,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "senderId",
+            "senderNickname",
+            "content",
+            "createdAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "FriendChatMessageResponse",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "FriendChatMessageResponse.builder()\r\n                .id(msg.getId())\r\n                .senderId(msg.getSender().getId())\r\n                .senderNickname(msg.getSender().getNickname())\r\n                .content(msg.getContent())\r\n                .createdAt(msg.getCreatedAt()).build",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "FriendChatMessageResponse.builder()\r\n                .id(msg.getId())\r\n                .senderId(msg.getSender().getId())\r\n                .senderNickname(msg.getSender().getNickname())\r\n                .content(msg.getContent()).createdAt",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "FriendChatMessageResponse.builder()\r\n                .id(msg.getId())\r\n                .senderId(msg.getSender().getId())\r\n                .senderNickname(msg.getSender().getNickname()).content",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "FriendChatMessageResponse.builder()\r\n                .id(msg.getId())\r\n                .senderId(msg.getSender().getId()).senderNickname",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "FriendChatMessageResponse.builder()\r\n                .id(msg.getId()).senderId",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "FriendChatMessageResponse.builder().id",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "FriendChatMessageResponse.builder",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "msg.getId",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "msg.getSender().getId",
+          "lineNumber": 20
+        },
+        {
+          "caller": "from",
+          "callee": "msg.getSender",
+          "lineNumber": 20
+        },
+        {
+          "caller": "from",
+          "callee": "msg.getSender().getNickname",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "msg.getSender",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "msg.getContent",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "msg.getCreatedAt",
+          "lineNumber": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 23,
+      "classes": [
+        {
+          "name": "FriendChatMessage",
+          "startLine": 6,
+          "endLine": 28,
+          "methods": [],
+          "properties": [
+            "id",
+            "room",
+            "sender",
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendChatMessage",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 24,
+      "classes": [
+        {
+          "name": "FriendChatRoom",
+          "startLine": 6,
+          "endLine": 28,
+          "methods": [],
+          "properties": [
+            "id",
+            "userLow",
+            "userHigh"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendChatRoom",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 9,
+      "classes": [
+        {
+          "name": "FriendChatMessageRepository",
+          "startLine": 9,
+          "endLine": 11,
+          "methods": [
+            "findByRoomOrderByIdDesc"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendChatMessageRepository",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "FriendChatRoomRepository",
+          "startLine": 11,
+          "endLine": 16,
+          "methods": [
+            "findByUserLowAndUserHigh",
+            "findAllByUser"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendChatRoomRepository",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    }
+  ]
+}

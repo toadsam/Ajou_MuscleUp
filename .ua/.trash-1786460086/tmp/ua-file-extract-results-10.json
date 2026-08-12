@@ -1,0 +1,4300 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 13,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 13,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 13,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 137,
+      "nonEmptyLines": 121,
+      "functions": [
+        {
+          "name": "upsertToday",
+          "startLine": 30,
+          "endLine": 36,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "getMonthlyLogs",
+          "startLine": 38,
+          "endLine": 45,
+          "params": [
+            "email",
+            "month"
+          ]
+        },
+        {
+          "name": "getSummary",
+          "startLine": 47,
+          "endLine": 54,
+          "params": [
+            "email",
+            "month"
+          ]
+        },
+        {
+          "name": "upsertByDate",
+          "startLine": 56,
+          "endLine": 64,
+          "params": [
+            "email",
+            "date",
+            "request"
+          ]
+        },
+        {
+          "name": "shareByDate",
+          "startLine": 66,
+          "endLine": 73,
+          "params": [
+            "email",
+            "date"
+          ]
+        },
+        {
+          "name": "unshareByDate",
+          "startLine": 75,
+          "endLine": 83,
+          "params": [
+            "email",
+            "date"
+          ]
+        },
+        {
+          "name": "getSharedBySlug",
+          "startLine": 85,
+          "endLine": 88,
+          "params": [
+            "slug"
+          ]
+        },
+        {
+          "name": "cheerBySlug",
+          "startLine": 90,
+          "endLine": 93,
+          "params": [
+            "slug"
+          ]
+        },
+        {
+          "name": "reportBySlug",
+          "startLine": 95,
+          "endLine": 98,
+          "params": [
+            "slug"
+          ]
+        },
+        {
+          "name": "weeklyStreakRanking",
+          "startLine": 100,
+          "endLine": 105,
+          "params": [
+            "limit"
+          ]
+        },
+        {
+          "name": "monthlyMediaRanking",
+          "startLine": 107,
+          "endLine": 114,
+          "params": [
+            "month",
+            "limit"
+          ]
+        },
+        {
+          "name": "parseMonthOrThrow",
+          "startLine": 116,
+          "endLine": 125,
+          "params": [
+            "month"
+          ]
+        },
+        {
+          "name": "parseDateOrThrow",
+          "startLine": 127,
+          "endLine": 136,
+          "params": [
+            "date"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AttendanceController",
+          "startLine": 22,
+          "endLine": 137,
+          "methods": [
+            "upsertToday",
+            "getMonthlyLogs",
+            "getSummary",
+            "upsertByDate",
+            "shareByDate",
+            "unshareByDate",
+            "getSharedBySlug",
+            "cheerBySlug",
+            "reportBySlug",
+            "weeklyStreakRanking",
+            "monthlyMediaRanking",
+            "parseMonthOrThrow",
+            "parseDateOrThrow"
+          ],
+          "properties": [
+            "MONTH_FORMAT",
+            "attendanceService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "upsertToday",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "getMonthlyLogs",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "getSummary",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "upsertByDate",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "shareByDate",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "unshareByDate",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "getSharedBySlug",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "cheerBySlug",
+          "line": 90,
+          "isDefault": false
+        },
+        {
+          "name": "reportBySlug",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "weeklyStreakRanking",
+          "line": 100,
+          "isDefault": false
+        },
+        {
+          "name": "monthlyMediaRanking",
+          "line": 107,
+          "isDefault": false
+        },
+        {
+          "name": "AttendanceController",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "upsertToday",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 35
+        },
+        {
+          "caller": "upsertToday",
+          "callee": "attendanceService.upsertToday",
+          "lineNumber": 35
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "parseMonthOrThrow",
+          "lineNumber": 43
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 44
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "attendanceService.getMonthlyLogs",
+          "lineNumber": 44
+        },
+        {
+          "caller": "getSummary",
+          "callee": "parseMonthOrThrow",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getSummary",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 53
+        },
+        {
+          "caller": "getSummary",
+          "callee": "attendanceService.getSummary",
+          "lineNumber": 53
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "parseDateOrThrow",
+          "lineNumber": 62
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 63
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "attendanceService.upsertByDate",
+          "lineNumber": 63
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "parseDateOrThrow",
+          "lineNumber": 71
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 72
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "attendanceService.shareByDate",
+          "lineNumber": 72
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "parseDateOrThrow",
+          "lineNumber": 80
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "attendanceService.unshareByDate",
+          "lineNumber": 81
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "ResponseEntity.noContent().build",
+          "lineNumber": 82
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "ResponseEntity.noContent",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 87
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "attendanceService.getSharedBySlug",
+          "lineNumber": 87
+        },
+        {
+          "caller": "cheerBySlug",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 92
+        },
+        {
+          "caller": "cheerBySlug",
+          "callee": "attendanceService.addCheerBySlug",
+          "lineNumber": 92
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 97
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "attendanceService.reportBySlug",
+          "lineNumber": 97
+        },
+        {
+          "caller": "weeklyStreakRanking",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 104
+        },
+        {
+          "caller": "weeklyStreakRanking",
+          "callee": "attendanceService.getWeeklyStreakRanking",
+          "lineNumber": 104
+        },
+        {
+          "caller": "monthlyMediaRanking",
+          "callee": "parseMonthOrThrow",
+          "lineNumber": 112
+        },
+        {
+          "caller": "monthlyMediaRanking",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 113
+        },
+        {
+          "caller": "monthlyMediaRanking",
+          "callee": "attendanceService.getMonthlyMediaRanking",
+          "lineNumber": 113
+        },
+        {
+          "caller": "parseMonthOrThrow",
+          "callee": "month.isBlank",
+          "lineNumber": 117
+        },
+        {
+          "caller": "parseMonthOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 118
+        },
+        {
+          "caller": "parseMonthOrThrow",
+          "callee": "YearMonth.parse",
+          "lineNumber": 121
+        },
+        {
+          "caller": "parseMonthOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 123
+        },
+        {
+          "caller": "parseDateOrThrow",
+          "callee": "date.isBlank",
+          "lineNumber": 128
+        },
+        {
+          "caller": "parseDateOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 129
+        },
+        {
+          "caller": "parseDateOrThrow",
+          "callee": "LocalDate.parse",
+          "lineNumber": 132
+        },
+        {
+          "caller": "parseDateOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 134
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 12,
+        "functionCount": 13,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 131,
+      "nonEmptyLines": 118,
+      "functions": [
+        {
+          "name": "sharePage",
+          "startLine": 23,
+          "endLine": 89,
+          "params": [
+            "slug"
+          ]
+        },
+        {
+          "name": "buildDescription",
+          "startLine": 91,
+          "endLine": 102,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "isVideo",
+          "startLine": 104,
+          "endLine": 112,
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "esc",
+          "startLine": 114,
+          "endLine": 123,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "jsString",
+          "startLine": 125,
+          "endLine": 130,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AttendanceSharePageController",
+          "startLine": 15,
+          "endLine": 131,
+          "methods": [
+            "sharePage",
+            "buildDescription",
+            "isVideo",
+            "esc",
+            "jsString"
+          ],
+          "properties": [
+            "attendanceService",
+            "frontendBaseUrl"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "sharePage",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "AttendanceSharePageController",
+          "line": 15,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "sharePage",
+          "callee": "attendanceService.getSharedBySlug",
+          "lineNumber": 25
+        },
+        {
+          "caller": "sharePage",
+          "callee": "ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString",
+          "lineNumber": 27
+        },
+        {
+          "caller": "sharePage",
+          "callee": "ServletUriComponentsBuilder.fromCurrentContextPath().build",
+          "lineNumber": 27
+        },
+        {
+          "caller": "sharePage",
+          "callee": "ServletUriComponentsBuilder.fromCurrentContextPath",
+          "lineNumber": 27
+        },
+        {
+          "caller": "sharePage",
+          "callee": "data.getAuthorNickname",
+          "lineNumber": 31
+        },
+        {
+          "caller": "sharePage",
+          "callee": "data.getAuthorNickname().isBlank",
+          "lineNumber": 31
+        },
+        {
+          "caller": "sharePage",
+          "callee": "data.getAuthorNickname",
+          "lineNumber": 31
+        },
+        {
+          "caller": "sharePage",
+          "callee": "data.getAuthorNickname",
+          "lineNumber": 33
+        },
+        {
+          "caller": "sharePage",
+          "callee": "buildDescription",
+          "lineNumber": 35
+        },
+        {
+          "caller": "sharePage",
+          "callee": "data.getMediaUrls",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sharePage",
+          "callee": "List.of",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sharePage",
+          "callee": "data.getMediaUrls",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sharePage",
+          "callee": "media.isEmpty",
+          "lineNumber": 38
+        },
+        {
+          "caller": "sharePage",
+          "callee": "media.get",
+          "lineNumber": 38
+        },
+        {
+          "caller": "sharePage",
+          "callee": "isVideo",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 43
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 45
+        },
+        {
+          "caller": "sharePage",
+          "callee": "\"\"\"\r\n                <!doctype html>\r\n                <html lang=\"ko\">\r\n                <head>\r\n                  <meta charset=\"utf-8\" />\r\n                  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\r\n                  <title>%s</title>\r\n                  <meta name=\"description\" content=\"%s\" />\r\n                  <link rel=\"canonical\" href=\"%s\" />\r\n                  <meta property=\"og:type\" content=\"article\" />\r\n                  <meta property=\"og:site_name\" content=\"MuscleUp\" />\r\n                  <meta property=\"og:title\" content=\"%s\" />\r\n                  <meta property=\"og:description\" content=\"%s\" />\r\n                  <meta property=\"og:url\" content=\"%s\" />\r\n                  %s\r\n                  %s\r\n                  <meta name=\"twitter:card\" content=\"summary_large_image\" />\r\n                  <meta http-equiv=\"refresh\" content=\"0; url=%s\" />\r\n                  <script>window.location.replace(%s);</script>\r\n                </head>\r\n                <body>\r\n                  <p><a href=\"%s\">Open shared attendance page</a></p>\r\n                </body>\r\n                </html>\r\n                \"\"\".formatted",
+          "lineNumber": 49
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 75
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 76
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 77
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 78
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 79
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 80
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 83
+        },
+        {
+          "caller": "sharePage",
+          "callee": "jsString",
+          "lineNumber": 84
+        },
+        {
+          "caller": "sharePage",
+          "callee": "esc",
+          "lineNumber": 85
+        },
+        {
+          "caller": "sharePage",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 88
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "data.isDidWorkout",
+          "lineNumber": 92
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "data.getShareComment",
+          "lineNumber": 93
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "source.isBlank",
+          "lineNumber": 94
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "data.getMemo",
+          "lineNumber": 95
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "source.isBlank",
+          "lineNumber": 97
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "source.trim",
+          "lineNumber": 100
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "trimmed.length",
+          "lineNumber": 101
+        },
+        {
+          "caller": "buildDescription",
+          "callee": "trimmed.substring",
+          "lineNumber": 101
+        },
+        {
+          "caller": "isVideo",
+          "callee": "url.toLowerCase",
+          "lineNumber": 105
+        },
+        {
+          "caller": "isVideo",
+          "callee": "lower.contains",
+          "lineNumber": 106
+        },
+        {
+          "caller": "isVideo",
+          "callee": "lower.contains",
+          "lineNumber": 107
+        },
+        {
+          "caller": "isVideo",
+          "callee": "lower.contains",
+          "lineNumber": 108
+        },
+        {
+          "caller": "isVideo",
+          "callee": "lower.contains",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isVideo",
+          "callee": "lower.contains",
+          "lineNumber": 110
+        },
+        {
+          "caller": "isVideo",
+          "callee": "lower.contains",
+          "lineNumber": 111
+        },
+        {
+          "caller": "esc",
+          "callee": "value\r\n                .replace(\"&\", \"&amp;\")\r\n                .replace(\"\\\"\", \"&quot;\")\r\n                .replace(\"<\", \"&lt;\").replace",
+          "lineNumber": 118
+        },
+        {
+          "caller": "esc",
+          "callee": "value\r\n                .replace(\"&\", \"&amp;\")\r\n                .replace(\"\\\"\", \"&quot;\").replace",
+          "lineNumber": 118
+        },
+        {
+          "caller": "esc",
+          "callee": "value\r\n                .replace(\"&\", \"&amp;\").replace",
+          "lineNumber": 118
+        },
+        {
+          "caller": "esc",
+          "callee": "value.replace",
+          "lineNumber": 118
+        },
+        {
+          "caller": "jsString",
+          "callee": "value\r\n                .replace(\"\\\\\", \"\\\\\\\\\").replace",
+          "lineNumber": 126
+        },
+        {
+          "caller": "jsString",
+          "callee": "value.replace",
+          "lineNumber": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 5,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 68,
+      "nonEmptyLines": 64,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 35,
+          "endLine": 57,
+          "params": [
+            "log"
+          ]
+        },
+        {
+          "name": "split",
+          "startLine": 59,
+          "endLine": 67,
+          "params": [
+            "raw",
+            "separator"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AdminAttendanceLogResponse",
+          "startLine": 12,
+          "endLine": 68,
+          "methods": [
+            "from",
+            "split"
+          ],
+          "properties": [
+            "id",
+            "userId",
+            "userEmail",
+            "userNickname",
+            "date",
+            "didWorkout",
+            "memo",
+            "shareComment",
+            "workoutTypes",
+            "workoutIntensity",
+            "mediaUrls",
+            "shared",
+            "shareSlug",
+            "cheerCount",
+            "reportCount",
+            "hiddenByAdmin",
+            "editCount",
+            "lastEditedAt",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "AdminAttendanceLogResponse",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared())\n                .shareSlug(log.getShareSlug())\n                .cheerCount(log.getCheerCount())\n                .reportCount(log.getReportCount())\n                .hiddenByAdmin(log.isHiddenByAdmin())\n                .editCount(log.getEditCount())\n                .lastEditedAt(log.getLastEditedAt())\n                .updatedAt(log.getUpdatedAt()).build",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared())\n                .shareSlug(log.getShareSlug())\n                .cheerCount(log.getCheerCount())\n                .reportCount(log.getReportCount())\n                .hiddenByAdmin(log.isHiddenByAdmin())\n                .editCount(log.getEditCount())\n                .lastEditedAt(log.getLastEditedAt()).updatedAt",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared())\n                .shareSlug(log.getShareSlug())\n                .cheerCount(log.getCheerCount())\n                .reportCount(log.getReportCount())\n                .hiddenByAdmin(log.isHiddenByAdmin())\n                .editCount(log.getEditCount()).lastEditedAt",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared())\n                .shareSlug(log.getShareSlug())\n                .cheerCount(log.getCheerCount())\n                .reportCount(log.getReportCount())\n                .hiddenByAdmin(log.isHiddenByAdmin()).editCount",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared())\n                .shareSlug(log.getShareSlug())\n                .cheerCount(log.getCheerCount())\n                .reportCount(log.getReportCount()).hiddenByAdmin",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared())\n                .shareSlug(log.getShareSlug())\n                .cheerCount(log.getCheerCount()).reportCount",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared())\n                .shareSlug(log.getShareSlug()).cheerCount",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\n                .shared(log.isShared()).shareSlug",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity())\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\")).shared",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\n                .workoutIntensity(log.getWorkoutIntensity()).mediaUrls",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment())\n                .workoutTypes(split(log.getWorkoutTypes(), \",\")).workoutIntensity",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo())\n                .shareComment(log.getShareComment()).workoutTypes",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout())\n                .memo(log.getMemo()).shareComment",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate())\n                .didWorkout(log.isDidWorkout()).memo",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null)\n                .date(log.getDate()).didWorkout",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null)\n                .userNickname(log.getUser() != null ? log.getUser().getNickname() : null).date",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null)\n                .userEmail(log.getUser() != null ? log.getUser().getEmail() : null).userNickname",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId())\n                .userId(log.getUser() != null ? log.getUser().getId() : null).userEmail",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder()\n                .id(log.getId()).userId",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder().id",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "AdminAttendanceLogResponse.builder",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "log.getId",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 38
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser().getId",
+          "lineNumber": 38
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 38
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser().getEmail",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser().getNickname",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "log.getDate",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 42
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMemo",
+          "lineNumber": 43
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareComment",
+          "lineNumber": 44
+        },
+        {
+          "caller": "from",
+          "callee": "split",
+          "lineNumber": 45
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutTypes",
+          "lineNumber": 45
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutIntensity",
+          "lineNumber": 46
+        },
+        {
+          "caller": "from",
+          "callee": "split",
+          "lineNumber": 47
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMediaUrls",
+          "lineNumber": 47
+        },
+        {
+          "caller": "from",
+          "callee": "log.isShared",
+          "lineNumber": 48
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareSlug",
+          "lineNumber": 49
+        },
+        {
+          "caller": "from",
+          "callee": "log.getCheerCount",
+          "lineNumber": 50
+        },
+        {
+          "caller": "from",
+          "callee": "log.getReportCount",
+          "lineNumber": 51
+        },
+        {
+          "caller": "from",
+          "callee": "log.isHiddenByAdmin",
+          "lineNumber": 52
+        },
+        {
+          "caller": "from",
+          "callee": "log.getEditCount",
+          "lineNumber": 53
+        },
+        {
+          "caller": "from",
+          "callee": "log.getLastEditedAt",
+          "lineNumber": 54
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUpdatedAt",
+          "lineNumber": 55
+        },
+        {
+          "caller": "split",
+          "callee": "raw.isBlank",
+          "lineNumber": 60
+        },
+        {
+          "caller": "split",
+          "callee": "Collections.emptyList",
+          "lineNumber": 61
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream(raw.split(separator))\n                .map(String::trim)\n                .filter(v -> !v.isEmpty()).toList",
+          "lineNumber": 63
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream(raw.split(separator))\n                .map(String::trim).filter",
+          "lineNumber": 63
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream(raw.split(separator)).map",
+          "lineNumber": 63
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream",
+          "lineNumber": 63
+        },
+        {
+          "caller": "split",
+          "callee": "raw.split",
+          "lineNumber": 63
+        },
+        {
+          "caller": "split",
+          "callee": "v.isEmpty",
+          "lineNumber": 65
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 97,
+      "nonEmptyLines": 91,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 34,
+          "endLine": 50,
+          "params": [
+            "log"
+          ]
+        },
+        {
+          "name": "from",
+          "startLine": 52,
+          "endLine": 76,
+          "params": [
+            "log",
+            "eventProgress",
+            "characterChange",
+            "expEarned"
+          ]
+        },
+        {
+          "name": "splitWorkoutTypes",
+          "startLine": 78,
+          "endLine": 86,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "splitMediaUrls",
+          "startLine": 88,
+          "endLine": 96,
+          "params": [
+            "raw"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AttendanceLogResponse",
+          "startLine": 14,
+          "endLine": 97,
+          "methods": [
+            "from",
+            "from",
+            "splitWorkoutTypes",
+            "splitMediaUrls"
+          ],
+          "properties": [
+            "date",
+            "didWorkout",
+            "memo",
+            "shareComment",
+            "workoutTypes",
+            "workoutIntensity",
+            "mediaUrls",
+            "shared",
+            "shareSlug",
+            "cheerCount",
+            "editCount",
+            "lastEditedAt",
+            "updatedAt",
+            "expEarned",
+            "eventProgress",
+            "characterChange"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "from",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "AttendanceLogResponse",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt()).build",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount())\r\n                .lastEditedAt(log.getLastEditedAt()).updatedAt",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount()).lastEditedAt",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount()).editCount",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug()).cheerCount",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared()).shareSlug",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls())).shared",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity()).mediaUrls",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes())).workoutIntensity",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment()).workoutTypes",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo()).shareComment",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout()).memo",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate()).didWorkout",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder().date",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "log.getDate",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMemo",
+          "lineNumber": 38
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareComment",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "splitWorkoutTypes",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutTypes",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutIntensity",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "splitMediaUrls",
+          "lineNumber": 42
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMediaUrls",
+          "lineNumber": 42
+        },
+        {
+          "caller": "from",
+          "callee": "log.isShared",
+          "lineNumber": 43
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareSlug",
+          "lineNumber": 44
+        },
+        {
+          "caller": "from",
+          "callee": "log.getCheerCount",
+          "lineNumber": 45
+        },
+        {
+          "caller": "from",
+          "callee": "log.getEditCount",
+          "lineNumber": 46
+        },
+        {
+          "caller": "from",
+          "callee": "log.getLastEditedAt",
+          "lineNumber": 47
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUpdatedAt",
+          "lineNumber": 48
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt())\r\n                .expEarned(expEarned)\r\n                .eventProgress(eventProgress)\r\n                .characterChange(characterChange).build",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt())\r\n                .expEarned(expEarned)\r\n                .eventProgress(eventProgress).characterChange",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt())\r\n                .expEarned(expEarned).eventProgress",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt()).expEarned",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount())\r\n                .lastEditedAt(log.getLastEditedAt()).updatedAt",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount())\r\n                .editCount(log.getEditCount()).lastEditedAt",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug())\r\n                .cheerCount(log.getCheerCount()).editCount",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared())\r\n                .shareSlug(log.getShareSlug()).cheerCount",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls()))\r\n                .shared(log.isShared()).shareSlug",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(splitMediaUrls(log.getMediaUrls())).shared",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes()))\r\n                .workoutIntensity(log.getWorkoutIntensity()).mediaUrls",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(splitWorkoutTypes(log.getWorkoutTypes())).workoutIntensity",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment()).workoutTypes",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo()).shareComment",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout()).memo",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder()\r\n                .date(log.getDate()).didWorkout",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder().date",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceLogResponse.builder",
+          "lineNumber": 58
+        },
+        {
+          "caller": "from",
+          "callee": "log.getDate",
+          "lineNumber": 59
+        },
+        {
+          "caller": "from",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 60
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMemo",
+          "lineNumber": 61
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareComment",
+          "lineNumber": 62
+        },
+        {
+          "caller": "from",
+          "callee": "splitWorkoutTypes",
+          "lineNumber": 63
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutTypes",
+          "lineNumber": 63
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutIntensity",
+          "lineNumber": 64
+        },
+        {
+          "caller": "from",
+          "callee": "splitMediaUrls",
+          "lineNumber": 65
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMediaUrls",
+          "lineNumber": 65
+        },
+        {
+          "caller": "from",
+          "callee": "log.isShared",
+          "lineNumber": 66
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareSlug",
+          "lineNumber": 67
+        },
+        {
+          "caller": "from",
+          "callee": "log.getCheerCount",
+          "lineNumber": 68
+        },
+        {
+          "caller": "from",
+          "callee": "log.getEditCount",
+          "lineNumber": 69
+        },
+        {
+          "caller": "from",
+          "callee": "log.getLastEditedAt",
+          "lineNumber": 70
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUpdatedAt",
+          "lineNumber": 71
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "raw.isBlank",
+          "lineNumber": 79
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "Collections.emptyList",
+          "lineNumber": 80
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "Arrays.stream(raw.split(\",\"))\r\n                .map(String::trim)\r\n                .filter(value -> !value.isEmpty()).toList",
+          "lineNumber": 82
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "Arrays.stream(raw.split(\",\"))\r\n                .map(String::trim).filter",
+          "lineNumber": 82
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "Arrays.stream(raw.split(\",\")).map",
+          "lineNumber": 82
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "Arrays.stream",
+          "lineNumber": 82
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "raw.split",
+          "lineNumber": 82
+        },
+        {
+          "caller": "splitWorkoutTypes",
+          "callee": "value.isEmpty",
+          "lineNumber": 84
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "raw.isBlank",
+          "lineNumber": 89
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "Collections.emptyList",
+          "lineNumber": 90
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "Arrays.stream(raw.split(\"\\n\"))\r\n                .map(String::trim)\r\n                .filter(value -> !value.isEmpty()).toList",
+          "lineNumber": 92
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "Arrays.stream(raw.split(\"\\n\"))\r\n                .map(String::trim).filter",
+          "lineNumber": 92
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "Arrays.stream(raw.split(\"\\n\")).map",
+          "lineNumber": 92
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "Arrays.stream",
+          "lineNumber": 92
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "raw.split",
+          "lineNumber": 92
+        },
+        {
+          "caller": "splitMediaUrls",
+          "callee": "value.isEmpty",
+          "lineNumber": 94
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 3,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "classes": [
+        {
+          "name": "AttendanceRankingItemResponse",
+          "startLine": 6,
+          "endLine": 12,
+          "methods": [],
+          "properties": [
+            "userId",
+            "nickname",
+            "score"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AttendanceRankingItemResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 66,
+      "nonEmptyLines": 61,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 32,
+          "endLine": 34,
+          "params": [
+            "log"
+          ]
+        },
+        {
+          "name": "from",
+          "startLine": 36,
+          "endLine": 55,
+          "params": [
+            "log",
+            "currentStreak"
+          ]
+        },
+        {
+          "name": "split",
+          "startLine": 57,
+          "endLine": 65,
+          "params": [
+            "raw",
+            "sep"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AttendanceShareResponse",
+          "startLine": 12,
+          "endLine": 66,
+          "methods": [
+            "from",
+            "from",
+            "split"
+          ],
+          "properties": [
+            "id",
+            "date",
+            "didWorkout",
+            "memo",
+            "shareComment",
+            "workoutTypes",
+            "workoutIntensity",
+            "mediaUrls",
+            "authorNickname",
+            "cheerCount",
+            "reportCount",
+            "hiddenByAdmin",
+            "lastEditedAt",
+            "updatedAt",
+            "shareSlug",
+            "currentStreak"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "from",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "AttendanceShareResponse",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "from",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null)\r\n                .cheerCount(log.getCheerCount())\r\n                .reportCount(log.getReportCount())\r\n                .hiddenByAdmin(log.isHiddenByAdmin())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt())\r\n                .shareSlug(log.getShareSlug())\r\n                .currentStreak(currentStreak).build",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null)\r\n                .cheerCount(log.getCheerCount())\r\n                .reportCount(log.getReportCount())\r\n                .hiddenByAdmin(log.isHiddenByAdmin())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt())\r\n                .shareSlug(log.getShareSlug()).currentStreak",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null)\r\n                .cheerCount(log.getCheerCount())\r\n                .reportCount(log.getReportCount())\r\n                .hiddenByAdmin(log.isHiddenByAdmin())\r\n                .lastEditedAt(log.getLastEditedAt())\r\n                .updatedAt(log.getUpdatedAt()).shareSlug",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null)\r\n                .cheerCount(log.getCheerCount())\r\n                .reportCount(log.getReportCount())\r\n                .hiddenByAdmin(log.isHiddenByAdmin())\r\n                .lastEditedAt(log.getLastEditedAt()).updatedAt",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null)\r\n                .cheerCount(log.getCheerCount())\r\n                .reportCount(log.getReportCount())\r\n                .hiddenByAdmin(log.isHiddenByAdmin()).lastEditedAt",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null)\r\n                .cheerCount(log.getCheerCount())\r\n                .reportCount(log.getReportCount()).hiddenByAdmin",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null)\r\n                .cheerCount(log.getCheerCount()).reportCount",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\"))\r\n                .authorNickname(log.getUser() != null ? log.getUser().getNickname() : null).cheerCount",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity())\r\n                .mediaUrls(split(log.getMediaUrls(), \"\\n\")).authorNickname",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\"))\r\n                .workoutIntensity(log.getWorkoutIntensity()).mediaUrls",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment())\r\n                .workoutTypes(split(log.getWorkoutTypes(), \",\")).workoutIntensity",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo())\r\n                .shareComment(log.getShareComment()).workoutTypes",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout())\r\n                .memo(log.getMemo()).shareComment",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate())\r\n                .didWorkout(log.isDidWorkout()).memo",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId())\r\n                .date(log.getDate()).didWorkout",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder()\r\n                .id(log.getId()).date",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder().id",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "AttendanceShareResponse.builder",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "log.getId",
+          "lineNumber": 38
+        },
+        {
+          "caller": "from",
+          "callee": "log.getDate",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMemo",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareComment",
+          "lineNumber": 42
+        },
+        {
+          "caller": "from",
+          "callee": "split",
+          "lineNumber": 43
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutTypes",
+          "lineNumber": 43
+        },
+        {
+          "caller": "from",
+          "callee": "log.getWorkoutIntensity",
+          "lineNumber": 44
+        },
+        {
+          "caller": "from",
+          "callee": "split",
+          "lineNumber": 45
+        },
+        {
+          "caller": "from",
+          "callee": "log.getMediaUrls",
+          "lineNumber": 45
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 46
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser().getNickname",
+          "lineNumber": 46
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUser",
+          "lineNumber": 46
+        },
+        {
+          "caller": "from",
+          "callee": "log.getCheerCount",
+          "lineNumber": 47
+        },
+        {
+          "caller": "from",
+          "callee": "log.getReportCount",
+          "lineNumber": 48
+        },
+        {
+          "caller": "from",
+          "callee": "log.isHiddenByAdmin",
+          "lineNumber": 49
+        },
+        {
+          "caller": "from",
+          "callee": "log.getLastEditedAt",
+          "lineNumber": 50
+        },
+        {
+          "caller": "from",
+          "callee": "log.getUpdatedAt",
+          "lineNumber": 51
+        },
+        {
+          "caller": "from",
+          "callee": "log.getShareSlug",
+          "lineNumber": 52
+        },
+        {
+          "caller": "split",
+          "callee": "raw.isBlank",
+          "lineNumber": 58
+        },
+        {
+          "caller": "split",
+          "callee": "Collections.emptyList",
+          "lineNumber": 59
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream(raw.split(sep))\r\n                .map(String::trim)\r\n                .filter(s -> !s.isEmpty()).toList",
+          "lineNumber": 61
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream(raw.split(sep))\r\n                .map(String::trim).filter",
+          "lineNumber": 61
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream(raw.split(sep)).map",
+          "lineNumber": 61
+        },
+        {
+          "caller": "split",
+          "callee": "Arrays.stream",
+          "lineNumber": 61
+        },
+        {
+          "caller": "split",
+          "callee": "raw.split",
+          "lineNumber": 61
+        },
+        {
+          "caller": "split",
+          "callee": "s.isEmpty",
+          "lineNumber": 63
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "classes": [
+        {
+          "name": "AttendanceSummaryResponse",
+          "startLine": 6,
+          "endLine": 12,
+          "methods": [],
+          "properties": [
+            "monthWorkoutCount",
+            "currentStreak",
+            "bestStreakInMonth"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AttendanceSummaryResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 27,
+      "nonEmptyLines": 20,
+      "classes": [
+        {
+          "name": "AttendanceUpsertRequest",
+          "startLine": 8,
+          "endLine": 27,
+          "methods": [],
+          "properties": [
+            "didWorkout",
+            "memo",
+            "shareComment",
+            "workoutTypes",
+            "workoutIntensity",
+            "mediaUrls"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AttendanceUpsertRequest",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "CharacterChangeResponse",
+          "startLine": 6,
+          "endLine": 14,
+          "methods": [],
+          "properties": [
+            "leveledUp",
+            "evolved",
+            "tierChanged",
+            "before",
+            "after"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterChangeResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 73,
+      "nonEmptyLines": 56,
+      "classes": [
+        {
+          "name": "AttendanceLog",
+          "startLine": 8,
+          "endLine": 73,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "date",
+            "didWorkout",
+            "memo",
+            "shareComment",
+            "workoutTypes",
+            "workoutIntensity",
+            "mediaUrls",
+            "shared",
+            "shareSlug",
+            "cheerCount",
+            "reportCount",
+            "hiddenByAdmin",
+            "editCount",
+            "lastEditedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AttendanceLog",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 89,
+      "nonEmptyLines": 78,
+      "classes": [
+        {
+          "name": "AttendanceLogRepository",
+          "startLine": 14,
+          "endLine": 89,
+          "methods": [
+            "findByUserAndDate",
+            "findByShareSlugAndSharedTrue",
+            "findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc",
+            "findBySharedTrueOrderByReportCountDescUpdatedAtDesc",
+            "findAllByUserAndDateBetweenOrderByDateAsc",
+            "countByUserAndDidWorkoutTrueAndDateBetween",
+            "countByDate",
+            "findByUserIdAndDateRangeOrderByDateAsc",
+            "countMediaLogsByUserBetween",
+            "countWorkoutByUserIdsAndDateBetween",
+            "searchForAdmin"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "AttendanceLogRepository",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 50,
+      "nonEmptyLines": 36,
+      "classes": [
+        {
+          "name": "AttendanceService",
+          "startLine": 14,
+          "endLine": 50,
+          "methods": [
+            "upsertToday",
+            "upsertByDate",
+            "getMonthlyLogs",
+            "getSummary",
+            "shareByDate",
+            "unshareByDate",
+            "getSharedBySlug",
+            "addCheerBySlug",
+            "reportBySlug",
+            "getWeeklyStreakRanking",
+            "getMonthlyMediaRanking",
+            "listSharedForAdmin",
+            "listSharedForAdmin",
+            "listLogsForAdmin",
+            "setHiddenByAdmin"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "AttendanceService",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 579,
+      "nonEmptyLines": 515,
+      "functions": [
+        {
+          "name": "upsertToday",
+          "startLine": 53,
+          "endLine": 63,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "upsertByDate",
+          "startLine": 65,
+          "endLine": 74,
+          "params": [
+            "email",
+            "date",
+            "request"
+          ]
+        },
+        {
+          "name": "getMonthlyLogs",
+          "startLine": 76,
+          "endLine": 86,
+          "params": [
+            "email",
+            "month"
+          ]
+        },
+        {
+          "name": "getSummary",
+          "startLine": 88,
+          "endLine": 105,
+          "params": [
+            "email",
+            "month"
+          ]
+        },
+        {
+          "name": "shareByDate",
+          "startLine": 107,
+          "endLine": 121,
+          "params": [
+            "email",
+            "date"
+          ]
+        },
+        {
+          "name": "unshareByDate",
+          "startLine": 123,
+          "endLine": 133,
+          "params": [
+            "email",
+            "date"
+          ]
+        },
+        {
+          "name": "getSharedBySlug",
+          "startLine": 135,
+          "endLine": 144,
+          "params": [
+            "slug"
+          ]
+        },
+        {
+          "name": "addCheerBySlug",
+          "startLine": 146,
+          "endLine": 156,
+          "params": [
+            "slug"
+          ]
+        },
+        {
+          "name": "reportBySlug",
+          "startLine": 158,
+          "endLine": 165,
+          "params": [
+            "slug"
+          ]
+        },
+        {
+          "name": "getWeeklyStreakRanking",
+          "startLine": 167,
+          "endLine": 185,
+          "params": [
+            "limit"
+          ]
+        },
+        {
+          "name": "getMonthlyMediaRanking",
+          "startLine": 187,
+          "endLine": 205,
+          "params": [
+            "month",
+            "limit"
+          ]
+        },
+        {
+          "name": "listSharedForAdmin",
+          "startLine": 207,
+          "endLine": 215,
+          "params": [
+            "limit"
+          ]
+        },
+        {
+          "name": "listSharedForAdmin",
+          "startLine": 217,
+          "endLine": 225,
+          "params": [
+            "page",
+            "size"
+          ]
+        },
+        {
+          "name": "listLogsForAdmin",
+          "startLine": 227,
+          "endLine": 244,
+          "params": [
+            "page",
+            "size",
+            "query",
+            "didWorkout",
+            "shared",
+            "fromDate",
+            "toDate"
+          ]
+        },
+        {
+          "name": "setHiddenByAdmin",
+          "startLine": 246,
+          "endLine": 254,
+          "params": [
+            "attendanceId",
+            "hidden"
+          ]
+        },
+        {
+          "name": "upsert",
+          "startLine": 256,
+          "endLine": 291,
+          "params": [
+            "user",
+            "date",
+            "request"
+          ]
+        },
+        {
+          "name": "calculateCurrentStreak",
+          "startLine": 293,
+          "endLine": 310,
+          "params": [
+            "user",
+            "today"
+          ]
+        },
+        {
+          "name": "calculateBestStreakInMonth",
+          "startLine": 312,
+          "endLine": 336,
+          "params": [
+            "user",
+            "start",
+            "end"
+          ]
+        },
+        {
+          "name": "normalizeInput",
+          "startLine": 338,
+          "endLine": 375,
+          "params": [
+            "request"
+          ]
+        },
+        {
+          "name": "isSame",
+          "startLine": 377,
+          "endLine": 393,
+          "params": [
+            "log",
+            "input",
+            "memo"
+          ]
+        },
+        {
+          "name": "normalizeMemo",
+          "startLine": 395,
+          "endLine": 401,
+          "params": [
+            "memo"
+          ]
+        },
+        {
+          "name": "equalsNullable",
+          "startLine": 403,
+          "endLine": 408,
+          "params": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "name": "normalizeShareComment",
+          "startLine": 410,
+          "endLine": 416,
+          "params": [
+            "comment"
+          ]
+        },
+        {
+          "name": "joinTypes",
+          "startLine": 418,
+          "endLine": 423,
+          "params": [
+            "types"
+          ]
+        },
+        {
+          "name": "normalizeMediaUrls",
+          "startLine": 425,
+          "endLine": 442,
+          "params": [
+            "mediaUrls"
+          ]
+        },
+        {
+          "name": "normalizeMediaUrls",
+          "startLine": 444,
+          "endLine": 461,
+          "params": [
+            "rawMediaUrls"
+          ]
+        },
+        {
+          "name": "calculatePointsEarned",
+          "startLine": 463,
+          "endLine": 485,
+          "params": [
+            "user",
+            "date",
+            "input",
+            "memo"
+          ]
+        },
+        {
+          "name": "countKeywordBonus",
+          "startLine": 487,
+          "endLine": 496,
+          "params": [
+            "memo"
+          ]
+        },
+        {
+          "name": "streakBonus",
+          "startLine": 498,
+          "endLine": 512,
+          "params": [
+            "streak"
+          ]
+        },
+        {
+          "name": "calculateStreakForDate",
+          "startLine": 514,
+          "endLine": 531,
+          "params": [
+            "user",
+            "date"
+          ]
+        },
+        {
+          "name": "calculateCurrentStreakInRange",
+          "startLine": 533,
+          "endLine": 549,
+          "params": [
+            "logs",
+            "start",
+            "end"
+          ]
+        },
+        {
+          "name": "toShareResponse",
+          "startLine": 551,
+          "endLine": 557,
+          "params": [
+            "log"
+          ]
+        },
+        {
+          "name": "getUserOrThrow",
+          "startLine": 559,
+          "endLine": 562,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AttendanceServiceImpl",
+          "startLine": 35,
+          "endLine": 579,
+          "methods": [
+            "upsertToday",
+            "upsertByDate",
+            "getMonthlyLogs",
+            "getSummary",
+            "shareByDate",
+            "unshareByDate",
+            "getSharedBySlug",
+            "addCheerBySlug",
+            "reportBySlug",
+            "getWeeklyStreakRanking",
+            "getMonthlyMediaRanking",
+            "listSharedForAdmin",
+            "listSharedForAdmin",
+            "listLogsForAdmin",
+            "setHiddenByAdmin",
+            "upsert",
+            "calculateCurrentStreak",
+            "calculateBestStreakInMonth",
+            "normalizeInput",
+            "isSame",
+            "normalizeMemo",
+            "equalsNullable",
+            "normalizeShareComment",
+            "joinTypes",
+            "normalizeMediaUrls",
+            "normalizeMediaUrls",
+            "calculatePointsEarned",
+            "countKeywordBonus",
+            "streakBonus",
+            "calculateStreakForDate",
+            "calculateCurrentStreakInRange",
+            "toShareResponse",
+            "getUserOrThrow"
+          ],
+          "properties": [
+            "KST",
+            "ALLOWED_TYPES",
+            "ALLOWED_INTENSITIES",
+            "INTENSITY_POINTS",
+            "MEMO_KEYWORDS",
+            "attendanceLogRepository",
+            "userRepository",
+            "eventService",
+            "characterGrowthService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "upsertToday",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "upsertByDate",
+          "line": 65,
+          "isDefault": false
+        },
+        {
+          "name": "getMonthlyLogs",
+          "line": 76,
+          "isDefault": false
+        },
+        {
+          "name": "getSummary",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "shareByDate",
+          "line": 107,
+          "isDefault": false
+        },
+        {
+          "name": "unshareByDate",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "getSharedBySlug",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "addCheerBySlug",
+          "line": 146,
+          "isDefault": false
+        },
+        {
+          "name": "reportBySlug",
+          "line": 158,
+          "isDefault": false
+        },
+        {
+          "name": "getWeeklyStreakRanking",
+          "line": 167,
+          "isDefault": false
+        },
+        {
+          "name": "getMonthlyMediaRanking",
+          "line": 187,
+          "isDefault": false
+        },
+        {
+          "name": "listSharedForAdmin",
+          "line": 207,
+          "isDefault": false
+        },
+        {
+          "name": "listSharedForAdmin",
+          "line": 217,
+          "isDefault": false
+        },
+        {
+          "name": "listLogsForAdmin",
+          "line": 227,
+          "isDefault": false
+        },
+        {
+          "name": "setHiddenByAdmin",
+          "line": 246,
+          "isDefault": false
+        },
+        {
+          "name": "AttendanceServiceImpl",
+          "line": 35,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "upsertToday",
+          "callee": "getUserOrThrow",
+          "lineNumber": 56
+        },
+        {
+          "caller": "upsertToday",
+          "callee": "LocalDate.now",
+          "lineNumber": 57
+        },
+        {
+          "caller": "upsertToday",
+          "callee": "upsert",
+          "lineNumber": 58
+        },
+        {
+          "caller": "upsertToday",
+          "callee": "eventService.updateAttendanceProgress",
+          "lineNumber": 60
+        },
+        {
+          "caller": "upsertToday",
+          "callee": "characterGrowthService.applyAttendance",
+          "lineNumber": 61
+        },
+        {
+          "caller": "upsertToday",
+          "callee": "AttendanceLogResponse.from",
+          "lineNumber": 62
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "getUserOrThrow",
+          "lineNumber": 68
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "upsert",
+          "lineNumber": 69
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "eventService.updateAttendanceProgress",
+          "lineNumber": 71
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "characterGrowthService.applyAttendance",
+          "lineNumber": 72
+        },
+        {
+          "caller": "upsertByDate",
+          "callee": "AttendanceLogResponse.from",
+          "lineNumber": 73
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "getUserOrThrow",
+          "lineNumber": 79
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "month.atDay",
+          "lineNumber": 80
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "month.atEndOfMonth",
+          "lineNumber": 81
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "attendanceLogRepository.findAllByUserAndDateBetweenOrderByDateAsc(user, start, end)\r\n                .stream()\r\n                .map(AttendanceLogResponse::from).toList",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "attendanceLogRepository.findAllByUserAndDateBetweenOrderByDateAsc(user, start, end)\r\n                .stream().map",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "attendanceLogRepository.findAllByUserAndDateBetweenOrderByDateAsc(user, start, end).stream",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getMonthlyLogs",
+          "callee": "attendanceLogRepository.findAllByUserAndDateBetweenOrderByDateAsc",
+          "lineNumber": 82
+        },
+        {
+          "caller": "getSummary",
+          "callee": "getUserOrThrow",
+          "lineNumber": 91
+        },
+        {
+          "caller": "getSummary",
+          "callee": "month.atDay",
+          "lineNumber": 92
+        },
+        {
+          "caller": "getSummary",
+          "callee": "month.atEndOfMonth",
+          "lineNumber": 93
+        },
+        {
+          "caller": "getSummary",
+          "callee": "attendanceLogRepository.countByUserAndDidWorkoutTrueAndDateBetween",
+          "lineNumber": 96
+        },
+        {
+          "caller": "getSummary",
+          "callee": "calculateCurrentStreak",
+          "lineNumber": 97
+        },
+        {
+          "caller": "getSummary",
+          "callee": "LocalDate.now",
+          "lineNumber": 97
+        },
+        {
+          "caller": "getSummary",
+          "callee": "calculateBestStreakInMonth",
+          "lineNumber": 98
+        },
+        {
+          "caller": "getSummary",
+          "callee": "AttendanceSummaryResponse.builder()\r\n                .monthWorkoutCount(monthWorkoutCount)\r\n                .currentStreak(currentStreak)\r\n                .bestStreakInMonth(bestStreakInMonth).build",
+          "lineNumber": 100
+        },
+        {
+          "caller": "getSummary",
+          "callee": "AttendanceSummaryResponse.builder()\r\n                .monthWorkoutCount(monthWorkoutCount)\r\n                .currentStreak(currentStreak).bestStreakInMonth",
+          "lineNumber": 100
+        },
+        {
+          "caller": "getSummary",
+          "callee": "AttendanceSummaryResponse.builder()\r\n                .monthWorkoutCount(monthWorkoutCount).currentStreak",
+          "lineNumber": 100
+        },
+        {
+          "caller": "getSummary",
+          "callee": "AttendanceSummaryResponse.builder().monthWorkoutCount",
+          "lineNumber": 100
+        },
+        {
+          "caller": "getSummary",
+          "callee": "AttendanceSummaryResponse.builder",
+          "lineNumber": 100
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "getUserOrThrow",
+          "lineNumber": 110
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "attendanceLogRepository.findByUserAndDate(user, date).orElseThrow",
+          "lineNumber": 111
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "attendanceLogRepository.findByUserAndDate",
+          "lineNumber": 111
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 112
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "log.getShareSlug",
+          "lineNumber": 114
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "log.getShareSlug().isBlank",
+          "lineNumber": 114
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "log.getShareSlug",
+          "lineNumber": 114
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "log.setShareSlug",
+          "lineNumber": 115
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "UUID.randomUUID().toString().replace",
+          "lineNumber": 115
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "UUID.randomUUID().toString",
+          "lineNumber": 115
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "UUID.randomUUID",
+          "lineNumber": 115
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "log.setShared",
+          "lineNumber": 117
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "attendanceLogRepository.save",
+          "lineNumber": 119
+        },
+        {
+          "caller": "shareByDate",
+          "callee": "toShareResponse",
+          "lineNumber": 120
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "getUserOrThrow",
+          "lineNumber": 126
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "attendanceLogRepository.findByUserAndDate(user, date).orElseThrow",
+          "lineNumber": 127
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "attendanceLogRepository.findByUserAndDate",
+          "lineNumber": 127
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 128
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "log.setShared",
+          "lineNumber": 130
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "log.setShareSlug",
+          "lineNumber": 131
+        },
+        {
+          "caller": "unshareByDate",
+          "callee": "attendanceLogRepository.save",
+          "lineNumber": 132
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "attendanceLogRepository.findByShareSlugAndSharedTrue(slug).orElseThrow",
+          "lineNumber": 138
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "attendanceLogRepository.findByShareSlugAndSharedTrue",
+          "lineNumber": 138
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 139
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "log.isHiddenByAdmin",
+          "lineNumber": 140
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 141
+        },
+        {
+          "caller": "getSharedBySlug",
+          "callee": "toShareResponse",
+          "lineNumber": 143
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "attendanceLogRepository.findByShareSlugAndSharedTrue(slug).orElseThrow",
+          "lineNumber": 149
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "attendanceLogRepository.findByShareSlugAndSharedTrue",
+          "lineNumber": 149
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 150
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "log.isHiddenByAdmin",
+          "lineNumber": 151
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 152
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "log.setCheerCount",
+          "lineNumber": 154
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "log.getCheerCount",
+          "lineNumber": 154
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "toShareResponse",
+          "lineNumber": 155
+        },
+        {
+          "caller": "addCheerBySlug",
+          "callee": "attendanceLogRepository.save",
+          "lineNumber": 155
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "attendanceLogRepository.findByShareSlugAndSharedTrue(slug).orElseThrow",
+          "lineNumber": 161
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "attendanceLogRepository.findByShareSlugAndSharedTrue",
+          "lineNumber": 161
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 162
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "log.setReportCount",
+          "lineNumber": 163
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "log.getReportCount",
+          "lineNumber": 163
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "toShareResponse",
+          "lineNumber": 164
+        },
+        {
+          "caller": "reportBySlug",
+          "callee": "attendanceLogRepository.save",
+          "lineNumber": 164
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "Math.max",
+          "lineNumber": 170
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "Math.min",
+          "lineNumber": 170
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "LocalDate.now",
+          "lineNumber": 171
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "today.minusDays",
+          "lineNumber": 172
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "today.getDayOfWeek().getValue",
+          "lineNumber": 172
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "today.getDayOfWeek",
+          "lineNumber": 172
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "userRepository.findAll().stream()\r\n                .map(user -> {\r\n                    List<AttendanceLog> logs = attendanceLogRepository.findByUserIdAndDateRangeOrderByDateAsc(\r\n                            user.getId(), weekStart, today);\r\n                    int streak = calculateCurrentStreakInRange(logs, weekStart, today);\r\n                    return new AttendanceRankingItemResponse(user.getId(), user.getNickname(), streak);\r\n                })\r\n                .filter(item -> item.getScore() > 0)\r\n                .sorted(Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed())\r\n                .limit(safeLimit).toList",
+          "lineNumber": 174
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "userRepository.findAll().stream()\r\n                .map(user -> {\r\n                    List<AttendanceLog> logs = attendanceLogRepository.findByUserIdAndDateRangeOrderByDateAsc(\r\n                            user.getId(), weekStart, today);\r\n                    int streak = calculateCurrentStreakInRange(logs, weekStart, today);\r\n                    return new AttendanceRankingItemResponse(user.getId(), user.getNickname(), streak);\r\n                })\r\n                .filter(item -> item.getScore() > 0)\r\n                .sorted(Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed()).limit",
+          "lineNumber": 174
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "userRepository.findAll().stream()\r\n                .map(user -> {\r\n                    List<AttendanceLog> logs = attendanceLogRepository.findByUserIdAndDateRangeOrderByDateAsc(\r\n                            user.getId(), weekStart, today);\r\n                    int streak = calculateCurrentStreakInRange(logs, weekStart, today);\r\n                    return new AttendanceRankingItemResponse(user.getId(), user.getNickname(), streak);\r\n                })\r\n                .filter(item -> item.getScore() > 0).sorted",
+          "lineNumber": 174
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "userRepository.findAll().stream()\r\n                .map(user -> {\r\n                    List<AttendanceLog> logs = attendanceLogRepository.findByUserIdAndDateRangeOrderByDateAsc(\r\n                            user.getId(), weekStart, today);\r\n                    int streak = calculateCurrentStreakInRange(logs, weekStart, today);\r\n                    return new AttendanceRankingItemResponse(user.getId(), user.getNickname(), streak);\r\n                }).filter",
+          "lineNumber": 174
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "userRepository.findAll().stream().map",
+          "lineNumber": 174
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "userRepository.findAll().stream",
+          "lineNumber": 174
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "userRepository.findAll",
+          "lineNumber": 174
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "attendanceLogRepository.findByUserIdAndDateRangeOrderByDateAsc",
+          "lineNumber": 176
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "user.getId",
+          "lineNumber": 177
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "calculateCurrentStreakInRange",
+          "lineNumber": 178
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "new AttendanceRankingItemResponse",
+          "lineNumber": 179
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "user.getId",
+          "lineNumber": 179
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "user.getNickname",
+          "lineNumber": 179
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "item.getScore",
+          "lineNumber": 181
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed",
+          "lineNumber": 182
+        },
+        {
+          "caller": "getWeeklyStreakRanking",
+          "callee": "Comparator.comparingInt",
+          "lineNumber": 182
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "Math.max",
+          "lineNumber": 190
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "Math.min",
+          "lineNumber": 190
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "month.atDay",
+          "lineNumber": 191
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "month.atEndOfMonth",
+          "lineNumber": 192
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "userRepository.findAll().stream().collect",
+          "lineNumber": 193
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "userRepository.findAll().stream",
+          "lineNumber": 193
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "userRepository.findAll",
+          "lineNumber": 193
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "java.util.stream.Collectors.toMap",
+          "lineNumber": 194
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "attendanceLogRepository.countMediaLogsByUserBetween(start, end).stream()\r\n                .map(row -> {\r\n                    Long userId = (Long) row[0];\r\n                    int score = ((Long) row[1]).intValue();\r\n                    return new AttendanceRankingItemResponse(userId, nickById.getOrDefault(userId, \"회원\"), score);\r\n                })\r\n                .sorted(Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed())\r\n                .limit(safeLimit).toList",
+          "lineNumber": 196
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "attendanceLogRepository.countMediaLogsByUserBetween(start, end).stream()\r\n                .map(row -> {\r\n                    Long userId = (Long) row[0];\r\n                    int score = ((Long) row[1]).intValue();\r\n                    return new AttendanceRankingItemResponse(userId, nickById.getOrDefault(userId, \"회원\"), score);\r\n                })\r\n                .sorted(Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed()).limit",
+          "lineNumber": 196
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "attendanceLogRepository.countMediaLogsByUserBetween(start, end).stream()\r\n                .map(row -> {\r\n                    Long userId = (Long) row[0];\r\n                    int score = ((Long) row[1]).intValue();\r\n                    return new AttendanceRankingItemResponse(userId, nickById.getOrDefault(userId, \"회원\"), score);\r\n                }).sorted",
+          "lineNumber": 196
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "attendanceLogRepository.countMediaLogsByUserBetween(start, end).stream().map",
+          "lineNumber": 196
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "attendanceLogRepository.countMediaLogsByUserBetween(start, end).stream",
+          "lineNumber": 196
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "attendanceLogRepository.countMediaLogsByUserBetween",
+          "lineNumber": 196
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "((Long) row[1]).intValue",
+          "lineNumber": 199
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "new AttendanceRankingItemResponse",
+          "lineNumber": 200
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "nickById.getOrDefault",
+          "lineNumber": 200
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "Comparator.comparingInt(AttendanceRankingItemResponse::getScore).reversed",
+          "lineNumber": 202
+        },
+        {
+          "caller": "getMonthlyMediaRanking",
+          "callee": "Comparator.comparingInt",
+          "lineNumber": 202
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "Math.max",
+          "lineNumber": 210
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "Math.min",
+          "lineNumber": 210
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "attendanceLogRepository.findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc().stream()\r\n                .limit(safeLimit)\r\n                .map(AttendanceShareResponse::from).toList",
+          "lineNumber": 211
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "attendanceLogRepository.findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc().stream()\r\n                .limit(safeLimit).map",
+          "lineNumber": 211
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "attendanceLogRepository.findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc().stream().limit",
+          "lineNumber": 211
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "attendanceLogRepository.findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc().stream",
+          "lineNumber": 211
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "attendanceLogRepository.findTop100BySharedTrueOrderByReportCountDescUpdatedAtDesc",
+          "lineNumber": 211
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "Math.max",
+          "lineNumber": 220
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "Math.max",
+          "lineNumber": 221
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "Math.min",
+          "lineNumber": 221
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "attendanceLogRepository\n                .findBySharedTrueOrderByReportCountDescUpdatedAtDesc(PageRequest.of(safePage, safeSize)).map",
+          "lineNumber": 222
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "attendanceLogRepository.findBySharedTrueOrderByReportCountDescUpdatedAtDesc",
+          "lineNumber": 222
+        },
+        {
+          "caller": "listSharedForAdmin",
+          "callee": "PageRequest.of",
+          "lineNumber": 223
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "Math.max",
+          "lineNumber": 238
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "Math.max",
+          "lineNumber": 239
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "Math.min",
+          "lineNumber": 239
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "query.isBlank",
+          "lineNumber": 240
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "query.trim",
+          "lineNumber": 240
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "attendanceLogRepository\n                .searchForAdmin(normalizedQuery, didWorkout, shared, fromDate, toDate, PageRequest.of(safePage, safeSize)).map",
+          "lineNumber": 241
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "attendanceLogRepository.searchForAdmin",
+          "lineNumber": 241
+        },
+        {
+          "caller": "listLogsForAdmin",
+          "callee": "PageRequest.of",
+          "lineNumber": 242
+        },
+        {
+          "caller": "setHiddenByAdmin",
+          "callee": "attendanceLogRepository.findById(attendanceId).orElseThrow",
+          "lineNumber": 249
+        },
+        {
+          "caller": "setHiddenByAdmin",
+          "callee": "attendanceLogRepository.findById",
+          "lineNumber": 249
+        },
+        {
+          "caller": "setHiddenByAdmin",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 250
+        },
+        {
+          "caller": "setHiddenByAdmin",
+          "callee": "log.setHiddenByAdmin",
+          "lineNumber": 251
+        },
+        {
+          "caller": "setHiddenByAdmin",
+          "callee": "attendanceLogRepository.save",
+          "lineNumber": 252
+        },
+        {
+          "caller": "setHiddenByAdmin",
+          "callee": "AttendanceShareResponse.from",
+          "lineNumber": 253
+        },
+        {
+          "caller": "upsert",
+          "callee": "normalizeInput",
+          "lineNumber": 257
+        },
+        {
+          "caller": "upsert",
+          "callee": "attendanceLogRepository.findByUserAndDate(user, date).orElse",
+          "lineNumber": 258
+        },
+        {
+          "caller": "upsert",
+          "callee": "attendanceLogRepository.findByUserAndDate",
+          "lineNumber": 258
+        },
+        {
+          "caller": "upsert",
+          "callee": "isSame",
+          "lineNumber": 260
+        },
+        {
+          "caller": "upsert",
+          "callee": "request.getMemo",
+          "lineNumber": 260
+        },
+        {
+          "caller": "upsert",
+          "callee": "new UpsertResult",
+          "lineNumber": 261
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.isDidWorkout",
+          "lineNumber": 261
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.isDidWorkout",
+          "lineNumber": 261
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.isDidWorkout",
+          "lineNumber": 263
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setDidWorkout",
+          "lineNumber": 264
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.didWorkout",
+          "lineNumber": 264
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setMemo",
+          "lineNumber": 265
+        },
+        {
+          "caller": "upsert",
+          "callee": "normalizeMemo",
+          "lineNumber": 265
+        },
+        {
+          "caller": "upsert",
+          "callee": "request.getMemo",
+          "lineNumber": 265
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setShareComment",
+          "lineNumber": 266
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.shareComment",
+          "lineNumber": 266
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setWorkoutTypes",
+          "lineNumber": 267
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.workoutTypesCsv",
+          "lineNumber": 267
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setWorkoutIntensity",
+          "lineNumber": 268
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.workoutIntensity",
+          "lineNumber": 268
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setMediaUrls",
+          "lineNumber": 269
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.mediaUrlsCsv",
+          "lineNumber": 269
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setEditCount",
+          "lineNumber": 270
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.getEditCount",
+          "lineNumber": 270
+        },
+        {
+          "caller": "upsert",
+          "callee": "existing.setLastEditedAt",
+          "lineNumber": 271
+        },
+        {
+          "caller": "upsert",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 271
+        },
+        {
+          "caller": "upsert",
+          "callee": "attendanceLogRepository.save",
+          "lineNumber": 272
+        },
+        {
+          "caller": "upsert",
+          "callee": "new UpsertResult",
+          "lineNumber": 274
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.didWorkout",
+          "lineNumber": 274
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user)\r\n                .date(date)\r\n                .didWorkout(input.didWorkout())\r\n                .memo(normalizeMemo(request.getMemo()))\r\n                .shareComment(input.shareComment())\r\n                .workoutTypes(input.workoutTypesCsv())\r\n                .workoutIntensity(input.workoutIntensity())\r\n                .mediaUrls(input.mediaUrlsCsv()).build",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user)\r\n                .date(date)\r\n                .didWorkout(input.didWorkout())\r\n                .memo(normalizeMemo(request.getMemo()))\r\n                .shareComment(input.shareComment())\r\n                .workoutTypes(input.workoutTypesCsv())\r\n                .workoutIntensity(input.workoutIntensity()).mediaUrls",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user)\r\n                .date(date)\r\n                .didWorkout(input.didWorkout())\r\n                .memo(normalizeMemo(request.getMemo()))\r\n                .shareComment(input.shareComment())\r\n                .workoutTypes(input.workoutTypesCsv()).workoutIntensity",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user)\r\n                .date(date)\r\n                .didWorkout(input.didWorkout())\r\n                .memo(normalizeMemo(request.getMemo()))\r\n                .shareComment(input.shareComment()).workoutTypes",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user)\r\n                .date(date)\r\n                .didWorkout(input.didWorkout())\r\n                .memo(normalizeMemo(request.getMemo())).shareComment",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user)\r\n                .date(date)\r\n                .didWorkout(input.didWorkout()).memo",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user)\r\n                .date(date).didWorkout",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder()\r\n                .user(user).date",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder().user",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "AttendanceLog.builder",
+          "lineNumber": 277
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.didWorkout",
+          "lineNumber": 280
+        },
+        {
+          "caller": "upsert",
+          "callee": "normalizeMemo",
+          "lineNumber": 281
+        },
+        {
+          "caller": "upsert",
+          "callee": "request.getMemo",
+          "lineNumber": 281
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.shareComment",
+          "lineNumber": 282
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.workoutTypesCsv",
+          "lineNumber": 283
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.workoutIntensity",
+          "lineNumber": 284
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.mediaUrlsCsv",
+          "lineNumber": 285
+        },
+        {
+          "caller": "upsert",
+          "callee": "attendanceLogRepository.save",
+          "lineNumber": 287
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.didWorkout",
+          "lineNumber": 289
+        },
+        {
+          "caller": "upsert",
+          "callee": "calculatePointsEarned",
+          "lineNumber": 289
+        },
+        {
+          "caller": "upsert",
+          "callee": "request.getMemo",
+          "lineNumber": 289
+        },
+        {
+          "caller": "upsert",
+          "callee": "new UpsertResult",
+          "lineNumber": 290
+        },
+        {
+          "caller": "upsert",
+          "callee": "input.didWorkout",
+          "lineNumber": 290
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "attendanceLogRepository.findByUserAndDate(user, today).orElse",
+          "lineNumber": 294
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "attendanceLogRepository.findByUserAndDate",
+          "lineNumber": 294
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "todayLog.isDidWorkout",
+          "lineNumber": 295
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "today.minusDays",
+          "lineNumber": 299
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "attendanceLogRepository.findByUserAndDate(user, cursor).orElse",
+          "lineNumber": 302
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "attendanceLogRepository.findByUserAndDate",
+          "lineNumber": 302
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 303
+        },
+        {
+          "caller": "calculateCurrentStreak",
+          "callee": "cursor.minusDays",
+          "lineNumber": 307
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "attendanceLogRepository.findAllByUserAndDateBetweenOrderByDateAsc",
+          "lineNumber": 313
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "logs.isEmpty",
+          "lineNumber": 314
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "new HashMap<>",
+          "lineNumber": 318
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "map.put",
+          "lineNumber": 320
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "log.getDate",
+          "lineNumber": 320
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 320
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "cursor.isAfter",
+          "lineNumber": 326
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "Boolean.TRUE.equals",
+          "lineNumber": 327
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "map.get",
+          "lineNumber": 327
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "Math.max",
+          "lineNumber": 329
+        },
+        {
+          "caller": "calculateBestStreakInMonth",
+          "callee": "cursor.plusDays",
+          "lineNumber": 333
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "Boolean.TRUE.equals",
+          "lineNumber": 339
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getDidWorkout",
+          "lineNumber": 339
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "normalizeMediaUrls",
+          "lineNumber": 340
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getMediaUrls",
+          "lineNumber": 340
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "normalizeShareComment",
+          "lineNumber": 341
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getShareComment",
+          "lineNumber": 341
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "new AttendanceInput",
+          "lineNumber": 343
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "List.of",
+          "lineNumber": 343
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "new ArrayList<>",
+          "lineNumber": 346
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "new HashSet<>",
+          "lineNumber": 347
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutTypes",
+          "lineNumber": 348
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutTypes",
+          "lineNumber": 349
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "raw.isBlank",
+          "lineNumber": 350
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "raw.trim().toLowerCase",
+          "lineNumber": 353
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "raw.trim",
+          "lineNumber": 353
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "ALLOWED_TYPES.contains",
+          "lineNumber": 354
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 355
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "seen.add",
+          "lineNumber": 357
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "normalizedTypes.add",
+          "lineNumber": 358
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "normalizedTypes.size",
+          "lineNumber": 362
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 363
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutIntensity",
+          "lineNumber": 367
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutIntensity().isBlank",
+          "lineNumber": 367
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutIntensity",
+          "lineNumber": 367
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutIntensity().trim().toLowerCase",
+          "lineNumber": 368
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutIntensity().trim",
+          "lineNumber": 368
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "request.getWorkoutIntensity",
+          "lineNumber": 368
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "ALLOWED_INTENSITIES.contains",
+          "lineNumber": 369
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 370
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "new AttendanceInput",
+          "lineNumber": 374
+        },
+        {
+          "caller": "normalizeInput",
+          "callee": "joinTypes",
+          "lineNumber": 374
+        },
+        {
+          "caller": "isSame",
+          "callee": "normalizeMemo",
+          "lineNumber": 378
+        },
+        {
+          "caller": "isSame",
+          "callee": "normalizeMemo",
+          "lineNumber": 379
+        },
+        {
+          "caller": "isSame",
+          "callee": "log.getMemo",
+          "lineNumber": 379
+        },
+        {
+          "caller": "isSame",
+          "callee": "log.getWorkoutTypes",
+          "lineNumber": 380
+        },
+        {
+          "caller": "isSame",
+          "callee": "log.getWorkoutTypes",
+          "lineNumber": 380
+        },
+        {
+          "caller": "isSame",
+          "callee": "input.workoutTypesCsv",
+          "lineNumber": 381
+        },
+        {
+          "caller": "isSame",
+          "callee": "log.getWorkoutIntensity",
+          "lineNumber": 382
+        },
+        {
+          "caller": "isSame",
+          "callee": "normalizeMediaUrls",
+          "lineNumber": 383
+        },
+        {
+          "caller": "isSame",
+          "callee": "log.getMediaUrls",
+          "lineNumber": 383
+        },
+        {
+          "caller": "isSame",
+          "callee": "input.mediaUrlsCsv",
+          "lineNumber": 384
+        },
+        {
+          "caller": "isSame",
+          "callee": "normalizeShareComment",
+          "lineNumber": 385
+        },
+        {
+          "caller": "isSame",
+          "callee": "log.getShareComment",
+          "lineNumber": 385
+        },
+        {
+          "caller": "isSame",
+          "callee": "input.shareComment",
+          "lineNumber": 386
+        },
+        {
+          "caller": "isSame",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 387
+        },
+        {
+          "caller": "isSame",
+          "callee": "input.didWorkout",
+          "lineNumber": 387
+        },
+        {
+          "caller": "isSame",
+          "callee": "equalsNullable",
+          "lineNumber": 388
+        },
+        {
+          "caller": "isSame",
+          "callee": "equalsNullable",
+          "lineNumber": 389
+        },
+        {
+          "caller": "isSame",
+          "callee": "equalsNullable",
+          "lineNumber": 390
+        },
+        {
+          "caller": "isSame",
+          "callee": "equalsNullable",
+          "lineNumber": 391
+        },
+        {
+          "caller": "isSame",
+          "callee": "input.workoutIntensity",
+          "lineNumber": 391
+        },
+        {
+          "caller": "isSame",
+          "callee": "equalsNullable",
+          "lineNumber": 392
+        },
+        {
+          "caller": "normalizeMemo",
+          "callee": "memo.trim",
+          "lineNumber": 399
+        },
+        {
+          "caller": "normalizeMemo",
+          "callee": "trimmed.isEmpty",
+          "lineNumber": 400
+        },
+        {
+          "caller": "equalsNullable",
+          "callee": "a.equals",
+          "lineNumber": 407
+        },
+        {
+          "caller": "normalizeShareComment",
+          "callee": "comment.trim",
+          "lineNumber": 414
+        },
+        {
+          "caller": "normalizeShareComment",
+          "callee": "trimmed.isEmpty",
+          "lineNumber": 415
+        },
+        {
+          "caller": "joinTypes",
+          "callee": "types.isEmpty",
+          "lineNumber": 419
+        },
+        {
+          "caller": "joinTypes",
+          "callee": "String.join",
+          "lineNumber": 422
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "mediaUrls.isEmpty",
+          "lineNumber": 426
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "mediaUrls.stream()\r\n                .filter(v -> v != null && !v.isBlank())\r\n                .map(String::trim)\r\n                .distinct()\r\n                .limit(10).toList",
+          "lineNumber": 430
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "mediaUrls.stream()\r\n                .filter(v -> v != null && !v.isBlank())\r\n                .map(String::trim)\r\n                .distinct().limit",
+          "lineNumber": 430
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "mediaUrls.stream()\r\n                .filter(v -> v != null && !v.isBlank())\r\n                .map(String::trim).distinct",
+          "lineNumber": 430
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "mediaUrls.stream()\r\n                .filter(v -> v != null && !v.isBlank()).map",
+          "lineNumber": 430
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "mediaUrls.stream().filter",
+          "lineNumber": 430
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "mediaUrls.stream",
+          "lineNumber": 430
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "v.isBlank",
+          "lineNumber": 431
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "normalized.isEmpty",
+          "lineNumber": 437
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "String.join",
+          "lineNumber": 441
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "rawMediaUrls.isBlank",
+          "lineNumber": 445
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "List.of(rawMediaUrls.split(\"\\n\")).stream()\r\n                .filter(v -> v != null && !v.isBlank())\r\n                .map(String::trim)\r\n                .distinct()\r\n                .limit(10).toList",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "List.of(rawMediaUrls.split(\"\\n\")).stream()\r\n                .filter(v -> v != null && !v.isBlank())\r\n                .map(String::trim)\r\n                .distinct().limit",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "List.of(rawMediaUrls.split(\"\\n\")).stream()\r\n                .filter(v -> v != null && !v.isBlank())\r\n                .map(String::trim).distinct",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "List.of(rawMediaUrls.split(\"\\n\")).stream()\r\n                .filter(v -> v != null && !v.isBlank()).map",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "List.of(rawMediaUrls.split(\"\\n\")).stream().filter",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "List.of(rawMediaUrls.split(\"\\n\")).stream",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "List.of",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "rawMediaUrls.split",
+          "lineNumber": 449
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "v.isBlank",
+          "lineNumber": 450
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "normalized.isEmpty",
+          "lineNumber": 456
+        },
+        {
+          "caller": "normalizeMediaUrls",
+          "callee": "String.join",
+          "lineNumber": 460
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "input.workoutTypes().size",
+          "lineNumber": 466
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "input.workoutTypes",
+          "lineNumber": 466
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "input.workoutIntensity",
+          "lineNumber": 468
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "INTENSITY_POINTS.getOrDefault",
+          "lineNumber": 469
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "input.workoutIntensity",
+          "lineNumber": 469
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "normalizeMemo",
+          "lineNumber": 472
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "countKeywordBonus",
+          "lineNumber": 475
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "input.mediaUrlsCsv",
+          "lineNumber": 478
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "calculateStreakForDate",
+          "lineNumber": 482
+        },
+        {
+          "caller": "calculatePointsEarned",
+          "callee": "streakBonus",
+          "lineNumber": 483
+        },
+        {
+          "caller": "countKeywordBonus",
+          "callee": "memo.toLowerCase",
+          "lineNumber": 489
+        },
+        {
+          "caller": "countKeywordBonus",
+          "callee": "lower.contains",
+          "lineNumber": 491
+        },
+        {
+          "caller": "countKeywordBonus",
+          "callee": "keyword.toLowerCase",
+          "lineNumber": 491
+        },
+        {
+          "caller": "countKeywordBonus",
+          "callee": "Math.min",
+          "lineNumber": 495
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "attendanceLogRepository.findByUserAndDate(user, date).orElse",
+          "lineNumber": 515
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "attendanceLogRepository.findByUserAndDate",
+          "lineNumber": 515
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "dateLog.isDidWorkout",
+          "lineNumber": 516
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "date.minusDays",
+          "lineNumber": 520
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "attendanceLogRepository.findByUserAndDate(user, cursor).orElse",
+          "lineNumber": 523
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "attendanceLogRepository.findByUserAndDate",
+          "lineNumber": 523
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 524
+        },
+        {
+          "caller": "calculateStreakForDate",
+          "callee": "cursor.minusDays",
+          "lineNumber": 528
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "new HashMap<>",
+          "lineNumber": 534
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "map.put",
+          "lineNumber": 536
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "log.getDate",
+          "lineNumber": 536
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "log.isDidWorkout",
+          "lineNumber": 536
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "cursor.isBefore",
+          "lineNumber": 540
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "Boolean.TRUE.equals",
+          "lineNumber": 541
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "map.get",
+          "lineNumber": 541
+        },
+        {
+          "caller": "calculateCurrentStreakInRange",
+          "callee": "cursor.minusDays",
+          "lineNumber": 543
+        },
+        {
+          "caller": "toShareResponse",
+          "callee": "log.getUser",
+          "lineNumber": 552
+        },
+        {
+          "caller": "toShareResponse",
+          "callee": "AttendanceShareResponse.from",
+          "lineNumber": 553
+        },
+        {
+          "caller": "toShareResponse",
+          "callee": "calculateStreakForDate",
+          "lineNumber": 555
+        },
+        {
+          "caller": "toShareResponse",
+          "callee": "log.getUser",
+          "lineNumber": 555
+        },
+        {
+          "caller": "toShareResponse",
+          "callee": "log.getDate",
+          "lineNumber": 555
+        },
+        {
+          "caller": "toShareResponse",
+          "callee": "AttendanceShareResponse.from",
+          "lineNumber": 556
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 560
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 560
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 561
+        }
+      ],
+      "metrics": {
+        "importCount": 12,
+        "exportCount": 16,
+        "functionCount": 33,
+        "classCount": 1
+      }
+    }
+  ]
+}

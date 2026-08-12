@@ -1,0 +1,21 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 1,
+  "edgesRestored": 2,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 2,
+  "complexityRemapped": 0,
+  "edgesRepointed": 6,
+  "testedByAdded": 1,
+  "notes": [
+    "머지 스크립트의 기계적 결과물은 구조적으로 정상. 중복 노드 0, 중복 엣지 0, dangling 엣지 0, self-loop 0, 필수 필드 누락 0. 노드 타입 7종·complexity 3종 모두 유효값만 사용. 'no id' 노드나 미지의 타입/complexity 항목은 없었음.",
+    "진입점 혼동 수정: MuscleupApplication.java는 디스크에서 본문이 빈 스텁(public class MuscleupApplication { })임을 확인. 실제 Spring Boot 진입점은 @SpringBootApplication이 붙은 BackendApplication.java. 스텁을 향하던 6개 엣지(configures 4 - build.gradle/application.properties/application-prod/application-test, deploys 1 - nixpacks.toml, documents 1 - muscleup_homepage_master_document.md)를 모두 file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java로 재지정. 기존 엣지와의 충돌은 없었음(README.md의 documents 엣지는 source가 달라 중복 아님). 스텁 노드 자체는 dead-code/legacy 태그와 함께 그래프에 남겨둠 - 실재하는 파일이므로 삭제하지 않음.",
+    "누락된 calls 엣지 복구: UserService.encodePassword는 실재하는 메서드(UserService.java:64-66, passwordEncoder.encode에 위임)이고 AuthController.googleLogin이 186행에서 실제로 호출함. 할루시네이션이 아니라 배치가 노드를 누락시킨 것이므로 function 노드를 생성하고 contains 엣지와 calls 엣지를 복구함.",
+    "tested_by 보강: backend/src/test 하위에 실제 테스트 파일은 2개뿐(AiInbodyQualityHarnessTest.java, BackendApplicationTests.java). AiService -> AiInbodyQualityHarnessTest 엣지는 이미 존재했고, 누락된 BackendApplication -> BackendApplicationTests(@SpringBootTest contextLoads 스모크 테스트)만 추가하고 BackendApplication 노드에 'tested' 태그 부여. 테스트 파일이 2개뿐이라 파일 단위 tested_by는 2개가 상한 - 추측성 페어링은 만들지 않음.",
+    "middleware 엣지 도입: JwtAuthenticationFilter와 AuditLogFilter 모두 OncePerRequestFilter를 상속하는 실제 서블릿 필터이며 SecurityConfig.java:116-117에서 addFilterBefore/addFilterAfter로 필터 체인에 명시적으로 등록됨. SecurityConfig -> 각 필터의 파일 단위 depends_on 2개를 middleware(weight 0.8)로 재분류. 클래스 단위 depends_on(생성자 주입)은 의존성 표현으로 여전히 타당하므로 그대로 유지.",
+    "프론트엔드 <-> realtime 접합부 정상: Lounge.tsx가 socket.io-client로 REALTIME_URL(기본 localhost:4001)에 접속해 lounge:join/lounge:players 이벤트를 주고받는 것을 확인. related 엣지 2개(realtime/src/server.ts -> Lounge.tsx, realtime/src/types.ts -> Lounge.tsx)가 머지 후에도 살아있고 의미적으로 타당해 수정하지 않음.",
+    "imports 엣지 615개가 importMap 총계와 정확히 일치하여 크로스배치 import 누락은 없음. 근거 없는 추측성 엣지는 추가하지 않았음.",
+    "잔여 관찰: MuscleupApplication.java는 패키지 리네이밍 잔재로 보이는 데드 코드이며 이제 인바운드 엣지가 없는 고립 노드. 코드베이스 정리 대상으로 볼 만함(그래프 문제는 아님).",
+    "잔여 관찰: 테스트 커버리지가 구조적으로 얕음. 프로덕션 노드 1000여 개 대비 테스트 파일 2개뿐이고 그중 AiInbodyQualityHarnessTest는 OPENAI_API_KEY가 없으면 조기 return하는 조건부 실행 하네스라 CI에서는 사실상 스킵됨."
+  ]
+}

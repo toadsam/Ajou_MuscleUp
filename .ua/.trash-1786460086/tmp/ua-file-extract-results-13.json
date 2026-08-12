@@ -1,0 +1,868 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 11,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 11,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 11,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/CrewController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 174,
+      "nonEmptyLines": 156,
+      "functions": [
+        {
+          "name": "create",
+          "startLine": 31,
+          "endLine": 37,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "list",
+          "startLine": 39,
+          "endLine": 44,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "detail",
+          "startLine": 46,
+          "endLine": 54,
+          "params": [
+            "email",
+            "crewId",
+            "month"
+          ]
+        },
+        {
+          "name": "join",
+          "startLine": 56,
+          "endLine": 62,
+          "params": [
+            "email",
+            "crewId"
+          ]
+        },
+        {
+          "name": "leave",
+          "startLine": 64,
+          "endLine": 71,
+          "params": [
+            "email",
+            "crewId"
+          ]
+        },
+        {
+          "name": "joinByCode",
+          "startLine": 73,
+          "endLine": 79,
+          "params": [
+            "email",
+            "inviteCode"
+          ]
+        },
+        {
+          "name": "listJoinRequests",
+          "startLine": 81,
+          "endLine": 87,
+          "params": [
+            "email",
+            "crewId"
+          ]
+        },
+        {
+          "name": "approveJoinRequest",
+          "startLine": 89,
+          "endLine": 97,
+          "params": [
+            "email",
+            "crewId",
+            "requestId"
+          ]
+        },
+        {
+          "name": "rejectJoinRequest",
+          "startLine": 99,
+          "endLine": 107,
+          "params": [
+            "email",
+            "crewId",
+            "requestId"
+          ]
+        },
+        {
+          "name": "update",
+          "startLine": 109,
+          "endLine": 116,
+          "params": [
+            "email",
+            "crewId",
+            "request"
+          ]
+        },
+        {
+          "name": "delete",
+          "startLine": 118,
+          "endLine": 125,
+          "params": [
+            "email",
+            "crewId"
+          ]
+        },
+        {
+          "name": "kickMember",
+          "startLine": 127,
+          "endLine": 135,
+          "params": [
+            "email",
+            "crewId",
+            "memberUserId"
+          ]
+        },
+        {
+          "name": "createChallenge",
+          "startLine": 137,
+          "endLine": 144,
+          "params": [
+            "email",
+            "crewId",
+            "request"
+          ]
+        },
+        {
+          "name": "updateChallenge",
+          "startLine": 146,
+          "endLine": 154,
+          "params": [
+            "email",
+            "crewId",
+            "challengeId",
+            "request"
+          ]
+        },
+        {
+          "name": "deleteChallenge",
+          "startLine": 156,
+          "endLine": 164,
+          "params": [
+            "email",
+            "crewId",
+            "challengeId"
+          ]
+        },
+        {
+          "name": "parseMonthOrDefault",
+          "startLine": 166,
+          "endLine": 173,
+          "params": [
+            "month"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CrewController",
+          "startLine": 24,
+          "endLine": 174,
+          "methods": [
+            "create",
+            "list",
+            "detail",
+            "join",
+            "leave",
+            "joinByCode",
+            "listJoinRequests",
+            "approveJoinRequest",
+            "rejectJoinRequest",
+            "update",
+            "delete",
+            "kickMember",
+            "createChallenge",
+            "updateChallenge",
+            "deleteChallenge",
+            "parseMonthOrDefault"
+          ],
+          "properties": [
+            "MONTH_FORMAT",
+            "crewService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "list",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "detail",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "join",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "leave",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "joinByCode",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "listJoinRequests",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "approveJoinRequest",
+          "line": 89,
+          "isDefault": false
+        },
+        {
+          "name": "rejectJoinRequest",
+          "line": 99,
+          "isDefault": false
+        },
+        {
+          "name": "update",
+          "line": 109,
+          "isDefault": false
+        },
+        {
+          "name": "delete",
+          "line": 118,
+          "isDefault": false
+        },
+        {
+          "name": "kickMember",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "createChallenge",
+          "line": 137,
+          "isDefault": false
+        },
+        {
+          "name": "updateChallenge",
+          "line": 146,
+          "isDefault": false
+        },
+        {
+          "name": "deleteChallenge",
+          "line": 156,
+          "isDefault": false
+        },
+        {
+          "name": "CrewController",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 36
+        },
+        {
+          "caller": "create",
+          "callee": "crewService.create",
+          "lineNumber": 36
+        },
+        {
+          "caller": "list",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 43
+        },
+        {
+          "caller": "list",
+          "callee": "crewService.list",
+          "lineNumber": 43
+        },
+        {
+          "caller": "detail",
+          "callee": "parseMonthOrDefault",
+          "lineNumber": 52
+        },
+        {
+          "caller": "detail",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 53
+        },
+        {
+          "caller": "detail",
+          "callee": "crewService.getDetail",
+          "lineNumber": 53
+        },
+        {
+          "caller": "join",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 61
+        },
+        {
+          "caller": "join",
+          "callee": "crewService.join",
+          "lineNumber": 61
+        },
+        {
+          "caller": "leave",
+          "callee": "crewService.leave",
+          "lineNumber": 69
+        },
+        {
+          "caller": "leave",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 70
+        },
+        {
+          "caller": "leave",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 70
+        },
+        {
+          "caller": "joinByCode",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 78
+        },
+        {
+          "caller": "joinByCode",
+          "callee": "crewService.joinByInviteCode",
+          "lineNumber": 78
+        },
+        {
+          "caller": "listJoinRequests",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 86
+        },
+        {
+          "caller": "listJoinRequests",
+          "callee": "crewService.listJoinRequests",
+          "lineNumber": 86
+        },
+        {
+          "caller": "approveJoinRequest",
+          "callee": "crewService.approveJoinRequest",
+          "lineNumber": 95
+        },
+        {
+          "caller": "approveJoinRequest",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 96
+        },
+        {
+          "caller": "approveJoinRequest",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 96
+        },
+        {
+          "caller": "rejectJoinRequest",
+          "callee": "crewService.rejectJoinRequest",
+          "lineNumber": 105
+        },
+        {
+          "caller": "rejectJoinRequest",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 106
+        },
+        {
+          "caller": "rejectJoinRequest",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 106
+        },
+        {
+          "caller": "update",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 115
+        },
+        {
+          "caller": "update",
+          "callee": "crewService.update",
+          "lineNumber": 115
+        },
+        {
+          "caller": "delete",
+          "callee": "crewService.delete",
+          "lineNumber": 123
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 124
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 124
+        },
+        {
+          "caller": "kickMember",
+          "callee": "crewService.kickMember",
+          "lineNumber": 133
+        },
+        {
+          "caller": "kickMember",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 134
+        },
+        {
+          "caller": "kickMember",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 134
+        },
+        {
+          "caller": "createChallenge",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 143
+        },
+        {
+          "caller": "createChallenge",
+          "callee": "crewService.createChallenge",
+          "lineNumber": 143
+        },
+        {
+          "caller": "updateChallenge",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 153
+        },
+        {
+          "caller": "updateChallenge",
+          "callee": "crewService.updateChallenge",
+          "lineNumber": 153
+        },
+        {
+          "caller": "deleteChallenge",
+          "callee": "crewService.deleteChallenge",
+          "lineNumber": 162
+        },
+        {
+          "caller": "deleteChallenge",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 163
+        },
+        {
+          "caller": "deleteChallenge",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 163
+        },
+        {
+          "caller": "parseMonthOrDefault",
+          "callee": "month.isBlank",
+          "lineNumber": 167
+        },
+        {
+          "caller": "parseMonthOrDefault",
+          "callee": "YearMonth.now",
+          "lineNumber": 167
+        },
+        {
+          "caller": "parseMonthOrDefault",
+          "callee": "YearMonth.parse",
+          "lineNumber": 169
+        },
+        {
+          "caller": "parseMonthOrDefault",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 171
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 16,
+        "functionCount": 16,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeCreateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 25,
+      "classes": [
+        {
+          "name": "CrewChallengeCreateRequest",
+          "startLine": 12,
+          "endLine": 31,
+          "methods": [],
+          "properties": [
+            "title",
+            "description",
+            "startDate",
+            "endDate",
+            "targetWorkoutDays"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewChallengeCreateRequest",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 17,
+      "classes": [
+        {
+          "name": "CrewChallengeResponse",
+          "startLine": 8,
+          "endLine": 19,
+          "methods": [],
+          "properties": [
+            "id",
+            "title",
+            "description",
+            "startDate",
+            "endDate",
+            "status",
+            "targetWorkoutDays",
+            "members"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewChallengeResponse",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCreateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 16,
+      "classes": [
+        {
+          "name": "CrewCreateRequest",
+          "startLine": 9,
+          "endLine": 20,
+          "methods": [],
+          "properties": [
+            "name",
+            "description",
+            "joinPolicy"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewCreateRequest",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewDetailResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 23,
+      "classes": [
+        {
+          "name": "CrewDetailResponse",
+          "startLine": 8,
+          "endLine": 25,
+          "methods": [],
+          "properties": [
+            "id",
+            "name",
+            "description",
+            "ownerNickname",
+            "inviteCode",
+            "joinPolicy",
+            "joined",
+            "leader",
+            "month",
+            "targetDays",
+            "members",
+            "challenges",
+            "kingTitles",
+            "competitionBoard"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewDetailResponse",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinRequestResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 14,
+      "classes": [
+        {
+          "name": "CrewJoinRequestResponse",
+          "startLine": 7,
+          "endLine": 16,
+          "methods": [],
+          "properties": [
+            "id",
+            "userId",
+            "nickname",
+            "email",
+            "status",
+            "requestedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewJoinRequestResponse",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinResultResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "CrewJoinResultResponse",
+          "startLine": 6,
+          "endLine": 14,
+          "methods": [],
+          "properties": [
+            "crewId",
+            "crewName",
+            "inviteCode",
+            "result",
+            "message"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewJoinResultResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewListItemResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 16,
+      "classes": [
+        {
+          "name": "CrewListItemResponse",
+          "startLine": 7,
+          "endLine": 18,
+          "methods": [],
+          "properties": [
+            "id",
+            "name",
+            "description",
+            "ownerNickname",
+            "memberCount",
+            "joined",
+            "inviteCode",
+            "joinPolicy"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewListItemResponse",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewUpdateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 16,
+      "classes": [
+        {
+          "name": "CrewUpdateRequest",
+          "startLine": 9,
+          "endLine": 20,
+          "methods": [],
+          "properties": [
+            "name",
+            "description",
+            "joinPolicy"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewUpdateRequest",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "CrewJoinPolicy",
+          "startLine": 3,
+          "endLine": 6,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewJoinPolicy",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CrewService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 44,
+      "nonEmptyLines": 28,
+      "classes": [
+        {
+          "name": "CrewService",
+          "startLine": 14,
+          "endLine": 44,
+          "methods": [
+            "create",
+            "list",
+            "getDetail",
+            "join",
+            "joinByInviteCode",
+            "leave",
+            "listJoinRequests",
+            "approveJoinRequest",
+            "rejectJoinRequest",
+            "update",
+            "delete",
+            "kickMember",
+            "createChallenge",
+            "updateChallenge",
+            "deleteChallenge"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewService",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    }
+  ]
+}

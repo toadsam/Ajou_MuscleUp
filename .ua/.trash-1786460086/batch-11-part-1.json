@@ -1,0 +1,343 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "type": "file",
+      "name": "AiController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "summary": "AI 코칭·인바디 분석 기능의 REST 진입점으로 `/api/ai` 하위에 분석·운동계획·챗·인바디 이미지 상담·PDF 리포트·대화 이력 공유 엔드포인트를 노출한다. 업로드 파일 검증과 PDF 렌더링 유틸(PdfWriter)까지 컨트롤러 안에 함께 들고 있다.",
+      "tags": ["api-handler", "controller", "ai", "pdf-generation", "file-upload"],
+      "complexity": "complex",
+      "languageNotes": "Spring `@RestController` + `@AuthenticationPrincipal`로 이메일을 주입받고, PDFBox(Loader/PDFRenderer/PDType0Font)를 직접 호출해 한글 유니코드 폰트를 로드한 뒤 PDF를 조립하는 내부 헬퍼 클래스를 품고 있다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:AiController",
+      "type": "class",
+      "name": "AiController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [39, 495],
+      "summary": "AiService(모델 호출)와 AiChatHistoryService(이력 저장/공유)를 주입받아 AI 관련 10개 엔드포인트를 처리하는 REST 컨트롤러. 요청 검증, 파일 전처리, 응답 DTO 변환, PDF 렌더링을 모두 담당한다.",
+      "tags": ["api-handler", "controller", "ai", "orchestration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:analyze",
+      "type": "function",
+      "name": "analyze",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [48, 60],
+      "summary": "키·체중·체지방·근육량·목표를 받아 코치 시스템 프롬프트로 AI 완성을 요청하고 결과를 대화 이력에 저장한 뒤 AiAnalyzeResponse로 반환한다.",
+      "tags": ["api-handler", "ai", "endpoint"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildPlan",
+      "type": "function",
+      "name": "buildPlan",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [62, 75],
+      "summary": "경험 수준·가능 요일·집중 부위·장비·선호 시간대를 플래너 프롬프트로 조합해 개인 맞춤 운동 계획을 생성하고 이력에 기록한다.",
+      "tags": ["api-handler", "ai", "workout-plan", "endpoint"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:chat",
+      "type": "function",
+      "name": "chat",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [77, 85],
+      "summary": "사용자 질문과 선택적 컨텍스트를 코치 프롬프트에 실어 AI 응답을 받고 질문/답변 쌍을 대화 이력에 저장한다.",
+      "tags": ["api-handler", "ai", "chat", "endpoint"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:consultInbody",
+      "type": "function",
+      "name": "consultInbody",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [87, 129],
+      "summary": "멀티파트로 업로드된 인바디 이미지/PDF를 빈 파일·용량·타입 기준으로 검증하고 전처리한 뒤 비전 모델 상담을 요청하여 구조화된 인바디 리포트를 반환한다.",
+      "tags": ["api-handler", "file-upload", "ai", "validation", "inbody"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:reviewConsult",
+      "type": "function",
+      "name": "reviewConsult",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [131, 160],
+      "summary": "이미지 없이 사용자가 직접 입력한 인바디 수치 맵을 받아 텍스트 기반 재상담을 수행하고 동일한 인바디 응답 포맷으로 변환한다.",
+      "tags": ["api-handler", "ai", "inbody", "endpoint"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildInbodyPdf",
+      "type": "function",
+      "name": "buildInbodyPdf",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [162, 182],
+      "summary": "인바디 상담 결과를 PDF 바이트로 렌더링하고 UTF-8 인코딩된 첨부 파일명과 함께 application/pdf 응답으로 내려준다.",
+      "tags": ["api-handler", "pdf-generation", "download", "endpoint"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:history",
+      "type": "function",
+      "name": "history",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [184, 192],
+      "summary": "로그인 사용자의 최근 AI 대화 이력을 메시지 타입과 개수 제한으로 필터링해 조회한다.",
+      "tags": ["api-handler", "history", "endpoint"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:share",
+      "type": "function",
+      "name": "share",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [194, 201],
+      "summary": "특정 AI 대화 메시지를 공개 상태로 전환하고 공유 슬러그가 포함된 AiShareResponse를 반환한다.",
+      "tags": ["api-handler", "sharing", "endpoint"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:unshare",
+      "type": "function",
+      "name": "unshare",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [203, 211],
+      "summary": "공유 중인 AI 대화 메시지의 공개를 해제하고 204 No Content를 반환한다.",
+      "tags": ["api-handler", "sharing", "endpoint"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:viewShared",
+      "type": "function",
+      "name": "viewShared",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [213, 216],
+      "summary": "인증 없이 공유 슬러그만으로 공개된 AI 상담 내용을 조회하는 퍼블릭 엔드포인트.",
+      "tags": ["api-handler", "sharing", "public", "endpoint"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:detectSourceType",
+      "type": "function",
+      "name": "detectSourceType",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [237, 247],
+      "summary": "Content-Type과 파일 확장자를 함께 검사해 업로드 파일을 pdf/image 중 하나로 분류하고, 지원하지 않는 형식이면 예외를 던진다.",
+      "tags": ["validation", "file-upload", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:preprocess",
+      "type": "function",
+      "name": "preprocess",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [249, 274],
+      "summary": "이미지는 원본 바이트를 그대로 쓰고 PDF는 PDFBox로 첫 페이지를 DPI 렌더링해 PNG 바이트로 변환하여, 비전 모델이 처리 가능한 단일 이미지로 정규화한다.",
+      "tags": ["preprocessing", "pdf", "image", "file-upload"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:toInbodyResponse",
+      "type": "function",
+      "name": "toInbodyResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [284, 313],
+      "summary": "AiService가 돌려준 느슨한 Map 결과에서 metrics·targets·nutrition·checkpoints·warnings를 기본값과 함께 꺼내 타입 안전한 AiInbodyConsultResponse DTO로 변환한다.",
+      "tags": ["serialization", "dto", "mapping", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:renderInbodyPdf",
+      "type": "function",
+      "name": "renderInbodyPdf",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [315, 360],
+      "summary": "내부 PdfWriter 헬퍼로 제목·측정값·목표·영양·주차별 체크포인트·주의사항·상담 본문을 순서대로 그려 인바디 리포트 PDF 바이트 배열을 만든다.",
+      "tags": ["pdf-generation", "report", "rendering"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java",
+      "type": "file",
+      "name": "MyPageController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java",
+      "summary": "`/api/mypage` 단일 GET 엔드포인트를 제공하는 얇은 REST 컨트롤러로, 로그인 사용자의 마이페이지 집계 데이터를 MyPageService에 위임한다.",
+      "tags": ["api-handler", "controller", "mypage", "thin-layer"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java:MyPageController",
+      "type": "class",
+      "name": "MyPageController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java",
+      "lineRange": [12, 22],
+      "summary": "MyPageService를 생성자 주입받아 마이페이지 조회 요청만 처리하는 최소 컨트롤러.",
+      "tags": ["api-handler", "controller", "mypage"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java:get",
+      "type": "function",
+      "name": "get",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java",
+      "lineRange": [18, 21],
+      "summary": "인증된 이메일로 MyPageService.fetch를 호출해 마이페이지 응답을 그대로 200으로 반환한다.",
+      "tags": ["api-handler", "endpoint", "mypage"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "type": "file",
+      "name": "AiChatLogItem.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "summary": "AI 대화 이력 한 건을 프런트로 내보내기 위한 응답 DTO로 질문·답변·타입·공유 여부와 슬러그를 담는다.",
+      "tags": ["dto", "data-model", "ai", "history"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java:AiChatLogItem",
+      "type": "class",
+      "name": "AiChatLogItem",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "lineRange": [9, 19],
+      "summary": "id, type(AiMessageType), question, answer, createdAt, shared, shareSlug 7개 필드로 구성된 Lombok 기반 이력 항목 DTO.",
+      "tags": ["dto", "data-model", "ai"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java",
+      "type": "file",
+      "name": "AiShareResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java",
+      "summary": "AI 대화 공유 시 반환되는 응답 DTO로 공유 슬러그와 함께 원본 질문·답변을 노출한다.",
+      "tags": ["dto", "data-model", "sharing", "ai"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java:AiShareResponse",
+      "type": "class",
+      "name": "AiShareResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java",
+      "lineRange": [9, 18],
+      "summary": "공유된 AI 상담 조회/생성 응답용 DTO. AiChatLogItem과 유사하지만 shared 플래그 없이 shareSlug만 포함한다.",
+      "tags": ["dto", "data-model", "sharing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "type": "file",
+      "name": "MyPageResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "summary": "마이페이지 화면 한 번에 필요한 프로필·최근 댓글·최근 좋아요·최근 AI 대화를 묶어 내려주는 집계 응답 DTO.",
+      "tags": ["dto", "data-model", "mypage", "aggregate"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java:MyPageResponse",
+      "type": "class",
+      "name": "MyPageResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "lineRange": [10, 20],
+      "summary": "email, nickname, createdAt와 recentComments/recentLikes/recentAiChats 리스트를 담는 마이페이지 집계 DTO.",
+      "tags": ["dto", "data-model", "mypage"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "type": "file",
+      "name": "AiChatMessage.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "summary": "`ai_chat_messages` 테이블에 매핑되는 JPA 엔티티로 사용자별 AI 질문/답변과 공유 상태를 영속화한다.",
+      "tags": ["entity", "data-model", "jpa", "ai"],
+      "complexity": "simple",
+      "languageNotes": "BaseTimeEntity를 상속해 생성/수정 시각을 자동 관리하고, shareSlug에 unique 제약을 걸어 공유 링크 충돌을 DB 레벨에서 막는다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java:AiChatMessage",
+      "type": "class",
+      "name": "AiChatMessage",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "lineRange": [6, 39],
+      "summary": "User와 LAZY ManyToOne으로 연결되고 AiMessageType enum을 STRING으로 저장하며, answer는 TEXT 컬럼으로 긴 AI 응답을 수용하는 엔티티.",
+      "tags": ["entity", "jpa", "data-model"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AiService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:AiController", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:analyze", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildPlan", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:chat", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:consultInbody", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:reviewConsult", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildInbodyPdf", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:history", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:share", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:unshare", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:viewShared", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:detectSourceType", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:preprocess", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:toInbodyResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:renderInbodyPdf", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:AiController", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:analyze", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildPlan", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:chat", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:consultInbody", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:reviewConsult", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildInbodyPdf", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:history", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:share", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:unshare", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AiController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:viewShared", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:analyze", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiService.java:requestCompletion", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:analyze", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:save", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildPlan", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiService.java:requestCompletion", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:buildPlan", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:save", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:chat", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiService.java:requestCompletion", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:chat", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:save", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:consultInbody", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiService.java:requestInbodyConsultation", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:consultInbody", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:save", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:reviewConsult", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiService.java:requestInbodyConsultationFromMetrics", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:reviewConsult", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:save", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:history", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:getRecent", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:share", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:share", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:unshare", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:unshare", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AiController.java:viewShared", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java:getSharedBySlug", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/MyPageService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java:MyPageController", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java:get", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java:MyPageController", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java:get", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java", "type": "depends_on", "direction": "forward", "weight": 0.6},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java:AiChatLogItem", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java:AiChatLogItem", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java:AiShareResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java:AiShareResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java:MyPageResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java:MyPageResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java:AiChatMessage", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java:AiChatMessage", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java", "type": "depends_on", "direction": "forward", "weight": 0.6},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java", "type": "depends_on", "direction": "forward", "weight": 0.6}
+  ]
+}

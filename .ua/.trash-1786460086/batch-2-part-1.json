@@ -1,0 +1,505 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java",
+      "type": "file",
+      "name": "AuditLogFilter.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java",
+      "summary": "인증된 사용자의 쓰기 계열 HTTP 요청(POST/PUT/PATCH/DELETE)을 가로채 감사 로그로 남기는 Spring Security 서블릿 필터입니다. 요청 URI·메서드·응답 상태·IP·User-Agent를 수집해 AuditLogService에 위임합니다.",
+      "tags": ["middleware", "audit-log", "security", "filter", "spring-boot"],
+      "complexity": "simple",
+      "languageNotes": "OncePerRequestFilter를 상속해 요청당 정확히 한 번만 실행되도록 보장하는 Spring의 표준 필터 패턴입니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java:AuditLogFilter",
+      "type": "class",
+      "name": "AuditLogFilter",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java",
+      "lineRange": [17, 49],
+      "summary": "감사 대상 HTTP 메서드 집합(METHODS_TO_LOG)을 기준으로 요청을 선별해 감사 로그를 기록하는 필터 클래스입니다.",
+      "tags": ["middleware", "filter", "audit-log", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java:doFilterInternal",
+      "type": "function",
+      "name": "doFilterInternal",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java",
+      "lineRange": [27, 48],
+      "summary": "필터 체인을 먼저 실행한 뒤 SecurityContext에서 인증 주체를 꺼내 요청 정보를 감사 로그로 기록합니다. 조회성 메서드는 로깅 대상에서 제외합니다.",
+      "tags": ["event-handler", "audit-log", "middleware", "security"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "type": "file",
+      "name": "AdminController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "summary": "관리자 전용 REST 엔드포인트를 한데 모은 컨트롤러로, 통계 요약·감사 로그 조회·게시물/댓글/리뷰/AI 기록 강제 삭제·프로그램 신청 관리·출석 로그 조회·문의 처리까지 운영 기능 전반을 제공합니다.",
+      "tags": ["api-handler", "admin", "rest-controller", "moderation", "entry-point"],
+      "complexity": "complex",
+      "languageNotes": "10개의 Repository/Service를 Lombok @RequiredArgsConstructor로 한 번에 주입받는 대형 컨트롤러로, 서비스 레이어를 우회해 Repository를 직접 호출하는 지점이 많습니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:AdminController",
+      "type": "class",
+      "name": "AdminController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [35, 219],
+      "summary": "16개의 관리자 API 핸들러를 보유한 컨트롤러 클래스입니다. 분석·감사·모더레이션·신청 관리·문의 관리 도메인을 한 클래스에서 처리합니다.",
+      "tags": ["api-handler", "admin", "rest-controller", "moderation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:listProgramApplications",
+      "type": "function",
+      "name": "listProgramApplications",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [104, 115],
+      "summary": "프로그램(반) 신청 목록을 최신순으로 페이징 조회합니다. page/size 파라미터를 Math.max/min으로 안전하게 보정한 뒤 ApplicationResponse로 변환합니다.",
+      "tags": ["api-handler", "pagination", "admin", "query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:updateProgramApplicationStatus",
+      "type": "function",
+      "name": "updateProgramApplicationStatus",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [117, 127],
+      "summary": "특정 프로그램 신청의 상태(ApplicationStatus)를 변경합니다. 대상이 없으면 404를 반환하고, 저장 후 변환된 응답 DTO를 돌려줍니다.",
+      "tags": ["api-handler", "admin", "state-transition", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:listAttendanceLogs",
+      "type": "function",
+      "name": "listAttendanceLogs",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [137, 148],
+      "summary": "검색어·운동 여부·공유 여부·기간 등 다중 필터를 받아 출석 로그를 페이징 조회하며, 실제 조회는 AttendanceService에 위임합니다.",
+      "tags": ["api-handler", "admin", "filtering", "pagination"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:listSupportInquiries",
+      "type": "function",
+      "name": "listSupportInquiries",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [150, 169],
+      "summary": "고객 문의를 검색어·회장 전용 여부·처리 상태로 필터링해 페이징 조회합니다. 빈 검색어는 null로 정규화해 Repository의 동적 쿼리에 전달합니다.",
+      "tags": ["api-handler", "admin", "filtering", "pagination", "support"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:updateSupportInquiryStatus",
+      "type": "function",
+      "name": "updateSupportInquiryStatus",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [171, 187],
+      "summary": "문의의 처리 상태와 관리자 메모를 갱신하고 처리 시각(handledAt)을 기록합니다. 대상이 없으면 ResponseStatusException으로 404를 던집니다.",
+      "tags": ["api-handler", "admin", "state-transition", "support"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:manualAudit",
+      "type": "function",
+      "name": "manualAudit",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [197, 210],
+      "summary": "관리자가 임의의 감사 이벤트를 수동으로 기록할 수 있는 엔드포인트입니다. action/resource 누락 시 기본값으로 보정한 뒤 AuditLogService에 위임합니다.",
+      "tags": ["api-handler", "admin", "audit-log", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java",
+      "type": "file",
+      "name": "AnalyticsController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java",
+      "summary": "프론트엔드가 보내는 사용자 행동 이벤트를 수집하는 단일 엔드포인트 컨트롤러입니다. 이벤트를 AnalyticsService에 넘기고 202 Accepted로 즉시 응답합니다.",
+      "tags": ["api-handler", "analytics", "rest-controller", "telemetry"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java:AnalyticsController",
+      "type": "class",
+      "name": "AnalyticsController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java",
+      "lineRange": [14, 27],
+      "summary": "행동 이벤트 수집 API(record)를 노출하는 얇은 컨트롤러 클래스입니다.",
+      "tags": ["api-handler", "analytics", "rest-controller"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java",
+      "type": "file",
+      "name": "ProgramApplicationController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java",
+      "summary": "운동 프로그램(반) 신청 접수 API를 제공하는 컨트롤러입니다. 요청 값의 공백을 제거해 PENDING 상태의 ProgramApplication 엔티티로 저장합니다.",
+      "tags": ["api-handler", "rest-controller", "program-application", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java:ProgramApplicationController",
+      "type": "class",
+      "name": "ProgramApplicationController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java",
+      "lineRange": [13, 32],
+      "summary": "프로그램 신청 생성 엔드포인트를 담당하며 Repository를 직접 사용하는 컨트롤러 클래스입니다.",
+      "tags": ["api-handler", "rest-controller", "program-application"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java:apply",
+      "type": "function",
+      "name": "apply",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java",
+      "lineRange": [20, 31],
+      "summary": "신청 요청 DTO의 각 필드를 trim한 뒤 Lombok 빌더로 ProgramApplication을 만들어 저장하고, ApplicationResponse로 변환해 반환합니다.",
+      "tags": ["api-handler", "factory", "validation", "persistence"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java",
+      "type": "file",
+      "name": "SupportController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/SupportController.java",
+      "summary": "고객 지원 기능의 진입점으로, 1:1 문의 등록과 AI 지원 챗봇 응답 두 가지 엔드포인트를 제공합니다.",
+      "tags": ["api-handler", "rest-controller", "support", "chatbot"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java:SupportController",
+      "type": "class",
+      "name": "SupportController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/SupportController.java",
+      "lineRange": [16, 42],
+      "summary": "문의 저장은 InquiryRepository에, 챗봇 응답은 SupportChatService에 위임하는 컨트롤러 클래스입니다.",
+      "tags": ["api-handler", "rest-controller", "support"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java:create",
+      "type": "function",
+      "name": "create",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/SupportController.java",
+      "lineRange": [24, 35],
+      "summary": "문의 요청 DTO로 OPEN 상태의 Inquiry 엔티티를 생성해 저장하고, 생성된 식별자를 담은 InquiryResponse를 반환합니다.",
+      "tags": ["api-handler", "factory", "persistence", "support"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java",
+      "type": "file",
+      "name": "AnalyticsEventRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java",
+      "summary": "클라이언트가 전송하는 행동 이벤트 수집 요청 DTO로, 페이지·액션·부가 메타데이터(JSON 문자열) 세 필드를 담습니다.",
+      "tags": ["dto", "data-model", "analytics", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java:AnalyticsEventRequest",
+      "type": "class",
+      "name": "AnalyticsEventRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java",
+      "lineRange": [6, 15],
+      "summary": "page, action, metadata 필드를 가진 행동 이벤트 요청 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "analytics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java",
+      "type": "file",
+      "name": "AnalyticsEventResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java",
+      "summary": "관리자 화면에 노출할 개별 행동 이벤트 응답 DTO입니다. 이벤트 정보에 더해 행위자의 이메일·닉네임과 생성 시각을 함께 담습니다.",
+      "tags": ["dto", "data-model", "analytics", "serialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java:AnalyticsEventResponse",
+      "type": "class",
+      "name": "AnalyticsEventResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java",
+      "lineRange": [8, 18],
+      "summary": "id·page·action·metadata·userEmail·userNickname·createdAt 7개 필드를 가진 이벤트 응답 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "analytics"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java",
+      "type": "file",
+      "name": "AnalyticsSummaryResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java",
+      "summary": "액션별·페이지별 이벤트 집계 결과를 담는 통계 응답 DTO입니다. 내부에 ActionCountItem, PageCountItem 두 개의 중첩 record를 정의합니다.",
+      "tags": ["dto", "data-model", "analytics", "aggregation"],
+      "complexity": "simple",
+      "languageNotes": "Java record와 중첩 record를 사용해 불변 집계 결과를 간결하게 표현합니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java:AnalyticsSummaryResponse",
+      "type": "class",
+      "name": "AnalyticsSummaryResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java",
+      "lineRange": [5, 11],
+      "summary": "actionCounts, pageCounts 두 리스트를 담는 record이며 각 항목 타입을 중첩 record로 함께 선언합니다.",
+      "tags": ["dto", "data-model", "analytics", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java",
+      "type": "file",
+      "name": "AuditLogResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java",
+      "summary": "관리자 감사 로그 조회 응답 DTO로, 행위·대상 리소스·요약·메타데이터와 행위자 이메일/닉네임을 평탄화해 담습니다.",
+      "tags": ["dto", "data-model", "audit-log", "serialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java:AuditLogResponse",
+      "type": "class",
+      "name": "AuditLogResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java",
+      "lineRange": [8, 19],
+      "summary": "감사 로그 8개 필드를 노출하는 응답 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "audit-log"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java",
+      "type": "file",
+      "name": "ApplicationRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java",
+      "summary": "프로그램(반) 신청 요청 DTO로 이름·이메일·목표·트랙·참여 다짐 다섯 항목을 받으며 Bean Validation 제약을 선언합니다.",
+      "tags": ["dto", "data-model", "validation", "program-application"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java:ApplicationRequest",
+      "type": "class",
+      "name": "ApplicationRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java",
+      "lineRange": [7, 20],
+      "summary": "name, email, goal, track, commitment 필드를 가진 신청 요청 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java",
+      "type": "file",
+      "name": "ApplicationResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java",
+      "summary": "ProgramApplication 엔티티를 API 응답 형태로 변환해 노출하는 DTO로, 정적 팩토리 메서드 from을 통해 매핑을 담당합니다.",
+      "tags": ["dto", "data-model", "factory", "serialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java:ApplicationResponse",
+      "type": "class",
+      "name": "ApplicationResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java",
+      "lineRange": [10, 34],
+      "summary": "신청 정보 8개 필드와 엔티티 → DTO 변환 팩토리 메서드를 함께 제공하는 응답 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "factory"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java",
+      "lineRange": [22, 33],
+      "summary": "ProgramApplication 엔티티의 각 게터를 호출해 ApplicationResponse 인스턴스를 생성하는 정적 팩토리 메서드입니다.",
+      "tags": ["factory", "serialization", "mapper", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java",
+      "type": "file",
+      "name": "AdminInquiryResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java",
+      "summary": "관리자 화면용 문의 상세 응답 DTO로, 일반 사용자용 응답보다 처리 상태·관리자 메모·처리 시각까지 포함한 전체 정보를 제공합니다.",
+      "tags": ["dto", "data-model", "admin", "support", "factory"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java:AdminInquiryResponse",
+      "type": "class",
+      "name": "AdminInquiryResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java",
+      "lineRange": [10, 40],
+      "summary": "문의 11개 필드를 노출하고 Inquiry 엔티티로부터 변환하는 팩토리 메서드를 제공하는 관리자용 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "admin", "support"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java",
+      "lineRange": [25, 39],
+      "summary": "Inquiry 엔티티를 관리자용 응답 DTO로 매핑하며, status가 null인 경우를 방어적으로 처리합니다.",
+      "tags": ["factory", "serialization", "mapper", "admin"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java",
+      "type": "file",
+      "name": "AdminInquiryStatusUpdateRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java",
+      "summary": "관리자가 문의 처리 상태와 관리자 메모를 갱신할 때 사용하는 요청 DTO입니다.",
+      "tags": ["dto", "data-model", "admin", "support"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java:AdminInquiryStatusUpdateRequest",
+      "type": "class",
+      "name": "AdminInquiryStatusUpdateRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java",
+      "lineRange": [8, 15],
+      "summary": "InquiryStatus 타입의 status와 문자열 adminNote 두 필드를 담는 상태 변경 요청 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "admin", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java",
+      "type": "file",
+      "name": "InquiryRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java",
+      "summary": "사용자가 1:1 문의를 등록할 때 보내는 요청 DTO로 이름·이메일·문의 내용과 발생 페이지, 사용자 식별자를 담습니다.",
+      "tags": ["dto", "data-model", "support", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java:InquiryRequest",
+      "type": "class",
+      "name": "InquiryRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java",
+      "lineRange": [6, 17],
+      "summary": "name, email, message, page, userId 필드를 가진 문의 등록 요청 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "support"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java",
+      "type": "file",
+      "name": "InquiryResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java",
+      "summary": "문의 등록 성공 시 생성된 식별자만 돌려주는 최소 응답 DTO입니다. Inquiry 엔티티에서 변환하는 from 팩토리를 제공합니다.",
+      "tags": ["dto", "data-model", "support", "factory"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java:InquiryResponse",
+      "type": "class",
+      "name": "InquiryResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java",
+      "lineRange": [7, 15],
+      "summary": "id 한 개 필드와 엔티티 변환 팩토리 메서드만 가진 경량 응답 DTO 클래스입니다.",
+      "tags": ["dto", "data-model", "support"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java", "target": "class:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java:AuditLogFilter", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java", "target": "function:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java:doFilterInternal", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java", "target": "class:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java:AuditLogFilter", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java:doFilterInternal", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java:log", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/ApplicationStatus.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/InquiryRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/ProgramApplicationRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:AdminController", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:listProgramApplications", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:updateProgramApplicationStatus", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:listAttendanceLogs", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:listSupportInquiries", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:updateSupportInquiryStatus", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:manualAudit", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:AdminController", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:updateProgramApplicationStatus", "target": "function:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java:from", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:updateSupportInquiryStatus", "target": "function:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java:from", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:manualAudit", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java:log", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java:listSupportInquiries", "target": "class:backend/src/main/java/com/ajou/muscleup/repository/InquiryRepository.java:InquiryRepository", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AdminController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java", "type": "depends_on", "direction": "forward", "weight": 0.6},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java:AnalyticsController", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java:AnalyticsController", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java:recordEvent", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/ApplicationStatus.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/ProgramApplication.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/ProgramApplicationRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java:ProgramApplicationController", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java:apply", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java:ProgramApplicationController", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java:apply", "target": "function:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java:from", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/support/SupportChatRequest.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/support/SupportChatResponse.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/repository/InquiryRepository.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "file:backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java:SupportController", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java:create", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "class:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java:SupportController", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/controller/SupportController.java", "target": "function:backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java:answer", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java:AnalyticsEventRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java:AnalyticsEventRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java:AnalyticsEventResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java:AnalyticsEventResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java:AnalyticsSummaryResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java:AnalyticsSummaryResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java:AuditLogResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java:AuditLogResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java:ApplicationRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java:ApplicationRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/ApplicationStatus.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/ProgramApplication.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java:ApplicationResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java", "target": "function:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java:from", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java:ApplicationResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java:AdminInquiryResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java", "target": "function:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java:from", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java:AdminInquiryResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java:AdminInquiryStatusUpdateRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java:AdminInquiryStatusUpdateRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java:InquiryRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java:InquiryRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java:InquiryResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java:InquiryResponse", "type": "exports", "direction": "forward", "weight": 0.8}
+  ]
+}

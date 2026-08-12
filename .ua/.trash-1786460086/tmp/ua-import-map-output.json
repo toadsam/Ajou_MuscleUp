@@ -1,0 +1,1219 @@
+{
+  "scriptCompleted": true,
+  "stats": {
+    "filesScanned": 403,
+    "filesWithImports": 191,
+    "totalEdges": 615
+  },
+  "importMap": {
+    ".ua/.understandignore": [],
+    ".ua/config.json": [],
+    "README.md": [],
+    "backend/.gitattributes": [],
+    "backend/build.gradle": [],
+    "backend/gradle.properties": [],
+    "backend/gradle/wrapper/gradle-wrapper.jar": [],
+    "backend/gradle/wrapper/gradle-wrapper.properties": [],
+    "backend/gradlew": [],
+    "backend/gradlew.bat": [],
+    "backend/nixpacks.toml": [],
+    "backend/settings.gradle": [],
+    "backend/sql/migration_20251202.sql": [],
+    "backend/sql/migration_20251204.sql": [],
+    "backend/sql/migration_20251205.sql": [],
+    "backend/sql/migration_20260122_events.sql": [],
+    "backend/sql/migration_20260205_attendance_details.sql": [],
+    "backend/sql/migration_20260206_lounge_visits.sql": [],
+    "backend/sql/migration_20260211_character_avatar_refactor.sql": [],
+    "backend/sql/migration_20260222_event_cms.sql": [],
+    "backend/sql/migration_20260308_workout_crew.sql": [],
+    "backend/sql/migration_20260315_attendance_media_share.sql": [],
+    "backend/sql/migration_20260318_attendance_share_comment.sql": [],
+    "backend/sql/migration_20260324_character_resting.sql": [],
+    "backend/src/main/java/com/ajou/muscleup/BackendApplication.java": [],
+    "backend/src/main/java/com/ajou/muscleup/MuscleupApplication.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/AdminBootstrapRunner.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/config/AsyncConfig.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java": [
+      "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/JpaConfig.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/PostgresSchemaRepairRunner.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/SchedulingConfig.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java": [],
+    "backend/src/main/java/com/ajou/muscleup/config/WebMvcStaticConfig.java": [],
+    "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ApplicationStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/InquiryRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProgramApplicationRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/AdminEventController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventStatusPatchRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventToggleRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/AiController.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AiService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/AnalyticsController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java": [
+      "backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/AccessTokenResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/LoginResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java",
+      "backend/src/main/java/com/ajou/muscleup/service/UserService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/BragInteractionController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/BragInteractionService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/BragPostController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/service/BragPostService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/CharacterController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterProfileResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterPublicUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRestUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionTriggerType.java",
+      "backend/src/main/java/com/ajou/muscleup/service/CharacterService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/CrewController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinRequestResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinResultResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/service/CrewService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/EventController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/service/EventService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/EventPublicController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/FileController.java": [],
+    "backend/src/main/java/com/ajou/muscleup/controller/FriendController.java": [
+      "backend/src/main/java/com/ajou/muscleup/service/FriendService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/HealthController.java": [],
+    "backend/src/main/java/com/ajou/muscleup/controller/HelloController.java": [],
+    "backend/src/main/java/com/ajou/muscleup/controller/LoungeController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/lounge/LoungeProfileResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/LoungeService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/MetricsController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/metrics/LobbyMetricsResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/MetricsService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/MyPageService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ApplicationStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProgramApplication.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProgramApplicationRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/ProteinController.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/ProteinShareController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareApplicationResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/service/ProteinShareService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/RankingController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/RankingService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java": [
+      "backend/src/main/java/com/ajou/muscleup/service/ReviewService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/StatsController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/StatsService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/SupportController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/support/SupportChatRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/support/SupportChatResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/InquiryRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/UserController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/UserRegisterRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/service/UserService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/AccessTokenResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/LoginResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/UserRegisterRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiAnalyzeResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterEvaluationResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterProfileResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterPublicUpdateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingListResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRestUpdateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterSnapshotResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/GrowthParamsResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeMemberProgressResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCreateRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewDetailResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinRequestResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinResultResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewListItemResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewMemberAttendanceResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewUpdateRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/EventParticipant.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/EventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/event/EventResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Event.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/EventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventStatusPatchRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventToggleRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendCharacterResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/lounge/LoungeProfileResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterProfileResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/metrics/LobbyMetricsResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/program/ApplicationResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/ApplicationStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProgramApplication.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinCreateUpdateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareApplicationResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareApplication.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareMessage.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareSummaryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Review.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/support/AdminInquiryStatusUpdateRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/support/InquiryResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/support/SupportChatRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/support/SupportChatResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/AnalyticsEvent.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/ApplicationStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/AuditLog.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionHistory.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionTriggerType.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/Event.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/EventParticipant.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/EventStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/Gender.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/LoungeVisitLog.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/ProgramApplication.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/Protein.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareApplication.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareMessage.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/Review.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/User.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java": [],
+    "backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/AnalyticsEventRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AnalyticsEvent.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/AuditLogRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AuditLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/CharacterEvolutionHistoryRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionHistory.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/CmsEventRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/EventParticipantRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Event.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/EventParticipant.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/EventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/EventRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Event.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/EventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendshipRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/InquiryRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Inquiry.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/InquiryStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/LoungeVisitLogRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/LoungeVisitLog.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ProgramApplicationRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/ProgramApplication.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ProteinShareApplicationRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareApplication.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ProteinShareMessageRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareMessage.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Review.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/scheduler/EventScheduler.java": [
+      "backend/src/main/java/com/ajou/muscleup/service/EventService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AiService.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/AnalyticsService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsEventResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/analytics/AnalyticsSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AnalyticsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AnalyticsEventRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/audit/AuditLogResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AuditLog.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AuditLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragInteractionService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragPostService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthCalculator.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/GrowthParamsResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionTriggerType.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Event.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CharacterService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterProfileResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterPublicUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRestUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionTriggerType.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterEvaluationResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterProfileResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterPublicUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRestUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterSnapshotResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/GrowthParamsResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionHistory.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionTriggerType.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CharacterEvolutionHistoryRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CmsEventService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventAdminListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventSaveRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/eventcms/EventViewClickResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEvent.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CmsEventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CmsEventRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CrewService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewDetailResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinRequestResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewJoinResultResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewListItemResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewUpdateRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/EmailSender.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/EventService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Event.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/EventParticipant.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/EventStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/EventParticipantRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/EventRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/FriendService.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/LoungeService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/lounge/LoungeProfileResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/LoungeServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterProfileResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/lounge/LoungeProfileResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/LoungeVisitLog.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/LoungeVisitLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/MetricsService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/metrics/LobbyMetricsResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/MetricsServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/metrics/LobbyMetricsResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/LoungeVisitLogRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/MyPageService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinCreateUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinShareService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareApplicationResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareApplicationResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareSummaryResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareApplication.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareMessage.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinShareApplicationRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinShareMessageRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/RankingService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingListResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/RankingServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingListResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java": [
+      "backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/RefreshTokenRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ReviewService.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/StatsService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/StatsServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionTriggerType.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/Gender.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/UserService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/UserRegisterRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/resources/application-local.example.properties": [],
+    "backend/src/main/resources/application-prod.properties": [],
+    "backend/src/main/resources/application-test.properties": [],
+    "backend/src/main/resources/application.properties": [],
+    "backend/src/main/resources/application.properties.example": [],
+    "backend/src/test/java/com/ajou/muscleup/ai/AiInbodyQualityHarnessTest.java": [
+      "backend/src/main/java/com/ajou/muscleup/service/AiService.java"
+    ],
+    "backend/src/test/java/com/ajou/muscleup/backend/BackendApplicationTests.java": [],
+    "backend/src/test/resources/application.properties": [],
+    "backend/src/test/resources/inbody/sample-cases.json": [],
+    "backend/uploads/2025/11/097cb7c5-61e3-44ef-8e70-ee7089e12e2d.webp": [],
+    "backend/uploads/2025/11/5e6a915e-c8d1-4961-a78c-e18e0d8566b6.webp": [],
+    "backend/uploads/2025/12/3defa408-5988-4982-befc-22abeeb91752.avif": [],
+    "backend/uploads/attendance/2026/03/c197c59d-3078-49ea-8b43-c080c8ce3722.webp": [],
+    "docs/inbody-quality-playbook.md": [],
+    "docs/muscleup_homepage_master_document.docx": [],
+    "docs/muscleup_homepage_master_document.md": [],
+    "docs/~$scleup_homepage_master_document.docx": [],
+    "frontend/README.md": [],
+    "frontend/eslint.config.js": [],
+    "frontend/index.html": [],
+    "frontend/package.json": [],
+    "frontend/postcss.config.js": [],
+    "frontend/src/App.css": [],
+    "frontend/src/App.tsx": [
+      "frontend/src/components/AdminRoute.tsx",
+      "frontend/src/components/BetaNoticeModal.tsx",
+      "frontend/src/components/ProtectedRoute.tsx",
+      "frontend/src/components/SupportWidget.tsx",
+      "frontend/src/layouts/Footer.tsx",
+      "frontend/src/layouts/Header.tsx"
+    ],
+    "frontend/src/components/AdminRoute.tsx": [
+      "frontend/src/services/adminApi.ts"
+    ],
+    "frontend/src/components/BetaNoticeModal.tsx": [],
+    "frontend/src/components/CharacterAvatar.tsx": [],
+    "frontend/src/components/CharacterCard.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/TierUpAnimation.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/utils/avatarCustomization.ts",
+      "frontend/src/utils/evolutionProgress.ts"
+    ],
+    "frontend/src/components/PlayerAvatar.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/components/ProtectedRoute.tsx": [],
+    "frontend/src/components/SupportWidget.tsx": [],
+    "frontend/src/components/UploadDropzone.tsx": [
+      "frontend/src/lib/api.ts",
+      "frontend/src/utils/imageUpload.ts"
+    ],
+    "frontend/src/components/admin/AdminDashboardPanels.tsx": [
+      "frontend/src/components/admin/AdminTableShell.tsx"
+    ],
+    "frontend/src/components/admin/AdminTableShell.tsx": [],
+    "frontend/src/components/admin/AdminToast.tsx": [],
+    "frontend/src/components/admin/useAdminToast.ts": [
+      "frontend/src/components/admin/AdminToast.tsx"
+    ],
+    "frontend/src/components/avatar/Arms.tsx": [
+      "frontend/src/components/avatar/seed.ts",
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/components/avatar/AvatarRenderer.tsx": [
+      "frontend/src/components/avatar/Arms.tsx",
+      "frontend/src/components/avatar/Effects.tsx",
+      "frontend/src/components/avatar/Head.tsx",
+      "frontend/src/components/avatar/Legs.tsx",
+      "frontend/src/components/avatar/Torso.tsx",
+      "frontend/src/components/avatar/avatar.css",
+      "frontend/src/components/avatar/seed.ts",
+      "frontend/src/components/avatar/tierPreset.ts",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/utils/avatarAppearanceState.ts",
+      "frontend/src/utils/avatarCustomization.ts",
+      "frontend/src/utils/evolutionProgress.ts"
+    ],
+    "frontend/src/components/avatar/Effects.tsx": [
+      "frontend/src/components/avatar/tierPreset.ts",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/utils/evolutionProgress.ts"
+    ],
+    "frontend/src/components/avatar/Head.tsx": [
+      "frontend/src/components/avatar/seed.ts",
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/components/avatar/Legs.tsx": [
+      "frontend/src/components/avatar/seed.ts",
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/components/avatar/TierUpAnimation.tsx": [
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/components/avatar/Torso.tsx": [
+      "frontend/src/components/avatar/seed.ts",
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/components/avatar/avatar.css": [],
+    "frontend/src/components/avatar/seed.ts": [],
+    "frontend/src/components/avatar/tierPreset.ts": [
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/components/avatar/types.ts": [],
+    "frontend/src/index.css": [],
+    "frontend/src/layouts/Footer.tsx": [],
+    "frontend/src/layouts/Header.tsx": [
+      "frontend/src/layouts/Logo.tsx"
+    ],
+    "frontend/src/layouts/Logo.tsx": [],
+    "frontend/src/lib/api.ts": [],
+    "frontend/src/lib/installFetchAuth.ts": [],
+    "frontend/src/lib/queryClient.ts": [],
+    "frontend/src/main.tsx": [
+      "frontend/src/App.tsx",
+      "frontend/src/index.css",
+      "frontend/src/lib/installFetchAuth.ts",
+      "frontend/src/lib/queryClient.ts"
+    ],
+    "frontend/src/pages/About.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/Admin.tsx": [
+      "frontend/src/components/admin/AdminDashboardPanels.tsx",
+      "frontend/src/components/admin/AdminToast.tsx",
+      "frontend/src/components/admin/useAdminToast.ts",
+      "frontend/src/services/adminApi.ts",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/AdminHistory.tsx": [
+      "frontend/src/components/admin/AdminTableShell.tsx",
+      "frontend/src/components/admin/AdminToast.tsx",
+      "frontend/src/components/admin/useAdminToast.ts",
+      "frontend/src/services/adminApi.ts",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/AiFitness.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/AiShareView.tsx": [],
+    "frontend/src/pages/Attendance.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/styles/attendance.css",
+      "frontend/src/utils/attendanceShareCard.ts"
+    ],
+    "frontend/src/pages/AttendanceShareView.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/styles/attendanceShare.css",
+      "frontend/src/utils/attendanceShareCard.ts"
+    ],
+    "frontend/src/pages/BragDetail.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/BragList.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/BragWrite.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/Crew.tsx": [
+      "frontend/src/services/crewApi.ts",
+      "frontend/src/types/crew.ts"
+    ],
+    "frontend/src/pages/CrewChallenge.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/services/crewApi.ts",
+      "frontend/src/types/crew.ts"
+    ],
+    "frontend/src/pages/CrewHighlights.tsx": [
+      "frontend/src/services/crewApi.ts",
+      "frontend/src/types/crew.ts"
+    ],
+    "frontend/src/pages/CrewHub.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/services/crewApi.ts",
+      "frontend/src/types/crew.ts"
+    ],
+    "frontend/src/pages/CrewLobby.tsx": [
+      "frontend/src/services/crewApi.ts",
+      "frontend/src/types/crew.ts"
+    ],
+    "frontend/src/pages/EventDetail.tsx": [
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/pages/Events.tsx": [
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/pages/Executives.tsx": [],
+    "frontend/src/pages/Forbidden.tsx": [],
+    "frontend/src/pages/Friends.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/services/friendApi.ts",
+      "frontend/src/types/friend.ts"
+    ],
+    "frontend/src/pages/Gallery.tsx": [
+      "frontend/src/components/UploadDropzone.tsx"
+    ],
+    "frontend/src/pages/Home.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/styles/homeLobby.css",
+      "frontend/src/types/event.ts",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/InbodyConsult.tsx": [],
+    "frontend/src/pages/Login.tsx": [],
+    "frontend/src/pages/Lounge.tsx": [
+      "frontend/src/components/PlayerAvatar.tsx",
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/pages/Members.tsx": [],
+    "frontend/src/pages/MyPage.tsx": [
+      "frontend/src/components/CharacterCard.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/utils/avatarAppearanceState.ts",
+      "frontend/src/utils/avatarCustomization.ts",
+      "frontend/src/utils/evolutionProgress.ts"
+    ],
+    "frontend/src/pages/Programs.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/ProgramsApplySuccess.tsx": [],
+    "frontend/src/pages/Protein.tsx": [],
+    "frontend/src/pages/ProteinDetail.tsx": [],
+    "frontend/src/pages/Rankings.tsx": [],
+    "frontend/src/pages/Register.tsx": [],
+    "frontend/src/pages/Reviews.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/WriteProtein.tsx": [
+      "frontend/src/components/UploadDropzone.tsx"
+    ],
+    "frontend/src/pages/WriteReview.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/admin/AdminEventForm.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/lib/api.ts",
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/pages/admin/AdminEventsList.tsx": [
+      "frontend/src/components/admin/AdminTableShell.tsx",
+      "frontend/src/components/admin/AdminToast.tsx",
+      "frontend/src/components/admin/useAdminToast.ts",
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/services/adminApi.ts": [
+      "frontend/src/lib/api.ts"
+    ],
+    "frontend/src/services/crewApi.ts": [
+      "frontend/src/lib/api.ts",
+      "frontend/src/types/crew.ts"
+    ],
+    "frontend/src/services/eventApi.ts": [
+      "frontend/src/lib/api.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/services/friendApi.ts": [
+      "frontend/src/lib/api.ts",
+      "frontend/src/types/friend.ts"
+    ],
+    "frontend/src/styles/attendance.css": [],
+    "frontend/src/styles/attendanceShare.css": [],
+    "frontend/src/styles/characterEffects.css": [],
+    "frontend/src/styles/homeLobby.css": [],
+    "frontend/src/styles/lounge.css": [],
+    "frontend/src/types/crew.ts": [],
+    "frontend/src/types/event.ts": [],
+    "frontend/src/types/friend.ts": [],
+    "frontend/src/utils/analytics.ts": [],
+    "frontend/src/utils/attendanceShareCard.ts": [],
+    "frontend/src/utils/avatarAppearanceState.ts": [
+      "frontend/src/utils/avatarCustomization.ts",
+      "frontend/src/utils/evolutionProgress.ts"
+    ],
+    "frontend/src/utils/avatarCustomization.ts": [],
+    "frontend/src/utils/evolutionProgress.ts": [
+      "frontend/src/components/avatar/types.ts"
+    ],
+    "frontend/src/utils/imageUpload.ts": [],
+    "frontend/src/vite-env.d.ts": [],
+    "frontend/tailwind.config.js": [],
+    "frontend/tsconfig.app.json": [],
+    "frontend/tsconfig.json": [],
+    "frontend/tsconfig.node.json": [],
+    "frontend/vercel.json": [],
+    "frontend/vite.config.ts": [],
+    "realtime/package.json": [],
+    "realtime/src/rooms.ts": [
+      "realtime/src/types.ts"
+    ],
+    "realtime/src/server.ts": [
+      "realtime/src/rooms.ts",
+      "realtime/src/types.ts"
+    ],
+    "realtime/src/types.ts": [],
+    "realtime/tsconfig.json": []
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "batchIndex": 26,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "frontend/vite.config.ts",
+      "language": "typescript",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "realtime/package.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "realtime/tsconfig.json",
+      "language": "json",
+      "sizeLines": 13,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "frontend/vite.config.ts": [],
+    "realtime/package.json": [],
+    "realtime/tsconfig.json": []
+  },
+  "neighborMap": {}
+}

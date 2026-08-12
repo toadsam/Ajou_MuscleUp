@@ -1,0 +1,242 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "type": "file",
+      "name": "FriendRequestResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "summary": "친구 요청 정보를 클라이언트에 내려주기 위한 응답 DTO로, 요청자·수신자의 이메일/닉네임/캐릭터와 요청 상태를 하나의 평탄한 구조로 담는다.",
+      "tags": ["dto", "serialization", "friend", "response-model"],
+      "complexity": "simple",
+      "languageNotes": "Lombok @Builder와 정적 팩토리 메서드 from()을 조합해 엔티티 → DTO 변환 책임을 DTO 쪽에 두는 Spring 진영의 전형적인 패턴입니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java:FriendRequestResponse",
+      "type": "class",
+      "name": "FriendRequestResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "lineRange": [8, 36],
+      "summary": "친구 요청 조회 API의 응답 본문 클래스. id, 요청자/수신자의 이메일·닉네임·캐릭터, status 8개 필드를 노출한다.",
+      "tags": ["dto", "data-model", "friend", "builder"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "lineRange": [20, 35],
+      "summary": "FriendRequest 엔티티와 양측 캐릭터 정보를 받아 응답 DTO로 변환하는 정적 팩토리 메서드. 연관된 User에서 이메일과 닉네임을 꺼내 평탄화한다.",
+      "tags": ["factory", "serialization", "mapper", "dto"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "type": "file",
+      "name": "FriendRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "summary": "친구 요청을 저장하는 JPA 엔티티 파일. friend_requests 테이블에 매핑되며 요청자와 수신자를 각각 User로 참조한다.",
+      "tags": ["entity", "data-model", "jpa", "friend"],
+      "complexity": "simple",
+      "languageNotes": "요청자/수신자 모두 @ManyToOne(fetch = LAZY)로 User를 참조하는 자기참조성 관계라, 조회 시 N+1을 피하려면 fetch join이 필요합니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java:FriendRequest",
+      "type": "class",
+      "name": "FriendRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "lineRange": [6, 29],
+      "summary": "friend_requests 테이블에 매핑되는 엔티티로 id, requester, receiver, status를 가지며 BaseTimeEntity를 상속해 생성/수정 시각을 자동 관리한다.",
+      "tags": ["entity", "jpa", "data-model", "friend"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "type": "file",
+      "name": "FriendRequestStatus.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "summary": "친구 요청의 처리 상태를 나타내는 enum 정의 파일로 PENDING, ACCEPTED, REJECTED 세 값을 갖는다.",
+      "tags": ["enum", "type-definition", "friend", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java:FriendRequestStatus",
+      "type": "class",
+      "name": "FriendRequestStatus",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "lineRange": [3, 7],
+      "summary": "친구 요청 상태 enum. 대기(PENDING)·수락(ACCEPTED)·거절(REJECTED) 상태 전이를 타입 수준에서 강제한다.",
+      "tags": ["enum", "type-definition", "state", "friend"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "type": "file",
+      "name": "FriendRequestRepository.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "summary": "FriendRequest 엔티티에 대한 Spring Data JPA 리포지토리 파일. 받은/보낸 요청 목록 조회와 중복 요청 확인용 파생 쿼리를 선언한다.",
+      "tags": ["repository", "data-access", "jpa", "friend"],
+      "complexity": "simple",
+      "languageNotes": "메서드 이름만으로 쿼리가 생성되는 Spring Data의 derived query 방식이라, 정렬 조건(OrderByCreatedAtDesc)까지 시그니처에 포함되어 있습니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java:FriendRequestRepository",
+      "type": "class",
+      "name": "FriendRequestRepository",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "lineRange": [10, 16],
+      "summary": "JpaRepository를 확장한 친구 요청 리포지토리 인터페이스로, 수신자/요청자 기준 상태별 최신순 목록 조회와 (요청자, 수신자, 상태) 단건 조회를 제공한다.",
+      "tags": ["repository", "data-access", "jpa", "query-method"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java:FriendRequestResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java:from",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java:FriendRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java:FriendRequestStatus",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java:FriendRequestRepository",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java:FriendRequestResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java:from",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java:FriendRequest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java:FriendRequestStatus",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java:FriendRequestRepository",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java:FriendRequest",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java:BaseTimeEntity",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java:FriendRequestRepository",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java:FriendRequest",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java:from",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java:FriendRequest",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

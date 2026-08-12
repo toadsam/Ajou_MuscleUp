@@ -1,0 +1,512 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 12,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 12,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 12
+    }
+  },
+  "results": [
+    {
+      "path": "backend/sql/migration_20251202.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 29,
+      "nonEmptyLines": 24,
+      "definitions": [
+        {
+          "name": "analytics_events",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "page",
+            "action",
+            "metadata",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 18,
+          "endLine": 27
+        },
+        {
+          "name": "ux_ai_chat_messages_share_slug",
+          "kind": "index",
+          "fields": [],
+          "startLine": 14,
+          "endLine": 14
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 2
+      }
+    },
+    {
+      "path": "backend/sql/migration_20251204.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 14,
+      "nonEmptyLines": 13,
+      "definitions": [
+        {
+          "name": "attendance_logs",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "workout_date",
+            "did_workout",
+            "memo",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 4,
+          "endLine": 14
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1
+      }
+    },
+    {
+      "path": "backend/sql/migration_20251205.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 52,
+      "nonEmptyLines": 47,
+      "definitions": [
+        {
+          "name": "user_body_stats",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "height_cm",
+            "gender",
+            "weight_kg",
+            "skeletal_muscle_kg",
+            "bench_kg",
+            "squat_kg",
+            "deadlift_kg",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 4,
+          "endLine": 18
+        },
+        {
+          "name": "character_profiles",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "level",
+            "tier",
+            "evolution_stage",
+            "title",
+            "is_public",
+            "last_evaluated_at",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 23,
+          "endLine": 36
+        },
+        {
+          "name": "character_evolution_history",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "trigger_type",
+            "before_level",
+            "after_level",
+            "before_tier",
+            "after_tier",
+            "before_stage",
+            "after_stage",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 38,
+          "endLine": 51
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 3
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260122_events.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 29,
+      "nonEmptyLines": 27,
+      "definitions": [
+        {
+          "name": "events",
+          "kind": "table",
+          "fields": [
+            "id",
+            "title",
+            "description",
+            "start_date",
+            "end_date",
+            "required_attendance_count",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 2,
+          "endLine": 12
+        },
+        {
+          "name": "event_participants",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "event_id",
+            "joined_at",
+            "current_attendance_count",
+            "success",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 14,
+          "endLine": 26
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 2
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260205_attendance_details.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 4,
+      "nonEmptyLines": 4,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260206_lounge_visits.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 8,
+      "nonEmptyLines": 8,
+      "definitions": [
+        {
+          "name": "lounge_visit_logs",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_id",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 2,
+          "endLine": 8
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260211_character_avatar_refactor.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 8,
+      "nonEmptyLines": 7,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260222_event_cms.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 33,
+      "nonEmptyLines": 31,
+      "definitions": [
+        {
+          "name": "cms_events",
+          "kind": "table",
+          "fields": [
+            "id",
+            "title",
+            "summary",
+            "content",
+            "thumbnail_url",
+            "banner_url",
+            "start_at",
+            "end_at",
+            "status",
+            "is_main_banner",
+            "is_pinned",
+            "priority",
+            "cta_text",
+            "cta_link",
+            "view_count",
+            "click_count",
+            "created_by",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 1,
+          "endLine": 21
+        },
+        {
+          "name": "cms_event_tags",
+          "kind": "table",
+          "fields": [
+            "event_id",
+            "tag"
+          ],
+          "startLine": 23,
+          "endLine": 28
+        },
+        {
+          "name": "idx_cms_events_status",
+          "kind": "index",
+          "fields": [],
+          "startLine": 30,
+          "endLine": 30
+        },
+        {
+          "name": "idx_cms_events_main_banner",
+          "kind": "index",
+          "fields": [],
+          "startLine": 31,
+          "endLine": 31
+        },
+        {
+          "name": "idx_cms_events_sort",
+          "kind": "index",
+          "fields": [],
+          "startLine": 32,
+          "endLine": 32
+        },
+        {
+          "name": "idx_cms_events_title",
+          "kind": "index",
+          "fields": [],
+          "startLine": 33,
+          "endLine": 33
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 6
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260308_workout_crew.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 85,
+      "nonEmptyLines": 77,
+      "definitions": [
+        {
+          "name": "workout_crews",
+          "kind": "table",
+          "fields": [
+            "id",
+            "name",
+            "description",
+            "owner_id",
+            "invite_code",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 1,
+          "endLine": 10
+        },
+        {
+          "name": "workout_crew_members",
+          "kind": "table",
+          "fields": [
+            "id",
+            "crew_id",
+            "user_id",
+            "role",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 15,
+          "endLine": 25
+        },
+        {
+          "name": "crew_challenges",
+          "kind": "table",
+          "fields": [
+            "id",
+            "crew_id",
+            "title",
+            "description",
+            "start_date",
+            "end_date",
+            "target_workout_days",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 27,
+          "endLine": 38
+        },
+        {
+          "name": "friend_requests",
+          "kind": "table",
+          "fields": [
+            "id",
+            "requester_id",
+            "receiver_id",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 40,
+          "endLine": 49
+        },
+        {
+          "name": "friendships",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_low_id",
+            "user_high_id",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 51,
+          "endLine": 60
+        },
+        {
+          "name": "friend_chat_rooms",
+          "kind": "table",
+          "fields": [
+            "id",
+            "user_low_id",
+            "user_high_id",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 62,
+          "endLine": 71
+        },
+        {
+          "name": "friend_chat_messages",
+          "kind": "table",
+          "fields": [
+            "id",
+            "room_id",
+            "sender_id",
+            "content",
+            "created_at",
+            "updated_at"
+          ],
+          "startLine": 73,
+          "endLine": 82
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 7
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260315_attendance_media_share.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 12,
+      "nonEmptyLines": 11,
+      "definitions": [
+        {
+          "name": "ux_attendance_logs_share_slug",
+          "kind": "index",
+          "fields": [],
+          "startLine": 11,
+          "endLine": 11
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260318_attendance_share_comment.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 2,
+      "nonEmptyLines": 2,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    },
+    {
+      "path": "backend/sql/migration_20260324_character_resting.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    }
+  ]
+}

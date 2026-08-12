@@ -1,0 +1,5259 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Ajou_MuscleUp",
+    "languages": [
+      "batch",
+      "css",
+      "gradle",
+      "html",
+      "java",
+      "javascript",
+      "json",
+      "markdown",
+      "properties",
+      "sql",
+      "toml",
+      "typescript"
+    ],
+    "frameworks": [
+      "React",
+      "React Router",
+      "TanStack React Query",
+      "Vite",
+      "Vite PWA",
+      "Tailwind CSS",
+      "Recharts",
+      "Axios",
+      "Socket.IO",
+      "Socket.IO Client",
+      "ESLint",
+      "TypeScript",
+      "tsx",
+      "Spring Boot",
+      "Spring Security",
+      "Spring Data JPA",
+      "Spring Web",
+      "JUnit",
+      "Lombok",
+      "JJWT",
+      "Gradle",
+      "MySQL",
+      "PostgreSQL",
+      "AWS SDK S3",
+      "Apache PDFBox",
+      "Google API Client"
+    ],
+    "description": "득근득근 MuscleUp은 매일의 운동 기록을 캐릭터 성장·랭킹·모임 경쟁으로 되돌려 주어 운동을 게임처럼 지속하게 만드는 피트니스 커뮤니티 서비스입니다. 출석 체크 한 번이 경험치 산정 → 캐릭터 티어 재평가 → 랭킹 갱신 → 라운지·크루 노출로 이어지는 하나의 루프를 이루며, 여기에 AI 인바디 상담, 실시간 메타버스 라운지, 자랑·친구·단백질 나눔 커뮤니티, 운영자용 감사·모더레이션 도구가 붙습니다. React PWA 프론트엔드, Spring Boot REST API, Socket.IO 실시간 서버 세 실행 단위가 HTTP와 WebSocket 경계로만 연결됩니다.",
+    "analyzedAt": "2026-08-11T15:44:41.882Z",
+    "gitCommitHash": "37f972a26c48de0556f5558f02edeb5aec9d8f34"
+  },
+  "nodes": [
+    {
+      "id": "domain:identity-auth",
+      "type": "domain",
+      "name": "계정 및 인증",
+      "summary": "회원가입부터 로그인, 토큰 갱신, 요청 인가까지 사용자 신원을 다루는 도메인입니다. 이메일 인증 코드와 구글 소셜 로그인 두 가지 가입 경로를 제공하며, accessToken/refreshToken/rememberMe 세 종류의 HttpOnly 쿠키로 세션을 유지합니다. 서버는 JwtAuthenticationFilter와 SecurityConfig 필터 체인으로, 클라이언트는 fetch 몽키패칭과 axios 인터셉터로 인증 경계를 HTTP 레이어에 통일해 두었습니다.",
+      "tags": [
+        "authentication",
+        "authorization",
+        "jwt",
+        "oauth",
+        "security"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "User",
+          "RefreshToken",
+          "EmailVerification",
+          "Role"
+        ],
+        "businessRules": [
+          "이메일 인증을 완료한 이메일만 회원가입할 수 있다",
+          "인증 코드는 60초 이내 재발송을 429로 차단한다",
+          "refreshToken은 사용 시 회전(rotate)되며 기존 토큰은 즉시 폐기된다",
+          "비밀번호는 BCrypt로만 저장하며 평문 비교를 하지 않는다",
+          "모든 인증 쿠키는 HttpOnly로 발급해 스크립트 접근을 차단한다"
+        ],
+        "crossDomainInteractions": [
+          "모든 도메인의 REST 요청은 JwtAuthenticationFilter가 채운 SecurityContext의 이메일로 주체를 식별한다",
+          "ROLE_ADMIN 판정 결과가 운영 및 관리자 도메인의 접근 제어 기준이 된다",
+          "라운지 입장 프로필 조회는 인증된 이메일을 그대로 조회 키로 사용한다"
+        ]
+      }
+    },
+    {
+      "id": "domain:attendance",
+      "type": "domain",
+      "name": "출석 기록",
+      "summary": "사용자가 하루 운동을 기록하고 경험치를 획득하는, 서비스 게임 루프의 출발점입니다. 운동 종류·강도·메모·미디어·연속 출석일을 종합해 경험치를 산정하고, 사용자·날짜 유니크 제약 위에서 하루 한 건만 유지합니다. 기록은 공유 슬러그로 외부에 공개해 응원과 신고를 받을 수 있고, 주간 스트릭·월간 미디어 랭킹의 원천 데이터가 됩니다.",
+      "tags": [
+        "attendance",
+        "gamification",
+        "streak",
+        "sharing",
+        "core-loop"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "AttendanceLog",
+          "User",
+          "AttendanceComment"
+        ],
+        "businessRules": [
+          "사용자·날짜 조합당 출석 기록은 하나만 존재한다",
+          "신규 생성일 때만 경험치를 산정하고, 수정 경로에서는 경험치를 0으로 고정해 반복 수정 EXP 파밍을 차단한다",
+          "경험치는 기본 5점 + 운동 종류 수 + 강도(light 1/normal 2/hard 3) + 메모·키워드 + 미디어 + 스트릭 보너스로 계산한다",
+          "연속 출석 보너스는 3/7/14/30일 구간에서 2~6점 계단식으로 부여한다",
+          "입력 값은 화이트리스트 정규화를 통과해야 저장되며 기존 값과 동일하면 조기 반환한다",
+          "공유 슬러그는 UUID 기반으로 한 번만 발급하고 재공유 시 재사용한다"
+        ],
+        "crossDomainInteractions": [
+          "출석 저장 직후 CharacterGrowthService.applyAttendance를 호출해 캐릭터 성장으로 전파한다",
+          "출석 여부 변동을 EventServiceImpl.updateAttendanceProgress로 진행 중 이벤트 참여 카운터에 ±1 반영한다",
+          "누적 출석 로그가 크루 경쟁 보드 점수의 주요 입력이 된다",
+          "신고 카운트가 누적된 공유 기록은 운영 및 관리자 도메인의 모더레이션 대상이 된다"
+        ]
+      }
+    },
+    {
+      "id": "domain:character-growth",
+      "type": "domain",
+      "name": "캐릭터 성장 및 랭킹",
+      "summary": "신체 스탯과 출석 활동을 하나의 가중 다항 점수로 환산해 캐릭터의 레벨·티어·진화 단계·칭호를 산출하는 도메인입니다. 3대 절대중량 55점, 상대근력 20점, 골격근지수 15점, 체성분 10점을 합산하고 중량 기준 티어와 총점 기준 티어를 혼합해 한쪽으로 치우치지 않는 등급을 만듭니다. 산출된 결과는 카운트 쿼리 기반 랭킹과 시드 기반 SVG 아바타 렌더링으로 이어집니다.",
+      "tags": [
+        "character",
+        "scoring",
+        "ranking",
+        "avatar",
+        "core-loop"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "CharacterProfile",
+          "UserBodyStats",
+          "CharacterEvolutionHistory",
+          "User"
+        ],
+        "businessRules": [
+          "체중은 20~300kg 범위를 벗어나면 평가를 거절한다",
+          "총점은 3대 절대중량 55 + 상대근력 20 + 골격근지수 15 + 체성분 10의 가중합으로 산출한다",
+          "최종 티어는 중량 기반 티어와 점수 기반 티어를 인덱스 수준에서 혼합해 결정한다",
+          "실제 티어·단계 변화가 있을 때만 진화 이력을 저장한다",
+          "내 순위는 전체 목록 정렬이 아니라 상위 인원 수 카운트 + 동점자 tie-break로 계산한다",
+          "랭킹 노출은 캐릭터를 공개 설정한 사용자만 포함한다"
+        ],
+        "crossDomainInteractions": [
+          "출석 도메인의 applyAttendance와 크루/이벤트 도메인의 applyEventSuccess가 성장의 두 진입점이다",
+          "스탯 갱신(upsertStats)이 곧바로 캐릭터 재평가를 연쇄 호출한다",
+          "산출된 레벨·티어·아바타 시드가 라운지 입장 payload와 친구 목록 스냅샷으로 전파된다"
+        ]
+      }
+    },
+    {
+      "id": "domain:crew-challenge",
+      "type": "domain",
+      "name": "크루 및 챌린지 이벤트",
+      "summary": "개인 성장 루프를 집단 루프로 확장하는 도메인입니다. 크루는 자동 가입·승인제·초대코드 세 가지 정책으로 멤버를 받고, 리더가 챌린지를 열어 출석률·챌린지 달성률·최근 활동을 가중 합산한 경쟁 보드와 킹 타이틀을 만듭니다. 운영이 개설한 이벤트는 매일 KST 00:10 크론이 상태를 갱신하고 종료 이벤트의 성공자에게 캐릭터 성장 보상을 확정 지급합니다.",
+      "tags": [
+        "crew",
+        "challenge",
+        "event",
+        "scheduler",
+        "competition"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "WorkoutCrew",
+          "CrewMember",
+          "CrewJoinRequest",
+          "CrewChallenge",
+          "Event",
+          "EventParticipant"
+        ],
+        "businessRules": [
+          "크루 생성자는 자동으로 LEADER 역할 멤버로 등록된다",
+          "초대코드는 DB 중복 검사를 반복해 유일성을 보장한다",
+          "joinPolicy가 AUTO_APPROVE면 즉시 가입, 승인제면 가입 신청만 등록하며 중복 신청은 차단한다",
+          "가입 승인·거절과 챌린지 CRUD는 리더 권한이 있어야 한다",
+          "경쟁 보드 점수는 ATTENDANCE_WEIGHT·CHALLENGE_WEIGHT·RECENT_DAY_WEIGHT 가중합에 개근 보너스를 더해 산출한다",
+          "이벤트 성공 판정은 누적 출석 횟수가 필요 횟수 이상인지로만 결정하며 FINISHED로 새로 전이된 이벤트에만 적용한다"
+        ],
+        "crossDomainInteractions": [
+          "출석 도메인의 기록 변동이 이벤트 참여 카운터와 크루 경쟁 보드 점수에 직접 반영된다",
+          "이벤트 성공자에게 CharacterGrowthService.applyEventSuccess로 캐릭터 성장 보상을 지급한다",
+          "진행 중 이벤트 진행도가 라운지 입장 프로필에 함께 실려 나간다",
+          "운영 도메인의 이벤트 CMS가 공개 이벤트의 원천 데이터를 관리한다"
+        ]
+      }
+    },
+    {
+      "id": "domain:community-social",
+      "type": "domain",
+      "name": "커뮤니티 및 소셜",
+      "summary": "사용자끼리 성과를 자랑하고 관계를 맺는 도메인입니다. 자랑 게시글은 공개 범위와 친구 관계 판정으로 노출을 통제하고 댓글·좋아요 반응을 받습니다. 친구 요청 수락은 1:1 채팅방으로, 단백질 나눔은 신청→승인→신청자 전용 채팅으로 이어지며, 마이페이지가 이 활동들을 한 화면에 모아 보여줍니다.",
+      "tags": [
+        "community",
+        "social",
+        "friend",
+        "brag",
+        "protein-share"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entities": [
+          "BragPost",
+          "BragComment",
+          "BragLike",
+          "FriendRequest",
+          "Friendship",
+          "FriendChatRoom",
+          "Protein",
+          "ProteinApplication",
+          "ProteinMessage",
+          "Review"
+        ],
+        "businessRules": [
+          "게시글 공개 범위가 없으면 PUBLIC을 기본값으로 적용한다",
+          "피드는 공개 게시글과 친구 게시글(본인 포함)만 조회하며 열람 권한은 friend 관계로 판정한다",
+          "좋아요는 토글 방식으로 같은 사용자가 중복 적립할 수 없다",
+          "친구 요청은 자기 자신·이미 친구·양방향 중복 PENDING을 모두 거절한다",
+          "단백질 나눔 신청은 기존 신청이 있으면 재사용하는 멱등 연산이다",
+          "신청자 채팅은 관리자·방장이거나 신청 상태가 APPROVED일 때만 허용한다"
+        ],
+        "crossDomainInteractions": [
+          "친구 응답과 채팅방 목록에 캐릭터 성장 도메인의 프로필 스냅샷을 실어 보낸다",
+          "마이페이지가 AI 코칭 도메인의 대화 이력을 함께 집계한다",
+          "게시글·나눔 이미지는 공용 파일 업로드 엔드포인트를 통해 저장된다"
+        ]
+      }
+    },
+    {
+      "id": "domain:realtime-lounge",
+      "type": "domain",
+      "name": "실시간 라운지",
+      "summary": "사용자가 자신의 캐릭터 아바타로 접속해 함께 움직이고 대화하는 메타버스형 공간입니다. 백엔드 REST로 입장 프로필을 받아 4001 포트의 독립 Socket.IO 서버에 접속하는 2단계 구조이며, 두 서비스 사이에 import 의존은 전혀 없고 오직 HTTP와 WebSocket 경계로만 연결됩니다. 접속자 상태는 socketId를 키로 하는 모듈 스코프 Map에 보관되고 이동은 60ms 배치 브로드캐스트로 전파됩니다.",
+      "tags": [
+        "realtime",
+        "socket-io",
+        "lounge",
+        "broadcast",
+        "in-memory"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "PlayerState",
+          "JoinPayload",
+          "LoungeVisitLog",
+          "GrowthParams"
+        ],
+        "businessRules": [
+          "lounge:join payload는 필드 단위 타입 가드를 통과해야 하며 실패 시 에러 emit 후 연결을 끊는다",
+          "플레이어 좌표는 2000x1200 맵 경계 안으로 clamp된다",
+          "모든 접속자는 \"lounge\" 단일 룸에 참여한다",
+          "이동 이벤트는 즉시 전파하지 않고 60ms 간격 배치로 묶어 브로드캐스트한다",
+          "접속 상태는 DB가 아닌 인메모리 Map에만 존재해 프로세스 재시작 시 소멸한다",
+          "프로필 조회는 조회임에도 LoungeVisitLog를 남기는 쓰기 부수효과를 가진다"
+        ],
+        "crossDomainInteractions": [
+          "입장 프로필이 출석 도메인의 최근 30일 출석 수를 집계한다",
+          "캐릭터 성장 도메인의 레벨·티어·진화 단계·아바타 시드를 입장 payload로 그대로 전달한다",
+          "진행 중 이벤트 진행도를 함께 실어 라운지 안에서 이벤트 상태를 보여준다"
+        ]
+      }
+    },
+    {
+      "id": "domain:ai-coaching",
+      "type": "domain",
+      "name": "AI 코칭 및 인바디 분석",
+      "summary": "게임 루프와 독립적으로 붙은 AI 기능 축입니다. 인바디 결과지 이미지·PDF를 비전 모델에 넘겨 구조화된 리포트를 받아내며, JSON Schema 강제 → 품질 미달 시 strict 재요청 → 사후 수치 정규화라는 3단 방어로 LLM 응답의 불확실성을 흡수합니다. 결과는 PDFBox 리포트와 공유 슬러그로 확장되고, 별도의 문서 검색 기반 지원 챗봇도 같은 AI 클라이언트를 재사용합니다.",
+      "tags": [
+        "ai",
+        "openai",
+        "inbody",
+        "pdf",
+        "chatbot"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "AiChatLog",
+          "InbodyReport",
+          "SupportDocument"
+        ],
+        "businessRules": [
+          "업로드 파일은 빈 파일·용량·MIME 타입 기준을 통과해야 분석에 넘어간다",
+          "모델 응답은 프로그램적으로 조립한 JSON Schema response_format으로만 받는다",
+          "품질 점수가 낮으면 strict 재요청을 수행해 더 나은 결과를 선택한다",
+          "파싱된 수치는 범위 검증·파생값 계산·주차별 체크포인트·경고 중복 제거로 정규화한다",
+          "모든 AI 요청과 응답은 대화 이력에 저장되어 마이페이지에서 조회된다",
+          "공유는 슬러그를 발급해 공개 전환하며 unshare로 되돌릴 수 있다"
+        ],
+        "crossDomainInteractions": [
+          "마이페이지 요약이 AI 대화 이력을 함께 집계한다",
+          "지원 챗봇이 같은 AI 클라이언트를 재사용하고 실패 시 fallback 답변으로 대체한다",
+          "인바디 업로드 파일은 공용 파일 저장 경로를 사용한다"
+        ]
+      }
+    },
+    {
+      "id": "domain:admin-ops",
+      "type": "domain",
+      "name": "운영 및 관리자",
+      "summary": "서비스 운영자가 콘텐츠와 사용자 요청을 관리하는 도메인입니다. AuditLogFilter가 인증된 사용자의 모든 쓰기 계열 요청을 자동으로 감사 로그에 남기고, 관리자 API가 출석 로그 모더레이션·이벤트 CMS·프로그램 신청 심사·고객 문의 처리를 담당합니다. 공개 노출은 PUBLIC_STATUSES 화이트리스트로 통제됩니다.",
+      "tags": [
+        "admin",
+        "audit",
+        "moderation",
+        "cms",
+        "operations"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entities": [
+          "AuditLog",
+          "CmsEvent",
+          "Inquiry",
+          "ProgramApplication",
+          "AttendanceLog"
+        ],
+        "businessRules": [
+          "POST/PUT/PATCH/DELETE 요청만 감사 로그 대상이며 조회성 메서드는 제외한다",
+          "감사 로그는 보존 기간을 넘기면 벌크 삭제로 정리한다",
+          "공개 이벤트 조회는 PUBLIC_STATUSES 화이트리스트에 없는 상태를 요청하면 예외를 던진다",
+          "이벤트 생성 시 기간 유효성을 검증하고 카운터는 0으로 초기화한다",
+          "조회수·클릭수는 벌크 업데이트로 원자적으로 증가시킨다",
+          "문의 상태 변경 시 관리자 메모와 처리 시각(handledAt)을 함께 기록한다"
+        ],
+        "crossDomainInteractions": [
+          "출석 도메인의 신고 누적 공유 기록을 조회해 관리자 숨김 처리한다",
+          "이벤트 CMS가 크루/챌린지 도메인이 소비하는 공개 이벤트 목록의 원천이다",
+          "인증 도메인의 ROLE_ADMIN 판정이 모든 관리자 API의 접근 조건이다"
+        ]
+      }
+    },
+    {
+      "id": "flow:email-signup",
+      "type": "flow",
+      "name": "이메일 인증 회원가입",
+      "summary": "이메일로 6자리 인증 코드를 받아 소유를 증명한 뒤 계정을 생성하는 기본 가입 경로입니다. 인증 완료 이메일만 회원가입을 통과할 수 있습니다.",
+      "tags": [
+        "signup",
+        "email-verification",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/auth/email/send → POST /api/users/register",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:email-signup:step-01",
+      "type": "step",
+      "name": "인증 코드 발송 요청",
+      "summary": "사용자가 입력한 이메일로 인증 코드 발송을 요청하는 컨트롤러 진입점입니다.",
+      "tags": [
+        "api-handler",
+        "email"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+      "lineRange": [
+        60,
+        64
+      ]
+    },
+    {
+      "id": "step:email-signup:step-02",
+      "type": "step",
+      "name": "재발송 차단 후 코드 저장·발송",
+      "summary": "이메일을 정규화하고 최근 발송 이력을 확인해 60초 이내 재발송을 429로 차단한 뒤, 새 코드를 저장하고 메일을 비동기 발송합니다.",
+      "tags": [
+        "rate-limiting",
+        "security",
+        "email"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "lineRange": [
+        24,
+        56
+      ]
+    },
+    {
+      "id": "step:email-signup:step-03",
+      "type": "step",
+      "name": "인증 코드 검증",
+      "summary": "사용자가 입력한 코드를 최신 발송 건과 대조해 만료·불일치를 검증하고 성공 시 인증 완료 상태로 표시합니다.",
+      "tags": [
+        "validation",
+        "email-verification"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "lineRange": [
+        58,
+        77
+      ]
+    },
+    {
+      "id": "step:email-signup:step-04",
+      "type": "step",
+      "name": "회원가입 요청 접수",
+      "summary": "가입 폼 DTO를 받아 UserService에 위임하는 /api/users 등록 엔드포인트입니다.",
+      "tags": [
+        "api-handler",
+        "registration"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/UserController.java",
+      "lineRange": [
+        20,
+        29
+      ]
+    },
+    {
+      "id": "step:email-signup:step-05",
+      "type": "step",
+      "name": "중복 검사 후 BCrypt 저장",
+      "summary": "이메일 인증 확인 → 중복 이메일 검사 → 닉네임 기본값 처리 → BCrypt 암호화 저장의 4단계로 계정을 생성합니다.",
+      "tags": [
+        "registration",
+        "security",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/UserService.java",
+      "lineRange": [
+        22,
+        50
+      ]
+    },
+    {
+      "id": "flow:local-login",
+      "type": "flow",
+      "name": "이메일 로그인과 토큰 발급",
+      "summary": "이메일·비밀번호 자격 증명을 검증하고 액세스/리프레시/rememberMe 세 종류의 HttpOnly 쿠키를 발급해 세션을 시작합니다.",
+      "tags": [
+        "login",
+        "jwt",
+        "cookie"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/auth/login",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:local-login:step-01",
+      "type": "step",
+      "name": "로그인 폼 제출",
+      "summary": "로그인 페이지에서 이메일·비밀번호를 제출하고, 성공 시 토큰과 프로필을 localStorage 세션에 저장합니다.",
+      "tags": [
+        "frontend",
+        "login",
+        "session"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/pages/Login.tsx"
+    },
+    {
+      "id": "step:local-login:step-02",
+      "type": "step",
+      "name": "자격 증명 검증",
+      "summary": "정규화한 이메일로 사용자를 찾고 PasswordEncoder.matches로 비밀번호를 대조하며 실패 시 401을 던집니다.",
+      "tags": [
+        "authentication",
+        "security"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/UserService.java",
+      "lineRange": [
+        53,
+        62
+      ]
+    },
+    {
+      "id": "step:local-login:step-03",
+      "type": "step",
+      "name": "리프레시 토큰 발급·저장",
+      "summary": "사용자에게 새 리프레시 토큰을 발급해 만료 시각과 함께 저장하고 토큰 문자열을 반환합니다.",
+      "tags": [
+        "token",
+        "persistence"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java",
+      "lineRange": [
+        24,
+        36
+      ]
+    },
+    {
+      "id": "step:local-login:step-04",
+      "type": "step",
+      "name": "인증 쿠키 3종 조립",
+      "summary": "accessToken 쿠키를 HttpOnly·SameSite 설정과 함께 조립합니다. refresh·rememberMe 쿠키도 같은 방식으로 만들어집니다.",
+      "tags": [
+        "cookie",
+        "security"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+      "lineRange": [
+        251,
+        262
+      ]
+    },
+    {
+      "id": "step:local-login:step-05",
+      "type": "step",
+      "name": "로그인 응답 반환",
+      "summary": "액세스 토큰을 발급하고 리프레시 토큰을 저장한 뒤 세 종류의 인증 쿠키와 함께 LoginResponse를 반환합니다.",
+      "tags": [
+        "api-handler",
+        "authentication"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+      "lineRange": [
+        72,
+        99
+      ]
+    },
+    {
+      "id": "flow:google-oauth-login",
+      "type": "flow",
+      "name": "구글 소셜 로그인",
+      "summary": "Google Identity Services가 발급한 ID 토큰을 서버가 검증해 기존 계정에 연결하거나 신규 계정을 자동 생성하고, 자체 JWT로 전환하는 경로입니다.",
+      "tags": [
+        "oauth",
+        "google",
+        "login"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/auth/google",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:google-oauth-login:step-01",
+      "type": "step",
+      "name": "GIS ID 토큰 획득",
+      "summary": "Google Identity Services로 ID 토큰을 받습니다. Safari와 카카오톡·인스타그램 인앱 브라우저를 감지해 대체 흐름을 안내합니다.",
+      "tags": [
+        "frontend",
+        "oauth",
+        "browser-compat"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/pages/Login.tsx"
+    },
+    {
+      "id": "step:google-oauth-login:step-02",
+      "type": "step",
+      "name": "ID 토큰 서버 검증",
+      "summary": "Google API Client로 전달받은 ID 토큰의 서명과 audience를 검증해 신뢰할 수 있는 사용자 식별 정보를 추출합니다.",
+      "tags": [
+        "oauth",
+        "verification",
+        "security"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+      "lineRange": [
+        218,
+        228
+      ]
+    },
+    {
+      "id": "step:google-oauth-login:step-03",
+      "type": "step",
+      "name": "계정 연결 또는 자동 가입",
+      "summary": "검증된 이메일로 기존 사용자를 찾고 없으면 랜덤 비밀번호로 신규 가입시킨 뒤 자체 액세스/리프레시 토큰과 쿠키를 발급합니다.",
+      "tags": [
+        "oauth",
+        "registration",
+        "authentication"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+      "lineRange": [
+        166,
+        206
+      ]
+    },
+    {
+      "id": "flow:token-refresh",
+      "type": "flow",
+      "name": "토큰 갱신과 세션 유지",
+      "summary": "액세스 토큰 만료로 401이 발생했을 때 클라이언트가 single-flight로 refresh를 호출하고, 서버가 리프레시 토큰을 회전시켜 새 세션을 내려주는 흐름입니다.",
+      "tags": [
+        "token-rotation",
+        "session",
+        "resilience"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /api/auth/refresh (401 자동 트리거)",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:token-refresh:step-01",
+      "type": "step",
+      "name": "401 감지와 single-flight refresh",
+      "summary": "전역 window.fetch를 몽키패칭해 Bearer 토큰을 자동 주입하고, 401 응답 시 동시 요청을 하나의 refresh로 묶어 재발급한 뒤 원요청을 1회 재시도합니다.",
+      "tags": [
+        "frontend",
+        "middleware",
+        "single-flight"
+      ],
+      "complexity": "complex",
+      "filePath": "frontend/src/lib/installFetchAuth.ts"
+    },
+    {
+      "id": "step:token-refresh:step-02",
+      "type": "step",
+      "name": "axios 인터셉터 동일 규칙 적용",
+      "summary": "axios 인스턴스에도 액세스 토큰 자동 첨부와 401 재발급 후 재시도 인터셉터를 심어 fetch 경로와 같은 규칙을 유지합니다.",
+      "tags": [
+        "frontend",
+        "interceptor",
+        "http-client"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/lib/api.ts"
+    },
+    {
+      "id": "step:token-refresh:step-03",
+      "type": "step",
+      "name": "리프레시 토큰 회전",
+      "summary": "기존 리프레시 토큰의 유효성과 만료를 검증한 뒤 폐기하고 새 토큰을 발급하는 회전 로직입니다.",
+      "tags": [
+        "token",
+        "rotation",
+        "security"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java",
+      "lineRange": [
+        38,
+        51
+      ]
+    },
+    {
+      "id": "step:token-refresh:step-04",
+      "type": "step",
+      "name": "새 액세스 토큰·쿠키 재발급",
+      "summary": "쿠키 또는 Authorization 헤더에서 리프레시 토큰을 확보해 회전시키고, 사용자 역할을 조회해 새 액세스 토큰과 갱신된 쿠키를 내려줍니다.",
+      "tags": [
+        "api-handler",
+        "cookie",
+        "authentication"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+      "lineRange": [
+        101,
+        129
+      ]
+    },
+    {
+      "id": "flow:request-authorization",
+      "type": "flow",
+      "name": "요청 인가와 라우트 가드",
+      "summary": "모든 API 요청이 통과하는 인가 경계입니다. 서버는 JWT 필터와 경로별 규칙으로, 클라이언트는 라우트 가드 컴포넌트로 같은 권한 판정을 이중으로 적용합니다.",
+      "tags": [
+        "authorization",
+        "filter",
+        "route-guard"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "모든 /api/** 요청 및 보호 라우트 진입",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:request-authorization:step-01",
+      "type": "step",
+      "name": "보호 라우트 세션 검증",
+      "summary": "/api/auth/me 호출로 세션을 검증하고 성공 시 localStorage 사용자 정보를 최신화하며, 서버 오류 시 로컬 세션이 있으면 통과시키는 낙관적 폴백을 둡니다.",
+      "tags": [
+        "frontend",
+        "route-guard",
+        "session"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/components/ProtectedRoute.tsx"
+    },
+    {
+      "id": "step:request-authorization:step-02",
+      "type": "step",
+      "name": "JWT 추출과 SecurityContext 주입",
+      "summary": "요청마다 Authorization 헤더 또는 accessToken 쿠키에서 JWT를 꺼내 검증하고 SecurityContext에 인증 주체를 채웁니다.",
+      "tags": [
+        "jwt",
+        "filter",
+        "authentication"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "lineRange": [
+        27,
+        55
+      ]
+    },
+    {
+      "id": "step:request-authorization:step-03",
+      "type": "step",
+      "name": "경로별 인가 규칙 적용",
+      "summary": "CSRF 비활성화·무상태 세션 위에 40개 이상의 경로별 인가 규칙을 조립해 필터 체인 전체를 구성합니다.",
+      "tags": [
+        "spring-security",
+        "authorization",
+        "configuration"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "lineRange": [
+        52,
+        119
+      ]
+    },
+    {
+      "id": "step:request-authorization:step-04",
+      "type": "step",
+      "name": "관리자 권한 서버 재확인",
+      "summary": "localStorage의 role을 먼저 확인한 뒤 adminApi.getMe() 서버 검증으로 관리자 권한을 최종 판정합니다.",
+      "tags": [
+        "frontend",
+        "admin",
+        "route-guard"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/components/AdminRoute.tsx"
+    },
+    {
+      "id": "flow:daily-attendance-check",
+      "type": "flow",
+      "name": "일일 출석 체크와 경험치 획득",
+      "summary": "서비스 게임 루프의 심장입니다. 하루치 운동 기록을 정규화·검증해 저장하고 경험치를 산정한 뒤, 캐릭터 성장과 이벤트 진행도로 결과를 전파합니다.",
+      "tags": [
+        "attendance",
+        "gamification",
+        "core-loop",
+        "anti-abuse"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /api/attendance/today, PUT /api/attendance/{date}",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:daily-attendance-check:step-01",
+      "type": "step",
+      "name": "캘린더에서 운동 기록 작성",
+      "summary": "월별 출석 캘린더에서 운동 종류·강도·메모를 입력하고 미디어를 첨부해 기록을 제출합니다.",
+      "tags": [
+        "frontend",
+        "attendance",
+        "form"
+      ],
+      "complexity": "complex",
+      "filePath": "frontend/src/pages/Attendance.tsx"
+    },
+    {
+      "id": "step:daily-attendance-check:step-02",
+      "type": "step",
+      "name": "출석 저장 엔드포인트 진입",
+      "summary": "오늘 날짜 출석 기록 저장 요청을 받아 AttendanceService에 위임하는 컨트롤러 핸들러입니다.",
+      "tags": [
+        "api-handler",
+        "attendance"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        30,
+        36
+      ]
+    },
+    {
+      "id": "step:daily-attendance-check:step-03",
+      "type": "step",
+      "name": "입력 정규화와 화이트리스트 검증",
+      "summary": "운동 종류·강도·메모 등 입력 값을 허용 목록 기준으로 정규화해 이후 계산이 신뢰할 수 있는 형태로 만듭니다.",
+      "tags": [
+        "validation",
+        "normalization"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        338,
+        375
+      ]
+    },
+    {
+      "id": "step:daily-attendance-check:step-04",
+      "type": "step",
+      "name": "중복·변경 판정과 저장",
+      "summary": "기존 기록이 있으면 변경 여부를 비교해 동일하면 조기 반환하고, 다르면 수정 카운트를 올려 저장합니다. 신규 생성일 때만 경험치를 산정해 수정 반복을 통한 EXP 파밍을 차단합니다.",
+      "tags": [
+        "idempotency",
+        "anti-abuse",
+        "business-logic"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        256,
+        291
+      ]
+    },
+    {
+      "id": "step:daily-attendance-check:step-05",
+      "type": "step",
+      "name": "경험치 산정",
+      "summary": "기본 5점에 운동 종류 수, 강도 가중치(light 1/normal 2/hard 3), 메모 작성 및 키워드 보너스, 미디어 첨부 보너스, 연속 출석 보너스를 더해 획득 경험치를 계산합니다.",
+      "tags": [
+        "gamification",
+        "scoring",
+        "business-logic"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        463,
+        485
+      ]
+    },
+    {
+      "id": "step:daily-attendance-check:step-06",
+      "type": "step",
+      "name": "연속 출석 보너스 계산",
+      "summary": "연속 출석일 구간(3/7/14/30일)에 따라 2~6점의 계단식 보너스를 반환합니다.",
+      "tags": [
+        "streak",
+        "gamification",
+        "scoring"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        498,
+        512
+      ]
+    },
+    {
+      "id": "step:daily-attendance-check:step-07",
+      "type": "step",
+      "name": "캐릭터 성장으로 전파",
+      "summary": "획득 포인트를 캐릭터 출석 포인트에 누적하고 스탯이 있으면 ATTENDANCE 트리거로 재평가해 변화 결과를 돌려줍니다.",
+      "tags": [
+        "growth",
+        "cross-domain",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthService.java",
+      "lineRange": [
+        22,
+        40
+      ]
+    },
+    {
+      "id": "step:daily-attendance-check:step-08",
+      "type": "step",
+      "name": "이벤트 진행도 반영",
+      "summary": "출석 여부가 바뀐 경우에만 진행 중인 모든 이벤트의 참여 레코드를 조회·생성하고 누적 출석 횟수를 +1/-1(0 미만 방지)로 갱신합니다.",
+      "tags": [
+        "event",
+        "cross-domain",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java",
+      "lineRange": [
+        51,
+        83
+      ]
+    },
+    {
+      "id": "flow:attendance-share-social",
+      "type": "flow",
+      "name": "출석 기록 공유와 응원·신고",
+      "summary": "출석 기록에 UUID 공유 슬러그를 붙여 로그인 없이 열람 가능한 공개 페이지로 만들고, 방문자가 응원하거나 신고할 수 있게 하는 소셜 확산 흐름입니다.",
+      "tags": [
+        "sharing",
+        "social",
+        "moderation"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/attendance/{date}/share, GET /s/{slug}",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:attendance-share-social:step-01",
+      "type": "step",
+      "name": "공유 슬러그 발급",
+      "summary": "해당 날짜 기록에 UUID 기반 공유 슬러그를 없을 때만 발급하고 공개 플래그를 켠 뒤 공유 응답을 반환합니다.",
+      "tags": [
+        "sharing",
+        "idempotency"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        107,
+        121
+      ]
+    },
+    {
+      "id": "step:attendance-share-social:step-02",
+      "type": "step",
+      "name": "OG 메타 공유 페이지 렌더",
+      "summary": "슬러그로 접근한 방문자에게 미리보기 메타데이터가 포함된 공유 전용 HTML 페이지를 서버에서 직접 렌더링합니다.",
+      "tags": [
+        "sharing",
+        "server-render",
+        "og-meta"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "lineRange": [
+        23,
+        89
+      ]
+    },
+    {
+      "id": "step:attendance-share-social:step-03",
+      "type": "step",
+      "name": "공유 기록 조회",
+      "summary": "슬러그로 공개된 출석 기록을 조회해 비로그인 방문자에게도 노출 가능한 응답으로 변환합니다.",
+      "tags": [
+        "sharing",
+        "public-access"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        135,
+        144
+      ]
+    },
+    {
+      "id": "step:attendance-share-social:step-04",
+      "type": "step",
+      "name": "응원 카운트 증가",
+      "summary": "공유 기록의 응원 카운트를 1 증가시키고 갱신된 공유 응답을 반환합니다.",
+      "tags": [
+        "social",
+        "engagement"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        146,
+        156
+      ]
+    },
+    {
+      "id": "step:attendance-share-social:step-05",
+      "type": "step",
+      "name": "신고 접수",
+      "summary": "공유 기록의 신고 카운트를 증가시켜 관리자 검토 대상으로 올립니다.",
+      "tags": [
+        "moderation",
+        "cross-domain"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        158,
+        165
+      ]
+    },
+    {
+      "id": "step:attendance-share-social:step-06",
+      "type": "step",
+      "name": "공유 해제",
+      "summary": "공개 플래그를 내려 공유 링크로의 노출을 중단합니다.",
+      "tags": [
+        "sharing",
+        "privacy"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        123,
+        133
+      ]
+    },
+    {
+      "id": "flow:attendance-media-upload",
+      "type": "flow",
+      "name": "운동 인증 미디어 업로드",
+      "summary": "출석 기록에 붙일 사진·영상을 S3 또는 로컬 스토리지에 저장하고, 저장된 URL을 정규화해 출석 기록에 연결하는 흐름입니다.",
+      "tags": [
+        "file-upload",
+        "storage",
+        "s3"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/files/upload",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:attendance-media-upload:step-01",
+      "type": "step",
+      "name": "멀티파트 업로드 처리",
+      "summary": "폴더명을 정제하고 연/월 디렉터리와 UUID 파일명으로 경로를 만든 뒤, S3 모드면 PutObject로 업로드하고 아니면 로컬에 복사한 다음 접근 URL·원본명·크기를 반환합니다.",
+      "tags": [
+        "file-upload",
+        "s3",
+        "storage"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [
+        71,
+        112
+      ]
+    },
+    {
+      "id": "step:attendance-media-upload:step-02",
+      "type": "step",
+      "name": "미디어 URL 정규화",
+      "summary": "첨부된 미디어 URL 목록을 정규화해 출석 기록에 저장 가능한 형태로 맞춥니다.",
+      "tags": [
+        "normalization",
+        "attendance"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        425,
+        461
+      ]
+    },
+    {
+      "id": "step:attendance-media-upload:step-03",
+      "type": "step",
+      "name": "비공개 버킷 프록시 제공",
+      "summary": "S3 또는 로컬에서 파일 바이트를 직접 읽어 Content-Type과 함께 응답해, 비공개 버킷의 이미지도 인증 없는 공개 URL로 노출할 수 있게 합니다.",
+      "tags": [
+        "proxy",
+        "storage",
+        "public-access"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [
+        145,
+        185
+      ]
+    },
+    {
+      "id": "step:attendance-media-upload:step-04",
+      "type": "step",
+      "name": "파일 삭제와 경로 탈출 차단",
+      "summary": "전달된 경로/URL을 스토리지 키 또는 로컬 상대 경로로 변환해 삭제하며, 로컬 모드에서는 정규화한 경로가 루트를 벗어나지 않는지 검증합니다.",
+      "tags": [
+        "storage",
+        "security",
+        "path-traversal"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/FileController.java",
+      "lineRange": [
+        114,
+        143
+      ]
+    },
+    {
+      "id": "flow:attendance-ranking-stats",
+      "type": "flow",
+      "name": "출석 랭킹과 통계 조회",
+      "summary": "누적된 출석 로그를 주간 스트릭 랭킹, 월간 미디어 랭킹, 월별 캘린더와 요약 통계로 가공해 보여주는 조회 흐름입니다.",
+      "tags": [
+        "ranking",
+        "statistics",
+        "aggregation"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "GET /api/attendance/rankings/*, GET /api/attendance/summary",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:attendance-ranking-stats:step-01",
+      "type": "step",
+      "name": "월별 출석 로그 조회",
+      "summary": "지정한 월의 출석 로그를 조회해 캘린더 렌더링용 목록으로 반환합니다.",
+      "tags": [
+        "query",
+        "attendance"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        76,
+        86
+      ]
+    },
+    {
+      "id": "step:attendance-ranking-stats:step-02",
+      "type": "step",
+      "name": "출석 요약 집계",
+      "summary": "총 출석일·현재 스트릭·최고 스트릭 등 요약 지표를 집계해 반환합니다.",
+      "tags": [
+        "aggregation",
+        "streak"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        88,
+        105
+      ]
+    },
+    {
+      "id": "step:attendance-ranking-stats:step-03",
+      "type": "step",
+      "name": "주간 스트릭 랭킹",
+      "summary": "주간 기준 연속 출석일이 높은 사용자 순으로 랭킹을 산출합니다.",
+      "tags": [
+        "ranking",
+        "streak"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        167,
+        185
+      ]
+    },
+    {
+      "id": "step:attendance-ranking-stats:step-04",
+      "type": "step",
+      "name": "월간 미디어 랭킹",
+      "summary": "해당 월에 미디어를 첨부한 인증 기록이 많은 사용자 순으로 랭킹을 산출합니다.",
+      "tags": [
+        "ranking",
+        "media"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        187,
+        205
+      ]
+    },
+    {
+      "id": "flow:body-stats-update",
+      "type": "flow",
+      "name": "신체 스탯 등록과 재평가 연쇄",
+      "summary": "사용자가 체중·3대 중량·체성분 등 신체 스탯을 입력하면 범위 검증 후 저장하고, 곧바로 캐릭터 재평가까지 이어지는 흐름입니다.",
+      "tags": [
+        "stats",
+        "validation",
+        "trigger"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/stats",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:body-stats-update:step-01",
+      "type": "step",
+      "name": "스탯 저장 요청 접수",
+      "summary": "신체 스탯 입력 DTO를 받아 StatsService에 위임하는 컨트롤러 핸들러입니다.",
+      "tags": [
+        "api-handler",
+        "stats"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/StatsController.java",
+      "lineRange": [
+        28,
+        34
+      ]
+    },
+    {
+      "id": "step:body-stats-update:step-02",
+      "type": "step",
+      "name": "체중 범위 검증 후 저장",
+      "summary": "체중 20~300kg 범위를 검증하고 스탯을 생성/갱신한 뒤 캐릭터 재평가까지 연쇄 호출합니다.",
+      "tags": [
+        "validation",
+        "stats",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/StatsServiceImpl.java",
+      "lineRange": [
+        46,
+        69
+      ]
+    },
+    {
+      "id": "step:body-stats-update:step-03",
+      "type": "step",
+      "name": "캐릭터 프로필 확보",
+      "summary": "사용자의 캐릭터 프로필을 조회하고 없으면 기본값으로 생성해 평가의 기준 레코드를 확보합니다.",
+      "tags": [
+        "character",
+        "lazy-init"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        47,
+        56
+      ]
+    },
+    {
+      "id": "step:body-stats-update:step-04",
+      "type": "step",
+      "name": "빈 스탯 응답 처리",
+      "summary": "스탯을 아직 등록하지 않은 사용자에게는 전 필드 null인 빈 응답 DTO를 반환해 프론트가 온보딩 상태를 판별할 수 있게 합니다.",
+      "tags": [
+        "query",
+        "null-object"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/StatsServiceImpl.java",
+      "lineRange": [
+        26,
+        44
+      ]
+    },
+    {
+      "id": "flow:character-evaluation",
+      "type": "flow",
+      "name": "캐릭터 티어 재평가",
+      "summary": "출석·이벤트·스탯 갱신 세 트리거가 모이는 평가 파이프라인입니다. 가중 다항 점수 모델로 총점을 내고 중량 티어와 점수 티어를 혼합해 레벨·티어·진화 단계·칭호를 갱신합니다.",
+      "tags": [
+        "evaluation",
+        "scoring",
+        "tier",
+        "core-loop"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /api/character/evaluate (및 출석·이벤트 내부 트리거)",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:character-evaluation:step-01",
+      "type": "step",
+      "name": "평가 트리거 진입",
+      "summary": "지정한 트리거 유형으로 사용자 스탯을 재평가해 캐릭터 상태와 변화 정보를 반환하는 진입점입니다.",
+      "tags": [
+        "character",
+        "evaluation",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        58,
+        66
+      ]
+    },
+    {
+      "id": "step:character-evaluation:step-02",
+      "type": "step",
+      "name": "가중 다항 점수 산출",
+      "summary": "체중 유효성을 검증한 뒤 3대 절대중량 55점·상대근력 20점·골격근지수 15점·체성분 적합도 10점을 가중 합산해 총점·레벨·티어·진화 단계·칭호를 산출하는 평가 알고리즘의 중심입니다.",
+      "tags": [
+        "scoring",
+        "business-logic",
+        "validation"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        196,
+        256
+      ]
+    },
+    {
+      "id": "step:character-evaluation:step-03",
+      "type": "step",
+      "name": "점수 기반 티어 결정",
+      "summary": "산출된 총점을 티어 구간에 매핑해 점수 기준 등급을 결정합니다.",
+      "tags": [
+        "tier",
+        "mapping"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        258,
+        284
+      ]
+    },
+    {
+      "id": "step:character-evaluation:step-04",
+      "type": "step",
+      "name": "중량·점수 티어 혼합",
+      "summary": "중량 기반 티어와 점수 기반 티어를 인덱스 수준에서 혼합해 한쪽으로 치우치지 않는 최종 등급을 만듭니다.",
+      "tags": [
+        "tier",
+        "heuristic",
+        "business-logic"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        297,
+        307
+      ]
+    },
+    {
+      "id": "step:character-evaluation:step-05",
+      "type": "step",
+      "name": "갱신과 진화 이력 저장",
+      "summary": "평가 전 스냅샷을 찍고 출석 보너스를 반영해 재평가한 뒤 레벨·티어·단계·칭호를 갱신하고, 실제 변화가 있을 때만 진화 이력을 저장합니다.",
+      "tags": [
+        "character",
+        "history",
+        "transaction"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        125,
+        169
+      ]
+    },
+    {
+      "id": "flow:character-ranking",
+      "type": "flow",
+      "name": "캐릭터 랭킹 산출",
+      "summary": "레벨과 3대 중량 두 축으로 상위 랭킹 목록과 내 순위·상위 퍼센트를 계산합니다. 전체 목록을 메모리에 올리지 않고 카운트 쿼리로 순위를 구하는 것이 핵심입니다.",
+      "tags": [
+        "ranking",
+        "query-optimization",
+        "tie-break"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "GET /api/rankings/characters",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:character-ranking:step-01",
+      "type": "step",
+      "name": "랭킹 탭 조회 요청",
+      "summary": "레벨 또는 3대 중량 탭을 전환하며 상위 50명 랭킹과 내 순위·상위 퍼센트를 조회해 렌더링합니다.",
+      "tags": [
+        "frontend",
+        "ranking"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/pages/Rankings.tsx"
+    },
+    {
+      "id": "step:character-ranking:step-02",
+      "type": "step",
+      "name": "랭킹 엔드포인트 진입",
+      "summary": "랭킹 타입 파라미터를 받아 RankingService에 위임하는 컨트롤러 핸들러입니다.",
+      "tags": [
+        "api-handler",
+        "ranking"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/RankingController.java",
+      "lineRange": [
+        19,
+        26
+      ]
+    },
+    {
+      "id": "step:character-ranking:step-03",
+      "type": "step",
+      "name": "타입 분기와 응답 조립",
+      "summary": "THREE_LIFT/LEVEL 타입을 분기해 상위 랭킹 목록, 전체 공개 인원, 내 순위와 상위 퍼센트를 조합해 반환하며 잘못된 타입은 400으로 거절합니다.",
+      "tags": [
+        "ranking",
+        "business-logic",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/RankingServiceImpl.java",
+      "lineRange": [
+        26,
+        58
+      ]
+    },
+    {
+      "id": "step:character-ranking:step-04",
+      "type": "step",
+      "name": "레벨 랭킹 목록 조회",
+      "summary": "공개 설정된 캐릭터 중 레벨 상위 사용자 목록을 조회합니다.",
+      "tags": [
+        "query",
+        "ranking"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/RankingServiceImpl.java",
+      "lineRange": [
+        60,
+        76
+      ]
+    },
+    {
+      "id": "step:character-ranking:step-05",
+      "type": "step",
+      "name": "내 순위 tie-break 계산",
+      "summary": "나보다 레벨이 높은 인원 수와 동점자 중 먼저 갱신된 인원 수를 더해 내 순위를 계산합니다. 전체 정렬 없이 카운트 쿼리만으로 순위를 얻습니다.",
+      "tags": [
+        "ranking",
+        "tie-break",
+        "query-optimization"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/RankingServiceImpl.java",
+      "lineRange": [
+        109,
+        121
+      ]
+    },
+    {
+      "id": "flow:avatar-rendering",
+      "type": "flow",
+      "name": "아바타 외형 생성과 렌더링",
+      "summary": "서버가 만든 아바타 시드를 클라이언트가 결정적 해시로 풀어 14가지 외형 피처를 얻고, 티어 프리셋과 진화 분기를 얹어 하나의 SVG 캐릭터로 합성하는 흐름입니다.",
+      "tags": [
+        "avatar",
+        "svg",
+        "deterministic",
+        "frontend"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /api/character/reroll → 클라이언트 렌더링",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:avatar-rendering:step-01",
+      "type": "step",
+      "name": "외형 시드 재발급",
+      "summary": "캐릭터의 아바타 시드를 새로 뽑아 외형을 리롤하는 엔드포인트입니다.",
+      "tags": [
+        "api-handler",
+        "avatar"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/CharacterController.java",
+      "lineRange": [
+        52,
+        55
+      ]
+    },
+    {
+      "id": "step:avatar-rendering:step-02",
+      "type": "step",
+      "name": "시드 해시로 외형 피처 산출",
+      "summary": "시드 문자열을 FNV 계열 해시로 돌려 14가지 외형 피처를 결정적으로 산출합니다. 같은 시드는 어떤 기기에서도 같은 외형을 만듭니다.",
+      "tags": [
+        "avatar",
+        "hash",
+        "deterministic"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/components/avatar/seed.ts",
+      "lineRange": [
+        35,
+        50
+      ]
+    },
+    {
+      "id": "step:avatar-rendering:step-03",
+      "type": "step",
+      "name": "진화 분기와 스킬 해금 판정",
+      "summary": "체성분·근력 지표로 TITAN/BLAZE/PHANTOM 진화 분기를 판정합니다.",
+      "tags": [
+        "evolution",
+        "branching"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/utils/evolutionProgress.ts",
+      "lineRange": [
+        32,
+        45
+      ]
+    },
+    {
+      "id": "step:avatar-rendering:step-04",
+      "type": "step",
+      "name": "SVG 파츠 합성",
+      "summary": "시드 피처·티어 프리셋·진화 분기·커스터마이징을 종합해 Head/Torso/Arms/Legs/Effects를 하나의 SVG로 합성하는 렌더링 허브입니다.",
+      "tags": [
+        "avatar",
+        "svg",
+        "composition"
+      ],
+      "complexity": "complex",
+      "filePath": "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "lineRange": [
+        48,
+        276
+      ]
+    },
+    {
+      "id": "step:avatar-rendering:step-05",
+      "type": "step",
+      "name": "외형 상태 저장과 전역 동기화",
+      "summary": "시드별 외형 상태를 localStorage에 저장하고 CustomEvent를 발행해 화면 전체를 즉시 동기화합니다.",
+      "tags": [
+        "state",
+        "localstorage",
+        "custom-event"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/utils/avatarAppearanceState.ts",
+      "lineRange": [
+        40,
+        44
+      ]
+    },
+    {
+      "id": "flow:character-visibility",
+      "type": "flow",
+      "name": "캐릭터 공개·휴식 상태 설정",
+      "summary": "캐릭터를 랭킹과 라운지에 노출할지, 휴식 상태로 표시할지 사용자가 직접 제어하는 흐름입니다.",
+      "tags": [
+        "privacy",
+        "character",
+        "settings"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "PATCH /api/character/public, PATCH /api/character/resting",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:character-visibility:step-01",
+      "type": "step",
+      "name": "내 캐릭터 조회",
+      "summary": "현재 사용자의 캐릭터 프로필과 평가 상태를 조회합니다.",
+      "tags": [
+        "api-handler",
+        "character"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/CharacterController.java",
+      "lineRange": [
+        26,
+        29
+      ]
+    },
+    {
+      "id": "step:character-visibility:step-02",
+      "type": "step",
+      "name": "공개 설정 변경",
+      "summary": "캐릭터의 랭킹·라운지 노출 여부를 전환합니다. 비공개 캐릭터는 랭킹 집계 대상에서 제외됩니다.",
+      "tags": [
+        "privacy",
+        "ranking"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        68,
+        79
+      ]
+    },
+    {
+      "id": "step:character-visibility:step-03",
+      "type": "step",
+      "name": "휴식 상태 전환",
+      "summary": "캐릭터를 휴식 상태로 표시해 연속 활동 압박 없이 잠시 쉬어갈 수 있게 합니다.",
+      "tags": [
+        "character",
+        "state"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "lineRange": [
+        81,
+        92
+      ]
+    },
+    {
+      "id": "flow:crew-creation",
+      "type": "flow",
+      "name": "크루 생성",
+      "summary": "사용자가 운동 모임을 개설하면 생성자를 리더로 자동 등록하고 유일한 초대코드를 발급하는 흐름입니다.",
+      "tags": [
+        "crew",
+        "creation",
+        "invite-code"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "POST /api/crew",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:crew-creation:step-01",
+      "type": "step",
+      "name": "크루 허브에서 개설",
+      "summary": "크루 탐색·생성·초대코드 가입의 진입점이 되는 허브 화면에서 새 크루를 개설합니다.",
+      "tags": [
+        "frontend",
+        "crew"
+      ],
+      "complexity": "moderate",
+      "filePath": "frontend/src/pages/CrewHub.tsx"
+    },
+    {
+      "id": "step:crew-creation:step-02",
+      "type": "step",
+      "name": "생성 요청 접수",
+      "summary": "크루 생성 DTO를 받아 CrewService에 위임하는 컨트롤러 핸들러입니다.",
+      "tags": [
+        "api-handler",
+        "crew"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/CrewController.java",
+      "lineRange": [
+        31,
+        37
+      ]
+    },
+    {
+      "id": "step:crew-creation:step-03",
+      "type": "step",
+      "name": "리더 자동 등록",
+      "summary": "새 크루를 만들고 생성자를 LEADER 역할 멤버로 자동 등록한 뒤 상세 응답을 반환합니다.",
+      "tags": [
+        "crew",
+        "role",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        49,
+        70
+      ]
+    },
+    {
+      "id": "step:crew-creation:step-04",
+      "type": "step",
+      "name": "유일 초대코드 발급",
+      "summary": "DB 중복 검사를 반복하며 유일한 크루 초대코드를 무작위로 생성합니다.",
+      "tags": [
+        "invite-code",
+        "uniqueness"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        651,
+        661
+      ]
+    },
+    {
+      "id": "flow:crew-join-approval",
+      "type": "flow",
+      "name": "크루 가입과 승인 심사",
+      "summary": "자동 가입·승인제·초대코드 세 가지 경로로 크루에 합류하는 흐름입니다. 승인제 크루는 신청만 등록되고 리더의 승인을 거쳐야 멤버가 됩니다.",
+      "tags": [
+        "crew",
+        "join-policy",
+        "approval"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /api/crew/{id}/join, POST /api/crew/join-by-code",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:crew-join-approval:step-01",
+      "type": "step",
+      "name": "가입 시도",
+      "summary": "크루 ID로 가입을 시도하며, 실제 가입/신청 분기는 크루의 joinPolicy를 해석하는 로직이 처리합니다.",
+      "tags": [
+        "crew",
+        "join"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        100,
+        105
+      ]
+    },
+    {
+      "id": "step:crew-join-approval:step-02",
+      "type": "step",
+      "name": "초대코드 가입",
+      "summary": "초대코드로 크루를 찾아 가입 절차를 진행하고, 존재하지 않는 코드면 예외를 던집니다.",
+      "tags": [
+        "crew",
+        "invite-code"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        107,
+        113
+      ]
+    },
+    {
+      "id": "step:crew-join-approval:step-03",
+      "type": "step",
+      "name": "가입 정책 분기",
+      "summary": "joinPolicy에 따라 즉시 가입(AUTO_APPROVE)과 가입 신청 등록(승인제)을 분기하는 핵심 규칙 함수로, 중복 신청도 함께 차단합니다.",
+      "tags": [
+        "business-logic",
+        "join-policy",
+        "crew"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        569,
+        612
+      ]
+    },
+    {
+      "id": "step:crew-join-approval:step-04",
+      "type": "step",
+      "name": "신청 목록 조회",
+      "summary": "리더가 대기 중인 가입 신청 목록을 조회합니다.",
+      "tags": [
+        "crew",
+        "query",
+        "authorization"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        115,
+        133
+      ]
+    },
+    {
+      "id": "step:crew-join-approval:step-05",
+      "type": "step",
+      "name": "가입 승인",
+      "summary": "리더가 신청을 승인하면 신청자를 크루 멤버로 등록하고 상태를 APPROVED로 바꾸며 승인자·승인 시각을 기록합니다.",
+      "tags": [
+        "crew",
+        "approval",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        135,
+        149
+      ]
+    },
+    {
+      "id": "step:crew-join-approval:step-06",
+      "type": "step",
+      "name": "가입 거절",
+      "summary": "리더가 신청을 거절해 상태를 REJECTED로 전이시킵니다.",
+      "tags": [
+        "crew",
+        "rejection"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        151,
+        164
+      ]
+    },
+    {
+      "id": "flow:crew-challenge-competition",
+      "type": "flow",
+      "name": "크루 챌린지와 경쟁 보드",
+      "summary": "리더가 기간·목표값을 가진 챌린지를 열고, 멤버들의 출석률·챌린지 달성·최근 활동을 가중 합산해 크루 내부 랭킹과 킹 타이틀을 산출하는 흐름입니다.",
+      "tags": [
+        "challenge",
+        "competition",
+        "scoring",
+        "crew"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /api/crew/{id}/challenges, GET /api/crew/{id}",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:crew-challenge-competition:step-01",
+      "type": "step",
+      "name": "챌린지 생성",
+      "summary": "리더가 크루 챌린지를 생성합니다. 기간·목표값을 검증한 뒤 저장하고 응답 DTO를 만듭니다.",
+      "tags": [
+        "challenge",
+        "validation",
+        "authorization"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        218,
+        233
+      ]
+    },
+    {
+      "id": "step:crew-challenge-competition:step-02",
+      "type": "step",
+      "name": "챌린지 수정",
+      "summary": "진행 중인 챌린지의 기간·목표값을 갱신합니다.",
+      "tags": [
+        "challenge",
+        "update"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        235,
+        251
+      ]
+    },
+    {
+      "id": "step:crew-challenge-competition:step-03",
+      "type": "step",
+      "name": "크루 상세 조립",
+      "summary": "멤버 목록·챌린지·경쟁 보드를 묶어 크루 상세 화면에 필요한 응답을 조립합니다.",
+      "tags": [
+        "crew",
+        "aggregation"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        265,
+        328
+      ]
+    },
+    {
+      "id": "step:crew-challenge-competition:step-04",
+      "type": "step",
+      "name": "경쟁 보드 점수 산출",
+      "summary": "출석률·챌린지 달성·최근 활동을 가중 합산하고 개근 보너스를 더해 멤버별 점수와 배지를 산출하는 크루 도메인에서 가장 복잡한 로직입니다.",
+      "tags": [
+        "scoring",
+        "competition",
+        "business-logic"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        370,
+        460
+      ]
+    },
+    {
+      "id": "step:crew-challenge-competition:step-05",
+      "type": "step",
+      "name": "킹 타이틀 부여",
+      "summary": "항목별 1위 멤버에게 킹 타이틀을 부여해 크루 내 경쟁을 가시화합니다.",
+      "tags": [
+        "gamification",
+        "title",
+        "crew"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [
+        462,
+        506
+      ]
+    },
+    {
+      "id": "flow:event-participation-finalize",
+      "type": "flow",
+      "name": "이벤트 참여와 일일 정산 배치",
+      "summary": "공개 이벤트에 참여한 사용자의 출석이 누적되고, 매일 KST 00:10 크론이 이벤트 상태를 갱신해 종료된 이벤트의 성공자에게 캐릭터 보상을 확정 지급하는 흐름입니다.",
+      "tags": [
+        "event",
+        "cron",
+        "batch",
+        "reward"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "EventScheduler @Scheduled (매일 KST 00:10)",
+        "entryType": "cron"
+      }
+    },
+    {
+      "id": "step:event-participation-finalize:step-01",
+      "type": "step",
+      "name": "진행 중 이벤트 조회",
+      "summary": "사용자가 참여할 수 있는 진행 중 이벤트 목록과 본인 진행도를 조회합니다.",
+      "tags": [
+        "event",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java",
+      "lineRange": [
+        29,
+        36
+      ]
+    },
+    {
+      "id": "step:event-participation-finalize:step-02",
+      "type": "step",
+      "name": "출석 변동을 진행도에 반영",
+      "summary": "출석 여부가 바뀐 경우에만 진행 중인 모든 이벤트의 참여 레코드를 조회·생성하고 누적 출석 횟수를 +1/-1로 갱신합니다.",
+      "tags": [
+        "event",
+        "cross-domain",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java",
+      "lineRange": [
+        51,
+        83
+      ]
+    },
+    {
+      "id": "step:event-participation-finalize:step-03",
+      "type": "step",
+      "name": "일일 크론 트리거",
+      "summary": "매일 KST 00:10에 오늘 날짜로 이벤트 상태 갱신 배치를 호출하는 크론 진입점입니다.",
+      "tags": [
+        "cron",
+        "scheduler",
+        "entry-point"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/scheduler/EventScheduler.java",
+      "lineRange": [
+        17,
+        20
+      ]
+    },
+    {
+      "id": "step:event-participation-finalize:step-04",
+      "type": "step",
+      "name": "상태 재계산과 종료 판정",
+      "summary": "전체 이벤트를 순회하며 날짜 기준으로 상태를 재계산·저장하고, FINISHED로 새로 전이된 이벤트에 대해서만 참여자 성공 판정을 수행합니다.",
+      "tags": [
+        "batch",
+        "state-machine",
+        "event"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java",
+      "lineRange": [
+        85,
+        99
+      ]
+    },
+    {
+      "id": "step:event-participation-finalize:step-05",
+      "type": "step",
+      "name": "참여자 성공 확정",
+      "summary": "종료된 이벤트의 참여자별로 누적 출석 횟수가 필요 횟수 이상인지 판정해 success 플래그를 확정합니다.",
+      "tags": [
+        "event",
+        "business-logic",
+        "finalize"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EventServiceImpl.java",
+      "lineRange": [
+        101,
+        111
+      ]
+    },
+    {
+      "id": "step:event-participation-finalize:step-06",
+      "type": "step",
+      "name": "성공 보상 지급",
+      "summary": "이벤트 성공자에게 출석 포인트 10점을 부여하고 EVENT_SUCCESS 트리거로 캐릭터를 재평가합니다.",
+      "tags": [
+        "reward",
+        "growth",
+        "cross-domain"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthService.java",
+      "lineRange": [
+        42,
+        55
+      ]
+    },
+    {
+      "id": "flow:brag-feed",
+      "type": "flow",
+      "name": "자랑 게시글 작성과 피드 노출",
+      "summary": "운동 성과를 자랑하는 게시글을 작성하고, 공개 범위와 친구 관계에 따라 피드 노출을 결정하는 흐름입니다.",
+      "tags": [
+        "brag",
+        "feed",
+        "visibility"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/brags, GET /api/brags",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:brag-feed:step-01",
+      "type": "step",
+      "name": "게시글 작성",
+      "summary": "요청 값을 트리밍하고 빈 미디어 URL을 제거한 뒤 저장하며, 공개 범위가 없으면 PUBLIC을 기본값으로 적용합니다.",
+      "tags": [
+        "brag",
+        "normalization"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+      "lineRange": [
+        32,
+        55
+      ]
+    },
+    {
+      "id": "step:brag-feed:step-02",
+      "type": "step",
+      "name": "친구 관계 판정",
+      "summary": "두 사용자가 친구인지 판정하는 조회 메서드로, 게시글 열람 권한과 채팅 접근 제어에 재사용됩니다.",
+      "tags": [
+        "friend",
+        "authorization",
+        "reuse"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "lineRange": [
+        154,
+        165
+      ]
+    },
+    {
+      "id": "step:brag-feed:step-03",
+      "type": "step",
+      "name": "피드 목록 조회",
+      "summary": "친구 ID 목록에 본인 ID를 더해 공개 게시글과 친구 게시글을 함께 조회하는 피드를 페이지 단위로 반환합니다.",
+      "tags": [
+        "feed",
+        "query",
+        "pagination"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+      "lineRange": [
+        57,
+        68
+      ]
+    },
+    {
+      "id": "step:brag-feed:step-04",
+      "type": "step",
+      "name": "게시글 상세 조회",
+      "summary": "열람 권한을 확인한 뒤 게시글 상세와 반응 정보를 반환합니다.",
+      "tags": [
+        "brag",
+        "authorization"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+      "lineRange": [
+        70,
+        82
+      ]
+    },
+    {
+      "id": "step:brag-feed:step-05",
+      "type": "step",
+      "name": "수정과 삭제",
+      "summary": "작성자 본인 확인 후 게시글을 수정합니다. 삭제도 같은 권한 규칙을 따릅니다.",
+      "tags": [
+        "brag",
+        "authorization",
+        "crud"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+      "lineRange": [
+        84,
+        113
+      ]
+    },
+    {
+      "id": "flow:brag-interaction",
+      "type": "flow",
+      "name": "게시글 댓글과 좋아요",
+      "summary": "게시글에 댓글을 달고 좋아요를 토글하는 반응 흐름입니다. 모든 반응은 게시글 열람 권한 확인을 먼저 통과해야 합니다.",
+      "tags": [
+        "comment",
+        "like",
+        "engagement"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "POST /api/brags/{id}/comments, POST /api/brags/{id}/like",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:brag-interaction:step-01",
+      "type": "step",
+      "name": "댓글 작성",
+      "summary": "열람 권한을 확인한 뒤 공백을 제거한 본문으로 댓글을 저장하고 응답 DTO로 변환합니다.",
+      "tags": [
+        "comment",
+        "authorization"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+      "lineRange": [
+        54,
+        65
+      ]
+    },
+    {
+      "id": "step:brag-interaction:step-02",
+      "type": "step",
+      "name": "댓글 수정",
+      "summary": "작성자 본인 확인 후 댓글 본문을 갱신합니다.",
+      "tags": [
+        "comment",
+        "authorization"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+      "lineRange": [
+        67,
+        78
+      ]
+    },
+    {
+      "id": "step:brag-interaction:step-03",
+      "type": "step",
+      "name": "댓글 삭제",
+      "summary": "작성자 또는 관리자 권한으로 댓글을 삭제합니다.",
+      "tags": [
+        "comment",
+        "authorization"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+      "lineRange": [
+        80,
+        89
+      ]
+    },
+    {
+      "id": "step:brag-interaction:step-04",
+      "type": "step",
+      "name": "좋아요 토글",
+      "summary": "이미 좋아요를 눌렀으면 삭제하고 아니면 새로 저장하는 토글 로직으로, 처리 후 갱신된 좋아요 수와 상태를 반환합니다.",
+      "tags": [
+        "like",
+        "toggle",
+        "idempotency"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+      "lineRange": [
+        91,
+        104
+      ]
+    },
+    {
+      "id": "step:brag-interaction:step-05",
+      "type": "step",
+      "name": "좋아요 상태 조회",
+      "summary": "현재 사용자의 좋아요 여부와 총 좋아요 수를 조회합니다.",
+      "tags": [
+        "like",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+      "lineRange": [
+        106,
+        118
+      ]
+    },
+    {
+      "id": "flow:friend-request-chat",
+      "type": "flow",
+      "name": "친구 요청과 1:1 채팅",
+      "summary": "친구 요청을 보내고 수락하면 관계 레코드가 생기고, 첫 메시지 전송 시점에 1:1 채팅방이 자동 생성되는 흐름입니다.",
+      "tags": [
+        "friend",
+        "chat",
+        "relationship"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/friends/requests, POST /api/friends/chat/{roomId}/messages",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:friend-request-chat:step-01",
+      "type": "step",
+      "name": "친구 요청 전송",
+      "summary": "이메일로 상대를 찾아 자기 자신 신청·이미 친구·양방향 중복 PENDING 요청을 모두 검증한 뒤 PENDING 상태 요청을 저장하고 캐릭터 스냅샷을 포함한 응답을 만듭니다.",
+      "tags": [
+        "friend",
+        "validation"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "lineRange": [
+        25,
+        52
+      ]
+    },
+    {
+      "id": "step:friend-request-chat:step-02",
+      "type": "step",
+      "name": "받은 요청 목록 조회",
+      "summary": "내게 온 친구 요청 목록을 상대 프로필과 함께 조회합니다.",
+      "tags": [
+        "friend",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "lineRange": [
+        54,
+        71
+      ]
+    },
+    {
+      "id": "step:friend-request-chat:step-03",
+      "type": "step",
+      "name": "요청 수락과 관계 생성",
+      "summary": "요청 수신자 본인인지와 상태가 PENDING인지 확인한 뒤 수락 상태로 바꾸고 실제 친구 관계 레코드를 생성합니다.",
+      "tags": [
+        "friend",
+        "state-machine",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "lineRange": [
+        92,
+        110
+      ]
+    },
+    {
+      "id": "step:friend-request-chat:step-04",
+      "type": "step",
+      "name": "캐릭터 스냅샷 부착",
+      "summary": "친구 목록 응답에 상대의 레벨·티어 등 캐릭터 프로필 스냅샷을 일괄 조회해 붙입니다.",
+      "tags": [
+        "friend",
+        "cross-domain",
+        "batch-query"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "lineRange": [
+        268,
+        277
+      ]
+    },
+    {
+      "id": "step:friend-request-chat:step-05",
+      "type": "step",
+      "name": "채팅방 목록 조회",
+      "summary": "내가 참여한 1:1 채팅방을 조회해 각 방에서 상대방을 판별하고 roomId·friendId·닉네임 형태로 변환합니다.",
+      "tags": [
+        "chat",
+        "query"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "lineRange": [
+        178,
+        193
+      ]
+    },
+    {
+      "id": "step:friend-request-chat:step-06",
+      "type": "step",
+      "name": "메시지 전송",
+      "summary": "친구 여부를 검증하고 채팅방을 확보한 뒤 메시지를 저장합니다. 방이 없으면 이 시점에 자동 생성됩니다.",
+      "tags": [
+        "chat",
+        "lazy-init",
+        "authorization"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "lineRange": [
+        214,
+        227
+      ]
+    },
+    {
+      "id": "flow:protein-share",
+      "type": "flow",
+      "name": "단백질 나눔 신청과 승인 채팅",
+      "summary": "남는 보충제를 나눔 게시하면 다른 사용자가 신청하고, 방장이 승인한 신청자만 전용 채팅에 참여할 수 있는 흐름입니다.",
+      "tags": [
+        "protein-share",
+        "application",
+        "authorization",
+        "chat"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/proteins, POST /api/proteins/{id}/apply",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:protein-share:step-01",
+      "type": "step",
+      "name": "나눔 게시글 등록",
+      "summary": "요청 DTO와 등록자 정보를 받아 새 보충제 나눔 엔티티를 만들어 저장합니다.",
+      "tags": [
+        "protein",
+        "creation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "lineRange": [
+        20,
+        28
+      ]
+    },
+    {
+      "id": "step:protein-share:step-02",
+      "type": "step",
+      "name": "참여 신청",
+      "summary": "기존 신청이 있으면 그대로 반환하고 없을 때만 PENDING 상태 신청을 새로 저장하는 멱등성 있는 참여 신청 로직입니다.",
+      "tags": [
+        "application",
+        "idempotency"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+      "lineRange": [
+        31,
+        49
+      ]
+    },
+    {
+      "id": "step:protein-share:step-03",
+      "type": "step",
+      "name": "신청 목록 조회",
+      "summary": "방장 또는 관리자 권한을 확인한 뒤 해당 나눔의 신청 목록을 최신순으로 조회합니다.",
+      "tags": [
+        "authorization",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+      "lineRange": [
+        60,
+        70
+      ]
+    },
+    {
+      "id": "step:protein-share:step-04",
+      "type": "step",
+      "name": "신청 승인·거절",
+      "summary": "방장/관리자 권한과 신청-나눔 소속 일치를 검증한 뒤 상태를 변경하며, 불일치 시 400을 반환합니다. 별도 save 없이 트랜잭션 더티 체킹으로 반영됩니다.",
+      "tags": [
+        "approval",
+        "authorization",
+        "transaction"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+      "lineRange": [
+        72,
+        84
+      ]
+    },
+    {
+      "id": "step:protein-share:step-05",
+      "type": "step",
+      "name": "채팅 접근 인가 가드",
+      "summary": "관리자나 방장은 통과시키고, 그 외 사용자는 신청이 존재하며 상태가 APPROVED일 때만 채팅을 허용하며 위반 시 403을 던집니다.",
+      "tags": [
+        "authorization",
+        "guard",
+        "security"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+      "lineRange": [
+        122,
+        132
+      ]
+    },
+    {
+      "id": "step:protein-share:step-06",
+      "type": "step",
+      "name": "신청자 채팅 메시지 전송",
+      "summary": "채팅 접근 권한 확인 후 나눔·작성자·본문으로 메시지 엔티티를 빌드해 저장합니다.",
+      "tags": [
+        "chat",
+        "messaging"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+      "lineRange": [
+        107,
+        120
+      ]
+    },
+    {
+      "id": "flow:protein-review",
+      "type": "flow",
+      "name": "보충제 리뷰 작성",
+      "summary": "보충제에 대한 후기를 남기고 조회·수정·삭제하는 리뷰 CRUD 흐름입니다.",
+      "tags": [
+        "review",
+        "crud"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "POST /api/reviews",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:protein-review:step-01",
+      "type": "step",
+      "name": "리뷰 작성",
+      "summary": "대상 보충제와 작성자를 연결해 새 리뷰를 저장합니다.",
+      "tags": [
+        "review",
+        "creation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java",
+      "lineRange": [
+        28,
+        41
+      ]
+    },
+    {
+      "id": "step:protein-review:step-02",
+      "type": "step",
+      "name": "보충제별 리뷰 조회",
+      "summary": "특정 보충제에 달린 리뷰 목록을 조회합니다.",
+      "tags": [
+        "review",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java",
+      "lineRange": [
+        43,
+        47
+      ]
+    },
+    {
+      "id": "step:protein-review:step-03",
+      "type": "step",
+      "name": "리뷰 수정",
+      "summary": "작성자 본인 확인 후 리뷰 내용을 갱신합니다.",
+      "tags": [
+        "review",
+        "authorization"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java",
+      "lineRange": [
+        49,
+        62
+      ]
+    },
+    {
+      "id": "step:protein-review:step-04",
+      "type": "step",
+      "name": "리뷰 삭제",
+      "summary": "작성자 또는 관리자 권한으로 리뷰를 삭제합니다.",
+      "tags": [
+        "review",
+        "authorization"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ReviewServiceImpl.java",
+      "lineRange": [
+        64,
+        74
+      ]
+    },
+    {
+      "id": "flow:mypage-summary",
+      "type": "flow",
+      "name": "마이페이지 활동 요약",
+      "summary": "내가 남긴 댓글, 좋아요한 게시글, AI 대화 기록을 한 화면에 모아 보여주는 개인 활동 집계 흐름입니다.",
+      "tags": [
+        "mypage",
+        "aggregation",
+        "cross-domain"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "GET /api/mypage",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:mypage-summary:step-01",
+      "type": "step",
+      "name": "마이페이지 요청 접수",
+      "summary": "인증된 사용자의 마이페이지 요약을 조회하는 컨트롤러 핸들러입니다.",
+      "tags": [
+        "api-handler",
+        "mypage"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java",
+      "lineRange": [
+        18,
+        21
+      ]
+    },
+    {
+      "id": "step:mypage-summary:step-02",
+      "type": "step",
+      "name": "활동 3종 집계",
+      "summary": "이메일로 사용자를 조회한 뒤 최근 댓글·좋아요한 게시글·AI 채팅 기록을 각각 20건씩 모아 응답으로 조립합니다.",
+      "tags": [
+        "aggregation",
+        "cross-domain"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java",
+      "lineRange": [
+        30,
+        47
+      ]
+    },
+    {
+      "id": "flow:lounge-entry",
+      "type": "flow",
+      "name": "라운지 입장",
+      "summary": "백엔드 REST로 입장 프로필을 받은 뒤 별도 프로세스인 Socket.IO 서버에 접속해 플레이어로 등록되는, 서비스 경계를 두 번 넘는 흐름입니다.",
+      "tags": [
+        "lounge",
+        "socket-io",
+        "service-boundary"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "GET /api/lounge/profile → socket lounge:join",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:lounge-entry:step-01",
+      "type": "step",
+      "name": "입장 프로필 요청",
+      "summary": "라운지 입장에 필요한 사용자 프로필을 요청하는 REST 엔드포인트입니다.",
+      "tags": [
+        "api-handler",
+        "lounge"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/LoungeController.java",
+      "lineRange": [
+        18,
+        23
+      ]
+    },
+    {
+      "id": "step:lounge-entry:step-02",
+      "type": "step",
+      "name": "프로필 집계와 방문 로그 기록",
+      "summary": "이메일로 사용자를 찾아(없으면 401) 최근 30일 출석 수, 캐릭터 프로필, 진행 중 이벤트 진행도를 모으고 방문 로그를 저장한 뒤 응답을 조립합니다. 조회 요청임에도 쓰기 부수효과를 갖습니다.",
+      "tags": [
+        "aggregation",
+        "cross-domain",
+        "side-effect"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/LoungeServiceImpl.java",
+      "lineRange": [
+        31,
+        51
+      ]
+    },
+    {
+      "id": "step:lounge-entry:step-03",
+      "type": "step",
+      "name": "소켓 연결 수립",
+      "summary": "프론트엔드가 4001 포트의 Socket.IO 서버에 연결하고 받은 프로필로 lounge:join payload를 구성해 전송합니다.",
+      "tags": [
+        "frontend",
+        "socket-io",
+        "service-boundary"
+      ],
+      "complexity": "complex",
+      "filePath": "frontend/src/pages/Lounge.tsx"
+    },
+    {
+      "id": "step:lounge-entry:step-04",
+      "type": "step",
+      "name": "join payload 타입 가드 검증",
+      "summary": "닉네임·레벨·진화 단계·티어·성별은 물론 선택 필드(avatarSeed, mbti, growthParams, 출석 수, 이벤트 정보)의 타입까지 필드 단위로 검증하며, 실패 시 에러를 emit하고 연결을 끊습니다.",
+      "tags": [
+        "validation",
+        "type-guard",
+        "realtime"
+      ],
+      "complexity": "complex",
+      "filePath": "realtime/src/server.ts",
+      "lineRange": [
+        77,
+        104
+      ]
+    },
+    {
+      "id": "step:lounge-entry:step-05",
+      "type": "step",
+      "name": "플레이어 등록과 스폰",
+      "summary": "입장 payload를 PlayerState로 변환해 랜덤 스폰 좌표와 갱신 시각을 붙인 뒤 인메모리 Map에 등록합니다.",
+      "tags": [
+        "realtime",
+        "in-memory",
+        "spawn"
+      ],
+      "complexity": "simple",
+      "filePath": "realtime/src/rooms.ts",
+      "lineRange": [
+        23,
+        47
+      ]
+    },
+    {
+      "id": "step:lounge-entry:step-06",
+      "type": "step",
+      "name": "맵 크기 전달",
+      "summary": "라운지 맵 크기(2000x1200)를 lounge:welcome 이벤트로 클라이언트에 전달해 좌표계를 맞춥니다.",
+      "tags": [
+        "realtime",
+        "handshake"
+      ],
+      "complexity": "simple",
+      "filePath": "realtime/src/rooms.ts",
+      "lineRange": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": "flow:lounge-movement-broadcast",
+      "type": "flow",
+      "name": "아바타 이동 동기화",
+      "summary": "접속자의 이동 이벤트를 맵 경계 안으로 보정해 저장하고, 즉시 전파 대신 60ms 간격 배치 브로드캐스트로 묶어 내보내는 흐름입니다.",
+      "tags": [
+        "realtime",
+        "broadcast",
+        "throttle"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "socket player:move",
+        "entryType": "event"
+      }
+    },
+    {
+      "id": "step:lounge-movement-broadcast:step-01",
+      "type": "step",
+      "name": "이동 이벤트 수신",
+      "summary": "player:move를 포함한 모든 소켓 이벤트를 처리하고 60ms 간격 배치 브로드캐스트로 접속자 위치를 전파하는 서버 진입점입니다.",
+      "tags": [
+        "realtime",
+        "socket-io",
+        "entry-point"
+      ],
+      "complexity": "complex",
+      "filePath": "realtime/src/server.ts"
+    },
+    {
+      "id": "step:lounge-movement-broadcast:step-02",
+      "type": "step",
+      "name": "좌표 경계 보정",
+      "summary": "지정 socketId의 플레이어 좌표를 맵 경계 안으로 clamp해 갱신하고 lastUpdatedAt을 새로 찍으며, 등록되지 않은 소켓이면 null을 반환합니다.",
+      "tags": [
+        "realtime",
+        "clamp",
+        "validation"
+      ],
+      "complexity": "simple",
+      "filePath": "realtime/src/rooms.ts",
+      "lineRange": [
+        49,
+        56
+      ]
+    },
+    {
+      "id": "step:lounge-movement-broadcast:step-03",
+      "type": "step",
+      "name": "접속자 목록 스냅샷",
+      "summary": "현재 라운지에 접속 중인 모든 플레이어 상태를 배열로 반환하며 브로드캐스트와 /status 응답의 데이터 소스가 됩니다.",
+      "tags": [
+        "realtime",
+        "snapshot"
+      ],
+      "complexity": "simple",
+      "filePath": "realtime/src/rooms.ts",
+      "lineRange": [
+        62,
+        62
+      ]
+    },
+    {
+      "id": "step:lounge-movement-broadcast:step-04",
+      "type": "step",
+      "name": "단일 룸 브로드캐스트",
+      "summary": "모든 접속자가 참여하는 단일 라운지 룸 이름을 기준으로 배치된 위치 변경을 한 번에 전파합니다.",
+      "tags": [
+        "realtime",
+        "broadcast",
+        "room"
+      ],
+      "complexity": "simple",
+      "filePath": "realtime/src/rooms.ts",
+      "lineRange": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": "step:lounge-movement-broadcast:step-05",
+      "type": "step",
+      "name": "연결 종료 시 정리",
+      "summary": "소켓 연결이 끊기면 해당 플레이어를 인메모리 Map에서 삭제해 유령 아바타가 남지 않게 합니다.",
+      "tags": [
+        "realtime",
+        "cleanup",
+        "lifecycle"
+      ],
+      "complexity": "simple",
+      "filePath": "realtime/src/rooms.ts",
+      "lineRange": [
+        58,
+        60
+      ]
+    },
+    {
+      "id": "flow:lounge-social-interaction",
+      "type": "flow",
+      "name": "라운지 채팅과 소셜 상호작용",
+      "summary": "라운지 안에서 채팅·이모트·스티커·파티 요청·핑 체크 등 실시간 상호작용 이벤트를 주고받는 흐름입니다.",
+      "tags": [
+        "realtime",
+        "chat",
+        "emote",
+        "party"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "socket chat:send, social:emote, party:follow",
+        "entryType": "event"
+      }
+    },
+    {
+      "id": "step:lounge-social-interaction:step-01",
+      "type": "step",
+      "name": "이벤트 계약 공유",
+      "summary": "캐릭터 티어·성별 리터럴 유니온과 19개 필드의 GrowthParams, PlayerState, JoinPayload, TypingPayload, PingPayload를 선언해 서버와 클라이언트가 같은 계약을 공유합니다.",
+      "tags": [
+        "types",
+        "contract",
+        "realtime"
+      ],
+      "complexity": "moderate",
+      "filePath": "realtime/src/types.ts"
+    },
+    {
+      "id": "step:lounge-social-interaction:step-02",
+      "type": "step",
+      "name": "채팅·이모트·파티 이벤트 처리",
+      "summary": "chat:send, social:emote/sticker, voice:chunk, party:follow/teleport, friend:*, ping:check 등 상호작용 이벤트를 룸 단위로 중계합니다.",
+      "tags": [
+        "realtime",
+        "chat",
+        "relay"
+      ],
+      "complexity": "complex",
+      "filePath": "realtime/src/server.ts"
+    },
+    {
+      "id": "step:lounge-social-interaction:step-03",
+      "type": "step",
+      "name": "라운지 화면 반영",
+      "summary": "수신한 이벤트를 아바타 애니메이션·말풍선·파티 UI로 반영하는 코드베이스 최대 단일 화면 모듈입니다.",
+      "tags": [
+        "frontend",
+        "realtime",
+        "rendering"
+      ],
+      "complexity": "complex",
+      "filePath": "frontend/src/pages/Lounge.tsx"
+    },
+    {
+      "id": "flow:inbody-consultation",
+      "type": "flow",
+      "name": "인바디 결과지 AI 상담",
+      "summary": "인바디 결과지 이미지나 PDF를 업로드하면 비전 모델이 구조화된 리포트를 만들어 주는 핵심 AI 흐름입니다. JSON Schema 강제 → strict 재요청 → 사후 정규화의 3단 방어로 LLM 응답의 불확실성을 흡수합니다.",
+      "tags": [
+        "ai",
+        "vision",
+        "json-schema",
+        "inbody"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "POST /api/ai/inbody/consult",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:inbody-consultation:step-01",
+      "type": "step",
+      "name": "결과지 업로드",
+      "summary": "인바디 결과지(이미지·PDF)를 업로드하거나 수치를 직접 입력해 상담을 요청하는 화면입니다.",
+      "tags": [
+        "frontend",
+        "upload",
+        "inbody"
+      ],
+      "complexity": "complex",
+      "filePath": "frontend/src/pages/InbodyConsult.tsx"
+    },
+    {
+      "id": "step:inbody-consultation:step-02",
+      "type": "step",
+      "name": "파일 검증과 전처리",
+      "summary": "멀티파트로 업로드된 이미지/PDF를 빈 파일·용량·타입 기준으로 검증하고 전처리한 뒤 비전 모델 상담을 요청합니다.",
+      "tags": [
+        "validation",
+        "preprocessing",
+        "api-handler"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        87,
+        129
+      ]
+    },
+    {
+      "id": "step:inbody-consultation:step-03",
+      "type": "step",
+      "name": "JSON Schema 응답 형식 강제",
+      "summary": "OpenAI structured outputs용 JSON Schema(response_format)를 프로그램적으로 조립해 모델이 정해진 인바디 리포트 형태로만 응답하도록 강제합니다.",
+      "tags": [
+        "json-schema",
+        "structured-output",
+        "ai"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AiService.java",
+      "lineRange": [
+        310,
+        367
+      ]
+    },
+    {
+      "id": "step:inbody-consultation:step-04",
+      "type": "step",
+      "name": "비전 모델 호출",
+      "summary": "이미지 data URL·시스템 프롬프트·JSON 스키마 포맷을 조합해 비전 모델 HTTP 요청을 구성·전송하고 오류 상태코드를 예외로 변환합니다.",
+      "tags": [
+        "ai",
+        "http-client",
+        "vision"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AiService.java",
+      "lineRange": [
+        369,
+        427
+      ]
+    },
+    {
+      "id": "step:inbody-consultation:step-05",
+      "type": "step",
+      "name": "품질 미달 시 strict 재요청",
+      "summary": "인바디 이미지를 Base64로 인코딩해 비전 모델에 넘기고, 결과 품질이 낮으면 strictRetry로 재요청해 더 나은 분석 결과를 고릅니다.",
+      "tags": [
+        "ai",
+        "retry",
+        "quality-gate"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AiService.java",
+      "lineRange": [
+        101,
+        139
+      ]
+    },
+    {
+      "id": "step:inbody-consultation:step-06",
+      "type": "step",
+      "name": "응답 JSON 파싱",
+      "summary": "모델이 반환한 JSON 문자열을 인바디 리포트 구조로 파싱합니다.",
+      "tags": [
+        "parsing",
+        "ai"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AiService.java",
+      "lineRange": [
+        224,
+        287
+      ]
+    },
+    {
+      "id": "step:inbody-consultation:step-07",
+      "type": "step",
+      "name": "사후 수치 정규화",
+      "summary": "파싱된 결과 전체를 순회하며 지표·목표·영양 수치를 범위 검증하고 파생값·주차별 체크포인트·경고 중복 제거까지 적용합니다.",
+      "tags": [
+        "normalization",
+        "validation",
+        "ai"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AiService.java",
+      "lineRange": [
+        571,
+        620
+      ]
+    },
+    {
+      "id": "step:inbody-consultation:step-08",
+      "type": "step",
+      "name": "8개 섹션 파싱과 차트 렌더",
+      "summary": "자유 서술 상담문을 총평·진단·항목별 해석·좋은 점·문제점·실행계획·4주 가이드·다음 체크 8개 섹션으로 파싱하고 recharts 차트와 임계값 해석을 붙입니다.",
+      "tags": [
+        "frontend",
+        "parsing",
+        "chart"
+      ],
+      "complexity": "complex",
+      "filePath": "frontend/src/pages/InbodyConsult.tsx"
+    },
+    {
+      "id": "flow:ai-coaching-chat",
+      "type": "flow",
+      "name": "AI 코칭 분석·계획·채팅",
+      "summary": "체성분 수치 기반 코칭, 조건 맞춤 운동 계획, 자유 질문 채팅 세 갈래로 텍스트 모델을 호출하고 모든 대화를 이력에 남기는 흐름입니다.",
+      "tags": [
+        "ai",
+        "coaching",
+        "chat",
+        "history"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/ai/analyze, /api/ai/plan, /api/ai/chat",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:ai-coaching-chat:step-01",
+      "type": "step",
+      "name": "체성분 분석 요청",
+      "summary": "키·체중·체지방·근육량·목표를 받아 코치 시스템 프롬프트로 AI 완성을 요청하고 결과를 대화 이력에 저장합니다.",
+      "tags": [
+        "ai",
+        "analysis",
+        "api-handler"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        48,
+        60
+      ]
+    },
+    {
+      "id": "step:ai-coaching-chat:step-02",
+      "type": "step",
+      "name": "맞춤 운동 계획 생성",
+      "summary": "경험 수준·가능 요일·집중 부위·장비·선호 시간대를 플래너 프롬프트로 조합해 개인 맞춤 운동 계획을 생성합니다.",
+      "tags": [
+        "ai",
+        "planning",
+        "api-handler"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        62,
+        75
+      ]
+    },
+    {
+      "id": "step:ai-coaching-chat:step-03",
+      "type": "step",
+      "name": "자유 질문 채팅",
+      "summary": "사용자 질문과 선택적 컨텍스트를 코치 프롬프트에 실어 AI 응답을 받고 질문/답변 쌍을 이력에 저장합니다.",
+      "tags": [
+        "ai",
+        "chat",
+        "api-handler"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        77,
+        85
+      ]
+    },
+    {
+      "id": "step:ai-coaching-chat:step-04",
+      "type": "step",
+      "name": "텍스트 모델 호출",
+      "summary": "시스템/사용자 프롬프트를 담은 요청 본문을 만들어 텍스트 모델에 전송하고, 응답에서 메시지 내용을 추출해 마크다운을 정리한 문자열로 반환합니다.",
+      "tags": [
+        "ai",
+        "http-client"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AiService.java",
+      "lineRange": [
+        57,
+        99
+      ]
+    },
+    {
+      "id": "step:ai-coaching-chat:step-05",
+      "type": "step",
+      "name": "대화 이력 저장",
+      "summary": "질문과 답변 쌍을 대화 이력으로 저장해 마이페이지와 히스토리 조회에서 재사용할 수 있게 합니다.",
+      "tags": [
+        "history",
+        "persistence"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java",
+      "lineRange": [
+        29,
+        40
+      ]
+    },
+    {
+      "id": "flow:ai-report-share",
+      "type": "flow",
+      "name": "리포트 PDF 생성과 공유 링크",
+      "summary": "AI 상담 결과를 PDFBox로 리포트 파일로 만들고, 공유 슬러그를 발급해 비로그인 사용자도 열람할 수 있게 하는 확산 흐름입니다.",
+      "tags": [
+        "pdf",
+        "sharing",
+        "report"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/ai/inbody/pdf, POST /api/ai/{id}/share",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:ai-report-share:step-01",
+      "type": "step",
+      "name": "PDF 응답 반환",
+      "summary": "인바디 상담 결과를 PDF 바이트로 렌더링하고 UTF-8 인코딩된 첨부 파일명과 함께 application/pdf 응답으로 내려줍니다.",
+      "tags": [
+        "pdf",
+        "api-handler",
+        "download"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        162,
+        182
+      ]
+    },
+    {
+      "id": "step:ai-report-share:step-02",
+      "type": "step",
+      "name": "PDFBox 문서 조립",
+      "summary": "PDFBox로 상담 결과 섹션을 페이지에 배치해 실제 PDF 바이트를 생성합니다.",
+      "tags": [
+        "pdf",
+        "pdfbox",
+        "rendering"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        315,
+        360
+      ]
+    },
+    {
+      "id": "step:ai-report-share:step-03",
+      "type": "step",
+      "name": "공유 슬러그 발급",
+      "summary": "특정 AI 대화 메시지를 공개 상태로 전환하고 공유 슬러그가 포함된 응답을 반환합니다.",
+      "tags": [
+        "sharing",
+        "slug"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        194,
+        201
+      ]
+    },
+    {
+      "id": "step:ai-report-share:step-04",
+      "type": "step",
+      "name": "공유 리포트 열람",
+      "summary": "슬러그로 공개된 AI 리포트를 비로그인 방문자에게 노출합니다.",
+      "tags": [
+        "sharing",
+        "public-access"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        213,
+        216
+      ]
+    },
+    {
+      "id": "step:ai-report-share:step-05",
+      "type": "step",
+      "name": "공유 해제",
+      "summary": "공개 상태를 해제해 슬러그로의 접근을 차단합니다.",
+      "tags": [
+        "sharing",
+        "privacy"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "lineRange": [
+        203,
+        211
+      ]
+    },
+    {
+      "id": "flow:support-chatbot",
+      "type": "flow",
+      "name": "지원 챗봇 문서 검색 응답",
+      "summary": "사용자 질문을 토큰화해 내부 문서를 가중 점수로 검색하고, 상위 문서를 프롬프트에 실어 AI가 답변하게 하는 검색 증강 흐름입니다. 검색 실패나 AI 오류 시 fallback 답변으로 대체합니다.",
+      "tags": [
+        "chatbot",
+        "retrieval",
+        "ai",
+        "fallback"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/support/chat",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:support-chatbot:step-01",
+      "type": "step",
+      "name": "챗봇 파이프라인 진입",
+      "summary": "질의 정규화 → 문서 검색 → 프롬프트 조립 → AI 호출 순으로 처리하고 검색 실패나 AI 오류 시 fallback 답변을 반환합니다.",
+      "tags": [
+        "chatbot",
+        "pipeline",
+        "resilience"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java",
+      "lineRange": [
+        41,
+        74
+      ]
+    },
+    {
+      "id": "step:support-chatbot:step-02",
+      "type": "step",
+      "name": "질의 토큰화",
+      "summary": "질문 문자열을 검색에 사용할 토큰 목록으로 분해합니다.",
+      "tags": [
+        "tokenization",
+        "search"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java",
+      "lineRange": [
+        157,
+        168
+      ]
+    },
+    {
+      "id": "step:support-chatbot:step-03",
+      "type": "step",
+      "name": "가중 점수 문서 검색",
+      "summary": "토큰이 문서의 제목·키워드·요약·라우트에 매칭되는 정도를 가중 점수로 계산하고, 현재 페이지와 일치하면 가산점을 준 뒤 상위 TOP_K 문서를 반환합니다.",
+      "tags": [
+        "retrieval",
+        "scoring",
+        "search"
+      ],
+      "complexity": "complex",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java",
+      "lineRange": [
+        93,
+        137
+      ]
+    },
+    {
+      "id": "step:support-chatbot:step-04",
+      "type": "step",
+      "name": "검색 결과 프롬프트 조립",
+      "summary": "검색된 문서 조각을 사용자 질문과 함께 프롬프트로 조립해 AI에 전달합니다.",
+      "tags": [
+        "prompt",
+        "rag"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java",
+      "lineRange": [
+        76,
+        91
+      ]
+    },
+    {
+      "id": "step:support-chatbot:step-05",
+      "type": "step",
+      "name": "fallback 답변 대체",
+      "summary": "검색 결과가 없거나 AI 호출이 실패하면 미리 준비된 안내 답변으로 대체해 항상 응답을 보장합니다.",
+      "tags": [
+        "fallback",
+        "resilience"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/SupportChatService.java",
+      "lineRange": [
+        139,
+        155
+      ]
+    },
+    {
+      "id": "flow:audit-logging",
+      "type": "flow",
+      "name": "감사 로그 자동 기록과 보존",
+      "summary": "인증된 사용자의 모든 쓰기 계열 HTTP 요청을 필터가 가로채 자동으로 감사 로그에 남기고, 관리자가 조회하며, 보존 기간이 지난 로그는 일괄 정리하는 흐름입니다.",
+      "tags": [
+        "audit",
+        "filter",
+        "compliance",
+        "retention"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "AuditLogFilter (모든 POST/PUT/PATCH/DELETE 요청)",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:audit-logging:step-01",
+      "type": "step",
+      "name": "쓰기 요청 가로채기",
+      "summary": "필터 체인을 먼저 실행한 뒤 SecurityContext에서 인증 주체를 꺼내 요청 URI·메서드·응답 상태·IP·User-Agent를 감사 로그로 기록하며, 조회성 메서드는 제외합니다.",
+      "tags": [
+        "filter",
+        "audit",
+        "middleware"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/AuditLogFilter.java",
+      "lineRange": [
+        27,
+        48
+      ]
+    },
+    {
+      "id": "step:audit-logging:step-02",
+      "type": "step",
+      "name": "감사 로그 저장",
+      "summary": "이메일로 User를 조회해(없으면 null) 감사 로그 엔티티를 빌더로 생성하고 저장하는 기록 진입점입니다.",
+      "tags": [
+        "audit",
+        "persistence"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java",
+      "lineRange": [
+        25,
+        39
+      ]
+    },
+    {
+      "id": "step:audit-logging:step-03",
+      "type": "step",
+      "name": "수동 감사 이벤트 기록",
+      "summary": "관리자가 임의의 감사 이벤트를 수동으로 기록할 수 있는 엔드포인트로, action/resource 누락 시 기본값으로 보정합니다.",
+      "tags": [
+        "audit",
+        "admin",
+        "api-handler"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [
+        197,
+        210
+      ]
+    },
+    {
+      "id": "step:audit-logging:step-04",
+      "type": "step",
+      "name": "최근 로그 조회",
+      "summary": "최근 감사 로그를 생성일 역순으로 조회해 응답 DTO로 변환하며 limit은 안전 범위로 보정합니다.",
+      "tags": [
+        "audit",
+        "query",
+        "admin"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java",
+      "lineRange": [
+        41,
+        57
+      ]
+    },
+    {
+      "id": "step:audit-logging:step-05",
+      "type": "step",
+      "name": "보존 기간 초과 로그 정리",
+      "summary": "보존 기간을 넘긴 감사 로그를 기준 시각 이전 기준으로 일괄 삭제하는 정리 작업입니다.",
+      "tags": [
+        "retention",
+        "cleanup",
+        "bulk-delete"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AuditLogService.java",
+      "lineRange": [
+        59,
+        64
+      ]
+    },
+    {
+      "id": "flow:content-moderation",
+      "type": "flow",
+      "name": "출석 콘텐츠 모더레이션",
+      "summary": "신고가 누적된 공유 출석 기록을 관리자가 다중 필터로 찾아 검토하고 숨김 처리하는 운영 흐름입니다.",
+      "tags": [
+        "moderation",
+        "admin",
+        "report"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "GET /api/admin/attendance-logs",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:content-moderation:step-01",
+      "type": "step",
+      "name": "신고 접수",
+      "summary": "공유 기록의 신고 카운트를 증가시켜 관리자 검토 대상으로 올립니다.",
+      "tags": [
+        "report",
+        "cross-domain"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        158,
+        165
+      ]
+    },
+    {
+      "id": "step:content-moderation:step-02",
+      "type": "step",
+      "name": "다중 필터 로그 조회",
+      "summary": "검색어·운동 여부·공유 여부·기간 등 다중 필터를 받아 출석 로그를 페이징 조회합니다.",
+      "tags": [
+        "admin",
+        "query",
+        "filter"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [
+        137,
+        148
+      ]
+    },
+    {
+      "id": "step:content-moderation:step-03",
+      "type": "step",
+      "name": "공유 기록 목록 집계",
+      "summary": "관리자 검토용으로 공유 상태인 출석 기록을 조건에 맞춰 조회합니다.",
+      "tags": [
+        "admin",
+        "moderation",
+        "query"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        207,
+        225
+      ]
+    },
+    {
+      "id": "step:content-moderation:step-04",
+      "type": "step",
+      "name": "관리자 숨김 처리",
+      "summary": "문제가 확인된 기록을 관리자 권한으로 숨김 처리해 공개 노출을 차단합니다.",
+      "tags": [
+        "moderation",
+        "admin",
+        "takedown"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "lineRange": [
+        246,
+        254
+      ]
+    },
+    {
+      "id": "flow:event-cms",
+      "type": "flow",
+      "name": "이벤트 CMS 운영",
+      "summary": "운영자가 이벤트 콘텐츠를 등록·수정하고 공개 상태 화이트리스트로 노출을 통제하며, 조회수·클릭수 지표를 원자적으로 집계하는 흐름입니다.",
+      "tags": [
+        "cms",
+        "event",
+        "admin",
+        "metrics"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "POST /api/admin/events, GET /api/events",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:event-cms:step-01",
+      "type": "step",
+      "name": "이벤트 생성 요청",
+      "summary": "관리자 전용 이벤트 생성 엔드포인트로 CMS 서비스에 위임합니다.",
+      "tags": [
+        "admin",
+        "api-handler",
+        "cms"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminEventController.java",
+      "lineRange": [
+        55,
+        64
+      ]
+    },
+    {
+      "id": "step:event-cms:step-02",
+      "type": "step",
+      "name": "기간 검증과 정규화 저장",
+      "summary": "기간 유효성을 검증한 뒤 요청 값을 trim·blank 정규화해 이벤트를 빌드하고, 카운터를 0으로 초기화한 상태로 저장합니다.",
+      "tags": [
+        "validation",
+        "normalization",
+        "cms"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java",
+      "lineRange": [
+        93,
+        117
+      ]
+    },
+    {
+      "id": "step:event-cms:step-03",
+      "type": "step",
+      "name": "관리자 목록 조회",
+      "summary": "상태 제한 없이 전체 이벤트를 관리자 화면용으로 조회합니다.",
+      "tags": [
+        "admin",
+        "query",
+        "cms"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java",
+      "lineRange": [
+        77,
+        85
+      ]
+    },
+    {
+      "id": "step:event-cms:step-04",
+      "type": "step",
+      "name": "공개 화이트리스트 필터링",
+      "summary": "요청 상태가 공개 화이트리스트에 없으면 예외를 던지고, 검색어 유무에 따라 쿼리를 분기해 공개 이벤트 목록으로 매핑합니다.",
+      "tags": [
+        "whitelist",
+        "security",
+        "cms"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java",
+      "lineRange": [
+        31,
+        43
+      ]
+    },
+    {
+      "id": "step:event-cms:step-05",
+      "type": "step",
+      "name": "조회수 원자적 증가",
+      "summary": "조회수를 벌크 업데이트로 원자적으로 1 증가시키고, 영향받은 행이 없으면 예외를 던진 뒤 갱신된 카운트를 응답합니다.",
+      "tags": [
+        "metrics",
+        "atomic-update"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java",
+      "lineRange": [
+        55,
+        64
+      ]
+    },
+    {
+      "id": "step:event-cms:step-06",
+      "type": "step",
+      "name": "클릭수 집계",
+      "summary": "이벤트 배너 클릭 지표를 같은 방식으로 원자적으로 증가시킵니다.",
+      "tags": [
+        "metrics",
+        "atomic-update"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CmsEventServiceImpl.java",
+      "lineRange": [
+        66,
+        75
+      ]
+    },
+    {
+      "id": "flow:support-inquiry",
+      "type": "flow",
+      "name": "고객 문의 접수와 처리",
+      "summary": "사용자가 남긴 문의를 OPEN 상태로 접수하고, 관리자가 필터로 찾아 상태와 메모를 갱신하며 처리 시각을 기록하는 운영 흐름입니다.",
+      "tags": [
+        "support",
+        "inquiry",
+        "admin",
+        "workflow"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "POST /api/support/inquiries",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:support-inquiry:step-01",
+      "type": "step",
+      "name": "문의 등록",
+      "summary": "문의 요청 DTO로 OPEN 상태의 Inquiry 엔티티를 생성해 저장하고 생성된 식별자를 반환합니다.",
+      "tags": [
+        "support",
+        "creation"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/SupportController.java",
+      "lineRange": [
+        24,
+        35
+      ]
+    },
+    {
+      "id": "step:support-inquiry:step-02",
+      "type": "step",
+      "name": "문의 목록 필터 조회",
+      "summary": "검색어·회장 전용 여부·처리 상태로 필터링해 페이징 조회하며, 빈 검색어는 null로 정규화해 동적 쿼리에 전달합니다.",
+      "tags": [
+        "admin",
+        "query",
+        "filter"
+      ],
+      "complexity": "moderate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [
+        150,
+        169
+      ]
+    },
+    {
+      "id": "step:support-inquiry:step-03",
+      "type": "step",
+      "name": "처리 상태 갱신",
+      "summary": "문의의 처리 상태와 관리자 메모를 갱신하고 처리 시각(handledAt)을 기록하며, 대상이 없으면 404를 던집니다.",
+      "tags": [
+        "admin",
+        "workflow",
+        "state-machine"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [
+        171,
+        187
+      ]
+    },
+    {
+      "id": "flow:program-application-review",
+      "type": "flow",
+      "name": "프로그램 신청 심사",
+      "summary": "사용자가 운동 프로그램 참여를 신청하면 관리자가 목록에서 확인해 상태를 변경하며 심사하는 흐름입니다.",
+      "tags": [
+        "application",
+        "admin",
+        "review"
+      ],
+      "complexity": "simple",
+      "domainMeta": {
+        "entryPoint": "POST /api/program-applications",
+        "entryType": "http"
+      }
+    },
+    {
+      "id": "step:program-application-review:step-01",
+      "type": "step",
+      "name": "프로그램 신청",
+      "summary": "사용자가 프로그램 참여를 신청하는 엔드포인트입니다.",
+      "tags": [
+        "application",
+        "api-handler"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/ProgramApplicationController.java",
+      "lineRange": [
+        20,
+        31
+      ]
+    },
+    {
+      "id": "step:program-application-review:step-02",
+      "type": "step",
+      "name": "신청 목록 조회",
+      "summary": "관리자가 접수된 프로그램 신청 목록을 조회합니다.",
+      "tags": [
+        "admin",
+        "query"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [
+        104,
+        115
+      ]
+    },
+    {
+      "id": "step:program-application-review:step-03",
+      "type": "step",
+      "name": "신청 상태 변경",
+      "summary": "특정 신청의 상태(ApplicationStatus)를 변경하며, 대상이 없으면 404를 반환하고 저장 후 응답 DTO를 돌려줍니다.",
+      "tags": [
+        "admin",
+        "state-machine",
+        "review"
+      ],
+      "complexity": "simple",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+      "lineRange": [
+        117,
+        127
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "domain:identity-auth",
+      "target": "flow:email-signup",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:email-signup",
+      "target": "step:email-signup:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:email-signup",
+      "target": "step:email-signup:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:email-signup",
+      "target": "step:email-signup:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:email-signup",
+      "target": "step:email-signup:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:email-signup",
+      "target": "step:email-signup:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:identity-auth",
+      "target": "flow:local-login",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:local-login",
+      "target": "step:local-login:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:local-login",
+      "target": "step:local-login:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:local-login",
+      "target": "step:local-login:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:local-login",
+      "target": "step:local-login:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:local-login",
+      "target": "step:local-login:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:identity-auth",
+      "target": "flow:google-oauth-login",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:google-oauth-login",
+      "target": "step:google-oauth-login:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:google-oauth-login",
+      "target": "step:google-oauth-login:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:google-oauth-login",
+      "target": "step:google-oauth-login:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:identity-auth",
+      "target": "flow:token-refresh",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:token-refresh",
+      "target": "step:token-refresh:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:token-refresh",
+      "target": "step:token-refresh:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:token-refresh",
+      "target": "step:token-refresh:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:token-refresh",
+      "target": "step:token-refresh:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:identity-auth",
+      "target": "flow:request-authorization",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:request-authorization",
+      "target": "step:request-authorization:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:request-authorization",
+      "target": "step:request-authorization:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:request-authorization",
+      "target": "step:request-authorization:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:request-authorization",
+      "target": "step:request-authorization:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:attendance",
+      "target": "flow:daily-attendance-check",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.13
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.38
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.63
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-07",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.88
+    },
+    {
+      "source": "flow:daily-attendance-check",
+      "target": "step:daily-attendance-check:step-08",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:attendance",
+      "target": "flow:attendance-share-social",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:attendance-share-social",
+      "target": "step:attendance-share-social:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.17
+    },
+    {
+      "source": "flow:attendance-share-social",
+      "target": "step:attendance-share-social:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:attendance-share-social",
+      "target": "step:attendance-share-social:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:attendance-share-social",
+      "target": "step:attendance-share-social:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:attendance-share-social",
+      "target": "step:attendance-share-social:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.83
+    },
+    {
+      "source": "flow:attendance-share-social",
+      "target": "step:attendance-share-social:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:attendance",
+      "target": "flow:attendance-media-upload",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:attendance-media-upload",
+      "target": "step:attendance-media-upload:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:attendance-media-upload",
+      "target": "step:attendance-media-upload:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:attendance-media-upload",
+      "target": "step:attendance-media-upload:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:attendance-media-upload",
+      "target": "step:attendance-media-upload:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:attendance",
+      "target": "flow:attendance-ranking-stats",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:attendance-ranking-stats",
+      "target": "step:attendance-ranking-stats:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:attendance-ranking-stats",
+      "target": "step:attendance-ranking-stats:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:attendance-ranking-stats",
+      "target": "step:attendance-ranking-stats:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:attendance-ranking-stats",
+      "target": "step:attendance-ranking-stats:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:character-growth",
+      "target": "flow:body-stats-update",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:body-stats-update",
+      "target": "step:body-stats-update:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:body-stats-update",
+      "target": "step:body-stats-update:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:body-stats-update",
+      "target": "step:body-stats-update:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:body-stats-update",
+      "target": "step:body-stats-update:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:character-growth",
+      "target": "flow:character-evaluation",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:character-evaluation",
+      "target": "step:character-evaluation:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:character-evaluation",
+      "target": "step:character-evaluation:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:character-evaluation",
+      "target": "step:character-evaluation:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:character-evaluation",
+      "target": "step:character-evaluation:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:character-evaluation",
+      "target": "step:character-evaluation:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:character-growth",
+      "target": "flow:character-ranking",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:character-ranking",
+      "target": "step:character-ranking:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:character-ranking",
+      "target": "step:character-ranking:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:character-ranking",
+      "target": "step:character-ranking:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:character-ranking",
+      "target": "step:character-ranking:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:character-ranking",
+      "target": "step:character-ranking:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:character-growth",
+      "target": "flow:avatar-rendering",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:avatar-rendering",
+      "target": "step:avatar-rendering:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:avatar-rendering",
+      "target": "step:avatar-rendering:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:avatar-rendering",
+      "target": "step:avatar-rendering:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:avatar-rendering",
+      "target": "step:avatar-rendering:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:avatar-rendering",
+      "target": "step:avatar-rendering:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:character-growth",
+      "target": "flow:character-visibility",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:character-visibility",
+      "target": "step:character-visibility:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:character-visibility",
+      "target": "step:character-visibility:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:character-visibility",
+      "target": "step:character-visibility:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:crew-challenge",
+      "target": "flow:crew-creation",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:crew-creation",
+      "target": "step:crew-creation:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:crew-creation",
+      "target": "step:crew-creation:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:crew-creation",
+      "target": "step:crew-creation:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:crew-creation",
+      "target": "step:crew-creation:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:crew-challenge",
+      "target": "flow:crew-join-approval",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:crew-join-approval",
+      "target": "step:crew-join-approval:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.17
+    },
+    {
+      "source": "flow:crew-join-approval",
+      "target": "step:crew-join-approval:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:crew-join-approval",
+      "target": "step:crew-join-approval:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:crew-join-approval",
+      "target": "step:crew-join-approval:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:crew-join-approval",
+      "target": "step:crew-join-approval:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.83
+    },
+    {
+      "source": "flow:crew-join-approval",
+      "target": "step:crew-join-approval:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:crew-challenge",
+      "target": "flow:crew-challenge-competition",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:crew-challenge-competition",
+      "target": "step:crew-challenge-competition:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:crew-challenge-competition",
+      "target": "step:crew-challenge-competition:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:crew-challenge-competition",
+      "target": "step:crew-challenge-competition:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:crew-challenge-competition",
+      "target": "step:crew-challenge-competition:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:crew-challenge-competition",
+      "target": "step:crew-challenge-competition:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:crew-challenge",
+      "target": "flow:event-participation-finalize",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:event-participation-finalize",
+      "target": "step:event-participation-finalize:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.17
+    },
+    {
+      "source": "flow:event-participation-finalize",
+      "target": "step:event-participation-finalize:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:event-participation-finalize",
+      "target": "step:event-participation-finalize:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:event-participation-finalize",
+      "target": "step:event-participation-finalize:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:event-participation-finalize",
+      "target": "step:event-participation-finalize:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.83
+    },
+    {
+      "source": "flow:event-participation-finalize",
+      "target": "step:event-participation-finalize:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-social",
+      "target": "flow:brag-feed",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:brag-feed",
+      "target": "step:brag-feed:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:brag-feed",
+      "target": "step:brag-feed:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:brag-feed",
+      "target": "step:brag-feed:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:brag-feed",
+      "target": "step:brag-feed:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:brag-feed",
+      "target": "step:brag-feed:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-social",
+      "target": "flow:brag-interaction",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:brag-interaction",
+      "target": "step:brag-interaction:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:brag-interaction",
+      "target": "step:brag-interaction:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:brag-interaction",
+      "target": "step:brag-interaction:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:brag-interaction",
+      "target": "step:brag-interaction:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:brag-interaction",
+      "target": "step:brag-interaction:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-social",
+      "target": "flow:friend-request-chat",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:friend-request-chat",
+      "target": "step:friend-request-chat:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.17
+    },
+    {
+      "source": "flow:friend-request-chat",
+      "target": "step:friend-request-chat:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:friend-request-chat",
+      "target": "step:friend-request-chat:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:friend-request-chat",
+      "target": "step:friend-request-chat:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:friend-request-chat",
+      "target": "step:friend-request-chat:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.83
+    },
+    {
+      "source": "flow:friend-request-chat",
+      "target": "step:friend-request-chat:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-social",
+      "target": "flow:protein-share",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:protein-share",
+      "target": "step:protein-share:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.17
+    },
+    {
+      "source": "flow:protein-share",
+      "target": "step:protein-share:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:protein-share",
+      "target": "step:protein-share:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:protein-share",
+      "target": "step:protein-share:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:protein-share",
+      "target": "step:protein-share:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.83
+    },
+    {
+      "source": "flow:protein-share",
+      "target": "step:protein-share:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-social",
+      "target": "flow:protein-review",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:protein-review",
+      "target": "step:protein-review:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:protein-review",
+      "target": "step:protein-review:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:protein-review",
+      "target": "step:protein-review:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:protein-review",
+      "target": "step:protein-review:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:community-social",
+      "target": "flow:mypage-summary",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:mypage-summary",
+      "target": "step:mypage-summary:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:mypage-summary",
+      "target": "step:mypage-summary:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:realtime-lounge",
+      "target": "flow:lounge-entry",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:lounge-entry",
+      "target": "step:lounge-entry:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.17
+    },
+    {
+      "source": "flow:lounge-entry",
+      "target": "step:lounge-entry:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:lounge-entry",
+      "target": "step:lounge-entry:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:lounge-entry",
+      "target": "step:lounge-entry:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:lounge-entry",
+      "target": "step:lounge-entry:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.83
+    },
+    {
+      "source": "flow:lounge-entry",
+      "target": "step:lounge-entry:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:realtime-lounge",
+      "target": "flow:lounge-movement-broadcast",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:lounge-movement-broadcast",
+      "target": "step:lounge-movement-broadcast:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:lounge-movement-broadcast",
+      "target": "step:lounge-movement-broadcast:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:lounge-movement-broadcast",
+      "target": "step:lounge-movement-broadcast:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:lounge-movement-broadcast",
+      "target": "step:lounge-movement-broadcast:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:lounge-movement-broadcast",
+      "target": "step:lounge-movement-broadcast:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:realtime-lounge",
+      "target": "flow:lounge-social-interaction",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:lounge-social-interaction",
+      "target": "step:lounge-social-interaction:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:lounge-social-interaction",
+      "target": "step:lounge-social-interaction:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:lounge-social-interaction",
+      "target": "step:lounge-social-interaction:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:ai-coaching",
+      "target": "flow:inbody-consultation",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.13
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.38
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.63
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-07",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.88
+    },
+    {
+      "source": "flow:inbody-consultation",
+      "target": "step:inbody-consultation:step-08",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:ai-coaching",
+      "target": "flow:ai-coaching-chat",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:ai-coaching-chat",
+      "target": "step:ai-coaching-chat:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:ai-coaching-chat",
+      "target": "step:ai-coaching-chat:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:ai-coaching-chat",
+      "target": "step:ai-coaching-chat:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:ai-coaching-chat",
+      "target": "step:ai-coaching-chat:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:ai-coaching-chat",
+      "target": "step:ai-coaching-chat:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:ai-coaching",
+      "target": "flow:ai-report-share",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:ai-report-share",
+      "target": "step:ai-report-share:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:ai-report-share",
+      "target": "step:ai-report-share:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:ai-report-share",
+      "target": "step:ai-report-share:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:ai-report-share",
+      "target": "step:ai-report-share:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:ai-report-share",
+      "target": "step:ai-report-share:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:ai-coaching",
+      "target": "flow:support-chatbot",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:support-chatbot",
+      "target": "step:support-chatbot:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:support-chatbot",
+      "target": "step:support-chatbot:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:support-chatbot",
+      "target": "step:support-chatbot:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:support-chatbot",
+      "target": "step:support-chatbot:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:support-chatbot",
+      "target": "step:support-chatbot:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-ops",
+      "target": "flow:audit-logging",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:audit-logging",
+      "target": "step:audit-logging:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.2
+    },
+    {
+      "source": "flow:audit-logging",
+      "target": "step:audit-logging:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.4
+    },
+    {
+      "source": "flow:audit-logging",
+      "target": "step:audit-logging:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:audit-logging",
+      "target": "step:audit-logging:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:audit-logging",
+      "target": "step:audit-logging:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-ops",
+      "target": "flow:content-moderation",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.25
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.75
+    },
+    {
+      "source": "flow:content-moderation",
+      "target": "step:content-moderation:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-ops",
+      "target": "flow:event-cms",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:event-cms",
+      "target": "step:event-cms:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.17
+    },
+    {
+      "source": "flow:event-cms",
+      "target": "step:event-cms:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:event-cms",
+      "target": "step:event-cms:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:event-cms",
+      "target": "step:event-cms:step-04",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:event-cms",
+      "target": "step:event-cms:step-05",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.83
+    },
+    {
+      "source": "flow:event-cms",
+      "target": "step:event-cms:step-06",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-ops",
+      "target": "flow:support-inquiry",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:support-inquiry",
+      "target": "step:support-inquiry:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:support-inquiry",
+      "target": "step:support-inquiry:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:support-inquiry",
+      "target": "step:support-inquiry:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:admin-ops",
+      "target": "flow:program-application-review",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "flow:program-application-review",
+      "target": "step:program-application-review:step-01",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.33
+    },
+    {
+      "source": "flow:program-application-review",
+      "target": "step:program-application-review:step-02",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.67
+    },
+    {
+      "source": "flow:program-application-review",
+      "target": "step:program-application-review:step-03",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "domain:attendance",
+      "target": "domain:character-growth",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "출석 저장 직후 CharacterGrowthService.applyAttendance를 호출해 획득 경험치를 캐릭터 성장으로 전파한다",
+      "weight": 0.9
+    },
+    {
+      "source": "domain:attendance",
+      "target": "domain:crew-challenge",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "출석 여부 변동이 updateAttendanceProgress로 이벤트 참여 카운터에 반영되고, 누적 출석 로그가 크루 경쟁 보드 점수의 입력이 된다",
+      "weight": 0.8
+    },
+    {
+      "source": "domain:crew-challenge",
+      "target": "domain:character-growth",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "종료된 이벤트의 성공자에게 applyEventSuccess로 출석 포인트 10점과 캐릭터 재평가 보상을 지급한다",
+      "weight": 0.7
+    },
+    {
+      "source": "domain:realtime-lounge",
+      "target": "domain:character-growth",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "라운지 입장 프로필이 캐릭터 레벨·티어·진화 단계·아바타 시드를 조회해 socket join payload로 전달한다",
+      "weight": 0.7
+    },
+    {
+      "source": "domain:realtime-lounge",
+      "target": "domain:attendance",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "라운지 입장 프로필 집계가 최근 30일 운동 출석 수를 조회한다",
+      "weight": 0.5
+    },
+    {
+      "source": "domain:attendance",
+      "target": "domain:admin-ops",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "공유 기록의 신고 카운트 누적이 관리자 모더레이션 큐의 입력이 된다",
+      "weight": 0.5
+    },
+    {
+      "source": "domain:community-social",
+      "target": "domain:character-growth",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "친구 목록과 요청 응답에 캐릭터 프로필 스냅샷을 일괄 조회해 붙인다",
+      "weight": 0.5
+    },
+    {
+      "source": "domain:community-social",
+      "target": "domain:ai-coaching",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "마이페이지 요약이 AI 대화 이력을 최근 20건까지 함께 집계한다",
+      "weight": 0.4
+    },
+    {
+      "source": "domain:identity-auth",
+      "target": "domain:admin-ops",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "JwtAuthenticationFilter가 판정한 ROLE_ADMIN 권한이 모든 관리자 API와 감사 로그 주체 식별의 기준이 된다",
+      "weight": 0.6
+    },
+    {
+      "source": "domain:identity-auth",
+      "target": "domain:realtime-lounge",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "인증된 이메일이 라운지 입장 프로필 조회 키가 되며 미인증 요청은 401로 차단된다",
+      "weight": 0.4
+    },
+    {
+      "source": "domain:attendance",
+      "target": "domain:community-social",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "출석 공유 카드와 인증 미디어가 자랑 게시글 작성의 소재로 이어진다",
+      "weight": 0.3
+    }
+  ],
+  "layers": [],
+  "tour": []
+}

@@ -1,0 +1,191 @@
+{
+  "batchIndex": 11,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AiController.java",
+      "language": "java",
+      "sizeLines": 495,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java",
+      "language": "java",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "language": "java",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "language": "java",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java",
+      "language": "java",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java",
+      "language": "java",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/AiService.java",
+      "language": "java",
+      "sizeLines": 895,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/MyPageService.java",
+      "language": "java",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/test/java/com/ajou/muscleup/ai/AiInbodyQualityHarnessTest.java",
+      "language": "java",
+      "sizeLines": 324,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/controller/AiController.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java",
+      "backend/src/main/java/com/ajou/muscleup/service/AiService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/MyPageController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/MyPageService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiShareResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AiChatMessage.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/AiMessageType.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AiService.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/MyPageService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java"
+    ],
+    "backend/src/test/java/com/ajou/muscleup/ai/AiInbodyQualityHarnessTest.java": [
+      "backend/src/main/java/com/ajou/muscleup/service/AiService.java"
+    ]
+  },
+  "neighborMap": {
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "fetch",
+          "MyPageServiceImpl"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java",
+        "batchIndex": 6,
+        "symbols": [
+          "fetch",
+          "MyPageServiceImpl"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/AiChatMessageRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+        "batchIndex": 8,
+        "symbols": [
+          "User"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/AdminController.java",
+        "batchIndex": 2,
+        "symbols": [
+          "ping",
+          "summary",
+          "recentEvents",
+          "audit",
+          "forceDeleteBrag",
+          "forceDeleteComment",
+          "forceDeleteReview",
+          "forceDeleteAiHistory",
+          "listProgramApplications",
+          "updateProgramApplicationStatus",
+          "listAttendanceShares",
+          "listAttendanceLogs",
+          "listSupportInquiries",
+          "updateSupportInquiryStatus",
+          "setAttendanceShareHidden",
+          "manualAudit",
+          "AdminController"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/AiChatHistoryService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+        "batchIndex": 8,
+        "symbols": [
+          "User"
+        ]
+      },
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+        "batchIndex": 8,
+        "symbols": [
+          "UserRepository"
+        ]
+      }
+    ]
+  }
+}

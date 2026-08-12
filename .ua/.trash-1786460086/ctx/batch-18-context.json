@@ -1,0 +1,44 @@
+{
+  "batchIndex": 18,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/build.gradle",
+      "language": "gradle",
+      "sizeLines": 83,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/gradle.properties",
+      "language": "properties",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/gradlew.bat",
+      "language": "batch",
+      "sizeLines": 94,
+      "fileCategory": "script"
+    },
+    {
+      "path": "backend/nixpacks.toml",
+      "language": "toml",
+      "sizeLines": 14,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/settings.gradle",
+      "language": "gradle",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "backend/build.gradle": [],
+    "backend/gradle.properties": [],
+    "backend/gradlew.bat": [],
+    "backend/nixpacks.toml": [],
+    "backend/settings.gradle": []
+  },
+  "neighborMap": {}
+}

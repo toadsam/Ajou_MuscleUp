@@ -1,0 +1,1094 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "type": "file",
+      "name": "AttendanceController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "summary": "출석 체크 도메인의 REST 진입점으로, 오늘/특정 날짜 출석 upsert, 월간 로그·요약 조회, 공유 링크 생성·해제, 응원·신고, 주간 연속 출석 및 월간 미디어 랭킹까지 11개 엔드포인트를 `/api/attendance` 아래에 노출한다.",
+      "tags": [
+        "api-handler",
+        "rest-api",
+        "attendance",
+        "controller",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Spring `@RestController` + Lombok `@RequiredArgsConstructor` 생성자 주입 조합이며, `@AuthenticationPrincipal String email`로 인증 주체를 직접 받아 서비스에 위임한다."
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "type": "file",
+      "name": "AttendanceSharePageController.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "summary": "공유 슬러그(`/s/{slug}`)로 접근했을 때 카카오톡·SNS 크롤러가 읽을 수 있도록 Open Graph 메타 태그가 채워진 HTML을 서버에서 직접 렌더링하고, 실제 사용자는 프론트엔드 URL로 즉시 리다이렉트시킨다.",
+      "tags": [
+        "server-side-rendering",
+        "og-meta",
+        "sharing",
+        "api-handler",
+        "html"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Java 15+ 텍스트 블록(`\"\"\"`)에 `formatted()`를 붙여 HTML 템플릿을 구성하고, `esc()`/`jsString()`으로 HTML·JS 컨텍스트별 이스케이프를 분리해 XSS를 방지한다."
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "type": "file",
+      "name": "AdminAttendanceLogResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "summary": "관리자 화면 전용 출석 로그 응답 DTO로, 일반 응답에는 없는 사용자 식별 정보(userId·email·nickname)와 신고 수·관리자 숨김 여부까지 포함해 엔티티를 평탄화한다.",
+      "tags": [
+        "dto",
+        "admin",
+        "serialization",
+        "attendance",
+        "response"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "type": "file",
+      "name": "AttendanceLogResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "summary": "사용자에게 반환하는 출석 로그 응답 DTO로, 엔티티에 CSV/개행으로 저장된 운동 종류·미디어 URL을 리스트로 풀어내고 획득 경험치·이벤트 진행도·캐릭터 변화까지 함께 담는 오버로드 팩토리를 제공한다.",
+      "tags": [
+        "dto",
+        "serialization",
+        "attendance",
+        "response",
+        "factory"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "type": "file",
+      "name": "AttendanceRankingItemResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "summary": "출석 랭킹 항목 하나를 표현하는 최소 DTO로, 주간 연속 출석 랭킹과 월간 미디어 랭킹이 공통으로 사용하는 `userId`/`nickname`/`score` 3필드만 담는다.",
+      "tags": [
+        "dto",
+        "ranking",
+        "response",
+        "attendance"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "type": "file",
+      "name": "AttendanceShareResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "summary": "공개 공유 페이지에서 노출되는 출석 기록 DTO로, 작성자 닉네임과 현재 연속 출석 일수를 포함하되 이메일 등 민감 정보는 제외한 공개용 뷰를 정의한다.",
+      "tags": [
+        "dto",
+        "sharing",
+        "serialization",
+        "response",
+        "attendance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "type": "file",
+      "name": "AttendanceSummaryResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "summary": "월간 출석 요약 DTO로, 해당 월 운동 횟수·현재 연속 출석일·그 달의 최고 연속 기록 3개 지표만 담아 캘린더 헤더에 표시한다.",
+      "tags": [
+        "dto",
+        "response",
+        "attendance",
+        "statistics"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:AttendanceController",
+      "type": "class",
+      "name": "AttendanceController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        22,
+        137
+      ],
+      "summary": "`/api/attendance` REST 컨트롤러로 출석 CRUD·공유·랭킹 엔드포인트를 제공하고, 월/일 문자열 파싱 실패 시 400 응답으로 변환하는 헬퍼를 내장한다.",
+      "tags": [
+        "api-handler",
+        "controller",
+        "rest-api",
+        "attendance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:AttendanceSharePageController",
+      "type": "class",
+      "name": "AttendanceSharePageController",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "lineRange": [
+        15,
+        131
+      ],
+      "summary": "공유 슬러그 요청에 대해 OG 메타가 포함된 정적 HTML을 생성해 반환하는 컨트롤러로, HTML/JS 이스케이프와 미디어 유형 판별 유틸을 함께 갖는다.",
+      "tags": [
+        "server-side-rendering",
+        "og-meta",
+        "sharing",
+        "controller"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java:AdminAttendanceLogResponse",
+      "type": "class",
+      "name": "AdminAttendanceLogResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "lineRange": [
+        12,
+        68
+      ],
+      "summary": "관리자용 출석 로그 응답 DTO 클래스로, Lombok 빌더와 정적 `from` 팩토리를 통해 엔티티를 관리자 뷰 형태로 변환한다.",
+      "tags": [
+        "dto",
+        "admin",
+        "builder",
+        "response"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java:AttendanceLogResponse",
+      "type": "class",
+      "name": "AttendanceLogResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "lineRange": [
+        14,
+        97
+      ],
+      "summary": "사용자용 출석 로그 응답 DTO 클래스로, 기본 변환과 게이미피케이션 정보(경험치·이벤트·캐릭터)를 포함한 확장 변환 두 가지 팩토리를 노출한다.",
+      "tags": [
+        "dto",
+        "response",
+        "builder",
+        "attendance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java:AttendanceRankingItemResponse",
+      "type": "class",
+      "name": "AttendanceRankingItemResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "lineRange": [
+        6,
+        12
+      ],
+      "summary": "랭킹 한 줄을 표현하는 값 객체로 사용자 ID·닉네임·점수만 보유한다.",
+      "tags": [
+        "dto",
+        "ranking",
+        "value-object"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java:AttendanceShareResponse",
+      "type": "class",
+      "name": "AttendanceShareResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "lineRange": [
+        12,
+        66
+      ],
+      "summary": "공유 페이지용 출석 기록 DTO 클래스로, 연속 출석일 포함 여부에 따라 두 가지 정적 팩토리를 제공한다.",
+      "tags": [
+        "dto",
+        "sharing",
+        "builder",
+        "response"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java:AttendanceSummaryResponse",
+      "type": "class",
+      "name": "AttendanceSummaryResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "lineRange": [
+        6,
+        12
+      ],
+      "summary": "월간 출석 요약 값 객체로 운동 횟수·현재 연속일·월 최고 연속일을 담는다.",
+      "tags": [
+        "dto",
+        "response",
+        "statistics"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertToday",
+      "type": "function",
+      "name": "upsertToday",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        30,
+        36
+      ],
+      "summary": "`POST /api/attendance/today` 핸들러로 오늘 날짜 출석 기록을 등록하거나 수정한다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "attendance",
+        "write"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getMonthlyLogs",
+      "type": "function",
+      "name": "getMonthlyLogs",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        38,
+        45
+      ],
+      "summary": "`GET /api/attendance` 핸들러로 `yyyy-MM` 월 파라미터를 파싱해 해당 월의 출석 로그 목록을 반환한다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "query",
+        "attendance"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSummary",
+      "type": "function",
+      "name": "getSummary",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        47,
+        54
+      ],
+      "summary": "`GET /api/attendance/summary` 핸들러로 지정 월의 운동 횟수·연속 출석 요약을 반환한다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "statistics"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertByDate",
+      "type": "function",
+      "name": "upsertByDate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        56,
+        64
+      ],
+      "summary": "특정 날짜(`{date}`)의 출석 기록을 등록·수정하는 핸들러로, 과거 날짜 보정 입력을 처리한다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "attendance",
+        "write"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:shareByDate",
+      "type": "function",
+      "name": "shareByDate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        66,
+        73
+      ],
+      "summary": "특정 날짜 출석 기록을 공개 공유 상태로 전환하고 공유 슬러그가 포함된 응답을 반환한다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "sharing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:unshareByDate",
+      "type": "function",
+      "name": "unshareByDate",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        75,
+        83
+      ],
+      "summary": "공유 중인 출석 기록의 공개를 해제하고 204 No Content를 반환한다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "sharing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSharedBySlug",
+      "type": "function",
+      "name": "getSharedBySlug",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        85,
+        88
+      ],
+      "summary": "인증 없이 공유 슬러그로 공개 출석 기록을 조회하는 핸들러다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "public",
+        "sharing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:cheerBySlug",
+      "type": "function",
+      "name": "cheerBySlug",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        90,
+        93
+      ],
+      "summary": "공유 게시물에 응원(좋아요)을 1 증가시키는 핸들러다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "social"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:reportBySlug",
+      "type": "function",
+      "name": "reportBySlug",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        95,
+        98
+      ],
+      "summary": "공유 게시물을 신고 처리해 신고 카운트를 증가시키는 핸들러다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "moderation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:weeklyStreakRanking",
+      "type": "function",
+      "name": "weeklyStreakRanking",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        100,
+        105
+      ],
+      "summary": "이번 주 연속 출석 랭킹 상위 목록을 조회하는 핸들러다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "ranking"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:monthlyMediaRanking",
+      "type": "function",
+      "name": "monthlyMediaRanking",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        107,
+        114
+      ],
+      "summary": "지정 월의 미디어 업로드 횟수 기준 랭킹을 조회하는 핸들러다.",
+      "tags": [
+        "api-handler",
+        "endpoint",
+        "ranking"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:parseMonthOrThrow",
+      "type": "function",
+      "name": "parseMonthOrThrow",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        116,
+        125
+      ],
+      "summary": "`yyyy-MM` 문자열을 `YearMonth`로 파싱하고 형식이 잘못되면 400 `ResponseStatusException`을 던지는 내부 헬퍼다.",
+      "tags": [
+        "utility",
+        "validation",
+        "parsing",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:parseDateOrThrow",
+      "type": "function",
+      "name": "parseDateOrThrow",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "lineRange": [
+        127,
+        136
+      ],
+      "summary": "ISO 날짜 문자열을 `LocalDate`로 파싱하고 실패 시 400 응답 예외로 변환하는 내부 헬퍼다.",
+      "tags": [
+        "utility",
+        "validation",
+        "parsing",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:sharePage",
+      "type": "function",
+      "name": "sharePage",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "lineRange": [
+        23,
+        89
+      ],
+      "summary": "공유 슬러그로 출석 데이터를 조회한 뒤 제목·설명·대표 이미지/영상 OG 태그를 채운 HTML 문서를 문자열로 조립해 반환하고, 브라우저는 meta refresh와 `location.replace`로 프론트엔드 페이지로 이동시킨다.",
+      "tags": [
+        "server-side-rendering",
+        "og-meta",
+        "html",
+        "sharing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:buildDescription",
+      "type": "function",
+      "name": "buildDescription",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "lineRange": [
+        91,
+        102
+      ],
+      "summary": "공유 코멘트 → 메모 → 기본 문구 순으로 폴백하며 OG description 문구를 만들고 120자 내외로 잘라낸다.",
+      "tags": [
+        "utility",
+        "formatting",
+        "og-meta"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:esc",
+      "type": "function",
+      "name": "esc",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "lineRange": [
+        114,
+        123
+      ],
+      "summary": "HTML 속성/본문에 삽입되는 문자열의 `&`, `\"`, `<`, `>` 등을 엔티티로 치환해 XSS를 방지한다.",
+      "tags": [
+        "utility",
+        "security",
+        "escaping",
+        "html"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "lineRange": [
+        35,
+        57
+      ],
+      "summary": "`AttendanceLog` 엔티티를 관리자용 응답 DTO로 변환하는 정적 팩토리로, 연관 사용자 null 여부를 방어적으로 처리하고 CSV 컬럼을 리스트로 분해한다.",
+      "tags": [
+        "factory",
+        "serialization",
+        "mapping",
+        "admin"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "lineRange": [
+        34,
+        76
+      ],
+      "summary": "엔티티를 사용자용 응답 DTO로 변환하는 정적 팩토리(오버로드 2종)로, 기본 변환과 함께 경험치·이벤트 진행도·캐릭터 변화가 포함된 확장 변환을 제공한다.",
+      "tags": [
+        "factory",
+        "serialization",
+        "mapping",
+        "overload"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java:from",
+      "type": "function",
+      "name": "from",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "lineRange": [
+        32,
+        55
+      ],
+      "summary": "엔티티를 공유용 응답 DTO로 변환하는 정적 팩토리(오버로드 2종)로, 작성자 닉네임을 꺼내고 선택적으로 현재 연속 출석일을 함께 채운다.",
+      "tags": [
+        "factory",
+        "serialization",
+        "mapping",
+        "sharing"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceUpsertRequest.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/AttendanceService.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/character/CharacterChangeResponse.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/event/EventProgressResponse.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/AttendanceLog.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:AttendanceController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:AttendanceController",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:AttendanceSharePageController",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:AttendanceSharePageController",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java:AdminAttendanceLogResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java:AdminAttendanceLogResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java:AttendanceLogResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java:AttendanceLogResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java:AttendanceRankingItemResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceRankingItemResponse.java:AttendanceRankingItemResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java:AttendanceShareResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java:AttendanceShareResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java:AttendanceSummaryResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceSummaryResponse.java:AttendanceSummaryResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertToday",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getMonthlyLogs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSummary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertByDate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:shareByDate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:unshareByDate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSharedBySlug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:cheerBySlug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:reportBySlug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:weeklyStreakRanking",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:monthlyMediaRanking",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:parseMonthOrThrow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:parseDateOrThrow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:sharePage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:buildDescription",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:esc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java:from",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java:from",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java:from",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertToday",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getMonthlyLogs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSummary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertByDate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:shareByDate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:unshareByDate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSharedBySlug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:cheerBySlug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:reportBySlug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:weeklyStreakRanking",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:monthlyMediaRanking",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:sharePage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AdminAttendanceLogResponse.java:from",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceLogResponse.java:from",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/dto/attendance/AttendanceShareResponse.java:from",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertToday",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:upsertToday",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getMonthlyLogs",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:getMonthlyLogs",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSummary",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:getSummary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:upsertByDate",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:upsertByDate",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:shareByDate",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:shareByDate",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:unshareByDate",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:unshareByDate",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:getSharedBySlug",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:getSharedBySlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:cheerBySlug",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:addCheerBySlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:reportBySlug",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:reportBySlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:weeklyStreakRanking",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:getWeeklyStreakRanking",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java:monthlyMediaRanking",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:getMonthlyMediaRanking",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java:sharePage",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java:getSharedBySlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/controller/AttendanceSharePageController.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/AttendanceServiceImpl.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

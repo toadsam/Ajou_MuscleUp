@@ -1,0 +1,201 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java",
+      "type": "file",
+      "name": "AiChatResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java",
+      "summary": "AI 트레이너 챗 응답을 담는 최소 DTO로, 모델이 생성한 답변 텍스트 한 필드만 클라이언트에 전달한다.",
+      "tags": ["dto", "ai", "response", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java:AiChatResponse",
+      "type": "class",
+      "name": "AiChatResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java",
+      "lineRange": [6, 10],
+      "summary": "AI 채팅 답변 문자열(answer)만 보유하는 불변 응답 DTO. Lombok 어노테이션으로 getter와 생성자를 자동 생성한다.",
+      "tags": ["dto", "ai", "response", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java",
+      "type": "file",
+      "name": "AiInbodyConsultResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java",
+      "summary": "AI 인바디 분석 결과 전체를 담는 응답 DTO로, 상담 텍스트·측정 지표·목표치·일일 영양·주차별 체크포인트·신뢰도·경고를 한 번에 반환한다.",
+      "tags": ["dto", "ai", "inbody", "response", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java:AiInbodyConsultResponse",
+      "type": "class",
+      "name": "AiInbodyConsultResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java",
+      "lineRange": [9, 23],
+      "summary": "인바디 AI 상담 결과를 표현하는 11개 필드 응답 DTO. metrics/targets/dailyNutrition은 Map으로, weeklyCheckpoints는 Map 리스트로 유연하게 담고 confidence·reviewRequired로 검수 필요 여부를 표시한다.",
+      "tags": ["dto", "ai", "inbody", "response", "lombok"],
+      "complexity": "simple",
+      "languageNotes": "구조가 유동적인 AI 출력을 Map<String,String>으로 받아 스키마 변경에 유연하게 대응하는 패턴이다."
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java",
+      "type": "file",
+      "name": "AiInbodyPdfRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java",
+      "summary": "인바디 AI 상담 결과를 PDF 리포트로 내보낼 때 사용하는 요청 DTO로, 회원 이름과 상담 결과 전체 필드를 함께 받는다.",
+      "tags": ["dto", "ai", "inbody", "request", "pdf"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java:AiInbodyPdfRequest",
+      "type": "class",
+      "name": "AiInbodyPdfRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java",
+      "lineRange": [8, 20],
+      "summary": "PDF 생성 요청 페이로드 클래스. memberName과 함께 AiInbodyConsultResponse와 거의 동일한 상담 결과 필드를 그대로 전달받아 리포트를 렌더링한다.",
+      "tags": ["dto", "ai", "request", "pdf", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java",
+      "type": "file",
+      "name": "AiInbodyReviewRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java",
+      "summary": "인바디 측정값과 사용자 목표·강도·성별·나이·키를 AI 분석 요청으로 전달하는 입력 DTO다.",
+      "tags": ["dto", "ai", "inbody", "request", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java:AiInbodyReviewRequest",
+      "type": "class",
+      "name": "AiInbodyReviewRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java",
+      "lineRange": [7, 16],
+      "summary": "AI 인바디 리뷰 요청 클래스로 metrics(측정 지표 맵), goal, notes, goalIntensity, gender, age, heightCm를 담아 프롬프트 구성에 사용된다.",
+      "tags": ["dto", "ai", "request", "inbody", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java",
+      "type": "file",
+      "name": "AiPlanRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java",
+      "summary": "AI 운동 계획 생성 요청 DTO로, 운동 경력·가능 요일·집중 부위·장비·선호 시간대·비고를 입력받는다.",
+      "tags": ["dto", "ai", "request", "workout-plan"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java:AiPlanRequest",
+      "type": "class",
+      "name": "AiPlanRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java",
+      "lineRange": [5, 13],
+      "summary": "운동 루틴 추천 프롬프트에 필요한 6개 사용자 조건(experienceLevel, availableDays, focusArea, equipment, preferredTime, notes)을 담는 요청 클래스.",
+      "tags": ["dto", "ai", "request", "workout-plan", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java",
+      "type": "file",
+      "name": "AiPlanResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java",
+      "summary": "AI가 생성한 운동 계획 텍스트를 담아 반환하는 단일 필드 응답 DTO다.",
+      "tags": ["dto", "ai", "response", "workout-plan"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java:AiPlanResponse",
+      "type": "class",
+      "name": "AiPlanResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java",
+      "lineRange": [6, 10],
+      "summary": "AI 운동 계획 결과 문자열(plan) 하나만 보유하는 응답 클래스로, Lombok으로 getter와 생성자를 생성한다.",
+      "tags": ["dto", "ai", "response", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java",
+      "type": "file",
+      "name": "CrewCompetitionEntryResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java",
+      "summary": "크루 내 경쟁 랭킹 한 행을 표현하는 응답 DTO로, 순위와 총점뿐 아니라 출석·챌린지·최근 활동·보너스 등 세부 점수 내역을 함께 노출한다.",
+      "tags": ["dto", "crew", "ranking", "response", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java:CrewCompetitionEntryResponse",
+      "type": "class",
+      "name": "CrewCompetitionEntryResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java",
+      "lineRange": [6, 20],
+      "summary": "크루 경쟁 랭킹 엔트리 클래스. rank/userId/nickname/score와 함께 attendanceScore·challengeScore·recentScore·bonusScore 및 출석률·최근 운동일수 같은 산출 근거를 담는다.",
+      "tags": ["dto", "crew", "ranking", "scoring", "lombok"],
+      "complexity": "simple",
+      "languageNotes": "총점만이 아니라 점수 구성 요소를 함께 내려주어 프론트엔드에서 랭킹 산정 근거를 그대로 시각화할 수 있게 설계되었다."
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java",
+      "type": "file",
+      "name": "CrewKingTitleResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java",
+      "summary": "크루 내 부문별 '왕' 칭호 수상자를 표현하는 응답 DTO로, 칭호명과 수상자 정보 및 근거 지표를 전달한다.",
+      "tags": ["dto", "crew", "gamification", "response"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java:CrewKingTitleResponse",
+      "type": "class",
+      "name": "CrewKingTitleResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java",
+      "lineRange": [6, 13],
+      "summary": "title, userId, nickname, metric 네 필드로 크루 칭호 수여 결과를 표현하는 응답 클래스.",
+      "tags": ["dto", "crew", "gamification", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java",
+      "type": "file",
+      "name": "FriendChatMessageCreateRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java",
+      "summary": "친구 1:1 채팅 메시지 전송 요청 DTO로, Bean Validation 어노테이션이 붙은 content 필드 하나를 받는다.",
+      "tags": ["dto", "friend", "chat", "request", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java:FriendChatMessageCreateRequest",
+      "type": "class",
+      "name": "FriendChatMessageCreateRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java",
+      "lineRange": [8, 14],
+      "summary": "채팅 메시지 본문(content)을 담는 요청 클래스. 검증 어노테이션으로 빈 문자열 전송을 컨트롤러 진입 단계에서 차단한다.",
+      "tags": ["dto", "chat", "request", "validation", "lombok"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java:AiChatResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java:AiChatResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java:AiInbodyConsultResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java:AiInbodyConsultResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java:AiInbodyPdfRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java:AiInbodyPdfRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java:AiInbodyReviewRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java:AiInbodyReviewRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java:AiPlanRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java:AiPlanRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java:AiPlanResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java:AiPlanResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java:CrewCompetitionEntryResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java:CrewCompetitionEntryResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java", "target": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java:CrewKingTitleResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java:CrewKingTitleResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java:FriendChatMessageCreateRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java:FriendChatMessageCreateRequest", "type": "exports", "direction": "forward", "weight": 0.8}
+  ]
+}

@@ -1,0 +1,3079 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 21,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 21,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 21,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/config/AdminBootstrapRunner.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 51,
+      "nonEmptyLines": 42,
+      "functions": [
+        {
+          "name": "run",
+          "startLine": 23,
+          "endLine": 32,
+          "params": [
+            "args"
+          ]
+        },
+        {
+          "name": "promoteToAdminIfNeeded",
+          "startLine": 34,
+          "endLine": 43,
+          "params": [
+            "user",
+            "email"
+          ]
+        },
+        {
+          "name": "normalizeEmail",
+          "startLine": 45,
+          "endLine": 50,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AdminBootstrapRunner",
+          "startLine": 13,
+          "endLine": 51,
+          "methods": [
+            "run",
+            "promoteToAdminIfNeeded",
+            "normalizeEmail"
+          ],
+          "properties": [
+            "userRepository",
+            "bootstrapEmail"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "run",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "AdminBootstrapRunner",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "run",
+          "callee": "normalizeEmail",
+          "lineNumber": 26
+        },
+        {
+          "caller": "run",
+          "callee": "email.isEmpty",
+          "lineNumber": 27
+        },
+        {
+          "caller": "run",
+          "callee": "userRepository.findByEmail(email).ifPresent",
+          "lineNumber": 31
+        },
+        {
+          "caller": "run",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 31
+        },
+        {
+          "caller": "run",
+          "callee": "promoteToAdminIfNeeded",
+          "lineNumber": 31
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "user.getRole",
+          "lineNumber": 35
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "user.getRole().trim().toUpperCase",
+          "lineNumber": 35
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "user.getRole().trim",
+          "lineNumber": 35
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "user.getRole",
+          "lineNumber": 35
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "\"ADMIN\".equals",
+          "lineNumber": 36
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "\"ROLE_ADMIN\".equals",
+          "lineNumber": 36
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "user.setRole",
+          "lineNumber": 40
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "userRepository.save",
+          "lineNumber": 41
+        },
+        {
+          "caller": "promoteToAdminIfNeeded",
+          "callee": "log.info",
+          "lineNumber": 42
+        },
+        {
+          "caller": "normalizeEmail",
+          "callee": "email.trim().toLowerCase",
+          "lineNumber": 49
+        },
+        {
+          "caller": "normalizeEmail",
+          "callee": "email.trim",
+          "lineNumber": 49
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 106,
+      "nonEmptyLines": 93,
+      "functions": [
+        {
+          "name": "JwtUtil",
+          "startLine": 21,
+          "endLine": 32,
+          "params": [
+            "secret",
+            "accessTokenExpirationMs",
+            "refreshTokenExpirationMs"
+          ]
+        },
+        {
+          "name": "generateAccessToken",
+          "startLine": 35,
+          "endLine": 44,
+          "params": [
+            "email",
+            "role"
+          ]
+        },
+        {
+          "name": "generateRefreshToken",
+          "startLine": 47,
+          "endLine": 55,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "getAccessTokenExpirationMs",
+          "startLine": 57,
+          "endLine": 59,
+          "params": []
+        },
+        {
+          "name": "getRefreshTokenExpirationMs",
+          "startLine": 61,
+          "endLine": 63,
+          "params": []
+        },
+        {
+          "name": "getEmailFromToken",
+          "startLine": 66,
+          "endLine": 73,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "getRoleFromToken",
+          "startLine": 76,
+          "endLine": 85,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "getTokenType",
+          "startLine": 88,
+          "endLine": 95,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "validateToken",
+          "startLine": 98,
+          "endLine": 105,
+          "params": [
+            "token"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "JwtUtil",
+          "startLine": 14,
+          "endLine": 106,
+          "methods": [
+            "JwtUtil",
+            "generateAccessToken",
+            "generateRefreshToken",
+            "getAccessTokenExpirationMs",
+            "getRefreshTokenExpirationMs",
+            "getEmailFromToken",
+            "getRoleFromToken",
+            "getTokenType",
+            "validateToken"
+          ],
+          "properties": [
+            "key",
+            "accessTokenExpirationMs",
+            "refreshTokenExpirationMs"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "JwtUtil",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "generateAccessToken",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "generateRefreshToken",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "getAccessTokenExpirationMs",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "getRefreshTokenExpirationMs",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "getEmailFromToken",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "getRoleFromToken",
+          "line": 76,
+          "isDefault": false
+        },
+        {
+          "name": "getTokenType",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "validateToken",
+          "line": 98,
+          "isDefault": false
+        },
+        {
+          "name": "JwtUtil",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "JwtUtil",
+          "callee": "secret.trim().length",
+          "lineNumber": 26
+        },
+        {
+          "caller": "JwtUtil",
+          "callee": "secret.trim",
+          "lineNumber": 26
+        },
+        {
+          "caller": "JwtUtil",
+          "callee": "new IllegalStateException",
+          "lineNumber": 27
+        },
+        {
+          "caller": "JwtUtil",
+          "callee": "Keys.hmacShaKeyFor",
+          "lineNumber": 29
+        },
+        {
+          "caller": "JwtUtil",
+          "callee": "secret.trim().getBytes",
+          "lineNumber": 29
+        },
+        {
+          "caller": "JwtUtil",
+          "callee": "secret.trim",
+          "lineNumber": 29
+        },
+        {
+          "caller": "JwtUtil",
+          "callee": "Math.max",
+          "lineNumber": 30
+        },
+        {
+          "caller": "JwtUtil",
+          "callee": "Math.max",
+          "lineNumber": 31
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"role\", role)\n                .claim(\"type\", \"access\")\n                .setIssuedAt(new Date())\n                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))\n                .signWith(key, SignatureAlgorithm.HS256).compact",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"role\", role)\n                .claim(\"type\", \"access\")\n                .setIssuedAt(new Date())\n                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs)).signWith",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"role\", role)\n                .claim(\"type\", \"access\")\n                .setIssuedAt(new Date()).setExpiration",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"role\", role)\n                .claim(\"type\", \"access\").setIssuedAt",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"role\", role).claim",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder()\n                .setSubject(email).claim",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder().setSubject",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "Jwts.builder",
+          "lineNumber": 36
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "new Date",
+          "lineNumber": 40
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "new Date",
+          "lineNumber": 41
+        },
+        {
+          "caller": "generateAccessToken",
+          "callee": "System.currentTimeMillis",
+          "lineNumber": 41
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"type\", \"refresh\")\n                .setIssuedAt(new Date())\n                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))\n                .signWith(key, SignatureAlgorithm.HS256).compact",
+          "lineNumber": 48
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"type\", \"refresh\")\n                .setIssuedAt(new Date())\n                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs)).signWith",
+          "lineNumber": 48
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"type\", \"refresh\")\n                .setIssuedAt(new Date()).setExpiration",
+          "lineNumber": 48
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "Jwts.builder()\n                .setSubject(email)\n                .claim(\"type\", \"refresh\").setIssuedAt",
+          "lineNumber": 48
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "Jwts.builder()\n                .setSubject(email).claim",
+          "lineNumber": 48
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "Jwts.builder().setSubject",
+          "lineNumber": 48
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "Jwts.builder",
+          "lineNumber": 48
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "new Date",
+          "lineNumber": 51
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "new Date",
+          "lineNumber": 52
+        },
+        {
+          "caller": "generateRefreshToken",
+          "callee": "System.currentTimeMillis",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getEmailFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build()\n                .parseClaimsJws(token)\n                .getBody().getSubject",
+          "lineNumber": 67
+        },
+        {
+          "caller": "getEmailFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build()\n                .parseClaimsJws(token).getBody",
+          "lineNumber": 67
+        },
+        {
+          "caller": "getEmailFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build().parseClaimsJws",
+          "lineNumber": 67
+        },
+        {
+          "caller": "getEmailFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key).build",
+          "lineNumber": 67
+        },
+        {
+          "caller": "getEmailFromToken",
+          "callee": "Jwts.parserBuilder().setSigningKey",
+          "lineNumber": 67
+        },
+        {
+          "caller": "getEmailFromToken",
+          "callee": "Jwts.parserBuilder",
+          "lineNumber": 67
+        },
+        {
+          "caller": "getRoleFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build()\n                .parseClaimsJws(token)\n                .getBody().get",
+          "lineNumber": 77
+        },
+        {
+          "caller": "getRoleFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build()\n                .parseClaimsJws(token).getBody",
+          "lineNumber": 77
+        },
+        {
+          "caller": "getRoleFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build().parseClaimsJws",
+          "lineNumber": 77
+        },
+        {
+          "caller": "getRoleFromToken",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key).build",
+          "lineNumber": 77
+        },
+        {
+          "caller": "getRoleFromToken",
+          "callee": "Jwts.parserBuilder().setSigningKey",
+          "lineNumber": 77
+        },
+        {
+          "caller": "getRoleFromToken",
+          "callee": "Jwts.parserBuilder",
+          "lineNumber": 77
+        },
+        {
+          "caller": "getRoleFromToken",
+          "callee": "role.startsWith",
+          "lineNumber": 84
+        },
+        {
+          "caller": "getTokenType",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build()\n                .parseClaimsJws(token)\n                .getBody().get",
+          "lineNumber": 89
+        },
+        {
+          "caller": "getTokenType",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build()\n                .parseClaimsJws(token).getBody",
+          "lineNumber": 89
+        },
+        {
+          "caller": "getTokenType",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key)\n                .build().parseClaimsJws",
+          "lineNumber": 89
+        },
+        {
+          "caller": "getTokenType",
+          "callee": "Jwts.parserBuilder()\n                .setSigningKey(key).build",
+          "lineNumber": 89
+        },
+        {
+          "caller": "getTokenType",
+          "callee": "Jwts.parserBuilder().setSigningKey",
+          "lineNumber": 89
+        },
+        {
+          "caller": "getTokenType",
+          "callee": "Jwts.parserBuilder",
+          "lineNumber": 89
+        },
+        {
+          "caller": "validateToken",
+          "callee": "Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws",
+          "lineNumber": 100
+        },
+        {
+          "caller": "validateToken",
+          "callee": "Jwts.parserBuilder().setSigningKey(key).build",
+          "lineNumber": 100
+        },
+        {
+          "caller": "validateToken",
+          "callee": "Jwts.parserBuilder().setSigningKey",
+          "lineNumber": 100
+        },
+        {
+          "caller": "validateToken",
+          "callee": "Jwts.parserBuilder",
+          "lineNumber": 100
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 10,
+        "functionCount": 9,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/AuthController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 308,
+      "nonEmptyLines": 274,
+      "functions": [
+        {
+          "name": "send",
+          "startLine": 60,
+          "endLine": 64,
+          "params": [
+            "req"
+          ]
+        },
+        {
+          "name": "verify",
+          "startLine": 66,
+          "endLine": 70,
+          "params": [
+            "req"
+          ]
+        },
+        {
+          "name": "login",
+          "startLine": 72,
+          "endLine": 99,
+          "params": [
+            "req"
+          ]
+        },
+        {
+          "name": "refresh",
+          "startLine": 101,
+          "endLine": 129,
+          "params": [
+            "refreshToken",
+            "rememberMeCookie",
+            "request"
+          ]
+        },
+        {
+          "name": "logout",
+          "startLine": 131,
+          "endLine": 164,
+          "params": [
+            "refreshToken"
+          ]
+        },
+        {
+          "name": "googleLogin",
+          "startLine": 166,
+          "endLine": 206,
+          "params": [
+            "req"
+          ]
+        },
+        {
+          "name": "me",
+          "startLine": 208,
+          "endLine": 216,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "verifyGoogleToken",
+          "startLine": 218,
+          "endLine": 228,
+          "params": [
+            "idToken"
+          ]
+        },
+        {
+          "name": "buildRefreshCookie",
+          "startLine": 230,
+          "endLine": 241,
+          "params": [
+            "token",
+            "rememberMe"
+          ]
+        },
+        {
+          "name": "extractBearerToken",
+          "startLine": 243,
+          "endLine": 249,
+          "params": [
+            "request"
+          ]
+        },
+        {
+          "name": "buildAccessCookie",
+          "startLine": 251,
+          "endLine": 262,
+          "params": [
+            "token",
+            "rememberMe"
+          ]
+        },
+        {
+          "name": "buildRememberMeCookie",
+          "startLine": 264,
+          "endLine": 275,
+          "params": [
+            "rememberMe"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AuthController",
+          "startLine": 37,
+          "endLine": 308,
+          "methods": [
+            "send",
+            "verify",
+            "login",
+            "refresh",
+            "logout",
+            "googleLogin",
+            "me",
+            "verifyGoogleToken",
+            "buildRefreshCookie",
+            "extractBearerToken",
+            "buildAccessCookie",
+            "buildRememberMeCookie"
+          ],
+          "properties": [
+            "emailSvc",
+            "userService",
+            "jwtUtil",
+            "refreshTokenService",
+            "userRepository",
+            "from",
+            "googleClientId",
+            "cookieSecure",
+            "cookieSameSite"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "send",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "verify",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "login",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "refresh",
+          "line": 101,
+          "isDefault": false
+        },
+        {
+          "name": "logout",
+          "line": 131,
+          "isDefault": false
+        },
+        {
+          "name": "googleLogin",
+          "line": 166,
+          "isDefault": false
+        },
+        {
+          "name": "me",
+          "line": 208,
+          "isDefault": false
+        },
+        {
+          "name": "AuthController",
+          "line": 37,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "send",
+          "callee": "emailSvc.sendCode",
+          "lineNumber": 62
+        },
+        {
+          "caller": "send",
+          "callee": "req.getEmail",
+          "lineNumber": 62
+        },
+        {
+          "caller": "send",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 63
+        },
+        {
+          "caller": "send",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 63
+        },
+        {
+          "caller": "verify",
+          "callee": "emailSvc.verify",
+          "lineNumber": 68
+        },
+        {
+          "caller": "verify",
+          "callee": "req.getEmail",
+          "lineNumber": 68
+        },
+        {
+          "caller": "verify",
+          "callee": "req.getCode",
+          "lineNumber": 68
+        },
+        {
+          "caller": "verify",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 69
+        },
+        {
+          "caller": "verify",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 69
+        },
+        {
+          "caller": "login",
+          "callee": "userService.login",
+          "lineNumber": 74
+        },
+        {
+          "caller": "login",
+          "callee": "req.getEmail",
+          "lineNumber": 74
+        },
+        {
+          "caller": "login",
+          "callee": "req.getPassword",
+          "lineNumber": 74
+        },
+        {
+          "caller": "login",
+          "callee": "req.getRememberMe",
+          "lineNumber": 75
+        },
+        {
+          "caller": "login",
+          "callee": "Boolean.TRUE.equals",
+          "lineNumber": 75
+        },
+        {
+          "caller": "login",
+          "callee": "req.getRememberMe",
+          "lineNumber": 75
+        },
+        {
+          "caller": "login",
+          "callee": "jwtUtil.generateAccessToken",
+          "lineNumber": 77
+        },
+        {
+          "caller": "login",
+          "callee": "user.getEmail",
+          "lineNumber": 77
+        },
+        {
+          "caller": "login",
+          "callee": "user.getRole",
+          "lineNumber": 77
+        },
+        {
+          "caller": "login",
+          "callee": "refreshTokenService.issueFor",
+          "lineNumber": 78
+        },
+        {
+          "caller": "login",
+          "callee": "new LoginResponse",
+          "lineNumber": 80
+        },
+        {
+          "caller": "login",
+          "callee": "user.getEmail",
+          "lineNumber": 82
+        },
+        {
+          "caller": "login",
+          "callee": "user.getNickname",
+          "lineNumber": 83
+        },
+        {
+          "caller": "login",
+          "callee": "user.getRole",
+          "lineNumber": 84
+        },
+        {
+          "caller": "login",
+          "callee": "ResponseEntity\n                .ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString()).body",
+          "lineNumber": 87
+        },
+        {
+          "caller": "login",
+          "callee": "ResponseEntity\n                .ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString()).header",
+          "lineNumber": 87
+        },
+        {
+          "caller": "login",
+          "callee": "ResponseEntity\n                .ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString()).header",
+          "lineNumber": 87
+        },
+        {
+          "caller": "login",
+          "callee": "ResponseEntity\n                .ok().header",
+          "lineNumber": 87
+        },
+        {
+          "caller": "login",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 87
+        },
+        {
+          "caller": "login",
+          "callee": "buildRefreshCookie(refreshToken, rememberMe).toString",
+          "lineNumber": 89
+        },
+        {
+          "caller": "login",
+          "callee": "buildRefreshCookie",
+          "lineNumber": 89
+        },
+        {
+          "caller": "login",
+          "callee": "buildAccessCookie(accessToken, rememberMe).toString",
+          "lineNumber": 90
+        },
+        {
+          "caller": "login",
+          "callee": "buildAccessCookie",
+          "lineNumber": 90
+        },
+        {
+          "caller": "login",
+          "callee": "buildRememberMeCookie(rememberMe).toString",
+          "lineNumber": 91
+        },
+        {
+          "caller": "login",
+          "callee": "buildRememberMeCookie",
+          "lineNumber": 91
+        },
+        {
+          "caller": "login",
+          "callee": "new LoginResponse",
+          "lineNumber": 92
+        },
+        {
+          "caller": "login",
+          "callee": "response.getToken",
+          "lineNumber": 93
+        },
+        {
+          "caller": "login",
+          "callee": "response.getEmail",
+          "lineNumber": 94
+        },
+        {
+          "caller": "login",
+          "callee": "response.getNickname",
+          "lineNumber": 95
+        },
+        {
+          "caller": "login",
+          "callee": "response.getRole",
+          "lineNumber": 96
+        },
+        {
+          "caller": "refresh",
+          "callee": "refreshToken.isBlank",
+          "lineNumber": 107
+        },
+        {
+          "caller": "refresh",
+          "callee": "extractBearerToken",
+          "lineNumber": 108
+        },
+        {
+          "caller": "refresh",
+          "callee": "refreshToken.isBlank",
+          "lineNumber": 110
+        },
+        {
+          "caller": "refresh",
+          "callee": "ResponseEntity.status(401).build",
+          "lineNumber": 111
+        },
+        {
+          "caller": "refresh",
+          "callee": "ResponseEntity.status",
+          "lineNumber": 111
+        },
+        {
+          "caller": "refresh",
+          "callee": "\"1\".equals",
+          "lineNumber": 114
+        },
+        {
+          "caller": "refresh",
+          "callee": "refreshTokenService.rotate",
+          "lineNumber": 116
+        },
+        {
+          "caller": "refresh",
+          "callee": "jwtUtil.getEmailFromToken",
+          "lineNumber": 117
+        },
+        {
+          "caller": "refresh",
+          "callee": "userRepository.findByEmail(email)\r\n                .map(User::getRole)\r\n                .map(r -> r != null && r.startsWith(\"ROLE_\") ? r : \"ROLE_\" + r).orElse",
+          "lineNumber": 118
+        },
+        {
+          "caller": "refresh",
+          "callee": "userRepository.findByEmail(email)\r\n                .map(User::getRole).map",
+          "lineNumber": 118
+        },
+        {
+          "caller": "refresh",
+          "callee": "userRepository.findByEmail(email).map",
+          "lineNumber": 118
+        },
+        {
+          "caller": "refresh",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 118
+        },
+        {
+          "caller": "refresh",
+          "callee": "r.startsWith",
+          "lineNumber": 120
+        },
+        {
+          "caller": "refresh",
+          "callee": "jwtUtil.generateAccessToken",
+          "lineNumber": 122
+        },
+        {
+          "caller": "refresh",
+          "callee": "ResponseEntity.ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(newRefresh, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString()).body",
+          "lineNumber": 124
+        },
+        {
+          "caller": "refresh",
+          "callee": "ResponseEntity.ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(newRefresh, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString()).header",
+          "lineNumber": 124
+        },
+        {
+          "caller": "refresh",
+          "callee": "ResponseEntity.ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(newRefresh, rememberMe).toString()).header",
+          "lineNumber": 124
+        },
+        {
+          "caller": "refresh",
+          "callee": "ResponseEntity.ok().header",
+          "lineNumber": 124
+        },
+        {
+          "caller": "refresh",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 124
+        },
+        {
+          "caller": "refresh",
+          "callee": "buildRefreshCookie(newRefresh, rememberMe).toString",
+          "lineNumber": 125
+        },
+        {
+          "caller": "refresh",
+          "callee": "buildRefreshCookie",
+          "lineNumber": 125
+        },
+        {
+          "caller": "refresh",
+          "callee": "buildAccessCookie(accessToken, rememberMe).toString",
+          "lineNumber": 126
+        },
+        {
+          "caller": "refresh",
+          "callee": "buildAccessCookie",
+          "lineNumber": 126
+        },
+        {
+          "caller": "refresh",
+          "callee": "buildRememberMeCookie(rememberMe).toString",
+          "lineNumber": 127
+        },
+        {
+          "caller": "refresh",
+          "callee": "buildRememberMeCookie",
+          "lineNumber": 127
+        },
+        {
+          "caller": "refresh",
+          "callee": "new AccessTokenResponse",
+          "lineNumber": 128
+        },
+        {
+          "caller": "logout",
+          "callee": "refreshToken.isBlank",
+          "lineNumber": 133
+        },
+        {
+          "caller": "logout",
+          "callee": "jwtUtil.getEmailFromToken",
+          "lineNumber": 134
+        },
+        {
+          "caller": "logout",
+          "callee": "refreshTokenService.revokeAllByUserEmail",
+          "lineNumber": 135
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"refreshToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite)\n                .path(\"/\")\n                .maxAge(0).build",
+          "lineNumber": 138
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"refreshToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite)\n                .path(\"/\").maxAge",
+          "lineNumber": 138
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"refreshToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite).path",
+          "lineNumber": 138
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"refreshToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure).sameSite",
+          "lineNumber": 138
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"refreshToken\", \"\")\n                .httpOnly(true).secure",
+          "lineNumber": 138
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"refreshToken\", \"\").httpOnly",
+          "lineNumber": 138
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from",
+          "lineNumber": 138
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"accessToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite)\n                .path(\"/\")\n                .maxAge(0).build",
+          "lineNumber": 145
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"accessToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite)\n                .path(\"/\").maxAge",
+          "lineNumber": 145
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"accessToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite).path",
+          "lineNumber": 145
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"accessToken\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure).sameSite",
+          "lineNumber": 145
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"accessToken\", \"\")\n                .httpOnly(true).secure",
+          "lineNumber": 145
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"accessToken\", \"\").httpOnly",
+          "lineNumber": 145
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from",
+          "lineNumber": 145
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"rememberMe\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite)\n                .path(\"/\")\n                .maxAge(0).build",
+          "lineNumber": 152
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"rememberMe\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite)\n                .path(\"/\").maxAge",
+          "lineNumber": 152
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"rememberMe\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite).path",
+          "lineNumber": 152
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"rememberMe\", \"\")\n                .httpOnly(true)\n                .secure(cookieSecure).sameSite",
+          "lineNumber": 152
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"rememberMe\", \"\")\n                .httpOnly(true).secure",
+          "lineNumber": 152
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from(\"rememberMe\", \"\").httpOnly",
+          "lineNumber": 152
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseCookie.from",
+          "lineNumber": 152
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseEntity.ok()\r\n                .header(HttpHeaders.SET_COOKIE, clearRefresh.toString())\r\n                .header(HttpHeaders.SET_COOKIE, clearAccess.toString())\r\n                .header(HttpHeaders.SET_COOKIE, clearRememberMe.toString()).build",
+          "lineNumber": 159
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseEntity.ok()\r\n                .header(HttpHeaders.SET_COOKIE, clearRefresh.toString())\r\n                .header(HttpHeaders.SET_COOKIE, clearAccess.toString()).header",
+          "lineNumber": 159
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseEntity.ok()\r\n                .header(HttpHeaders.SET_COOKIE, clearRefresh.toString()).header",
+          "lineNumber": 159
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseEntity.ok().header",
+          "lineNumber": 159
+        },
+        {
+          "caller": "logout",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 159
+        },
+        {
+          "caller": "logout",
+          "callee": "clearRefresh.toString",
+          "lineNumber": 160
+        },
+        {
+          "caller": "logout",
+          "callee": "clearAccess.toString",
+          "lineNumber": 161
+        },
+        {
+          "caller": "logout",
+          "callee": "clearRememberMe.toString",
+          "lineNumber": 162
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "googleClientId.isBlank",
+          "lineNumber": 168
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity.status(500).build",
+          "lineNumber": 169
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity.status",
+          "lineNumber": 169
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "req.getRememberMe",
+          "lineNumber": 171
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "Boolean.TRUE.equals",
+          "lineNumber": 171
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "req.getRememberMe",
+          "lineNumber": 171
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "verifyGoogleToken",
+          "lineNumber": 172
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "req.getIdToken",
+          "lineNumber": 172
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity.status(401).build",
+          "lineNumber": 174
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity.status",
+          "lineNumber": 174
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "payload.getEmail",
+          "lineNumber": 176
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "payload.get",
+          "lineNumber": 177
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "name.isBlank",
+          "lineNumber": 178
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "email.split",
+          "lineNumber": 178
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "userRepository.findByEmail(email).orElseGet",
+          "lineNumber": 180
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 180
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "new User",
+          "lineNumber": 181
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "u.setEmail",
+          "lineNumber": 182
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "u.setName",
+          "lineNumber": 183
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "u.setNickname",
+          "lineNumber": 184
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "u.setRole",
+          "lineNumber": 185
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "u.setPassword",
+          "lineNumber": 186
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "userService.encodePassword",
+          "lineNumber": 186
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "UUID.randomUUID",
+          "lineNumber": 186
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "userRepository.save",
+          "lineNumber": 187
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "jwtUtil.generateAccessToken",
+          "lineNumber": 190
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "user.getEmail",
+          "lineNumber": 190
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "user.getRole",
+          "lineNumber": 190
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "refreshTokenService.issueFor",
+          "lineNumber": 191
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "new LoginResponse",
+          "lineNumber": 192
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "user.getEmail",
+          "lineNumber": 192
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "user.getNickname",
+          "lineNumber": 192
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "user.getRole",
+          "lineNumber": 192
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity\n                .ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildRememberMeCookie(rememberMe).toString()).body",
+          "lineNumber": 194
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity\n                .ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString())\n                .header(HttpHeaders.SET_COOKIE, buildAccessCookie(accessToken, rememberMe).toString()).header",
+          "lineNumber": 194
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity\n                .ok()\n                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken, rememberMe).toString()).header",
+          "lineNumber": 194
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity\n                .ok().header",
+          "lineNumber": 194
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 194
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "buildRefreshCookie(refreshToken, rememberMe).toString",
+          "lineNumber": 196
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "buildRefreshCookie",
+          "lineNumber": 196
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "buildAccessCookie(accessToken, rememberMe).toString",
+          "lineNumber": 197
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "buildAccessCookie",
+          "lineNumber": 197
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "buildRememberMeCookie(rememberMe).toString",
+          "lineNumber": 198
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "buildRememberMeCookie",
+          "lineNumber": 198
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "new LoginResponse",
+          "lineNumber": 199
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "response.getToken",
+          "lineNumber": 200
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "response.getEmail",
+          "lineNumber": 201
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "response.getNickname",
+          "lineNumber": 202
+        },
+        {
+          "caller": "googleLogin",
+          "callee": "response.getRole",
+          "lineNumber": 203
+        },
+        {
+          "caller": "me",
+          "callee": "email.isBlank",
+          "lineNumber": 210
+        },
+        {
+          "caller": "me",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 211
+        },
+        {
+          "caller": "me",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 213
+        },
+        {
+          "caller": "me",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 213
+        },
+        {
+          "caller": "me",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 214
+        },
+        {
+          "caller": "me",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 215
+        },
+        {
+          "caller": "me",
+          "callee": "UserDTO.from",
+          "lineNumber": 215
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())\r\n                    .setAudience(List.of(googleClientId)).build",
+          "lineNumber": 220
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory()).setAudience",
+          "lineNumber": 220
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "new GoogleIdTokenVerifier.Builder",
+          "lineNumber": 220
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "new NetHttpTransport",
+          "lineNumber": 220
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "new GsonFactory",
+          "lineNumber": 220
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "List.of",
+          "lineNumber": 221
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "verifier.verify",
+          "lineNumber": 223
+        },
+        {
+          "caller": "verifyGoogleToken",
+          "callee": "token.getPayload",
+          "lineNumber": 224
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "Math.max",
+          "lineNumber": 231
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "jwtUtil.getRefreshTokenExpirationMs",
+          "lineNumber": 231
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "ResponseCookie.from(\"refreshToken\", token)\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite).path",
+          "lineNumber": 232
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "ResponseCookie.from(\"refreshToken\", token)\n                .httpOnly(true)\n                .secure(cookieSecure).sameSite",
+          "lineNumber": 232
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "ResponseCookie.from(\"refreshToken\", token)\n                .httpOnly(true).secure",
+          "lineNumber": 232
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "ResponseCookie.from(\"refreshToken\", token).httpOnly",
+          "lineNumber": 232
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "ResponseCookie.from",
+          "lineNumber": 232
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "builder.maxAge",
+          "lineNumber": 238
+        },
+        {
+          "caller": "buildRefreshCookie",
+          "callee": "builder.build",
+          "lineNumber": 240
+        },
+        {
+          "caller": "extractBearerToken",
+          "callee": "request.getHeader",
+          "lineNumber": 244
+        },
+        {
+          "caller": "extractBearerToken",
+          "callee": "authHeader.startsWith",
+          "lineNumber": 246
+        },
+        {
+          "caller": "extractBearerToken",
+          "callee": "authHeader.substring",
+          "lineNumber": 247
+        },
+        {
+          "caller": "extractBearerToken",
+          "callee": "token.isBlank",
+          "lineNumber": 248
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "Math.max",
+          "lineNumber": 252
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "jwtUtil.getAccessTokenExpirationMs",
+          "lineNumber": 252
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "ResponseCookie.from(\"accessToken\", token)\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite).path",
+          "lineNumber": 253
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "ResponseCookie.from(\"accessToken\", token)\n                .httpOnly(true)\n                .secure(cookieSecure).sameSite",
+          "lineNumber": 253
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "ResponseCookie.from(\"accessToken\", token)\n                .httpOnly(true).secure",
+          "lineNumber": 253
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "ResponseCookie.from(\"accessToken\", token).httpOnly",
+          "lineNumber": 253
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "ResponseCookie.from",
+          "lineNumber": 253
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "builder.maxAge",
+          "lineNumber": 259
+        },
+        {
+          "caller": "buildAccessCookie",
+          "callee": "builder.build",
+          "lineNumber": 261
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "Math.max",
+          "lineNumber": 265
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "jwtUtil.getRefreshTokenExpirationMs",
+          "lineNumber": 265
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "ResponseCookie.from(\"rememberMe\", rememberMe ? \"1\" : \"0\")\n                .httpOnly(true)\n                .secure(cookieSecure)\n                .sameSite(cookieSameSite).path",
+          "lineNumber": 266
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "ResponseCookie.from(\"rememberMe\", rememberMe ? \"1\" : \"0\")\n                .httpOnly(true)\n                .secure(cookieSecure).sameSite",
+          "lineNumber": 266
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "ResponseCookie.from(\"rememberMe\", rememberMe ? \"1\" : \"0\")\n                .httpOnly(true).secure",
+          "lineNumber": 266
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "ResponseCookie.from(\"rememberMe\", rememberMe ? \"1\" : \"0\").httpOnly",
+          "lineNumber": 266
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "ResponseCookie.from",
+          "lineNumber": 266
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "builder.maxAge",
+          "lineNumber": 272
+        },
+        {
+          "caller": "buildRememberMeCookie",
+          "callee": "builder.build",
+          "lineNumber": 274
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 8,
+        "functionCount": 12,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/ProteinController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 55,
+      "nonEmptyLines": 48,
+      "functions": [
+        {
+          "name": "create",
+          "startLine": 21,
+          "endLine": 27,
+          "params": [
+            "email",
+            "req"
+          ]
+        },
+        {
+          "name": "update",
+          "startLine": 29,
+          "endLine": 33,
+          "params": [
+            "id",
+            "req"
+          ]
+        },
+        {
+          "name": "delete",
+          "startLine": 35,
+          "endLine": 39,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "get",
+          "startLine": 41,
+          "endLine": 45,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "list",
+          "startLine": 47,
+          "endLine": 54,
+          "params": [
+            "q",
+            "page",
+            "size"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProteinController",
+          "startLine": 14,
+          "endLine": 55,
+          "methods": [
+            "create",
+            "update",
+            "delete",
+            "get",
+            "list"
+          ],
+          "properties": [
+            "proteinService",
+            "userRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "update",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "delete",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "get",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "list",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "ProteinController",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create",
+          "callee": "userRepository.findByEmail(email).orElse",
+          "lineNumber": 24
+        },
+        {
+          "caller": "create",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 24
+        },
+        {
+          "caller": "create",
+          "callee": "proteinService.create",
+          "lineNumber": 25
+        },
+        {
+          "caller": "create",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 26
+        },
+        {
+          "caller": "create",
+          "callee": "ProteinResponse.from",
+          "lineNumber": 26
+        },
+        {
+          "caller": "update",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 31
+        },
+        {
+          "caller": "update",
+          "callee": "ProteinResponse.from",
+          "lineNumber": 31
+        },
+        {
+          "caller": "update",
+          "callee": "proteinService.update",
+          "lineNumber": 32
+        },
+        {
+          "caller": "update",
+          "callee": "proteinService.averageRating",
+          "lineNumber": 32
+        },
+        {
+          "caller": "delete",
+          "callee": "proteinService.delete",
+          "lineNumber": 37
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.ok().build",
+          "lineNumber": 38
+        },
+        {
+          "caller": "delete",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 38
+        },
+        {
+          "caller": "get",
+          "callee": "proteinService.get",
+          "lineNumber": 43
+        },
+        {
+          "caller": "get",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 44
+        },
+        {
+          "caller": "get",
+          "callee": "ProteinResponse.from",
+          "lineNumber": 44
+        },
+        {
+          "caller": "get",
+          "callee": "proteinService.averageRating",
+          "lineNumber": 44
+        },
+        {
+          "caller": "list",
+          "callee": "PageRequest.of",
+          "lineNumber": 51
+        },
+        {
+          "caller": "list",
+          "callee": "proteinService.list",
+          "lineNumber": 52
+        },
+        {
+          "caller": "list",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 53
+        },
+        {
+          "caller": "list",
+          "callee": "result.map",
+          "lineNumber": 53
+        },
+        {
+          "caller": "list",
+          "callee": "ProteinResponse.from",
+          "lineNumber": 53
+        },
+        {
+          "caller": "list",
+          "callee": "proteinService.averageRating",
+          "lineNumber": 53
+        },
+        {
+          "caller": "list",
+          "callee": "p.getId",
+          "lineNumber": 53
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 6,
+        "functionCount": 5,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/UserController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 26,
+      "functions": [
+        {
+          "name": "register",
+          "startLine": 20,
+          "endLine": 29,
+          "params": [
+            "req",
+            "uriBuilder"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "UserController",
+          "startLine": 12,
+          "endLine": 30,
+          "methods": [
+            "register"
+          ],
+          "properties": [
+            "userService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "register",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "UserController",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "register",
+          "callee": "userService.register",
+          "lineNumber": 25
+        },
+        {
+          "caller": "register",
+          "callee": "ResponseEntity\r\n                .created(uriBuilder.path(\"/api/users/{id}\").buildAndExpand(created.getId()).toUri()).body",
+          "lineNumber": 26
+        },
+        {
+          "caller": "register",
+          "callee": "ResponseEntity.created",
+          "lineNumber": 26
+        },
+        {
+          "caller": "register",
+          "callee": "uriBuilder.path(\"/api/users/{id}\").buildAndExpand(created.getId()).toUri",
+          "lineNumber": 27
+        },
+        {
+          "caller": "register",
+          "callee": "uriBuilder.path(\"/api/users/{id}\").buildAndExpand",
+          "lineNumber": 27
+        },
+        {
+          "caller": "register",
+          "callee": "uriBuilder.path",
+          "lineNumber": 27
+        },
+        {
+          "caller": "register",
+          "callee": "created.getId",
+          "lineNumber": 27
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/AccessTokenResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 16,
+      "functions": [
+        {
+          "name": "AccessTokenResponse",
+          "startLine": 11,
+          "endLine": 13,
+          "params": [
+            "accessToken"
+          ]
+        },
+        {
+          "name": "AccessTokenResponse",
+          "startLine": 15,
+          "endLine": 19,
+          "params": [
+            "accessToken",
+            "refreshToken"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AccessTokenResponse",
+          "startLine": 5,
+          "endLine": 20,
+          "methods": [
+            "AccessTokenResponse",
+            "AccessTokenResponse"
+          ],
+          "properties": [
+            "token",
+            "accessToken",
+            "refreshToken"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AccessTokenResponse",
+          "line": 11,
+          "isDefault": false
+        },
+        {
+          "name": "AccessTokenResponse",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "AccessTokenResponse",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/LoginResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 20,
+      "functions": [
+        {
+          "name": "LoginResponse",
+          "startLine": 13,
+          "endLine": 15,
+          "params": [
+            "token",
+            "email",
+            "nickname",
+            "role"
+          ]
+        },
+        {
+          "name": "LoginResponse",
+          "startLine": 17,
+          "endLine": 23,
+          "params": [
+            "token",
+            "email",
+            "nickname",
+            "role",
+            "refreshToken"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "LoginResponse",
+          "startLine": 5,
+          "endLine": 24,
+          "methods": [
+            "LoginResponse",
+            "LoginResponse"
+          ],
+          "properties": [
+            "token",
+            "email",
+            "nickname",
+            "role",
+            "refreshToken"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "LoginResponse",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "LoginResponse",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "LoginResponse",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/UserDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 22,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 15,
+          "endLine": 24,
+          "params": [
+            "u"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "UserDTO",
+          "startLine": 6,
+          "endLine": 25,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "name",
+            "email",
+            "nickname",
+            "role"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "UserDTO",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "UserDTO.builder()\r\n                .id(u.getId())\r\n                .name(u.getName())\r\n                .email(u.getEmail())\r\n                .nickname(u.getNickname())\r\n                .role(u.getRole()).build",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "UserDTO.builder()\r\n                .id(u.getId())\r\n                .name(u.getName())\r\n                .email(u.getEmail())\r\n                .nickname(u.getNickname()).role",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "UserDTO.builder()\r\n                .id(u.getId())\r\n                .name(u.getName())\r\n                .email(u.getEmail()).nickname",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "UserDTO.builder()\r\n                .id(u.getId())\r\n                .name(u.getName()).email",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "UserDTO.builder()\r\n                .id(u.getId()).name",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "UserDTO.builder().id",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "UserDTO.builder",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "u.getId",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "u.getName",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "u.getEmail",
+          "lineNumber": 20
+        },
+        {
+          "caller": "from",
+          "callee": "u.getNickname",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "u.getRole",
+          "lineNumber": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/UserRegisterRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 23,
+      "nonEmptyLines": 18,
+      "classes": [
+        {
+          "name": "UserRegisterRequest",
+          "startLine": 8,
+          "endLine": 23,
+          "methods": [],
+          "properties": [
+            "name",
+            "email",
+            "password",
+            "nickname"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "UserRegisterRequest",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinCreateUpdateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "ProteinCreateUpdateRequest",
+          "startLine": 6,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "name",
+            "price",
+            "days",
+            "goal",
+            "imageUrl",
+            "description",
+            "category"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinCreateUpdateRequest",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 53,
+      "nonEmptyLines": 48,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 29,
+          "endLine": 31,
+          "params": [
+            "p"
+          ]
+        },
+        {
+          "name": "from",
+          "startLine": 34,
+          "endLine": 52,
+          "params": [
+            "p",
+            "avgOverride"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProteinResponse",
+          "startLine": 11,
+          "endLine": 53,
+          "methods": [
+            "from",
+            "from"
+          ],
+          "properties": [
+            "id",
+            "ownerId",
+            "ownerEmail",
+            "ownerNickname",
+            "name",
+            "price",
+            "days",
+            "goal",
+            "imageUrl",
+            "description",
+            "category",
+            "avgRating"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "from",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "ProteinResponse",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "from",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName())\r\n                .price(p.getPrice())\r\n                .days(p.getDays())\r\n                .goal(p.getGoal())\r\n                .imageUrl(p.getImageUrl())\r\n                .description(p.getDescription())\r\n                .category(p.getCategory())\r\n                // avgOverride가 있으면 우선 적용, 없으면 엔티티 값 사용\r\n                .avgRating(avgOverride != null ? avgOverride : p.getAvgRating()).build",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName())\r\n                .price(p.getPrice())\r\n                .days(p.getDays())\r\n                .goal(p.getGoal())\r\n                .imageUrl(p.getImageUrl())\r\n                .description(p.getDescription())\r\n                .category(p.getCategory()).avgRating",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName())\r\n                .price(p.getPrice())\r\n                .days(p.getDays())\r\n                .goal(p.getGoal())\r\n                .imageUrl(p.getImageUrl())\r\n                .description(p.getDescription()).category",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName())\r\n                .price(p.getPrice())\r\n                .days(p.getDays())\r\n                .goal(p.getGoal())\r\n                .imageUrl(p.getImageUrl()).description",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName())\r\n                .price(p.getPrice())\r\n                .days(p.getDays())\r\n                .goal(p.getGoal()).imageUrl",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName())\r\n                .price(p.getPrice())\r\n                .days(p.getDays()).goal",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName())\r\n                .price(p.getPrice()).days",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null)\r\n                .name(p.getName()).price",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null)\r\n                .ownerNickname(p.getOwner() != null ? p.getOwner().getNickname() : null).name",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null)\r\n                .ownerEmail(p.getOwner() != null ? p.getOwner().getEmail() : null).ownerNickname",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId())\r\n                .ownerId(p.getOwner() != null ? p.getOwner().getId() : null).ownerEmail",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder()\r\n                .id(p.getId()).ownerId",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder().id",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinResponse.builder",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "p.getId",
+          "lineNumber": 38
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner().getId",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner().getEmail",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner().getNickname",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "p.getOwner",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "p.getName",
+          "lineNumber": 42
+        },
+        {
+          "caller": "from",
+          "callee": "p.getPrice",
+          "lineNumber": 43
+        },
+        {
+          "caller": "from",
+          "callee": "p.getDays",
+          "lineNumber": 44
+        },
+        {
+          "caller": "from",
+          "callee": "p.getGoal",
+          "lineNumber": 45
+        },
+        {
+          "caller": "from",
+          "callee": "p.getImageUrl",
+          "lineNumber": 46
+        },
+        {
+          "caller": "from",
+          "callee": "p.getDescription",
+          "lineNumber": 47
+        },
+        {
+          "caller": "from",
+          "callee": "p.getCategory",
+          "lineNumber": 48
+        },
+        {
+          "caller": "from",
+          "callee": "p.getAvgRating",
+          "lineNumber": 50
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewCreateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "ReviewCreateRequest",
+          "startLine": 5,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "proteinId",
+            "rating",
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ReviewCreateRequest",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 23,
+      "nonEmptyLines": 20,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 12,
+          "endLine": 22,
+          "params": [
+            "r"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ReviewResponse",
+          "startLine": 7,
+          "endLine": 23,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "userId",
+            "nickname",
+            "proteinId",
+            "rating",
+            "content",
+            "createdAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "ReviewResponse",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder()\r\n                .id(r.getId())\r\n                .userId(r.getUser().getId())\r\n                .nickname(r.getUser().getNickname())\r\n                .proteinId(r.getProtein().getId())\r\n                .rating(r.getRating())\r\n                .content(r.getContent())\r\n                .createdAt(r.getCreatedAt()).build",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder()\r\n                .id(r.getId())\r\n                .userId(r.getUser().getId())\r\n                .nickname(r.getUser().getNickname())\r\n                .proteinId(r.getProtein().getId())\r\n                .rating(r.getRating())\r\n                .content(r.getContent()).createdAt",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder()\r\n                .id(r.getId())\r\n                .userId(r.getUser().getId())\r\n                .nickname(r.getUser().getNickname())\r\n                .proteinId(r.getProtein().getId())\r\n                .rating(r.getRating()).content",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder()\r\n                .id(r.getId())\r\n                .userId(r.getUser().getId())\r\n                .nickname(r.getUser().getNickname())\r\n                .proteinId(r.getProtein().getId()).rating",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder()\r\n                .id(r.getId())\r\n                .userId(r.getUser().getId())\r\n                .nickname(r.getUser().getNickname()).proteinId",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder()\r\n                .id(r.getId())\r\n                .userId(r.getUser().getId()).nickname",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder()\r\n                .id(r.getId()).userId",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder().id",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "ReviewResponse.builder",
+          "lineNumber": 13
+        },
+        {
+          "caller": "from",
+          "callee": "r.getId",
+          "lineNumber": 14
+        },
+        {
+          "caller": "from",
+          "callee": "r.getUser().getId",
+          "lineNumber": 15
+        },
+        {
+          "caller": "from",
+          "callee": "r.getUser",
+          "lineNumber": 15
+        },
+        {
+          "caller": "from",
+          "callee": "r.getUser().getNickname",
+          "lineNumber": 16
+        },
+        {
+          "caller": "from",
+          "callee": "r.getUser",
+          "lineNumber": 16
+        },
+        {
+          "caller": "from",
+          "callee": "r.getProtein().getId",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "r.getProtein",
+          "lineNumber": 17
+        },
+        {
+          "caller": "from",
+          "callee": "r.getRating",
+          "lineNumber": 18
+        },
+        {
+          "caller": "from",
+          "callee": "r.getContent",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "r.getCreatedAt",
+          "lineNumber": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/review/ReviewUpdateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "ReviewUpdateRequest",
+          "startLine": 7,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "rating",
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ReviewUpdateRequest",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 29,
+      "classes": [
+        {
+          "name": "CrewChallenge",
+          "startLine": 7,
+          "endLine": 37,
+          "methods": [],
+          "properties": [
+            "id",
+            "crew",
+            "title",
+            "description",
+            "startDate",
+            "endDate",
+            "targetWorkoutDays"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewChallenge",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 6,
+      "classes": [
+        {
+          "name": "CrewJoinRequestStatus",
+          "startLine": 3,
+          "endLine": 7,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewJoinRequestStatus",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 24,
+      "classes": [
+        {
+          "name": "EmailVerification",
+          "startLine": 7,
+          "endLine": 32,
+          "methods": [],
+          "properties": [
+            "id",
+            "email",
+            "code",
+            "createdAt",
+            "expireAt",
+            "verified",
+            "attempts"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "EmailVerification",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/Friendship.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 24,
+      "classes": [
+        {
+          "name": "Friendship",
+          "startLine": 6,
+          "endLine": 28,
+          "methods": [],
+          "properties": [
+            "id",
+            "userLow",
+            "userHigh"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Friendship",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 22,
+      "classes": [
+        {
+          "name": "Protein",
+          "startLine": 6,
+          "endLine": 26,
+          "methods": [],
+          "properties": [
+            "id",
+            "owner",
+            "name",
+            "price",
+            "days",
+            "goal",
+            "imageUrl",
+            "description",
+            "category",
+            "avgRating"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Protein",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/RefreshToken.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 27,
+      "nonEmptyLines": 20,
+      "classes": [
+        {
+          "name": "RefreshToken",
+          "startLine": 8,
+          "endLine": 26,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "token",
+            "expiresAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "RefreshToken",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/Review.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 19,
+      "classes": [
+        {
+          "name": "Review",
+          "startLine": 7,
+          "endLine": 25,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "protein",
+            "rating",
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Review",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    }
+  ]
+}

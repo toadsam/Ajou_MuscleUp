@@ -1,0 +1,62 @@
+{
+  "batchIndex": 15,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "language": "java",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "language": "java",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendChatMessageRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatMessage.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendChatRoom.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ]
+  },
+  "neighborMap": {
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendChatRoomRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+        "batchIndex": 8,
+        "symbols": [
+          "User"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java",
+      "type": "file",
+      "name": "FriendChatRoomResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java",
+      "summary": "친구 1:1 채팅방 목록 항목을 표현하는 응답 DTO로, 방 ID와 상대 친구의 ID·닉네임을 전달한다.",
+      "tags": ["dto", "friend", "chat", "response"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java:FriendChatRoomResponse",
+      "type": "class",
+      "name": "FriendChatRoomResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java",
+      "lineRange": [6, 12],
+      "summary": "roomId, friendId, friendNickname 세 필드를 담는 채팅방 요약 응답 클래스. Lombok 빌더로 서비스 계층에서 조립된다.",
+      "tags": ["dto", "chat", "response", "lombok", "builder"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java",
+      "type": "file",
+      "name": "FriendRequestCreateRequest.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java",
+      "summary": "친구 요청 생성 시 상대방 이메일을 받는 요청 DTO로, Bean Validation으로 이메일 형식을 검증한다.",
+      "tags": ["dto", "friend", "request", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java:FriendRequestCreateRequest",
+      "type": "class",
+      "name": "FriendRequestCreateRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java",
+      "lineRange": [8, 14],
+      "summary": "친구 신청 대상 이메일(targetEmail) 한 필드만 갖는 요청 클래스로, 검증 어노테이션이 붙어 컨트롤러 @Valid 단계에서 형식을 확인한다.",
+      "tags": ["dto", "friend", "request", "validation", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java",
+      "type": "file",
+      "name": "FriendSummaryResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java",
+      "summary": "친구 목록 한 항목을 표현하는 응답 DTO로, 사용자 식별 정보와 함께 캐릭터 스냅샷을 포함해 목록에서 바로 캐릭터를 렌더링할 수 있게 한다.",
+      "tags": ["dto", "friend", "response", "character", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java:FriendSummaryResponse",
+      "type": "class",
+      "name": "FriendSummaryResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java",
+      "lineRange": [6, 13],
+      "summary": "userId, email, nickname, character(캐릭터 스냅샷)로 구성된 친구 요약 응답 클래스. FriendServiceImpl.listFriends가 빌더로 생성한다.",
+      "tags": ["dto", "friend", "response", "lombok", "builder"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "type": "file",
+      "name": "BaseTimeEntity.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "summary": "JPA Auditing으로 생성/수정 시각을 자동 기록하는 공통 추상 엔티티로, 프로젝트의 대부분 엔티티가 이 클래스를 상속한다.",
+      "tags": ["entity", "jpa", "auditing", "base-class", "data-model"],
+      "complexity": "simple",
+      "languageNotes": "@MappedSuperclass + @EntityListeners(AuditingEntityListener.class) 조합은 Spring Data JPA에서 createdAt/updatedAt를 상속 계층 전체에 주입하는 표준 패턴이다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java:BaseTimeEntity",
+      "type": "class",
+      "name": "BaseTimeEntity",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "lineRange": [12, 20],
+      "summary": "@CreatedDate가 붙은 createdAt(수정 불가 컬럼)과 @LastModifiedDate가 붙은 updatedAt을 제공하는 추상 상위 클래스. 별도 테이블 없이 상속받는 엔티티의 컬럼으로 매핑된다.",
+      "tags": ["entity", "jpa", "auditing", "abstract-class", "lombok"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java",
+      "type": "file",
+      "name": "ApiErrorResponse.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java",
+      "summary": "REST API 오류 응답의 표준 포맷을 정의하는 DTO로, 상태 코드·에러 코드·메시지·발생 시각·요청 경로를 일관되게 반환한다.",
+      "tags": ["dto", "error-handling", "api-contract", "response"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java:ApiErrorResponse",
+      "type": "class",
+      "name": "ApiErrorResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java",
+      "lineRange": [7, 15],
+      "summary": "status, code, message, timestamp, path 다섯 필드로 구성된 공통 에러 바디 클래스. GlobalExceptionHandler가 Lombok 빌더로 생성해 응답한다.",
+      "tags": ["dto", "error-handling", "response", "lombok", "builder"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java",
+      "type": "file",
+      "name": "GlobalExceptionHandler.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java",
+      "summary": "@RestControllerAdvice 기반 전역 예외 처리기로, ResponseStatusException과 Bean Validation 실패를 가로채 ApiErrorResponse 형식으로 통일해 응답한다.",
+      "tags": ["error-handling", "middleware", "api-handler", "validation", "cross-cutting"],
+      "complexity": "simple",
+      "languageNotes": "Spring의 @RestControllerAdvice는 모든 컨트롤러에 공통 적용되는 예외 처리 계층으로, 컨트롤러마다 try-catch를 반복하지 않아도 되게 해준다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:GlobalExceptionHandler",
+      "type": "class",
+      "name": "GlobalExceptionHandler",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java",
+      "lineRange": [11, 42],
+      "summary": "두 개의 @ExceptionHandler 메서드로 비즈니스 예외(ResponseStatusException)와 입력 검증 예외를 처리해 표준 에러 바디를 만드는 전역 어드바이스 클래스.",
+      "tags": ["error-handling", "middleware", "controller-advice", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:handleRSE",
+      "type": "function",
+      "name": "handleRSE",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java",
+      "lineRange": [14, 24],
+      "summary": "ResponseStatusException을 잡아 예외의 HTTP 상태·사유·요청 URI를 ApiErrorResponse로 감싸 동일한 상태 코드로 반환한다.",
+      "tags": ["error-handling", "exception-handler", "http-status"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:handleValidation",
+      "type": "function",
+      "name": "handleValidation",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java",
+      "lineRange": [26, 41],
+      "summary": "@Valid 검증 실패 시 첫 번째 필드 에러를 골라 '필드명 + 메시지' 형태 문자열로 만들고 400 BAD_REQUEST와 함께 표준 에러 바디를 반환한다.",
+      "tags": ["error-handling", "validation", "exception-handler", "bad-request"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java:FriendChatRoomResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java:FriendChatRoomResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java:FriendRequestCreateRequest", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java:FriendRequestCreateRequest", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java:FriendSummaryResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java:FriendSummaryResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java:BaseTimeEntity", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java", "target": "class:backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java:BaseTimeEntity", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java:ApiErrorResponse", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java", "target": "class:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java:ApiErrorResponse", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java", "target": "class:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:GlobalExceptionHandler", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java", "target": "function:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:handleRSE", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java", "target": "function:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:handleValidation", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java", "target": "class:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:GlobalExceptionHandler", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java", "target": "file:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java", "type": "depends_on", "direction": "forward", "weight": 0.6},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:handleRSE", "target": "class:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java:ApiErrorResponse", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java:handleValidation", "target": "class:backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java:ApiErrorResponse", "type": "calls", "direction": "forward", "weight": 0.8}
+  ]
+}

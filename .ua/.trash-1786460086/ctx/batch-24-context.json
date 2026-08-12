@@ -1,0 +1,217 @@
+{
+  "batchIndex": 24,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java",
+      "language": "java",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java",
+      "language": "java",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/EmailSender.java",
+      "language": "java",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/FriendService.java",
+      "language": "java",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java",
+      "language": "java",
+      "sizeLines": 287,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ReviewService.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/resources/application.properties.example",
+      "language": "example",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/test/java/com/ajou/muscleup/backend/BackendApplicationTests.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/test/resources/application.properties",
+      "language": "properties",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/src/test/resources/inbody/sample-cases.json",
+      "language": "json",
+      "sizeLines": 282,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/uploads/2025/11/097cb7c5-61e3-44ef-8e70-ee7089e12e2d.webp",
+      "language": "webp",
+      "sizeLines": 8870,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/uploads/2025/11/5e6a915e-c8d1-4961-a78c-e18e0d8566b6.webp",
+      "language": "webp",
+      "sizeLines": 8870,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyConsultResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyPdfRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiInbodyReviewRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/ai/AiPlanResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewCompetitionEntryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewKingTitleResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatMessageCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendChatRoomResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendSummaryResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BaseTimeEntity.java": [],
+    "backend/src/main/java/com/ajou/muscleup/exception/ApiErrorResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/exception/GlobalExceptionHandler.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/EmailSender.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/FriendService.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/FriendServiceImpl.java": [],
+    "backend/src/main/java/com/ajou/muscleup/service/ReviewService.java": [],
+    "backend/src/main/resources/application.properties.example": [],
+    "backend/src/test/java/com/ajou/muscleup/backend/BackendApplicationTests.java": [],
+    "backend/src/test/resources/application.properties": [],
+    "backend/src/test/resources/inbody/sample-cases.json": [],
+    "backend/uploads/2025/11/097cb7c5-61e3-44ef-8e70-ee7089e12e2d.webp": [],
+    "backend/uploads/2025/11/5e6a915e-c8d1-4961-a78c-e18e0d8566b6.webp": []
+  },
+  "neighborMap": {
+    "backend/src/main/java/com/ajou/muscleup/service/FriendService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/FriendController.java",
+        "batchIndex": 23,
+        "symbols": [
+          "sendRequest",
+          "incoming",
+          "outgoing",
+          "accept",
+          "reject",
+          "list",
+          "delete",
+          "chatRooms",
+          "messages",
+          "sendMessage",
+          "FriendController"
+        ]
+      }
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/ReviewService.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/controller/ReviewController.java",
+        "batchIndex": 23,
+        "symbols": [
+          "create",
+          "list",
+          "update",
+          "delete",
+          "ReviewController"
+        ]
+      }
+    ]
+  }
+}

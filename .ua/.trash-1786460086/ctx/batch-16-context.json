@@ -1,0 +1,54 @@
+{
+  "batchIndex": 16,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "language": "java",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "language": "java",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "language": "java",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java"
+    ]
+  },
+  "neighborMap": {
+    "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java": [
+      {
+        "path": "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+        "batchIndex": 8,
+        "symbols": [
+          "User"
+        ]
+      }
+    ]
+  }
+}

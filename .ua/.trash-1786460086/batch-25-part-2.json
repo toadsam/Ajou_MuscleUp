@@ -1,0 +1,253 @@
+{
+  "nodes": [
+    {
+      "id": "file:frontend/src/components/CharacterAvatar.tsx",
+      "type": "file",
+      "name": "CharacterAvatar.tsx",
+      "filePath": "frontend/src/components/CharacterAvatar.tsx",
+      "summary": "티어(BRONZE~CHALLENGER)·성별·진화 단계·레벨을 입력받아 캐릭터 아바타를 순수 SVG로 그려내는 프레젠테이션 컴포넌트다. 티어별 색 팔레트와 링 개수, 단계 진행도(0~9) 보간으로 성장감을 시각화한다.",
+      "tags": ["component", "avatar", "svg", "gamification", "presentational"],
+      "complexity": "complex",
+      "languageNotes": "외부 이미지 자산 없이 `clamp`/`lerp`로 단계값을 좌표·크기에 보간해 넣는 절차적 SVG 생성 방식이라, 캐릭터가 레벨업할수록 형태가 연속적으로 변한다."
+    },
+    {
+      "id": "function:frontend/src/components/CharacterAvatar.tsx:CharacterAvatar",
+      "type": "function",
+      "name": "CharacterAvatar",
+      "filePath": "frontend/src/components/CharacterAvatar.tsx",
+      "lineRange": [51, 395],
+      "summary": "성별·티어·단계·레벨·크기 props로 아바타 SVG 전체를 조립하는 기본 export 컴포넌트로, 단계를 0~9로 clamp한 진행도와 티어 팔레트를 기반으로 몸체·이펙트·링을 렌더링한다.",
+      "tags": ["component", "avatar", "svg", "rendering", "gamification"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/src/components/CharacterAvatar.tsx:getTierRing",
+      "type": "function",
+      "name": "getTierRing",
+      "filePath": "frontend/src/components/CharacterAvatar.tsx",
+      "lineRange": [37, 49],
+      "summary": "티어 등급에 따라 아바타 주변에 그릴 장식 링의 개수(1~3)를 반환하는 매핑 함수로, PLATINUM은 2개, DIAMOND 이상은 3개를 부여한다.",
+      "tags": ["utility", "avatar", "tier", "mapping"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/src/pages/AiShareView.tsx",
+      "type": "file",
+      "name": "AiShareView.tsx",
+      "filePath": "frontend/src/pages/AiShareView.tsx",
+      "summary": "URL의 share slug로 `/api/ai/share/{slug}`를 조회해 공유된 AI 상담 Q&A를 비로그인 상태에서도 볼 수 있게 보여주는 공개 페이지다. 로딩·에러·존재하지 않는 링크 상태를 각각 분기 렌더링한다.",
+      "tags": ["page", "ai", "share", "data-fetching", "public"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/src/pages/AiShareView.tsx:AiShareView",
+      "type": "function",
+      "name": "AiShareView",
+      "filePath": "frontend/src/pages/AiShareView.tsx",
+      "lineRange": [15, 89],
+      "summary": "`useParams`로 얻은 slug를 의존성으로 하는 useEffect에서 공유 답변을 fetch하고, loading/error/data 3상태를 관리하며 공유된 질문과 답변을 렌더링한다.",
+      "tags": ["page", "hook", "data-fetching", "component"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/src/pages/Executives.tsx",
+      "type": "file",
+      "name": "Executives.tsx",
+      "filePath": "frontend/src/pages/Executives.tsx",
+      "summary": "동아리 운영진 5인의 이름·직책·담당 영역·한 줄 인용문과 리더십 통계를 하드코딩된 상수 배열로 소개하는 정적 소개 페이지다. API 호출 없이 그라디언트 블러 배경 위에 카드 형태로 배치한다.",
+      "tags": ["page", "static-content", "team", "presentational", "marketing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/src/pages/Executives.tsx:Executives",
+      "type": "function",
+      "name": "Executives",
+      "filePath": "frontend/src/pages/Executives.tsx",
+      "lineRange": [53, 112],
+      "summary": "모듈 상단의 `leads`·`leadershipStats` 상수를 순회해 운영진 카드와 지표 블록을 그리는 상태 없는 페이지 컴포넌트다.",
+      "tags": ["page", "component", "presentational", "static-content"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/src/pages/Forbidden.tsx",
+      "type": "file",
+      "name": "Forbidden.tsx",
+      "filePath": "frontend/src/pages/Forbidden.tsx",
+      "summary": "권한 부족(403) 시 표시되는 안내 페이지로, 라우터 navigate state에 담겨 온 `reason`을 사유로 노출하고 홈 이동·재로그인 링크를 제공한다.",
+      "tags": ["page", "error-page", "authorization", "routing", "presentational"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:frontend/src/pages/Forbidden.tsx:Forbidden",
+      "type": "function",
+      "name": "Forbidden",
+      "filePath": "frontend/src/pages/Forbidden.tsx",
+      "lineRange": [7, 30],
+      "summary": "`useLocation().state.reason`을 읽어 접근 거부 사유 문구를 출력하고, 없으면 관리자 권한 안내 기본 메시지를 보여주는 403 화면 컴포넌트다.",
+      "tags": ["page", "error-page", "authorization", "component"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/src/pages/ProgramsApplySuccess.tsx",
+      "type": "file",
+      "name": "ProgramsApplySuccess.tsx",
+      "filePath": "frontend/src/pages/ProgramsApplySuccess.tsx",
+      "summary": "운동 프로그램(반) 신청 완료 후 도착하는 확인 페이지로, 라우터 state로 전달된 신청 폼(이름·이메일·최종 반·목표)과 설문 기반 추천 결과·추천 근거·코칭 포인트를 다시 요약해 보여준다.",
+      "tags": ["page", "confirmation", "routing", "programs", "presentational"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/src/pages/ProgramsApplySuccess.tsx:ProgramsApplySuccess",
+      "type": "function",
+      "name": "ProgramsApplySuccess",
+      "filePath": "frontend/src/pages/ProgramsApplySuccess.tsx",
+      "lineRange": [14, 101],
+      "summary": "`location.state.form`을 `SuccessFormState`로 해석해 신청 정보와 추천 결과 카드를 렌더링하고, state가 없을 때는 대체 안내를 보여주는 완료 화면 컴포넌트다.",
+      "tags": ["page", "component", "routing", "confirmation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/src/pages/Rankings.tsx",
+      "type": "file",
+      "name": "Rankings.tsx",
+      "filePath": "frontend/src/pages/Rankings.tsx",
+      "summary": "레벨 또는 3대 중량(THREE_LIFT) 기준으로 `/api/rankings/characters`를 조회해 상위 50명 랭킹과 내 순위·상위 퍼센트를 보여주는 랭킹 페이지다. 탭 전환 시 타입을 바꿔 재조회한다.",
+      "tags": ["page", "ranking", "data-fetching", "gamification", "leaderboard"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/src/pages/Rankings.tsx:api",
+      "type": "function",
+      "name": "api",
+      "filePath": "frontend/src/pages/Rankings.tsx",
+      "lineRange": [22, 35],
+      "summary": "`VITE_API_BASE`를 붙여 쿠키 포함(`credentials: \"include\"`) fetch를 수행하는 제네릭 API 헬퍼로, 401이면 로그인 페이지로 리다이렉트하고 그 외 실패는 응답 본문을 메시지로 하는 에러를 던진다.",
+      "tags": ["utility", "api-client", "fetch", "authentication", "error-handling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:frontend/src/pages/Rankings.tsx:Rankings",
+      "type": "function",
+      "name": "Rankings",
+      "filePath": "frontend/src/pages/Rankings.tsx",
+      "lineRange": [37, 135],
+      "summary": "랭킹 타입 상태(LEVEL/THREE_LIFT)에 따라 랭킹 목록·내 순위·상위 퍼센트·전체 공개 인원을 불러와 표로 렌더링하고 로딩·에러 상태를 처리하는 페이지 컴포넌트다.",
+      "tags": ["page", "component", "ranking", "data-fetching", "state-management"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:frontend/src/components/CharacterAvatar.tsx",
+      "target": "function:frontend/src/components/CharacterAvatar.tsx:CharacterAvatar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/src/components/CharacterAvatar.tsx",
+      "target": "function:frontend/src/components/CharacterAvatar.tsx:CharacterAvatar",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/src/components/CharacterAvatar.tsx",
+      "target": "function:frontend/src/components/CharacterAvatar.tsx:getTierRing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:frontend/src/components/CharacterAvatar.tsx:CharacterAvatar",
+      "target": "function:frontend/src/components/CharacterAvatar.tsx:getTierRing",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/src/pages/AiShareView.tsx",
+      "target": "function:frontend/src/pages/AiShareView.tsx:AiShareView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/src/pages/AiShareView.tsx",
+      "target": "function:frontend/src/pages/AiShareView.tsx:AiShareView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/src/pages/Executives.tsx",
+      "target": "function:frontend/src/pages/Executives.tsx:Executives",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/src/pages/Executives.tsx",
+      "target": "function:frontend/src/pages/Executives.tsx:Executives",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/src/pages/Forbidden.tsx",
+      "target": "function:frontend/src/pages/Forbidden.tsx:Forbidden",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/src/pages/Forbidden.tsx",
+      "target": "function:frontend/src/pages/Forbidden.tsx:Forbidden",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/src/pages/ProgramsApplySuccess.tsx",
+      "target": "function:frontend/src/pages/ProgramsApplySuccess.tsx:ProgramsApplySuccess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/src/pages/ProgramsApplySuccess.tsx",
+      "target": "function:frontend/src/pages/ProgramsApplySuccess.tsx:ProgramsApplySuccess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/src/pages/Rankings.tsx",
+      "target": "function:frontend/src/pages/Rankings.tsx:Rankings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/src/pages/Rankings.tsx",
+      "target": "function:frontend/src/pages/Rankings.tsx:Rankings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/src/pages/Rankings.tsx",
+      "target": "function:frontend/src/pages/Rankings.tsx:api",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:frontend/src/pages/Rankings.tsx:Rankings",
+      "target": "function:frontend/src/pages/Rankings.tsx:api",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

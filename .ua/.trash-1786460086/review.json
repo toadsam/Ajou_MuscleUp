@@ -1,0 +1,42 @@
+{
+  "issues": [],
+  "warnings": [
+    "Node 'file:backend/src/main/java/com/ajou/muscleup/MuscleupApplication.java' has no edges (orphan)",
+    "Node 'file:backend/uploads/2025/11/097cb7c5-61e3-44ef-8e70-ee7089e12e2d.webp' has no edges (orphan)",
+    "Node 'file:backend/uploads/2025/11/5e6a915e-c8d1-4961-a78c-e18e0d8566b6.webp' has no edges (orphan)",
+    "Node 'file:backend/uploads/2025/12/3defa408-5988-4982-befc-22abeeb91752.avif' has no edges (orphan)",
+    "Node 'file:backend/uploads/attendance/2026/03/c197c59d-3078-49ea-8b43-c080c8ce3722.webp' has no edges (orphan)",
+    "Node 'file:frontend/src/App.css' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 1143,
+    "totalEdges": 2272,
+    "totalLayers": 10,
+    "tourSteps": 14,
+    "nodeTypes": {
+      "file": 362,
+      "class": 234,
+      "function": 494,
+      "config": 22,
+      "pipeline": 1,
+      "table": 24,
+      "document": 6
+    },
+    "edgeTypes": {
+      "contains": 728,
+      "exports": 409,
+      "imports": 615,
+      "calls": 269,
+      "depends_on": 95,
+      "implements": 17,
+      "related": 44,
+      "inherits": 6,
+      "tested_by": 2,
+      "configures": 50,
+      "deploys": 2,
+      "migrates": 24,
+      "documents": 9,
+      "middleware": 2
+    }
+  }
+}

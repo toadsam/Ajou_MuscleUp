@@ -1,0 +1,93 @@
+{
+  "batchIndex": 19,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/sql/migration_20251202.sql",
+      "language": "sql",
+      "sizeLines": 29,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20251204.sql",
+      "language": "sql",
+      "sizeLines": 14,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20251205.sql",
+      "language": "sql",
+      "sizeLines": 52,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260122_events.sql",
+      "language": "sql",
+      "sizeLines": 29,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260205_attendance_details.sql",
+      "language": "sql",
+      "sizeLines": 4,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260206_lounge_visits.sql",
+      "language": "sql",
+      "sizeLines": 8,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260211_character_avatar_refactor.sql",
+      "language": "sql",
+      "sizeLines": 8,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260222_event_cms.sql",
+      "language": "sql",
+      "sizeLines": 33,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260308_workout_crew.sql",
+      "language": "sql",
+      "sizeLines": 85,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260315_attendance_media_share.sql",
+      "language": "sql",
+      "sizeLines": 12,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260318_attendance_share_comment.sql",
+      "language": "sql",
+      "sizeLines": 2,
+      "fileCategory": "data"
+    },
+    {
+      "path": "backend/sql/migration_20260324_character_resting.sql",
+      "language": "sql",
+      "sizeLines": 3,
+      "fileCategory": "data"
+    }
+  ],
+  "batchImportData": {
+    "backend/sql/migration_20251202.sql": [],
+    "backend/sql/migration_20251204.sql": [],
+    "backend/sql/migration_20251205.sql": [],
+    "backend/sql/migration_20260122_events.sql": [],
+    "backend/sql/migration_20260205_attendance_details.sql": [],
+    "backend/sql/migration_20260206_lounge_visits.sql": [],
+    "backend/sql/migration_20260211_character_avatar_refactor.sql": [],
+    "backend/sql/migration_20260222_event_cms.sql": [],
+    "backend/sql/migration_20260308_workout_crew.sql": [],
+    "backend/sql/migration_20260315_attendance_media_share.sql": [],
+    "backend/sql/migration_20260318_attendance_share_comment.sql": [],
+    "backend/sql/migration_20260324_character_resting.sql": []
+  },
+  "neighborMap": {}
+}

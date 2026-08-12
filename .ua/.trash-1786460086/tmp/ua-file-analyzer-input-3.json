@@ -1,0 +1,291 @@
+{
+  "projectRoot": "C:/Users/jk636/OneDrive/문서/GitHub/Whims-of-Wonder/Whims-of-Wonder/MetaverseProgramming/My project/Assets/Ajou_MuscleUp",
+  "batchFiles": [
+    {
+      "path": "frontend/src/components/UploadDropzone.tsx",
+      "language": "typescript",
+      "sizeLines": 139,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/admin/AdminDashboardPanels.tsx",
+      "language": "typescript",
+      "sizeLines": 246,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/admin/AdminTableShell.tsx",
+      "language": "typescript",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/admin/AdminToast.tsx",
+      "language": "typescript",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/components/admin/useAdminToast.ts",
+      "language": "typescript",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/lib/api.ts",
+      "language": "typescript",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/About.tsx",
+      "language": "typescript",
+      "sizeLines": 192,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/Admin.tsx",
+      "language": "typescript",
+      "sizeLines": 1266,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/AdminHistory.tsx",
+      "language": "typescript",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/AiFitness.tsx",
+      "language": "typescript",
+      "sizeLines": 501,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/Attendance.tsx",
+      "language": "typescript",
+      "sizeLines": 869,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/BragDetail.tsx",
+      "language": "typescript",
+      "sizeLines": 936,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/BragList.tsx",
+      "language": "typescript",
+      "sizeLines": 329,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/BragWrite.tsx",
+      "language": "typescript",
+      "sizeLines": 655,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/EventDetail.tsx",
+      "language": "typescript",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/Events.tsx",
+      "language": "typescript",
+      "sizeLines": 171,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/Gallery.tsx",
+      "language": "typescript",
+      "sizeLines": 266,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/Home.tsx",
+      "language": "typescript",
+      "sizeLines": 658,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/Programs.tsx",
+      "language": "typescript",
+      "sizeLines": 1005,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/Reviews.tsx",
+      "language": "typescript",
+      "sizeLines": 333,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/WriteProtein.tsx",
+      "language": "typescript",
+      "sizeLines": 331,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/WriteReview.tsx",
+      "language": "typescript",
+      "sizeLines": 194,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/admin/AdminEventForm.tsx",
+      "language": "typescript",
+      "sizeLines": 232,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/pages/admin/AdminEventsList.tsx",
+      "language": "typescript",
+      "sizeLines": 199,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/services/adminApi.ts",
+      "language": "typescript",
+      "sizeLines": 254,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/services/eventApi.ts",
+      "language": "typescript",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/types/event.ts",
+      "language": "typescript",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/utils/analytics.ts",
+      "language": "typescript",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/utils/attendanceShareCard.ts",
+      "language": "typescript",
+      "sizeLines": 474,
+      "fileCategory": "code"
+    },
+    {
+      "path": "frontend/src/utils/imageUpload.ts",
+      "language": "typescript",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "frontend/src/components/UploadDropzone.tsx": [
+      "frontend/src/lib/api.ts",
+      "frontend/src/utils/imageUpload.ts"
+    ],
+    "frontend/src/components/admin/AdminDashboardPanels.tsx": [
+      "frontend/src/components/admin/AdminTableShell.tsx"
+    ],
+    "frontend/src/components/admin/AdminTableShell.tsx": [],
+    "frontend/src/components/admin/AdminToast.tsx": [],
+    "frontend/src/components/admin/useAdminToast.ts": [
+      "frontend/src/components/admin/AdminToast.tsx"
+    ],
+    "frontend/src/lib/api.ts": [],
+    "frontend/src/pages/About.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/Admin.tsx": [
+      "frontend/src/components/admin/AdminDashboardPanels.tsx",
+      "frontend/src/components/admin/AdminToast.tsx",
+      "frontend/src/components/admin/useAdminToast.ts",
+      "frontend/src/services/adminApi.ts",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/AdminHistory.tsx": [
+      "frontend/src/components/admin/AdminTableShell.tsx",
+      "frontend/src/components/admin/AdminToast.tsx",
+      "frontend/src/components/admin/useAdminToast.ts",
+      "frontend/src/services/adminApi.ts",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/AiFitness.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/Attendance.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/styles/attendance.css",
+      "frontend/src/utils/attendanceShareCard.ts"
+    ],
+    "frontend/src/pages/BragDetail.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/BragList.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/BragWrite.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/EventDetail.tsx": [
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/pages/Events.tsx": [
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/pages/Gallery.tsx": [
+      "frontend/src/components/UploadDropzone.tsx"
+    ],
+    "frontend/src/pages/Home.tsx": [
+      "frontend/src/components/avatar/AvatarRenderer.tsx",
+      "frontend/src/components/avatar/types.ts",
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/styles/homeLobby.css",
+      "frontend/src/types/event.ts",
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/Programs.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/Reviews.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/WriteProtein.tsx": [
+      "frontend/src/components/UploadDropzone.tsx"
+    ],
+    "frontend/src/pages/WriteReview.tsx": [
+      "frontend/src/utils/analytics.ts"
+    ],
+    "frontend/src/pages/admin/AdminEventForm.tsx": [
+      "frontend/src/components/UploadDropzone.tsx",
+      "frontend/src/lib/api.ts",
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/pages/admin/AdminEventsList.tsx": [
+      "frontend/src/components/admin/AdminTableShell.tsx",
+      "frontend/src/components/admin/AdminToast.tsx",
+      "frontend/src/components/admin/useAdminToast.ts",
+      "frontend/src/services/eventApi.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/services/adminApi.ts": [
+      "frontend/src/lib/api.ts"
+    ],
+    "frontend/src/services/eventApi.ts": [
+      "frontend/src/lib/api.ts",
+      "frontend/src/types/event.ts"
+    ],
+    "frontend/src/types/event.ts": [],
+    "frontend/src/utils/analytics.ts": [],
+    "frontend/src/utils/attendanceShareCard.ts": [],
+    "frontend/src/utils/imageUpload.ts": []
+  }
+}

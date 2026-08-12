@@ -1,0 +1,273 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 4,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 4,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 4,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendRequestResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 36,
+      "nonEmptyLines": 33,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 20,
+          "endLine": 35,
+          "params": [
+            "req",
+            "requesterCharacter",
+            "receiverCharacter"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "FriendRequestResponse",
+          "startLine": 8,
+          "endLine": 36,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "requesterEmail",
+            "requesterNickname",
+            "requesterCharacter",
+            "receiverEmail",
+            "receiverNickname",
+            "receiverCharacter",
+            "status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "FriendRequestResponse",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId())\r\n                .requesterEmail(req.getRequester().getEmail())\r\n                .requesterNickname(req.getRequester().getNickname())\r\n                .requesterCharacter(requesterCharacter)\r\n                .receiverEmail(req.getReceiver().getEmail())\r\n                .receiverNickname(req.getReceiver().getNickname())\r\n                .receiverCharacter(receiverCharacter)\r\n                .status(req.getStatus()).build",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId())\r\n                .requesterEmail(req.getRequester().getEmail())\r\n                .requesterNickname(req.getRequester().getNickname())\r\n                .requesterCharacter(requesterCharacter)\r\n                .receiverEmail(req.getReceiver().getEmail())\r\n                .receiverNickname(req.getReceiver().getNickname())\r\n                .receiverCharacter(receiverCharacter).status",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId())\r\n                .requesterEmail(req.getRequester().getEmail())\r\n                .requesterNickname(req.getRequester().getNickname())\r\n                .requesterCharacter(requesterCharacter)\r\n                .receiverEmail(req.getReceiver().getEmail())\r\n                .receiverNickname(req.getReceiver().getNickname()).receiverCharacter",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId())\r\n                .requesterEmail(req.getRequester().getEmail())\r\n                .requesterNickname(req.getRequester().getNickname())\r\n                .requesterCharacter(requesterCharacter)\r\n                .receiverEmail(req.getReceiver().getEmail()).receiverNickname",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId())\r\n                .requesterEmail(req.getRequester().getEmail())\r\n                .requesterNickname(req.getRequester().getNickname())\r\n                .requesterCharacter(requesterCharacter).receiverEmail",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId())\r\n                .requesterEmail(req.getRequester().getEmail())\r\n                .requesterNickname(req.getRequester().getNickname()).requesterCharacter",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId())\r\n                .requesterEmail(req.getRequester().getEmail()).requesterNickname",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder()\r\n                .id(req.getId()).requesterEmail",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder().id",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendRequestResponse.builder",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "req.getId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "req.getRequester().getEmail",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "req.getRequester",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "req.getRequester().getNickname",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "req.getRequester",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "req.getReceiver().getEmail",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "req.getReceiver",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "req.getReceiver().getNickname",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "req.getReceiver",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "req.getStatus",
+          "lineNumber": 33
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 29,
+      "nonEmptyLines": 24,
+      "classes": [
+        {
+          "name": "FriendRequest",
+          "startLine": 6,
+          "endLine": 29,
+          "methods": [],
+          "properties": [
+            "id",
+            "requester",
+            "receiver",
+            "status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendRequest",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/FriendRequestStatus.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 6,
+      "classes": [
+        {
+          "name": "FriendRequestStatus",
+          "startLine": 3,
+          "endLine": 7,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendRequestStatus",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/FriendRequestRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "FriendRequestRepository",
+          "startLine": 10,
+          "endLine": 16,
+          "methods": [
+            "findAllByReceiverAndStatusOrderByCreatedAtDesc",
+            "findAllByRequesterAndStatusOrderByCreatedAtDesc",
+            "findByRequesterAndReceiverAndStatus"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendRequestRepository",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    }
+  ]
+}

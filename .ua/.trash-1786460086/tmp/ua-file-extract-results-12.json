@@ -1,0 +1,1389 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 12,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 12,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 12,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/ProteinShareController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 72,
+      "nonEmptyLines": 63,
+      "functions": [
+        {
+          "name": "apply",
+          "startLine": 29,
+          "endLine": 33,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "myApplication",
+          "startLine": 35,
+          "endLine": 39,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "listApplications",
+          "startLine": 41,
+          "endLine": 45,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "updateStatus",
+          "startLine": 47,
+          "endLine": 53,
+          "params": [
+            "proteinId",
+            "appId",
+            "status",
+            "email"
+          ]
+        },
+        {
+          "name": "summary",
+          "startLine": 55,
+          "endLine": 58,
+          "params": [
+            "proteinId"
+          ]
+        },
+        {
+          "name": "listMessages",
+          "startLine": 60,
+          "endLine": 64,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "postMessage",
+          "startLine": 66,
+          "endLine": 71,
+          "params": [
+            "proteinId",
+            "email",
+            "req"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProteinShareController",
+          "startLine": 23,
+          "endLine": 72,
+          "methods": [
+            "apply",
+            "myApplication",
+            "listApplications",
+            "updateStatus",
+            "summary",
+            "listMessages",
+            "postMessage"
+          ],
+          "properties": [
+            "proteinShareService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "apply",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "myApplication",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "listApplications",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "updateStatus",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "summary",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "listMessages",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "postMessage",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "ProteinShareController",
+          "line": 23,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "apply",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 32
+        },
+        {
+          "caller": "apply",
+          "callee": "proteinShareService.apply",
+          "lineNumber": 32
+        },
+        {
+          "caller": "myApplication",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 38
+        },
+        {
+          "caller": "myApplication",
+          "callee": "proteinShareService.getMyApplication",
+          "lineNumber": 38
+        },
+        {
+          "caller": "listApplications",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 44
+        },
+        {
+          "caller": "listApplications",
+          "callee": "proteinShareService.listApplications",
+          "lineNumber": 44
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 52
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "proteinShareService.updateStatus",
+          "lineNumber": 52
+        },
+        {
+          "caller": "summary",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 57
+        },
+        {
+          "caller": "summary",
+          "callee": "proteinShareService.getSummary",
+          "lineNumber": 57
+        },
+        {
+          "caller": "listMessages",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 63
+        },
+        {
+          "caller": "listMessages",
+          "callee": "proteinShareService.listMessages",
+          "lineNumber": 63
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 70
+        },
+        {
+          "caller": "postMessage",
+          "callee": "proteinShareService.postMessage",
+          "lineNumber": 70
+        },
+        {
+          "caller": "postMessage",
+          "callee": "req.getContent",
+          "lineNumber": 70
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 8,
+        "functionCount": 7,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareApplicationResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 35,
+      "nonEmptyLines": 32,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 25,
+          "endLine": 34,
+          "params": [
+            "application"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProteinShareApplicationResponse",
+          "startLine": 12,
+          "endLine": 35,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "proteinId",
+            "userId",
+            "userNickname",
+            "status",
+            "createdAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "ProteinShareApplicationResponse",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder()\r\n                .id(application.getId())\r\n                .proteinId(application.getProtein().getId())\r\n                .userId(application.getUser().getId())\r\n                .userNickname(application.getUser().getNickname())\r\n                .status(application.getStatus())\r\n                .createdAt(application.getCreatedAt()).build",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder()\r\n                .id(application.getId())\r\n                .proteinId(application.getProtein().getId())\r\n                .userId(application.getUser().getId())\r\n                .userNickname(application.getUser().getNickname())\r\n                .status(application.getStatus()).createdAt",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder()\r\n                .id(application.getId())\r\n                .proteinId(application.getProtein().getId())\r\n                .userId(application.getUser().getId())\r\n                .userNickname(application.getUser().getNickname()).status",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder()\r\n                .id(application.getId())\r\n                .proteinId(application.getProtein().getId())\r\n                .userId(application.getUser().getId()).userNickname",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder()\r\n                .id(application.getId())\r\n                .proteinId(application.getProtein().getId()).userId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder()\r\n                .id(application.getId()).proteinId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder().id",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareApplicationResponse.builder",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "application.getId",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "application.getProtein().getId",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "application.getProtein",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "application.getUser().getId",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "application.getUser",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "application.getUser().getNickname",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "application.getUser",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "application.getStatus",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "application.getCreatedAt",
+          "lineNumber": 32
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "ProteinShareMessageRequest",
+          "startLine": 6,
+          "endLine": 10,
+          "methods": [],
+          "properties": [
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareMessageRequest",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareMessageResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 23,
+          "endLine": 31,
+          "params": [
+            "message"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProteinShareMessageResponse",
+          "startLine": 11,
+          "endLine": 32,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "id",
+            "userId",
+            "userNickname",
+            "content",
+            "createdAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "ProteinShareMessageResponse",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "ProteinShareMessageResponse.builder()\r\n                .id(message.getId())\r\n                .userId(message.getUser().getId())\r\n                .userNickname(message.getUser().getNickname())\r\n                .content(message.getContent())\r\n                .createdAt(message.getCreatedAt()).build",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareMessageResponse.builder()\r\n                .id(message.getId())\r\n                .userId(message.getUser().getId())\r\n                .userNickname(message.getUser().getNickname())\r\n                .content(message.getContent()).createdAt",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareMessageResponse.builder()\r\n                .id(message.getId())\r\n                .userId(message.getUser().getId())\r\n                .userNickname(message.getUser().getNickname()).content",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareMessageResponse.builder()\r\n                .id(message.getId())\r\n                .userId(message.getUser().getId()).userNickname",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareMessageResponse.builder()\r\n                .id(message.getId()).userId",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareMessageResponse.builder().id",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "ProteinShareMessageResponse.builder",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "message.getId",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "message.getUser().getId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "message.getUser",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "message.getUser().getNickname",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "message.getUser",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "message.getContent",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "message.getCreatedAt",
+          "lineNumber": 29
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinShareSummaryResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "ProteinShareSummaryResponse",
+          "startLine": 8,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "pendingCount",
+            "approvedCount"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareSummaryResponse",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareApplication.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 34,
+      "nonEmptyLines": 29,
+      "classes": [
+        {
+          "name": "ProteinShareApplication",
+          "startLine": 6,
+          "endLine": 34,
+          "methods": [],
+          "properties": [
+            "id",
+            "protein",
+            "user",
+            "status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareApplication",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareMessage.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 23,
+      "classes": [
+        {
+          "name": "ProteinShareMessage",
+          "startLine": 6,
+          "endLine": 28,
+          "methods": [],
+          "properties": [
+            "id",
+            "protein",
+            "user",
+            "content"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareMessage",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/ProteinShareStatus.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 6,
+      "classes": [
+        {
+          "name": "ProteinShareStatus",
+          "startLine": 3,
+          "endLine": 7,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareStatus",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/ProteinShareApplicationRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "ProteinShareApplicationRepository",
+          "startLine": 9,
+          "endLine": 13,
+          "methods": [
+            "findByProteinIdAndUserId",
+            "findByProteinIdOrderByCreatedAtDesc",
+            "countByProteinIdAndStatus"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareApplicationRepository",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/ProteinShareMessageRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 7,
+      "classes": [
+        {
+          "name": "ProteinShareMessageRepository",
+          "startLine": 7,
+          "endLine": 9,
+          "methods": [
+            "findByProteinIdOrderByCreatedAtAsc"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareMessageRepository",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 17,
+      "nonEmptyLines": 15,
+      "classes": [
+        {
+          "name": "ProteinShareService",
+          "startLine": 9,
+          "endLine": 17,
+          "methods": [
+            "apply",
+            "getMyApplication",
+            "listApplications",
+            "updateStatus",
+            "getSummary",
+            "listMessages",
+            "postMessage"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProteinShareService",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/ProteinShareServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 160,
+      "nonEmptyLines": 145,
+      "functions": [
+        {
+          "name": "apply",
+          "startLine": 31,
+          "endLine": 49,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "getMyApplication",
+          "startLine": 51,
+          "endLine": 58,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "listApplications",
+          "startLine": 60,
+          "endLine": 70,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "updateStatus",
+          "startLine": 72,
+          "endLine": 84,
+          "params": [
+            "proteinId",
+            "appId",
+            "status",
+            "email"
+          ]
+        },
+        {
+          "name": "getSummary",
+          "startLine": 86,
+          "endLine": 93,
+          "params": [
+            "proteinId"
+          ]
+        },
+        {
+          "name": "listMessages",
+          "startLine": 95,
+          "endLine": 105,
+          "params": [
+            "proteinId",
+            "email"
+          ]
+        },
+        {
+          "name": "postMessage",
+          "startLine": 107,
+          "endLine": 120,
+          "params": [
+            "proteinId",
+            "email",
+            "content"
+          ]
+        },
+        {
+          "name": "ensureChatAccess",
+          "startLine": 122,
+          "endLine": 132,
+          "params": [
+            "protein",
+            "user"
+          ]
+        },
+        {
+          "name": "ensureOwnerOrAdmin",
+          "startLine": 134,
+          "endLine": 141,
+          "params": [
+            "protein",
+            "user"
+          ]
+        },
+        {
+          "name": "isOwner",
+          "startLine": 143,
+          "endLine": 145,
+          "params": [
+            "protein",
+            "user"
+          ]
+        },
+        {
+          "name": "isAdmin",
+          "startLine": 147,
+          "endLine": 149,
+          "params": [
+            "user"
+          ]
+        },
+        {
+          "name": "getUser",
+          "startLine": 151,
+          "endLine": 154,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "getProtein",
+          "startLine": 156,
+          "endLine": 159,
+          "params": [
+            "proteinId"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProteinShareServiceImpl",
+          "startLine": 22,
+          "endLine": 160,
+          "methods": [
+            "apply",
+            "getMyApplication",
+            "listApplications",
+            "updateStatus",
+            "getSummary",
+            "listMessages",
+            "postMessage",
+            "ensureChatAccess",
+            "ensureOwnerOrAdmin",
+            "isOwner",
+            "isAdmin",
+            "getUser",
+            "getProtein"
+          ],
+          "properties": [
+            "proteinRepository",
+            "applicationRepository",
+            "messageRepository",
+            "userRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "apply",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "getMyApplication",
+          "line": 51,
+          "isDefault": false
+        },
+        {
+          "name": "listApplications",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "updateStatus",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "getSummary",
+          "line": 86,
+          "isDefault": false
+        },
+        {
+          "name": "listMessages",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "postMessage",
+          "line": 107,
+          "isDefault": false
+        },
+        {
+          "name": "ProteinShareServiceImpl",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "apply",
+          "callee": "getUser",
+          "lineNumber": 33
+        },
+        {
+          "caller": "apply",
+          "callee": "getProtein",
+          "lineNumber": 34
+        },
+        {
+          "caller": "apply",
+          "callee": "applicationRepository\r\n                .findByProteinIdAndUserId(proteinId, user.getId()).orElse",
+          "lineNumber": 35
+        },
+        {
+          "caller": "apply",
+          "callee": "applicationRepository.findByProteinIdAndUserId",
+          "lineNumber": 35
+        },
+        {
+          "caller": "apply",
+          "callee": "user.getId",
+          "lineNumber": 36
+        },
+        {
+          "caller": "apply",
+          "callee": "ProteinShareApplicationResponse.from",
+          "lineNumber": 39
+        },
+        {
+          "caller": "apply",
+          "callee": "applicationRepository.save",
+          "lineNumber": 41
+        },
+        {
+          "caller": "apply",
+          "callee": "ProteinShareApplication.builder()\r\n                        .protein(protein)\r\n                        .user(user)\r\n                        .status(ProteinShareStatus.PENDING).build",
+          "lineNumber": 42
+        },
+        {
+          "caller": "apply",
+          "callee": "ProteinShareApplication.builder()\r\n                        .protein(protein)\r\n                        .user(user).status",
+          "lineNumber": 42
+        },
+        {
+          "caller": "apply",
+          "callee": "ProteinShareApplication.builder()\r\n                        .protein(protein).user",
+          "lineNumber": 42
+        },
+        {
+          "caller": "apply",
+          "callee": "ProteinShareApplication.builder().protein",
+          "lineNumber": 42
+        },
+        {
+          "caller": "apply",
+          "callee": "ProteinShareApplication.builder",
+          "lineNumber": 42
+        },
+        {
+          "caller": "apply",
+          "callee": "ProteinShareApplicationResponse.from",
+          "lineNumber": 48
+        },
+        {
+          "caller": "getMyApplication",
+          "callee": "getUser",
+          "lineNumber": 54
+        },
+        {
+          "caller": "getMyApplication",
+          "callee": "applicationRepository.findByProteinIdAndUserId(proteinId, user.getId())\r\n                .map(ProteinShareApplicationResponse::from).orElseThrow",
+          "lineNumber": 55
+        },
+        {
+          "caller": "getMyApplication",
+          "callee": "applicationRepository.findByProteinIdAndUserId(proteinId, user.getId()).map",
+          "lineNumber": 55
+        },
+        {
+          "caller": "getMyApplication",
+          "callee": "applicationRepository.findByProteinIdAndUserId",
+          "lineNumber": 55
+        },
+        {
+          "caller": "getMyApplication",
+          "callee": "user.getId",
+          "lineNumber": 55
+        },
+        {
+          "caller": "getMyApplication",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 57
+        },
+        {
+          "caller": "listApplications",
+          "callee": "getUser",
+          "lineNumber": 63
+        },
+        {
+          "caller": "listApplications",
+          "callee": "getProtein",
+          "lineNumber": 64
+        },
+        {
+          "caller": "listApplications",
+          "callee": "ensureOwnerOrAdmin",
+          "lineNumber": 65
+        },
+        {
+          "caller": "listApplications",
+          "callee": "applicationRepository.findByProteinIdOrderByCreatedAtDesc(proteinId)\r\n                .stream()\r\n                .map(ProteinShareApplicationResponse::from).toList",
+          "lineNumber": 66
+        },
+        {
+          "caller": "listApplications",
+          "callee": "applicationRepository.findByProteinIdOrderByCreatedAtDesc(proteinId)\r\n                .stream().map",
+          "lineNumber": 66
+        },
+        {
+          "caller": "listApplications",
+          "callee": "applicationRepository.findByProteinIdOrderByCreatedAtDesc(proteinId).stream",
+          "lineNumber": 66
+        },
+        {
+          "caller": "listApplications",
+          "callee": "applicationRepository.findByProteinIdOrderByCreatedAtDesc",
+          "lineNumber": 66
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "getUser",
+          "lineNumber": 74
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "getProtein",
+          "lineNumber": 75
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "ensureOwnerOrAdmin",
+          "lineNumber": 76
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "applicationRepository.findById(appId).orElseThrow",
+          "lineNumber": 77
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "applicationRepository.findById",
+          "lineNumber": 77
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 78
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "application.getProtein().getId().equals",
+          "lineNumber": 79
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "application.getProtein().getId",
+          "lineNumber": 79
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "application.getProtein",
+          "lineNumber": 79
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 80
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "application.setStatus",
+          "lineNumber": 82
+        },
+        {
+          "caller": "updateStatus",
+          "callee": "ProteinShareApplicationResponse.from",
+          "lineNumber": 83
+        },
+        {
+          "caller": "getSummary",
+          "callee": "getProtein",
+          "lineNumber": 89
+        },
+        {
+          "caller": "getSummary",
+          "callee": "applicationRepository.countByProteinIdAndStatus",
+          "lineNumber": 90
+        },
+        {
+          "caller": "getSummary",
+          "callee": "applicationRepository.countByProteinIdAndStatus",
+          "lineNumber": 91
+        },
+        {
+          "caller": "getSummary",
+          "callee": "new ProteinShareSummaryResponse",
+          "lineNumber": 92
+        },
+        {
+          "caller": "listMessages",
+          "callee": "getUser",
+          "lineNumber": 98
+        },
+        {
+          "caller": "listMessages",
+          "callee": "getProtein",
+          "lineNumber": 99
+        },
+        {
+          "caller": "listMessages",
+          "callee": "ensureChatAccess",
+          "lineNumber": 100
+        },
+        {
+          "caller": "listMessages",
+          "callee": "messageRepository.findByProteinIdOrderByCreatedAtAsc(proteinId)\r\n                .stream()\r\n                .map(ProteinShareMessageResponse::from).toList",
+          "lineNumber": 101
+        },
+        {
+          "caller": "listMessages",
+          "callee": "messageRepository.findByProteinIdOrderByCreatedAtAsc(proteinId)\r\n                .stream().map",
+          "lineNumber": 101
+        },
+        {
+          "caller": "listMessages",
+          "callee": "messageRepository.findByProteinIdOrderByCreatedAtAsc(proteinId).stream",
+          "lineNumber": 101
+        },
+        {
+          "caller": "listMessages",
+          "callee": "messageRepository.findByProteinIdOrderByCreatedAtAsc",
+          "lineNumber": 101
+        },
+        {
+          "caller": "postMessage",
+          "callee": "getUser",
+          "lineNumber": 109
+        },
+        {
+          "caller": "postMessage",
+          "callee": "getProtein",
+          "lineNumber": 110
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ensureChatAccess",
+          "lineNumber": 111
+        },
+        {
+          "caller": "postMessage",
+          "callee": "messageRepository.save",
+          "lineNumber": 112
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ProteinShareMessage.builder()\r\n                        .protein(protein)\r\n                        .user(user)\r\n                        .content(content).build",
+          "lineNumber": 113
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ProteinShareMessage.builder()\r\n                        .protein(protein)\r\n                        .user(user).content",
+          "lineNumber": 113
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ProteinShareMessage.builder()\r\n                        .protein(protein).user",
+          "lineNumber": 113
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ProteinShareMessage.builder().protein",
+          "lineNumber": 113
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ProteinShareMessage.builder",
+          "lineNumber": 113
+        },
+        {
+          "caller": "postMessage",
+          "callee": "ProteinShareMessageResponse.from",
+          "lineNumber": 119
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "isAdmin",
+          "lineNumber": 123
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "isOwner",
+          "lineNumber": 123
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "applicationRepository\r\n                .findByProteinIdAndUserId(protein.getId(), user.getId()).orElseThrow",
+          "lineNumber": 126
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "applicationRepository.findByProteinIdAndUserId",
+          "lineNumber": 126
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "protein.getId",
+          "lineNumber": 127
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "user.getId",
+          "lineNumber": 127
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 128
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "application.getStatus",
+          "lineNumber": 129
+        },
+        {
+          "caller": "ensureChatAccess",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 130
+        },
+        {
+          "caller": "ensureOwnerOrAdmin",
+          "callee": "isAdmin",
+          "lineNumber": 135
+        },
+        {
+          "caller": "ensureOwnerOrAdmin",
+          "callee": "isOwner",
+          "lineNumber": 138
+        },
+        {
+          "caller": "ensureOwnerOrAdmin",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 139
+        },
+        {
+          "caller": "isOwner",
+          "callee": "protein.getOwner",
+          "lineNumber": 144
+        },
+        {
+          "caller": "isOwner",
+          "callee": "protein.getOwner().getId().equals",
+          "lineNumber": 144
+        },
+        {
+          "caller": "isOwner",
+          "callee": "protein.getOwner().getId",
+          "lineNumber": 144
+        },
+        {
+          "caller": "isOwner",
+          "callee": "protein.getOwner",
+          "lineNumber": 144
+        },
+        {
+          "caller": "isOwner",
+          "callee": "user.getId",
+          "lineNumber": 144
+        },
+        {
+          "caller": "isAdmin",
+          "callee": "user.getRole",
+          "lineNumber": 148
+        },
+        {
+          "caller": "isAdmin",
+          "callee": "user.getRole().contains",
+          "lineNumber": 148
+        },
+        {
+          "caller": "isAdmin",
+          "callee": "user.getRole",
+          "lineNumber": 148
+        },
+        {
+          "caller": "getUser",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 152
+        },
+        {
+          "caller": "getUser",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 152
+        },
+        {
+          "caller": "getUser",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 153
+        },
+        {
+          "caller": "getProtein",
+          "callee": "proteinRepository.findById(proteinId).orElseThrow",
+          "lineNumber": 157
+        },
+        {
+          "caller": "getProtein",
+          "callee": "proteinRepository.findById",
+          "lineNumber": 157
+        },
+        {
+          "caller": "getProtein",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 158
+        }
+      ],
+      "metrics": {
+        "importCount": 12,
+        "exportCount": 8,
+        "functionCount": 13,
+        "classCount": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "batchIndex": 20,
+  "totalBatches": 26,
+  "files": [
+    {
+      "path": "backend/src/main/resources/application-local.example.properties",
+      "language": "properties",
+      "sizeLines": 16,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/src/main/resources/application-prod.properties",
+      "language": "properties",
+      "sizeLines": 46,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/src/main/resources/application-test.properties",
+      "language": "properties",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "backend/src/main/resources/application.properties",
+      "language": "properties",
+      "sizeLines": 8,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/resources/application-local.example.properties": [],
+    "backend/src/main/resources/application-prod.properties": [],
+    "backend/src/main/resources/application-test.properties": [],
+    "backend/src/main/resources/application.properties": []
+  },
+  "neighborMap": {}
+}

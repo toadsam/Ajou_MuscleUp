@@ -1,0 +1,252 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "type": "file",
+      "name": "BackendApplication.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "summary": "Spring Boot 백엔드의 실제 진입점으로, com.ajou.muscleup 패키지 전체를 컴포넌트 스캔해 애플리케이션을 부팅합니다. 기동 완료 시점에 옵션 플래그에 따라 SMTP 연결을 점검하는 헬스 체크도 함께 수행합니다.",
+      "tags": ["entry-point", "spring-boot", "bootstrap", "mail", "backend"],
+      "complexity": "simple",
+      "languageNotes": "@SpringBootApplication(scanBasePackages=...)로 스캔 범위를 명시하고, @EventListener(ApplicationReadyEvent.class)로 기동 후 훅을 거는 Spring 관용 패턴입니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/BackendApplication.java:BackendApplication",
+      "type": "class",
+      "name": "BackendApplication",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "lineRange": [11, 37],
+      "summary": "Spring Boot 애플리케이션 부트 클래스입니다. main()에서 SpringApplication.run을 호출하고, 기동 완료 이벤트에서 메일 서버 연결을 선택적으로 검증합니다.",
+      "tags": ["entry-point", "spring-boot", "bootstrap", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/BackendApplication.java:testMailConnection",
+      "type": "function",
+      "name": "testMailConnection",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "lineRange": [24, 36],
+      "summary": "애플리케이션 기동 완료 이벤트에서 mail.test-on-startup 플래그가 켜져 있을 때만 JavaMailSender의 SMTP 연결을 시험해 설정 오류를 조기에 드러냅니다.",
+      "tags": ["health-check", "mail", "event-handler", "startup"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/MuscleupApplication.java",
+      "type": "file",
+      "name": "MuscleupApplication.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/MuscleupApplication.java",
+      "summary": "본문이 비어 있는 잔여 클래스 파일로, 실제 부팅은 BackendApplication이 담당합니다. 패키지명 변경 과정에서 남은 레거시 스텁으로 보입니다.",
+      "tags": ["dead-code", "legacy", "placeholder", "backend"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/AsyncConfig.java",
+      "type": "file",
+      "name": "AsyncConfig.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/AsyncConfig.java",
+      "summary": "@EnableAsync만 선언한 설정 클래스로, 서비스 계층의 @Async 메서드가 별도 스레드에서 실행되도록 비동기 처리를 활성화합니다.",
+      "tags": ["configuration", "async", "spring-config", "backend"],
+      "complexity": "simple",
+      "languageNotes": "본문 없이 애노테이션만으로 기능을 켜는 Spring의 marker configuration 패턴입니다."
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "type": "file",
+      "name": "CorsConfig.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "summary": "프론트엔드 오리진에서의 크로스 도메인 호출을 허용하는 CORS 설정을 정의합니다. cors.allowed-origins 프로퍼티로 허용 오리진을 주입받고, 쿠키 인증을 위해 credentials 허용과 Set-Cookie 노출을 함께 설정합니다.",
+      "tags": ["configuration", "cors", "security", "spring-config"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java:CorsConfig",
+      "type": "class",
+      "name": "CorsConfig",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "lineRange": [13, 38],
+      "summary": "CorsConfigurationSource 빈을 등록하는 설정 클래스로, SecurityConfig의 필터 체인이 이 빈을 주입받아 CORS 정책을 적용합니다.",
+      "tags": ["configuration", "cors", "spring-config", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java:corsConfigurationSource",
+      "type": "function",
+      "name": "corsConfigurationSource",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "lineRange": [16, 37],
+      "summary": "허용 오리진 패턴, 허용 헤더(Authorization·x-auth-retry 등), 허용 메서드, 노출 헤더(Set-Cookie), credentials 허용과 preflight 캐시 시간을 조합해 전 경로(/**)에 적용할 CORS 설정 소스를 생성합니다.",
+      "tags": ["cors", "factory", "configuration", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/JpaConfig.java",
+      "type": "file",
+      "name": "JpaConfig.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/JpaConfig.java",
+      "summary": "@EnableJpaAuditing만 선언한 설정 클래스로, 엔티티의 생성·수정 시각 자동 기록(BaseTimeEntity 계열 감사 필드)을 활성화합니다.",
+      "tags": ["configuration", "jpa", "auditing", "spring-config"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "type": "file",
+      "name": "JwtAuthenticationFilter.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "summary": "요청마다 한 번 실행되며 Authorization 헤더 또는 accessToken 쿠키에서 JWT를 꺼내 검증하고, 유효한 access 토큰이면 이메일과 권한을 담은 인증 객체를 SecurityContext에 세팅하는 인증 필터입니다.",
+      "tags": ["middleware", "authentication", "jwt", "security", "filter"],
+      "complexity": "moderate",
+      "languageNotes": "OncePerRequestFilter를 상속해 forward/include 시 중복 실행을 막고, 헤더와 쿠키 두 경로를 모두 지원해 웹·모바일 클라이언트를 함께 수용합니다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:JwtAuthenticationFilter",
+      "type": "class",
+      "name": "JwtAuthenticationFilter",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "lineRange": [18, 70],
+      "summary": "JwtUtil을 주입받아 토큰 파싱·검증·SecurityContext 주입을 담당하는 Spring Security 커스텀 필터입니다. UsernamePasswordAuthenticationFilter 앞에 등록됩니다.",
+      "tags": ["middleware", "authentication", "jwt", "security"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:doFilterInternal",
+      "type": "function",
+      "name": "doFilterInternal",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "lineRange": [27, 55],
+      "summary": "요청에서 토큰을 추출해 없으면 그대로 통과시키고, 유효한 access 타입 토큰이면 이메일·역할로 UsernamePasswordAuthenticationToken을 만들어 SecurityContextHolder에 저장한 뒤 다음 필터로 넘깁니다.",
+      "tags": ["middleware", "authentication", "jwt", "request-pipeline"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:resolveToken",
+      "type": "function",
+      "name": "resolveToken",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "lineRange": [57, 69],
+      "summary": "Authorization 헤더의 Bearer 접두사를 우선 확인하고, 없으면 accessToken 쿠키에서 값을 찾아 반환합니다. 둘 다 없으면 null을 돌려줍니다.",
+      "tags": ["authentication", "jwt", "utility", "parsing"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/BackendApplication.java:BackendApplication",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/BackendApplication.java:testMailConnection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/BackendApplication.java:BackendApplication",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/AsyncConfig.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/JpaConfig.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/BackendApplication.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/SchedulingConfig.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java:CorsConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java:corsConfigurationSource",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java:corsConfigurationSource",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/CorsConfig.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/SecurityConfig.java",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:JwtAuthenticationFilter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:doFilterInternal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:resolveToken",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:JwtAuthenticationFilter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/config/JwtAuthenticationFilter.java:JwtAuthenticationFilter",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/config/JwtUtil.java:JwtUtil",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

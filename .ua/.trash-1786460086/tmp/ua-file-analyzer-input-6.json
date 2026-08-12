@@ -1,0 +1,224 @@
+{
+  "projectRoot": "C:/Users/jk636/OneDrive/문서/GitHub/Whims-of-Wonder/Whims-of-Wonder/MetaverseProgramming/My project/Assets/Ajou_MuscleUp",
+  "batchFiles": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/BragInteractionController.java",
+      "language": "java",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/BragPostController.java",
+      "language": "java",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "language": "java",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "language": "java",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "language": "java",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java",
+      "language": "java",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java",
+      "language": "java",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "language": "java",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java",
+      "language": "java",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionService.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java",
+      "language": "java",
+      "sizeLines": 130,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragPostService.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java",
+      "language": "java",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java",
+      "language": "java",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "backend/src/main/java/com/ajou/muscleup/controller/BragInteractionController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/service/BragInteractionService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/controller/BragPostController.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/service/BragPostService.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java": [],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java": [],
+    "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java": [],
+    "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java": [
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragInteractionService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragInteractionServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragLikeResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragComment.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragPostService.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/BragPostServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostCreateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostUpdateRequest.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragPost.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragVisibility.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragPostRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ],
+    "backend/src/main/java/com/ajou/muscleup/service/MyPageServiceImpl.java": [
+      "backend/src/main/java/com/ajou/muscleup/dto/ai/AiChatLogItem.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragCommentResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/BragPostResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/dto/brag/MyPageResponse.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/BragLike.java",
+      "backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragCommentRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/BragLikeRepository.java",
+      "backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java"
+    ]
+  }
+}

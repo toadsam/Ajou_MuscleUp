@@ -1,0 +1,5244 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 35,
+  "filesSkipped": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 35,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 35,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/CharacterController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 56,
+      "nonEmptyLines": 49,
+      "functions": [
+        {
+          "name": "getMe",
+          "startLine": 26,
+          "endLine": 29,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "evaluate",
+          "startLine": 31,
+          "endLine": 34,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "updatePublic",
+          "startLine": 36,
+          "endLine": 42,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "updateResting",
+          "startLine": 44,
+          "endLine": 50,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "reroll",
+          "startLine": 52,
+          "endLine": 55,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CharacterController",
+          "startLine": 20,
+          "endLine": 56,
+          "methods": [
+            "getMe",
+            "evaluate",
+            "updatePublic",
+            "updateResting",
+            "reroll"
+          ],
+          "properties": [
+            "characterService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getMe",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "evaluate",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "updatePublic",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "updateResting",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "reroll",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "CharacterController",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getMe",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 28
+        },
+        {
+          "caller": "getMe",
+          "callee": "characterService.getOrCreateProfile",
+          "lineNumber": 28
+        },
+        {
+          "caller": "evaluate",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 33
+        },
+        {
+          "caller": "evaluate",
+          "callee": "characterService.evaluate",
+          "lineNumber": 33
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 41
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "characterService.updatePublic",
+          "lineNumber": 41
+        },
+        {
+          "caller": "updateResting",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 49
+        },
+        {
+          "caller": "updateResting",
+          "callee": "characterService.updateResting",
+          "lineNumber": 49
+        },
+        {
+          "caller": "reroll",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 54
+        },
+        {
+          "caller": "reroll",
+          "callee": "characterService.reroll",
+          "lineNumber": 54
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 6,
+        "functionCount": 5,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/RankingController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 27,
+      "nonEmptyLines": 24,
+      "functions": [
+        {
+          "name": "characters",
+          "startLine": 19,
+          "endLine": 26,
+          "params": [
+            "email",
+            "type",
+            "limit"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RankingController",
+          "startLine": 13,
+          "endLine": 27,
+          "methods": [
+            "characters"
+          ],
+          "properties": [
+            "rankingService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "characters",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "RankingController",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "characters",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 25
+        },
+        {
+          "caller": "characters",
+          "callee": "rankingService.getCharacterRankings",
+          "lineNumber": 25
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/controller/StatsController.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 35,
+      "nonEmptyLines": 31,
+      "functions": [
+        {
+          "name": "get",
+          "startLine": 23,
+          "endLine": 26,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "upsert",
+          "startLine": 28,
+          "endLine": 34,
+          "params": [
+            "email",
+            "request"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "StatsController",
+          "startLine": 17,
+          "endLine": 35,
+          "methods": [
+            "get",
+            "upsert"
+          ],
+          "properties": [
+            "statsService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "get",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "upsert",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "StatsController",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 25
+        },
+        {
+          "caller": "get",
+          "callee": "statsService.getStats",
+          "lineNumber": 25
+        },
+        {
+          "caller": "upsert",
+          "callee": "ResponseEntity.ok",
+          "lineNumber": 33
+        },
+        {
+          "caller": "upsert",
+          "callee": "statsService.upsertStats",
+          "lineNumber": 33
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterEvaluationResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 19,
+      "classes": [
+        {
+          "name": "CharacterEvaluationResponse",
+          "startLine": 7,
+          "endLine": 21,
+          "methods": [],
+          "properties": [
+            "threeLiftTotal",
+            "strengthRatio",
+            "bmi",
+            "skeletalMuscleIndex",
+            "heightWeightScore",
+            "heightMuscleScore",
+            "totalScore",
+            "level",
+            "tier",
+            "evolutionStage",
+            "title"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterEvaluationResponse",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterProfileResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 45,
+      "nonEmptyLines": 42,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 29,
+          "endLine": 44,
+          "params": [
+            "profile",
+            "growthParams"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CharacterProfileResponse",
+          "startLine": 11,
+          "endLine": 45,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "level",
+            "tier",
+            "evolutionStage",
+            "title",
+            "avatarSeed",
+            "stylePreset",
+            "gender",
+            "growthParams",
+            "isPublic",
+            "isResting",
+            "lastEvaluatedAt",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "CharacterProfileResponse",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset())\r\n                .gender(profile.getGender())\r\n                .growthParams(growthParams)\r\n                .isPublic(profile.isPublic())\r\n                .isResting(profile.isResting())\r\n                .lastEvaluatedAt(profile.getLastEvaluatedAt())\r\n                .updatedAt(profile.getUpdatedAt()).build",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset())\r\n                .gender(profile.getGender())\r\n                .growthParams(growthParams)\r\n                .isPublic(profile.isPublic())\r\n                .isResting(profile.isResting())\r\n                .lastEvaluatedAt(profile.getLastEvaluatedAt()).updatedAt",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset())\r\n                .gender(profile.getGender())\r\n                .growthParams(growthParams)\r\n                .isPublic(profile.isPublic())\r\n                .isResting(profile.isResting()).lastEvaluatedAt",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset())\r\n                .gender(profile.getGender())\r\n                .growthParams(growthParams)\r\n                .isPublic(profile.isPublic()).isResting",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset())\r\n                .gender(profile.getGender())\r\n                .growthParams(growthParams).isPublic",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset())\r\n                .gender(profile.getGender()).growthParams",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset()).gender",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed()).stylePreset",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle()).avatarSeed",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage()).title",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier()).evolutionStage",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder()\r\n                .level(profile.getLevel()).tier",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder().level",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterProfileResponse.builder",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getLevel",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getTier",
+          "lineNumber": 32
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getEvolutionStage",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getTitle",
+          "lineNumber": 34
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getAvatarSeed",
+          "lineNumber": 35
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getStylePreset",
+          "lineNumber": 36
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getGender",
+          "lineNumber": 37
+        },
+        {
+          "caller": "from",
+          "callee": "profile.isPublic",
+          "lineNumber": 39
+        },
+        {
+          "caller": "from",
+          "callee": "profile.isResting",
+          "lineNumber": 40
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getLastEvaluatedAt",
+          "lineNumber": 41
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getUpdatedAt",
+          "lineNumber": 42
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterPublicUpdateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "classes": [
+        {
+          "name": "CharacterPublicUpdateRequest",
+          "startLine": 7,
+          "endLine": 12,
+          "methods": [],
+          "properties": [
+            "isPublic"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterPublicUpdateRequest",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingListResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "CharacterRankingListResponse",
+          "startLine": 7,
+          "endLine": 14,
+          "methods": [],
+          "properties": [
+            "items",
+            "totalPublic",
+            "myRank",
+            "myTopPercent"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterRankingListResponse",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRankingResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 22,
+      "classes": [
+        {
+          "name": "CharacterRankingResponse",
+          "startLine": 10,
+          "endLine": 24,
+          "methods": [],
+          "properties": [
+            "nickname",
+            "level",
+            "tier",
+            "evolutionStage",
+            "title",
+            "avatarSeed",
+            "gender",
+            "isResting",
+            "threeLiftTotal",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterRankingResponse",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterRestUpdateRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "CharacterRestUpdateRequest",
+          "startLine": 8,
+          "endLine": 14,
+          "methods": [],
+          "properties": [
+            "isResting"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterRestUpdateRequest",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/CharacterSnapshotResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 25,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 18,
+          "endLine": 27,
+          "params": [
+            "profile"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CharacterSnapshotResponse",
+          "startLine": 8,
+          "endLine": 28,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "level",
+            "tier",
+            "evolutionStage",
+            "title",
+            "avatarSeed",
+            "stylePreset"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "CharacterSnapshotResponse",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .stylePreset(profile.getStylePreset()).build",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle())\r\n                .avatarSeed(profile.getAvatarSeed()).stylePreset",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .title(profile.getTitle()).avatarSeed",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage()).title",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder()\r\n                .level(profile.getLevel())\r\n                .tier(profile.getTier()).evolutionStage",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder()\r\n                .level(profile.getLevel()).tier",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder().level",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "CharacterSnapshotResponse.builder",
+          "lineNumber": 19
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getLevel",
+          "lineNumber": 20
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getTier",
+          "lineNumber": 21
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getEvolutionStage",
+          "lineNumber": 22
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getTitle",
+          "lineNumber": 23
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getAvatarSeed",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getStylePreset",
+          "lineNumber": 25
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/GrowthParamsResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 26,
+      "classes": [
+        {
+          "name": "GrowthParamsResponse",
+          "startLine": 6,
+          "endLine": 32,
+          "methods": [],
+          "properties": [
+            "bmiNormalized",
+            "muscularityNormalized",
+            "fatNormalized",
+            "armGrowth",
+            "legGrowth",
+            "torsoGrowth",
+            "armScale",
+            "legScale",
+            "torsoScaleX",
+            "chestGrowth",
+            "backGrowth",
+            "shoulderGrowth",
+            "quadGrowth",
+            "hamstringGrowth",
+            "gluteGrowth",
+            "strokeWidth",
+            "muscleDetailOpacity",
+            "fatShadowOpacity",
+            "contrastBoost"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "GrowthParamsResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/StatsCharacterResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "StatsCharacterResponse",
+          "startLine": 6,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "stats",
+            "character",
+            "evaluation",
+            "change"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "StatsCharacterResponse",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsRequest.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 47,
+      "nonEmptyLines": 37,
+      "classes": [
+        {
+          "name": "UserBodyStatsRequest",
+          "startLine": 12,
+          "endLine": 47,
+          "methods": [],
+          "properties": [
+            "heightCm",
+            "gender",
+            "weightKg",
+            "skeletalMuscleKg",
+            "bodyFatPercent",
+            "mbti",
+            "benchKg",
+            "squatKg",
+            "deadliftKg"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "UserBodyStatsRequest",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/character/UserBodyStatsResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 34,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 23,
+          "endLine": 36,
+          "params": [
+            "stats"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "UserBodyStatsResponse",
+          "startLine": 9,
+          "endLine": 37,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "heightCm",
+            "gender",
+            "weightKg",
+            "skeletalMuscleKg",
+            "bodyFatPercent",
+            "mbti",
+            "benchKg",
+            "squatKg",
+            "deadliftKg",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "UserBodyStatsResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg())\r\n                .skeletalMuscleKg(stats.getSkeletalMuscleKg())\r\n                .bodyFatPercent(stats.getBodyFatPercent())\r\n                .mbti(stats.getMbti())\r\n                .benchKg(stats.getBenchKg())\r\n                .squatKg(stats.getSquatKg())\r\n                .deadliftKg(stats.getDeadliftKg())\r\n                .updatedAt(stats.getUpdatedAt()).build",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg())\r\n                .skeletalMuscleKg(stats.getSkeletalMuscleKg())\r\n                .bodyFatPercent(stats.getBodyFatPercent())\r\n                .mbti(stats.getMbti())\r\n                .benchKg(stats.getBenchKg())\r\n                .squatKg(stats.getSquatKg())\r\n                .deadliftKg(stats.getDeadliftKg()).updatedAt",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg())\r\n                .skeletalMuscleKg(stats.getSkeletalMuscleKg())\r\n                .bodyFatPercent(stats.getBodyFatPercent())\r\n                .mbti(stats.getMbti())\r\n                .benchKg(stats.getBenchKg())\r\n                .squatKg(stats.getSquatKg()).deadliftKg",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg())\r\n                .skeletalMuscleKg(stats.getSkeletalMuscleKg())\r\n                .bodyFatPercent(stats.getBodyFatPercent())\r\n                .mbti(stats.getMbti())\r\n                .benchKg(stats.getBenchKg()).squatKg",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg())\r\n                .skeletalMuscleKg(stats.getSkeletalMuscleKg())\r\n                .bodyFatPercent(stats.getBodyFatPercent())\r\n                .mbti(stats.getMbti()).benchKg",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg())\r\n                .skeletalMuscleKg(stats.getSkeletalMuscleKg())\r\n                .bodyFatPercent(stats.getBodyFatPercent()).mbti",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg())\r\n                .skeletalMuscleKg(stats.getSkeletalMuscleKg()).bodyFatPercent",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender())\r\n                .weightKg(stats.getWeightKg()).skeletalMuscleKg",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm())\r\n                .gender(stats.getGender()).weightKg",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder()\r\n                .heightCm(stats.getHeightCm()).gender",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder().heightCm",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "UserBodyStatsResponse.builder",
+          "lineNumber": 24
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getHeightCm",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getGender",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getWeightKg",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getSkeletalMuscleKg",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getBodyFatPercent",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getMbti",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 31
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 32
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 33
+        },
+        {
+          "caller": "from",
+          "callee": "stats.getUpdatedAt",
+          "lineNumber": 34
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewChallengeMemberProgressResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 23,
+      "classes": [
+        {
+          "name": "CrewChallengeMemberProgressResponse",
+          "startLine": 9,
+          "endLine": 25,
+          "methods": [],
+          "properties": [
+            "userId",
+            "nickname",
+            "workoutDays",
+            "targetWorkoutDays",
+            "completionRate",
+            "badge",
+            "characterTier",
+            "characterStage",
+            "characterLevel",
+            "avatarSeed",
+            "gender",
+            "isResting"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewChallengeMemberProgressResponse",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/crew/CrewMemberAttendanceResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 24,
+      "classes": [
+        {
+          "name": "CrewMemberAttendanceResponse",
+          "startLine": 10,
+          "endLine": 26,
+          "methods": [],
+          "properties": [
+            "userId",
+            "nickname",
+            "role",
+            "workoutDays",
+            "targetDays",
+            "attendanceRate",
+            "characterTier",
+            "characterStage",
+            "characterLevel",
+            "avatarSeed",
+            "gender",
+            "isResting"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CrewMemberAttendanceResponse",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/dto/friend/FriendCharacterResponse.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 34,
+      "nonEmptyLines": 31,
+      "functions": [
+        {
+          "name": "from",
+          "startLine": 21,
+          "endLine": 33,
+          "params": [
+            "profile"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "FriendCharacterResponse",
+          "startLine": 10,
+          "endLine": 34,
+          "methods": [
+            "from"
+          ],
+          "properties": [
+            "tier",
+            "evolutionStage",
+            "level",
+            "avatarSeed",
+            "gender",
+            "isResting"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "from",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "FriendCharacterResponse",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder()\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .level(profile.getLevel())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .gender(profile.getGender())\r\n                .isResting(profile.isResting()).build",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder()\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .level(profile.getLevel())\r\n                .avatarSeed(profile.getAvatarSeed())\r\n                .gender(profile.getGender()).isResting",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder()\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .level(profile.getLevel())\r\n                .avatarSeed(profile.getAvatarSeed()).gender",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder()\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage())\r\n                .level(profile.getLevel()).avatarSeed",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder()\r\n                .tier(profile.getTier())\r\n                .evolutionStage(profile.getEvolutionStage()).level",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder()\r\n                .tier(profile.getTier()).evolutionStage",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder().tier",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "FriendCharacterResponse.builder",
+          "lineNumber": 25
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getTier",
+          "lineNumber": 26
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getEvolutionStage",
+          "lineNumber": 27
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getLevel",
+          "lineNumber": 28
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getAvatarSeed",
+          "lineNumber": 29
+        },
+        {
+          "caller": "from",
+          "callee": "profile.getGender",
+          "lineNumber": 30
+        },
+        {
+          "caller": "from",
+          "callee": "profile.isResting",
+          "lineNumber": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionHistory.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 45,
+      "nonEmptyLines": 35,
+      "classes": [
+        {
+          "name": "CharacterEvolutionHistory",
+          "startLine": 6,
+          "endLine": 45,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "triggerType",
+            "beforeLevel",
+            "afterLevel",
+            "beforeTier",
+            "afterTier",
+            "beforeStage",
+            "afterStage"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterEvolutionHistory",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CharacterEvolutionTriggerType.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "CharacterEvolutionTriggerType",
+          "startLine": 3,
+          "endLine": 9,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterEvolutionTriggerType",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 63,
+      "nonEmptyLines": 48,
+      "classes": [
+        {
+          "name": "CharacterProfile",
+          "startLine": 7,
+          "endLine": 63,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "level",
+            "tier",
+            "evolutionStage",
+            "title",
+            "isPublic",
+            "lastEvaluatedAt",
+            "attendancePoints",
+            "avatarSeed",
+            "stylePreset",
+            "gender",
+            "isResting",
+            "rerollCount"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterProfile",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/CharacterTier.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "CharacterTier",
+          "startLine": 3,
+          "endLine": 12,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterTier",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/Gender.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "Gender",
+          "startLine": 3,
+          "endLine": 6,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "Gender",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/UserBodyStats.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 52,
+      "nonEmptyLines": 40,
+      "classes": [
+        {
+          "name": "UserBodyStats",
+          "startLine": 6,
+          "endLine": 52,
+          "methods": [],
+          "properties": [
+            "id",
+            "user",
+            "heightCm",
+            "gender",
+            "weightKg",
+            "skeletalMuscleKg",
+            "bodyFatPercent",
+            "mbti",
+            "benchKg",
+            "squatKg",
+            "deadliftKg"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "UserBodyStats",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "WorkoutCrewMemberRole",
+          "startLine": 3,
+          "endLine": 6,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "WorkoutCrewMemberRole",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/CharacterEvolutionHistoryRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "CharacterEvolutionHistoryRepository",
+          "startLine": 6,
+          "endLine": 7,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterEvolutionHistoryRepository",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 54,
+      "nonEmptyLines": 45,
+      "classes": [
+        {
+          "name": "CharacterProfileRepository",
+          "startLine": 15,
+          "endLine": 54,
+          "methods": [
+            "findByUser",
+            "findAllByUserIn",
+            "findByIsPublicTrueOrderByLevelDescUpdatedAtDesc",
+            "countByIsPublicTrue",
+            "countByIsPublicTrueAndLevelGreaterThan",
+            "countByIsPublicTrueAndLevelEqualsAndUpdatedAtAfter",
+            "countPublicWithThreeLiftGreaterThan",
+            "countPublicWithThreeLiftEqualsAndUpdatedAtAfter",
+            "findPublicWithStatsOrderByThreeLiftDesc"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterProfileRepository",
+          "line": 15,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/repository/UserBodyStatsRepository.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 16,
+      "classes": [
+        {
+          "name": "UserBodyStatsRepository",
+          "startLine": 9,
+          "endLine": 19,
+          "methods": [
+            "findByUser",
+            "sumThreeLiftTotal"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "UserBodyStatsRepository",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthCalculator.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 131,
+      "nonEmptyLines": 116,
+      "functions": [
+        {
+          "name": "calculate",
+          "startLine": 9,
+          "endLine": 80,
+          "params": [
+            "stats"
+          ]
+        },
+        {
+          "name": "resolveLowerBodyRatio",
+          "startLine": 82,
+          "endLine": 91,
+          "params": [
+            "stats"
+          ]
+        },
+        {
+          "name": "zero",
+          "startLine": 93,
+          "endLine": 115,
+          "params": []
+        },
+        {
+          "name": "normalize",
+          "startLine": 117,
+          "endLine": 122,
+          "params": [
+            "value",
+            "min",
+            "max"
+          ]
+        },
+        {
+          "name": "clamp",
+          "startLine": 124,
+          "endLine": 126,
+          "params": [
+            "value",
+            "min",
+            "max"
+          ]
+        },
+        {
+          "name": "roundFour",
+          "startLine": 128,
+          "endLine": 130,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CharacterGrowthCalculator",
+          "startLine": 7,
+          "endLine": 131,
+          "methods": [
+            "calculate",
+            "resolveLowerBodyRatio",
+            "zero",
+            "normalize",
+            "clamp",
+            "roundFour"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "calculate",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "CharacterGrowthCalculator",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "calculate",
+          "callee": "stats.getHeightCm",
+          "lineNumber": 10
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getWeightKg",
+          "lineNumber": 10
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getWeightKg",
+          "lineNumber": 10
+        },
+        {
+          "caller": "calculate",
+          "callee": "zero",
+          "lineNumber": 11
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getHeightCm",
+          "lineNumber": 14
+        },
+        {
+          "caller": "calculate",
+          "callee": "zero",
+          "lineNumber": 16
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getWeightKg",
+          "lineNumber": 19
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getSkeletalMuscleKg",
+          "lineNumber": 21
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getSkeletalMuscleKg",
+          "lineNumber": 21
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getBodyFatPercent",
+          "lineNumber": 22
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getBodyFatPercent",
+          "lineNumber": 22
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 23
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 23
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 24
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 24
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 25
+        },
+        {
+          "caller": "calculate",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 25
+        },
+        {
+          "caller": "calculate",
+          "callee": "normalize",
+          "lineNumber": 27
+        },
+        {
+          "caller": "calculate",
+          "callee": "normalize",
+          "lineNumber": 28
+        },
+        {
+          "caller": "calculate",
+          "callee": "normalize",
+          "lineNumber": 29
+        },
+        {
+          "caller": "calculate",
+          "callee": "normalize",
+          "lineNumber": 30
+        },
+        {
+          "caller": "calculate",
+          "callee": "normalize",
+          "lineNumber": 31
+        },
+        {
+          "caller": "calculate",
+          "callee": "normalize",
+          "lineNumber": 32
+        },
+        {
+          "caller": "calculate",
+          "callee": "resolveLowerBodyRatio",
+          "lineNumber": 34
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 39
+        },
+        {
+          "caller": "calculate",
+          "callee": "Math.pow",
+          "lineNumber": 39
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 40
+        },
+        {
+          "caller": "calculate",
+          "callee": "Math.pow",
+          "lineNumber": 40
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 41
+        },
+        {
+          "caller": "calculate",
+          "callee": "Math.pow",
+          "lineNumber": 41
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 43
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 44
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 45
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 46
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 47
+        },
+        {
+          "caller": "calculate",
+          "callee": "clamp",
+          "lineNumber": 48
+        },
+        {
+          "caller": "calculate",
+          "callee": "Math.pow",
+          "lineNumber": 55
+        },
+        {
+          "caller": "calculate",
+          "callee": "Math.pow",
+          "lineNumber": 56
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth))\r\n                .quadGrowth(roundFour(quadGrowth))\r\n                .hamstringGrowth(roundFour(hamstringGrowth))\r\n                .gluteGrowth(roundFour(gluteGrowth))\r\n                .strokeWidth(roundFour(strokeWidth))\r\n                .muscleDetailOpacity(roundFour(muscleDetailOpacity))\r\n                .fatShadowOpacity(roundFour(fatShadowOpacity))\r\n                .contrastBoost(roundFour(contrastBoost)).build",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth))\r\n                .quadGrowth(roundFour(quadGrowth))\r\n                .hamstringGrowth(roundFour(hamstringGrowth))\r\n                .gluteGrowth(roundFour(gluteGrowth))\r\n                .strokeWidth(roundFour(strokeWidth))\r\n                .muscleDetailOpacity(roundFour(muscleDetailOpacity))\r\n                .fatShadowOpacity(roundFour(fatShadowOpacity)).contrastBoost",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth))\r\n                .quadGrowth(roundFour(quadGrowth))\r\n                .hamstringGrowth(roundFour(hamstringGrowth))\r\n                .gluteGrowth(roundFour(gluteGrowth))\r\n                .strokeWidth(roundFour(strokeWidth))\r\n                .muscleDetailOpacity(roundFour(muscleDetailOpacity)).fatShadowOpacity",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth))\r\n                .quadGrowth(roundFour(quadGrowth))\r\n                .hamstringGrowth(roundFour(hamstringGrowth))\r\n                .gluteGrowth(roundFour(gluteGrowth))\r\n                .strokeWidth(roundFour(strokeWidth)).muscleDetailOpacity",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth))\r\n                .quadGrowth(roundFour(quadGrowth))\r\n                .hamstringGrowth(roundFour(hamstringGrowth))\r\n                .gluteGrowth(roundFour(gluteGrowth)).strokeWidth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth))\r\n                .quadGrowth(roundFour(quadGrowth))\r\n                .hamstringGrowth(roundFour(hamstringGrowth)).gluteGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth))\r\n                .quadGrowth(roundFour(quadGrowth)).hamstringGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth))\r\n                .shoulderGrowth(roundFour(shoulderGrowth)).quadGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth))\r\n                .backGrowth(roundFour(backGrowth)).shoulderGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX))\r\n                .chestGrowth(roundFour(chestGrowth)).backGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale))\r\n                .torsoScaleX(roundFour(torsoScaleX)).chestGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale))\r\n                .legScale(roundFour(legScale)).torsoScaleX",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth))\r\n                .armScale(roundFour(armScale)).legScale",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth))\r\n                .torsoGrowth(roundFour(torsoGrowth)).armScale",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth))\r\n                .legGrowth(roundFour(legGrowth)).torsoGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized))\r\n                .armGrowth(roundFour(armGrowth)).legGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized))\r\n                .fatNormalized(roundFour(fatNormalized)).armGrowth",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized))\r\n                .muscularityNormalized(roundFour(muscularityNormalized)).fatNormalized",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(roundFour(bmiNormalized)).muscularityNormalized",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder().bmiNormalized",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "GrowthParamsResponse.builder",
+          "lineNumber": 59
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 60
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 61
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 62
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 63
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 64
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 65
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 66
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 67
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 68
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 69
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 70
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 71
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 72
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 73
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 74
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 75
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 76
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 77
+        },
+        {
+          "caller": "calculate",
+          "callee": "roundFour",
+          "lineNumber": 78
+        },
+        {
+          "caller": "resolveLowerBodyRatio",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 83
+        },
+        {
+          "caller": "resolveLowerBodyRatio",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 83
+        },
+        {
+          "caller": "resolveLowerBodyRatio",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 84
+        },
+        {
+          "caller": "resolveLowerBodyRatio",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 84
+        },
+        {
+          "caller": "resolveLowerBodyRatio",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 85
+        },
+        {
+          "caller": "resolveLowerBodyRatio",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 85
+        },
+        {
+          "caller": "resolveLowerBodyRatio",
+          "callee": "clamp",
+          "lineNumber": 90
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0)\r\n                .quadGrowth(0.0)\r\n                .hamstringGrowth(0.0)\r\n                .gluteGrowth(0.0)\r\n                .strokeWidth(2.0)\r\n                .muscleDetailOpacity(0.0)\r\n                .fatShadowOpacity(0.0)\r\n                .contrastBoost(1.0).build",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0)\r\n                .quadGrowth(0.0)\r\n                .hamstringGrowth(0.0)\r\n                .gluteGrowth(0.0)\r\n                .strokeWidth(2.0)\r\n                .muscleDetailOpacity(0.0)\r\n                .fatShadowOpacity(0.0).contrastBoost",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0)\r\n                .quadGrowth(0.0)\r\n                .hamstringGrowth(0.0)\r\n                .gluteGrowth(0.0)\r\n                .strokeWidth(2.0)\r\n                .muscleDetailOpacity(0.0).fatShadowOpacity",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0)\r\n                .quadGrowth(0.0)\r\n                .hamstringGrowth(0.0)\r\n                .gluteGrowth(0.0)\r\n                .strokeWidth(2.0).muscleDetailOpacity",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0)\r\n                .quadGrowth(0.0)\r\n                .hamstringGrowth(0.0)\r\n                .gluteGrowth(0.0).strokeWidth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0)\r\n                .quadGrowth(0.0)\r\n                .hamstringGrowth(0.0).gluteGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0)\r\n                .quadGrowth(0.0).hamstringGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0)\r\n                .shoulderGrowth(0.0).quadGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0)\r\n                .backGrowth(0.0).shoulderGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0)\r\n                .chestGrowth(0.0).backGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0)\r\n                .torsoScaleX(1.0).chestGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0)\r\n                .legScale(1.0).torsoScaleX",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0)\r\n                .armScale(1.0).legScale",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0)\r\n                .torsoGrowth(0.0).armScale",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0)\r\n                .legGrowth(0.0).torsoGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0)\r\n                .armGrowth(0.0).legGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0)\r\n                .fatNormalized(0.0).armGrowth",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0)\r\n                .muscularityNormalized(0.0).fatNormalized",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder()\r\n                .bmiNormalized(0.0).muscularityNormalized",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder().bmiNormalized",
+          "lineNumber": 94
+        },
+        {
+          "caller": "zero",
+          "callee": "GrowthParamsResponse.builder",
+          "lineNumber": 94
+        },
+        {
+          "caller": "normalize",
+          "callee": "clamp",
+          "lineNumber": 121
+        },
+        {
+          "caller": "clamp",
+          "callee": "Math.max",
+          "lineNumber": 125
+        },
+        {
+          "caller": "clamp",
+          "callee": "Math.min",
+          "lineNumber": 125
+        },
+        {
+          "caller": "roundFour",
+          "callee": "Math.round",
+          "lineNumber": 129
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterGrowthService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 57,
+      "nonEmptyLines": 49,
+      "functions": [
+        {
+          "name": "applyAttendance",
+          "startLine": 22,
+          "endLine": 40,
+          "params": [
+            "user",
+            "pointsEarned"
+          ]
+        },
+        {
+          "name": "applyEventSuccess",
+          "startLine": 42,
+          "endLine": 55,
+          "params": [
+            "user",
+            "event"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CharacterGrowthService",
+          "startLine": 15,
+          "endLine": 57,
+          "methods": [
+            "applyAttendance",
+            "applyEventSuccess"
+          ],
+          "properties": [
+            "characterService",
+            "profileRepository",
+            "statsRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "applyAttendance",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "applyEventSuccess",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "CharacterGrowthService",
+          "line": 15,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "applyAttendance",
+          "callee": "profileRepository.findByUser(user).orElseGet",
+          "lineNumber": 27
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 27
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "profileRepository.save",
+          "lineNumber": 28
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "CharacterServiceImpl.defaultProfileStatic",
+          "lineNumber": 28
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "Math.max",
+          "lineNumber": 29
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "profile.getAttendancePoints",
+          "lineNumber": 29
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "profile.setAttendancePoints",
+          "lineNumber": 30
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "profileRepository.save",
+          "lineNumber": 31
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "statsRepository.findByUser(user).orElse",
+          "lineNumber": 33
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 33
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "characterService.evaluate(user.getEmail(), CharacterEvolutionTriggerType.ATTENDANCE).getChange",
+          "lineNumber": 38
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "characterService.evaluate",
+          "lineNumber": 38
+        },
+        {
+          "caller": "applyAttendance",
+          "callee": "user.getEmail",
+          "lineNumber": 38
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "profileRepository.findByUser(user).orElseGet",
+          "lineNumber": 44
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 44
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "profileRepository.save",
+          "lineNumber": 45
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "CharacterServiceImpl.defaultProfileStatic",
+          "lineNumber": 45
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "profile.setAttendancePoints",
+          "lineNumber": 46
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "profile.getAttendancePoints",
+          "lineNumber": 46
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "profileRepository.save",
+          "lineNumber": 47
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "statsRepository.findByUser(user).orElse",
+          "lineNumber": 49
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 49
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "characterService.evaluate(user.getEmail(), CharacterEvolutionTriggerType.EVENT_SUCCESS).getChange",
+          "lineNumber": 53
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "characterService.evaluate",
+          "lineNumber": 53
+        },
+        {
+          "caller": "applyEventSuccess",
+          "callee": "user.getEmail",
+          "lineNumber": 53
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "CharacterService",
+          "startLine": 9,
+          "endLine": 19,
+          "methods": [
+            "getOrCreateProfile",
+            "evaluate",
+            "updatePublic",
+            "updateResting",
+            "reroll"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CharacterService",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/CharacterServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 468,
+      "nonEmptyLines": 417,
+      "functions": [
+        {
+          "name": "getOrCreateProfile",
+          "startLine": 47,
+          "endLine": 56,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "evaluate",
+          "startLine": 58,
+          "endLine": 66,
+          "params": [
+            "email",
+            "triggerType"
+          ]
+        },
+        {
+          "name": "updatePublic",
+          "startLine": 68,
+          "endLine": 79,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "updateResting",
+          "startLine": 81,
+          "endLine": 92,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "reroll",
+          "startLine": 94,
+          "endLine": 123,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "evaluateAndUpdate",
+          "startLine": 125,
+          "endLine": 169,
+          "params": [
+            "user",
+            "stats",
+            "triggerType"
+          ]
+        },
+        {
+          "name": "toProfileResponse",
+          "startLine": 171,
+          "endLine": 174,
+          "params": [
+            "profile",
+            "stats"
+          ]
+        },
+        {
+          "name": "ensureIdentity",
+          "startLine": 176,
+          "endLine": 194,
+          "params": [
+            "profile",
+            "stats"
+          ]
+        },
+        {
+          "name": "evaluateStats",
+          "startLine": 196,
+          "endLine": 256,
+          "params": [
+            "stats",
+            "attendanceBonus"
+          ]
+        },
+        {
+          "name": "resolveTier",
+          "startLine": 258,
+          "endLine": 284,
+          "params": [
+            "totalScore",
+            "threeLiftTotal",
+            "gender"
+          ]
+        },
+        {
+          "name": "resolveTierByScore",
+          "startLine": 286,
+          "endLine": 295,
+          "params": [
+            "totalScore"
+          ]
+        },
+        {
+          "name": "blendLiftAndScoreTier",
+          "startLine": 297,
+          "endLine": 307,
+          "params": [
+            "liftTier",
+            "scoreTier"
+          ]
+        },
+        {
+          "name": "tierIndex",
+          "startLine": 309,
+          "endLine": 320,
+          "params": [
+            "tier"
+          ]
+        },
+        {
+          "name": "tierByIndex",
+          "startLine": 322,
+          "endLine": 333,
+          "params": [
+            "index"
+          ]
+        },
+        {
+          "name": "resolveHeightMeters",
+          "startLine": 335,
+          "endLine": 340,
+          "params": [
+            "heightCm"
+          ]
+        },
+        {
+          "name": "scoreThreeLiftAbsolute",
+          "startLine": 342,
+          "endLine": 347,
+          "params": [
+            "gender",
+            "threeLiftTotal"
+          ]
+        },
+        {
+          "name": "scoreStrengthRatio",
+          "startLine": 349,
+          "endLine": 353,
+          "params": [
+            "gender",
+            "ratio"
+          ]
+        },
+        {
+          "name": "scoreBmiFit",
+          "startLine": 355,
+          "endLine": 360,
+          "params": [
+            "gender",
+            "bmi"
+          ]
+        },
+        {
+          "name": "scoreBodyFatFit",
+          "startLine": 362,
+          "endLine": 367,
+          "params": [
+            "gender",
+            "bodyFatPercent"
+          ]
+        },
+        {
+          "name": "scoreHeightAdjustedMuscle",
+          "startLine": 369,
+          "endLine": 374,
+          "params": [
+            "gender",
+            "smi"
+          ]
+        },
+        {
+          "name": "resolveStage",
+          "startLine": 376,
+          "endLine": 379,
+          "params": [
+            "level"
+          ]
+        },
+        {
+          "name": "resolveTitle",
+          "startLine": 381,
+          "endLine": 394,
+          "params": [
+            "stage"
+          ]
+        },
+        {
+          "name": "clamp",
+          "startLine": 396,
+          "endLine": 398,
+          "params": [
+            "value",
+            "min",
+            "max"
+          ]
+        },
+        {
+          "name": "roundOneDecimal",
+          "startLine": 400,
+          "endLine": 402,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "roundTwoDecimals",
+          "startLine": 404,
+          "endLine": 406,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "defaultProfile",
+          "startLine": 408,
+          "endLine": 410,
+          "params": [
+            "user",
+            "stats"
+          ]
+        },
+        {
+          "name": "defaultProfileStatic",
+          "startLine": 412,
+          "endLine": 427,
+          "params": [
+            "user",
+            "mbti"
+          ]
+        },
+        {
+          "name": "calculateAttendanceBonus",
+          "startLine": 429,
+          "endLine": 432,
+          "params": [
+            "attendancePoints"
+          ]
+        },
+        {
+          "name": "getUserOrThrow",
+          "startLine": 434,
+          "endLine": 437,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "generateAvatarSeed",
+          "startLine": 439,
+          "endLine": 447,
+          "params": []
+        },
+        {
+          "name": "pickStylePreset",
+          "startLine": 449,
+          "endLine": 467,
+          "params": [
+            "mbti"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CharacterServiceImpl",
+          "startLine": 34,
+          "endLine": 468,
+          "methods": [
+            "getOrCreateProfile",
+            "evaluate",
+            "updatePublic",
+            "updateResting",
+            "reroll",
+            "evaluateAndUpdate",
+            "toProfileResponse",
+            "ensureIdentity",
+            "evaluateStats",
+            "resolveTier",
+            "resolveTierByScore",
+            "blendLiftAndScoreTier",
+            "tierIndex",
+            "tierByIndex",
+            "resolveHeightMeters",
+            "scoreThreeLiftAbsolute",
+            "scoreStrengthRatio",
+            "scoreBmiFit",
+            "scoreBodyFatFit",
+            "scoreHeightAdjustedMuscle",
+            "resolveStage",
+            "resolveTitle",
+            "clamp",
+            "roundOneDecimal",
+            "roundTwoDecimals",
+            "defaultProfile",
+            "defaultProfileStatic",
+            "calculateAttendanceBonus",
+            "getUserOrThrow",
+            "generateAvatarSeed",
+            "pickStylePreset"
+          ],
+          "properties": [
+            "KST",
+            "RANDOM",
+            "STYLE_PRESETS",
+            "userRepository",
+            "statsRepository",
+            "profileRepository",
+            "historyRepository",
+            "growthCalculator"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getOrCreateProfile",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "evaluate",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "updatePublic",
+          "line": 68,
+          "isDefault": false
+        },
+        {
+          "name": "updateResting",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "reroll",
+          "line": 94,
+          "isDefault": false
+        },
+        {
+          "name": "evaluateAndUpdate",
+          "line": 125,
+          "isDefault": false
+        },
+        {
+          "name": "CharacterServiceImpl",
+          "line": 34,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "getUserOrThrow",
+          "lineNumber": 50
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "statsRepository.findByUser(user).orElse",
+          "lineNumber": 51
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 51
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "profileRepository.findByUser(user).orElseGet",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "profileRepository.save",
+          "lineNumber": 53
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "defaultProfile",
+          "lineNumber": 53
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "ensureIdentity",
+          "lineNumber": 54
+        },
+        {
+          "caller": "getOrCreateProfile",
+          "callee": "toProfileResponse",
+          "lineNumber": 55
+        },
+        {
+          "caller": "evaluate",
+          "callee": "getUserOrThrow",
+          "lineNumber": 61
+        },
+        {
+          "caller": "evaluate",
+          "callee": "statsRepository.findByUser(user).orElseThrow",
+          "lineNumber": 62
+        },
+        {
+          "caller": "evaluate",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 62
+        },
+        {
+          "caller": "evaluate",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 63
+        },
+        {
+          "caller": "evaluate",
+          "callee": "evaluateAndUpdate",
+          "lineNumber": 65
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "getUserOrThrow",
+          "lineNumber": 71
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "statsRepository.findByUser(user).orElse",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 72
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "profileRepository.findByUser(user).orElseGet",
+          "lineNumber": 73
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 73
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "profileRepository.save",
+          "lineNumber": 74
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "defaultProfile",
+          "lineNumber": 74
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "ensureIdentity",
+          "lineNumber": 75
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "profile.setPublic",
+          "lineNumber": 76
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "Boolean.TRUE.equals",
+          "lineNumber": 76
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "request.getIsPublic",
+          "lineNumber": 76
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "profileRepository.save",
+          "lineNumber": 77
+        },
+        {
+          "caller": "updatePublic",
+          "callee": "toProfileResponse",
+          "lineNumber": 78
+        },
+        {
+          "caller": "updateResting",
+          "callee": "getUserOrThrow",
+          "lineNumber": 84
+        },
+        {
+          "caller": "updateResting",
+          "callee": "statsRepository.findByUser(user).orElse",
+          "lineNumber": 85
+        },
+        {
+          "caller": "updateResting",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 85
+        },
+        {
+          "caller": "updateResting",
+          "callee": "profileRepository.findByUser(user).orElseGet",
+          "lineNumber": 86
+        },
+        {
+          "caller": "updateResting",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 86
+        },
+        {
+          "caller": "updateResting",
+          "callee": "profileRepository.save",
+          "lineNumber": 87
+        },
+        {
+          "caller": "updateResting",
+          "callee": "defaultProfile",
+          "lineNumber": 87
+        },
+        {
+          "caller": "updateResting",
+          "callee": "ensureIdentity",
+          "lineNumber": 88
+        },
+        {
+          "caller": "updateResting",
+          "callee": "profile.setResting",
+          "lineNumber": 89
+        },
+        {
+          "caller": "updateResting",
+          "callee": "Boolean.TRUE.equals",
+          "lineNumber": 89
+        },
+        {
+          "caller": "updateResting",
+          "callee": "request.getIsResting",
+          "lineNumber": 89
+        },
+        {
+          "caller": "updateResting",
+          "callee": "profileRepository.save",
+          "lineNumber": 90
+        },
+        {
+          "caller": "updateResting",
+          "callee": "toProfileResponse",
+          "lineNumber": 91
+        },
+        {
+          "caller": "reroll",
+          "callee": "getUserOrThrow",
+          "lineNumber": 97
+        },
+        {
+          "caller": "reroll",
+          "callee": "statsRepository.findByUser(user).orElse",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reroll",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reroll",
+          "callee": "profileRepository.findByUser(user).orElseGet",
+          "lineNumber": 99
+        },
+        {
+          "caller": "reroll",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 99
+        },
+        {
+          "caller": "reroll",
+          "callee": "profileRepository.save",
+          "lineNumber": 100
+        },
+        {
+          "caller": "reroll",
+          "callee": "defaultProfile",
+          "lineNumber": 100
+        },
+        {
+          "caller": "reroll",
+          "callee": "ensureIdentity",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterSnapshotResponse.from",
+          "lineNumber": 103
+        },
+        {
+          "caller": "reroll",
+          "callee": "profile.setAvatarSeed",
+          "lineNumber": 105
+        },
+        {
+          "caller": "reroll",
+          "callee": "generateAvatarSeed",
+          "lineNumber": 105
+        },
+        {
+          "caller": "reroll",
+          "callee": "profile.setStylePreset",
+          "lineNumber": 106
+        },
+        {
+          "caller": "reroll",
+          "callee": "pickStylePreset",
+          "lineNumber": 106
+        },
+        {
+          "caller": "reroll",
+          "callee": "stats.getMbti",
+          "lineNumber": 106
+        },
+        {
+          "caller": "reroll",
+          "callee": "profile.setRerollCount",
+          "lineNumber": 107
+        },
+        {
+          "caller": "reroll",
+          "callee": "profile.getRerollCount",
+          "lineNumber": 107
+        },
+        {
+          "caller": "reroll",
+          "callee": "profileRepository.save",
+          "lineNumber": 108
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterSnapshotResponse.from",
+          "lineNumber": 110
+        },
+        {
+          "caller": "reroll",
+          "callee": "historyRepository.save",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user)\r\n                .triggerType(CharacterEvolutionTriggerType.REROLL)\r\n                .beforeLevel(beforeSnapshot.getLevel())\r\n                .afterLevel(afterSnapshot.getLevel())\r\n                .beforeTier(beforeSnapshot.getTier())\r\n                .afterTier(afterSnapshot.getTier())\r\n                .beforeStage(beforeSnapshot.getEvolutionStage())\r\n                .afterStage(afterSnapshot.getEvolutionStage()).build",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user)\r\n                .triggerType(CharacterEvolutionTriggerType.REROLL)\r\n                .beforeLevel(beforeSnapshot.getLevel())\r\n                .afterLevel(afterSnapshot.getLevel())\r\n                .beforeTier(beforeSnapshot.getTier())\r\n                .afterTier(afterSnapshot.getTier())\r\n                .beforeStage(beforeSnapshot.getEvolutionStage()).afterStage",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user)\r\n                .triggerType(CharacterEvolutionTriggerType.REROLL)\r\n                .beforeLevel(beforeSnapshot.getLevel())\r\n                .afterLevel(afterSnapshot.getLevel())\r\n                .beforeTier(beforeSnapshot.getTier())\r\n                .afterTier(afterSnapshot.getTier()).beforeStage",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user)\r\n                .triggerType(CharacterEvolutionTriggerType.REROLL)\r\n                .beforeLevel(beforeSnapshot.getLevel())\r\n                .afterLevel(afterSnapshot.getLevel())\r\n                .beforeTier(beforeSnapshot.getTier()).afterTier",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user)\r\n                .triggerType(CharacterEvolutionTriggerType.REROLL)\r\n                .beforeLevel(beforeSnapshot.getLevel())\r\n                .afterLevel(afterSnapshot.getLevel()).beforeTier",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user)\r\n                .triggerType(CharacterEvolutionTriggerType.REROLL)\r\n                .beforeLevel(beforeSnapshot.getLevel()).afterLevel",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user)\r\n                .triggerType(CharacterEvolutionTriggerType.REROLL).beforeLevel",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                .user(user).triggerType",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder().user",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "CharacterEvolutionHistory.builder",
+          "lineNumber": 111
+        },
+        {
+          "caller": "reroll",
+          "callee": "beforeSnapshot.getLevel",
+          "lineNumber": 114
+        },
+        {
+          "caller": "reroll",
+          "callee": "afterSnapshot.getLevel",
+          "lineNumber": 115
+        },
+        {
+          "caller": "reroll",
+          "callee": "beforeSnapshot.getTier",
+          "lineNumber": 116
+        },
+        {
+          "caller": "reroll",
+          "callee": "afterSnapshot.getTier",
+          "lineNumber": 117
+        },
+        {
+          "caller": "reroll",
+          "callee": "beforeSnapshot.getEvolutionStage",
+          "lineNumber": 118
+        },
+        {
+          "caller": "reroll",
+          "callee": "afterSnapshot.getEvolutionStage",
+          "lineNumber": 119
+        },
+        {
+          "caller": "reroll",
+          "callee": "toProfileResponse",
+          "lineNumber": 122
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profileRepository.findByUser(user).orElseGet",
+          "lineNumber": 127
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 127
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profileRepository.save",
+          "lineNumber": 128
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "defaultProfile",
+          "lineNumber": 128
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "ensureIdentity",
+          "lineNumber": 129
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterSnapshotResponse.from",
+          "lineNumber": 130
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "calculateAttendanceBonus",
+          "lineNumber": 132
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profile.getAttendancePoints",
+          "lineNumber": 132
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "evaluateStats",
+          "lineNumber": 133
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profile.setLevel",
+          "lineNumber": 134
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "evaluation.getLevel",
+          "lineNumber": 134
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profile.setTier",
+          "lineNumber": 135
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "evaluation.getTier",
+          "lineNumber": 135
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profile.setEvolutionStage",
+          "lineNumber": 136
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "evaluation.getEvolutionStage",
+          "lineNumber": 136
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profile.setTitle",
+          "lineNumber": 137
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "evaluation.getTitle",
+          "lineNumber": 137
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profile.setLastEvaluatedAt",
+          "lineNumber": 138
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 138
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "profileRepository.save",
+          "lineNumber": 139
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterSnapshotResponse.from",
+          "lineNumber": 141
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterChangeResponse.builder()\r\n                .leveledUp(afterSnapshot.getLevel() > beforeSnapshot.getLevel())\r\n                .evolved(afterSnapshot.getEvolutionStage() > beforeSnapshot.getEvolutionStage())\r\n                .tierChanged(afterSnapshot.getTier() != beforeSnapshot.getTier())\r\n                .before(beforeSnapshot)\r\n                .after(afterSnapshot).build",
+          "lineNumber": 142
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterChangeResponse.builder()\r\n                .leveledUp(afterSnapshot.getLevel() > beforeSnapshot.getLevel())\r\n                .evolved(afterSnapshot.getEvolutionStage() > beforeSnapshot.getEvolutionStage())\r\n                .tierChanged(afterSnapshot.getTier() != beforeSnapshot.getTier())\r\n                .before(beforeSnapshot).after",
+          "lineNumber": 142
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterChangeResponse.builder()\r\n                .leveledUp(afterSnapshot.getLevel() > beforeSnapshot.getLevel())\r\n                .evolved(afterSnapshot.getEvolutionStage() > beforeSnapshot.getEvolutionStage())\r\n                .tierChanged(afterSnapshot.getTier() != beforeSnapshot.getTier()).before",
+          "lineNumber": 142
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterChangeResponse.builder()\r\n                .leveledUp(afterSnapshot.getLevel() > beforeSnapshot.getLevel())\r\n                .evolved(afterSnapshot.getEvolutionStage() > beforeSnapshot.getEvolutionStage()).tierChanged",
+          "lineNumber": 142
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterChangeResponse.builder()\r\n                .leveledUp(afterSnapshot.getLevel() > beforeSnapshot.getLevel()).evolved",
+          "lineNumber": 142
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterChangeResponse.builder().leveledUp",
+          "lineNumber": 142
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterChangeResponse.builder",
+          "lineNumber": 142
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "afterSnapshot.getLevel",
+          "lineNumber": 143
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "beforeSnapshot.getLevel",
+          "lineNumber": 143
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "afterSnapshot.getEvolutionStage",
+          "lineNumber": 144
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "beforeSnapshot.getEvolutionStage",
+          "lineNumber": 144
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "afterSnapshot.getTier",
+          "lineNumber": 145
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "beforeSnapshot.getTier",
+          "lineNumber": 145
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "change.isLeveledUp",
+          "lineNumber": 150
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "change.isEvolved",
+          "lineNumber": 150
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "change.isTierChanged",
+          "lineNumber": 150
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "historyRepository.save",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user)\r\n                    .triggerType(triggerType)\r\n                    .beforeLevel(beforeSnapshot.getLevel())\r\n                    .afterLevel(afterSnapshot.getLevel())\r\n                    .beforeTier(beforeSnapshot.getTier())\r\n                    .afterTier(afterSnapshot.getTier())\r\n                    .beforeStage(beforeSnapshot.getEvolutionStage())\r\n                    .afterStage(afterSnapshot.getEvolutionStage()).build",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user)\r\n                    .triggerType(triggerType)\r\n                    .beforeLevel(beforeSnapshot.getLevel())\r\n                    .afterLevel(afterSnapshot.getLevel())\r\n                    .beforeTier(beforeSnapshot.getTier())\r\n                    .afterTier(afterSnapshot.getTier())\r\n                    .beforeStage(beforeSnapshot.getEvolutionStage()).afterStage",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user)\r\n                    .triggerType(triggerType)\r\n                    .beforeLevel(beforeSnapshot.getLevel())\r\n                    .afterLevel(afterSnapshot.getLevel())\r\n                    .beforeTier(beforeSnapshot.getTier())\r\n                    .afterTier(afterSnapshot.getTier()).beforeStage",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user)\r\n                    .triggerType(triggerType)\r\n                    .beforeLevel(beforeSnapshot.getLevel())\r\n                    .afterLevel(afterSnapshot.getLevel())\r\n                    .beforeTier(beforeSnapshot.getTier()).afterTier",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user)\r\n                    .triggerType(triggerType)\r\n                    .beforeLevel(beforeSnapshot.getLevel())\r\n                    .afterLevel(afterSnapshot.getLevel()).beforeTier",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user)\r\n                    .triggerType(triggerType)\r\n                    .beforeLevel(beforeSnapshot.getLevel()).afterLevel",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user)\r\n                    .triggerType(triggerType).beforeLevel",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder()\r\n                    .user(user).triggerType",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder().user",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "CharacterEvolutionHistory.builder",
+          "lineNumber": 151
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "beforeSnapshot.getLevel",
+          "lineNumber": 154
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "afterSnapshot.getLevel",
+          "lineNumber": 155
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "beforeSnapshot.getTier",
+          "lineNumber": 156
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "afterSnapshot.getTier",
+          "lineNumber": 157
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "beforeSnapshot.getEvolutionStage",
+          "lineNumber": 158
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "afterSnapshot.getEvolutionStage",
+          "lineNumber": 159
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "StatsCharacterResponse.builder()\r\n                .stats(UserBodyStatsResponse.from(stats))\r\n                .character(toProfileResponse(saved, stats))\r\n                .evaluation(evaluation)\r\n                .change(change).build",
+          "lineNumber": 163
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "StatsCharacterResponse.builder()\r\n                .stats(UserBodyStatsResponse.from(stats))\r\n                .character(toProfileResponse(saved, stats))\r\n                .evaluation(evaluation).change",
+          "lineNumber": 163
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "StatsCharacterResponse.builder()\r\n                .stats(UserBodyStatsResponse.from(stats))\r\n                .character(toProfileResponse(saved, stats)).evaluation",
+          "lineNumber": 163
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "StatsCharacterResponse.builder()\r\n                .stats(UserBodyStatsResponse.from(stats)).character",
+          "lineNumber": 163
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "StatsCharacterResponse.builder().stats",
+          "lineNumber": 163
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "StatsCharacterResponse.builder",
+          "lineNumber": 163
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "UserBodyStatsResponse.from",
+          "lineNumber": 164
+        },
+        {
+          "caller": "evaluateAndUpdate",
+          "callee": "toProfileResponse",
+          "lineNumber": 165
+        },
+        {
+          "caller": "toProfileResponse",
+          "callee": "growthCalculator.calculate",
+          "lineNumber": 172
+        },
+        {
+          "caller": "toProfileResponse",
+          "callee": "CharacterProfileResponse.from",
+          "lineNumber": 173
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getAvatarSeed",
+          "lineNumber": 178
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getAvatarSeed().isBlank",
+          "lineNumber": 178
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getAvatarSeed",
+          "lineNumber": 178
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.setAvatarSeed",
+          "lineNumber": 179
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "generateAvatarSeed",
+          "lineNumber": 179
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getStylePreset",
+          "lineNumber": 182
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getStylePreset().isBlank",
+          "lineNumber": 182
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getStylePreset",
+          "lineNumber": 182
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.setStylePreset",
+          "lineNumber": 183
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "pickStylePreset",
+          "lineNumber": 183
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "stats.getMbti",
+          "lineNumber": 183
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getGender",
+          "lineNumber": 186
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "stats.getGender",
+          "lineNumber": 186
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.getGender",
+          "lineNumber": 187
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profile.setGender",
+          "lineNumber": 188
+        },
+        {
+          "caller": "ensureIdentity",
+          "callee": "profileRepository.save",
+          "lineNumber": 192
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 197
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 197
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 198
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 198
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 199
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 199
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getWeightKg",
+          "lineNumber": 200
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getWeightKg",
+          "lineNumber": 200
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "resolveHeightMeters",
+          "lineNumber": 201
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getHeightCm",
+          "lineNumber": 201
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 203
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getGender",
+          "lineNumber": 205
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getGender",
+          "lineNumber": 205
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getBodyFatPercent",
+          "lineNumber": 210
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getBodyFatPercent",
+          "lineNumber": 212
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "scoreThreeLiftAbsolute",
+          "lineNumber": 219
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "scoreStrengthRatio",
+          "lineNumber": 220
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getSkeletalMuscleKg",
+          "lineNumber": 224
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "stats.getSkeletalMuscleKg",
+          "lineNumber": 225
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "scoreHeightAdjustedMuscle",
+          "lineNumber": 226
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "scoreBmiFit",
+          "lineNumber": 229
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "scoreBodyFatFit",
+          "lineNumber": 230
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "clamp",
+          "lineNumber": 233
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "Math.min",
+          "lineNumber": 238
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "Math.floor",
+          "lineNumber": 238
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "resolveTier",
+          "lineNumber": 239
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "resolveStage",
+          "lineNumber": 240
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "resolveTitle",
+          "lineNumber": 241
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi))\r\n                .heightWeightScore(roundTwoDecimals(heightWeightScore))\r\n                .heightMuscleScore(roundTwoDecimals(heightMuscleScore))\r\n                .totalScore(roundTwoDecimals(totalScore))\r\n                .level(level)\r\n                .tier(tier)\r\n                .evolutionStage(stage)\r\n                .title(title).build",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi))\r\n                .heightWeightScore(roundTwoDecimals(heightWeightScore))\r\n                .heightMuscleScore(roundTwoDecimals(heightMuscleScore))\r\n                .totalScore(roundTwoDecimals(totalScore))\r\n                .level(level)\r\n                .tier(tier)\r\n                .evolutionStage(stage).title",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi))\r\n                .heightWeightScore(roundTwoDecimals(heightWeightScore))\r\n                .heightMuscleScore(roundTwoDecimals(heightMuscleScore))\r\n                .totalScore(roundTwoDecimals(totalScore))\r\n                .level(level)\r\n                .tier(tier).evolutionStage",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi))\r\n                .heightWeightScore(roundTwoDecimals(heightWeightScore))\r\n                .heightMuscleScore(roundTwoDecimals(heightMuscleScore))\r\n                .totalScore(roundTwoDecimals(totalScore))\r\n                .level(level).tier",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi))\r\n                .heightWeightScore(roundTwoDecimals(heightWeightScore))\r\n                .heightMuscleScore(roundTwoDecimals(heightMuscleScore))\r\n                .totalScore(roundTwoDecimals(totalScore)).level",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi))\r\n                .heightWeightScore(roundTwoDecimals(heightWeightScore))\r\n                .heightMuscleScore(roundTwoDecimals(heightMuscleScore)).totalScore",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi))\r\n                .heightWeightScore(roundTwoDecimals(heightWeightScore)).heightMuscleScore",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi))\r\n                .skeletalMuscleIndex(roundTwoDecimals(smi)).heightWeightScore",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio))\r\n                .bmi(roundTwoDecimals(bmi)).skeletalMuscleIndex",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal))\r\n                .strengthRatio(roundTwoDecimals(strengthRatio)).bmi",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder()\r\n                .threeLiftTotal(roundOneDecimal(threeLiftTotal)).strengthRatio",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder().threeLiftTotal",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "CharacterEvaluationResponse.builder",
+          "lineNumber": 243
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "roundOneDecimal",
+          "lineNumber": 244
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "roundTwoDecimals",
+          "lineNumber": 245
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "roundTwoDecimals",
+          "lineNumber": 246
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "roundTwoDecimals",
+          "lineNumber": 247
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "roundTwoDecimals",
+          "lineNumber": 248
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "roundTwoDecimals",
+          "lineNumber": 249
+        },
+        {
+          "caller": "evaluateStats",
+          "callee": "roundTwoDecimals",
+          "lineNumber": 250
+        },
+        {
+          "caller": "resolveTier",
+          "callee": "resolveTierByScore",
+          "lineNumber": 259
+        },
+        {
+          "caller": "resolveTier",
+          "callee": "blendLiftAndScoreTier",
+          "lineNumber": 281
+        },
+        {
+          "caller": "blendLiftAndScoreTier",
+          "callee": "tierIndex",
+          "lineNumber": 298
+        },
+        {
+          "caller": "blendLiftAndScoreTier",
+          "callee": "tierIndex",
+          "lineNumber": 299
+        },
+        {
+          "caller": "blendLiftAndScoreTier",
+          "callee": "tierByIndex",
+          "lineNumber": 301
+        },
+        {
+          "caller": "blendLiftAndScoreTier",
+          "callee": "Math.min",
+          "lineNumber": 301
+        },
+        {
+          "caller": "blendLiftAndScoreTier",
+          "callee": "tierByIndex",
+          "lineNumber": 304
+        },
+        {
+          "caller": "blendLiftAndScoreTier",
+          "callee": "Math.max",
+          "lineNumber": 304
+        },
+        {
+          "caller": "scoreThreeLiftAbsolute",
+          "callee": "clamp",
+          "lineNumber": 345
+        },
+        {
+          "caller": "scoreStrengthRatio",
+          "callee": "clamp",
+          "lineNumber": 351
+        },
+        {
+          "caller": "scoreBmiFit",
+          "callee": "Math.abs",
+          "lineNumber": 357
+        },
+        {
+          "caller": "scoreBmiFit",
+          "callee": "clamp",
+          "lineNumber": 359
+        },
+        {
+          "caller": "scoreBodyFatFit",
+          "callee": "Math.abs",
+          "lineNumber": 364
+        },
+        {
+          "caller": "scoreBodyFatFit",
+          "callee": "clamp",
+          "lineNumber": 366
+        },
+        {
+          "caller": "scoreHeightAdjustedMuscle",
+          "callee": "Math.abs",
+          "lineNumber": 371
+        },
+        {
+          "caller": "scoreHeightAdjustedMuscle",
+          "callee": "clamp",
+          "lineNumber": 373
+        },
+        {
+          "caller": "resolveStage",
+          "callee": "Math.max",
+          "lineNumber": 377
+        },
+        {
+          "caller": "resolveStage",
+          "callee": "Math.min",
+          "lineNumber": 377
+        },
+        {
+          "caller": "resolveStage",
+          "callee": "Math.min",
+          "lineNumber": 378
+        },
+        {
+          "caller": "clamp",
+          "callee": "Math.max",
+          "lineNumber": 397
+        },
+        {
+          "caller": "clamp",
+          "callee": "Math.min",
+          "lineNumber": 397
+        },
+        {
+          "caller": "roundOneDecimal",
+          "callee": "Math.round",
+          "lineNumber": 401
+        },
+        {
+          "caller": "roundTwoDecimals",
+          "callee": "Math.round",
+          "lineNumber": 405
+        },
+        {
+          "caller": "defaultProfile",
+          "callee": "defaultProfileStatic",
+          "lineNumber": 409
+        },
+        {
+          "caller": "defaultProfile",
+          "callee": "stats.getMbti",
+          "lineNumber": 409
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\")\r\n                .isPublic(false)\r\n                .attendancePoints(0)\r\n                .avatarSeed(generateAvatarSeed())\r\n                .stylePreset(pickStylePreset(mbti))\r\n                .gender(null)\r\n                .isResting(false)\r\n                .rerollCount(0).build",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\")\r\n                .isPublic(false)\r\n                .attendancePoints(0)\r\n                .avatarSeed(generateAvatarSeed())\r\n                .stylePreset(pickStylePreset(mbti))\r\n                .gender(null)\r\n                .isResting(false).rerollCount",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\")\r\n                .isPublic(false)\r\n                .attendancePoints(0)\r\n                .avatarSeed(generateAvatarSeed())\r\n                .stylePreset(pickStylePreset(mbti))\r\n                .gender(null).isResting",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\")\r\n                .isPublic(false)\r\n                .attendancePoints(0)\r\n                .avatarSeed(generateAvatarSeed())\r\n                .stylePreset(pickStylePreset(mbti)).gender",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\")\r\n                .isPublic(false)\r\n                .attendancePoints(0)\r\n                .avatarSeed(generateAvatarSeed()).stylePreset",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\")\r\n                .isPublic(false)\r\n                .attendancePoints(0).avatarSeed",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\")\r\n                .isPublic(false).attendancePoints",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0)\r\n                .title(\"초보 헬린이\").isPublic",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE)\r\n                .evolutionStage(0).title",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1)\r\n                .tier(CharacterTier.BRONZE).evolutionStage",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user)\r\n                .level(1).tier",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder()\r\n                .user(user).level",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder().user",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "CharacterProfile.builder",
+          "lineNumber": 413
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "generateAvatarSeed",
+          "lineNumber": 421
+        },
+        {
+          "caller": "defaultProfileStatic",
+          "callee": "pickStylePreset",
+          "lineNumber": 422
+        },
+        {
+          "caller": "calculateAttendanceBonus",
+          "callee": "clamp",
+          "lineNumber": 431
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 435
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 435
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 436
+        },
+        {
+          "caller": "generateAvatarSeed",
+          "callee": "RANDOM.nextBytes",
+          "lineNumber": 441
+        },
+        {
+          "caller": "generateAvatarSeed",
+          "callee": "new StringBuilder",
+          "lineNumber": 442
+        },
+        {
+          "caller": "generateAvatarSeed",
+          "callee": "builder.append",
+          "lineNumber": 444
+        },
+        {
+          "caller": "generateAvatarSeed",
+          "callee": "String.format",
+          "lineNumber": 444
+        },
+        {
+          "caller": "generateAvatarSeed",
+          "callee": "builder.toString",
+          "lineNumber": 446
+        },
+        {
+          "caller": "pickStylePreset",
+          "callee": "mbti.trim().toUpperCase",
+          "lineNumber": 450
+        },
+        {
+          "caller": "pickStylePreset",
+          "callee": "mbti.trim",
+          "lineNumber": 450
+        },
+        {
+          "caller": "pickStylePreset",
+          "callee": "RANDOM.nextDouble",
+          "lineNumber": 451
+        },
+        {
+          "caller": "pickStylePreset",
+          "callee": "normalizedMbti.startsWith",
+          "lineNumber": 453
+        },
+        {
+          "caller": "pickStylePreset",
+          "callee": "normalizedMbti.startsWith",
+          "lineNumber": 459
+        },
+        {
+          "caller": "pickStylePreset",
+          "callee": "STYLE_PRESETS.get",
+          "lineNumber": 466
+        },
+        {
+          "caller": "pickStylePreset",
+          "callee": "STYLE_PRESETS.size",
+          "lineNumber": 466
+        }
+      ],
+      "metrics": {
+        "importCount": 20,
+        "exportCount": 7,
+        "functionCount": 31,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/RankingService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 5,
+      "classes": [
+        {
+          "name": "RankingService",
+          "startLine": 5,
+          "endLine": 7,
+          "methods": [
+            "getCharacterRankings"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RankingService",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/RankingServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 134,
+      "functions": [
+        {
+          "name": "getCharacterRankings",
+          "startLine": 26,
+          "endLine": 58,
+          "params": [
+            "email",
+            "type",
+            "limit"
+          ]
+        },
+        {
+          "name": "fetchLevelRankings",
+          "startLine": 60,
+          "endLine": 76,
+          "params": [
+            "limit"
+          ]
+        },
+        {
+          "name": "fetchThreeLiftRankings",
+          "startLine": 78,
+          "endLine": 107,
+          "params": [
+            "limit"
+          ]
+        },
+        {
+          "name": "calculateMyLevelRank",
+          "startLine": 109,
+          "endLine": 121,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "calculateMyThreeLiftRank",
+          "startLine": 123,
+          "endLine": 140,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RankingServiceImpl",
+          "startLine": 19,
+          "endLine": 141,
+          "methods": [
+            "getCharacterRankings",
+            "fetchLevelRankings",
+            "fetchThreeLiftRankings",
+            "calculateMyLevelRank",
+            "calculateMyThreeLiftRank"
+          ],
+          "properties": [
+            "profileRepository",
+            "userRepository",
+            "statsRepository"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getCharacterRankings",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "RankingServiceImpl",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getCharacterRankings",
+          "callee": "Math.max",
+          "lineNumber": 29
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "Math.min",
+          "lineNumber": 29
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "profileRepository.countByIsPublicTrue",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "\"THREE_LIFT\".equalsIgnoreCase",
+          "lineNumber": 31
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "calculateMyThreeLiftRank",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "Math.round",
+          "lineNumber": 35
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                    .items(fetchThreeLiftRankings(safeLimit))\r\n                    .totalPublic(totalPublic)\r\n                    .myRank(myRank)\r\n                    .myTopPercent(myTopPercent).build",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                    .items(fetchThreeLiftRankings(safeLimit))\r\n                    .totalPublic(totalPublic)\r\n                    .myRank(myRank).myTopPercent",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                    .items(fetchThreeLiftRankings(safeLimit))\r\n                    .totalPublic(totalPublic).myRank",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                    .items(fetchThreeLiftRankings(safeLimit)).totalPublic",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder().items",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "fetchThreeLiftRankings",
+          "lineNumber": 38
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "\"LEVEL\".equalsIgnoreCase",
+          "lineNumber": 44
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 45
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "calculateMyLevelRank",
+          "lineNumber": 47
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "Math.round",
+          "lineNumber": 50
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                .items(fetchLevelRankings(safeLimit))\r\n                .totalPublic(totalPublic)\r\n                .myRank(myRank)\r\n                .myTopPercent(myTopPercent).build",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                .items(fetchLevelRankings(safeLimit))\r\n                .totalPublic(totalPublic)\r\n                .myRank(myRank).myTopPercent",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                .items(fetchLevelRankings(safeLimit))\r\n                .totalPublic(totalPublic).myRank",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder()\r\n                .items(fetchLevelRankings(safeLimit)).totalPublic",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder().items",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "CharacterRankingListResponse.builder",
+          "lineNumber": 52
+        },
+        {
+          "caller": "getCharacterRankings",
+          "callee": "fetchLevelRankings",
+          "lineNumber": 53
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profileRepository.findByIsPublicTrueOrderByLevelDescUpdatedAtDesc(PageRequest.of(0, limit))\r\n                .stream()\r\n                .map(profile -> CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage())\r\n                        .title(profile.getTitle())\r\n                        .avatarSeed(profile.getAvatarSeed())\r\n                        .gender(profile.getGender())\r\n                        .isResting(profile.isResting())\r\n                        .threeLiftTotal(null)\r\n                        .updatedAt(profile.getUpdatedAt())\r\n                        .build()).toList",
+          "lineNumber": 61
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profileRepository.findByIsPublicTrueOrderByLevelDescUpdatedAtDesc(PageRequest.of(0, limit))\r\n                .stream().map",
+          "lineNumber": 61
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profileRepository.findByIsPublicTrueOrderByLevelDescUpdatedAtDesc(PageRequest.of(0, limit)).stream",
+          "lineNumber": 61
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profileRepository.findByIsPublicTrueOrderByLevelDescUpdatedAtDesc",
+          "lineNumber": 61
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "PageRequest.of",
+          "lineNumber": 61
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage())\r\n                        .title(profile.getTitle())\r\n                        .avatarSeed(profile.getAvatarSeed())\r\n                        .gender(profile.getGender())\r\n                        .isResting(profile.isResting())\r\n                        .threeLiftTotal(null)\r\n                        .updatedAt(profile.getUpdatedAt()).build",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage())\r\n                        .title(profile.getTitle())\r\n                        .avatarSeed(profile.getAvatarSeed())\r\n                        .gender(profile.getGender())\r\n                        .isResting(profile.isResting())\r\n                        .threeLiftTotal(null).updatedAt",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage())\r\n                        .title(profile.getTitle())\r\n                        .avatarSeed(profile.getAvatarSeed())\r\n                        .gender(profile.getGender())\r\n                        .isResting(profile.isResting()).threeLiftTotal",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage())\r\n                        .title(profile.getTitle())\r\n                        .avatarSeed(profile.getAvatarSeed())\r\n                        .gender(profile.getGender()).isResting",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage())\r\n                        .title(profile.getTitle())\r\n                        .avatarSeed(profile.getAvatarSeed()).gender",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage())\r\n                        .title(profile.getTitle()).avatarSeed",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier())\r\n                        .evolutionStage(profile.getEvolutionStage()).title",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel())\r\n                        .tier(profile.getTier()).evolutionStage",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname())\r\n                        .level(profile.getLevel()).tier",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                        .nickname(profile.getUser().getNickname()).level",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder().nickname",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "CharacterRankingResponse.builder",
+          "lineNumber": 63
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getUser().getNickname",
+          "lineNumber": 64
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getUser",
+          "lineNumber": 64
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getLevel",
+          "lineNumber": 65
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getTier",
+          "lineNumber": 66
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getEvolutionStage",
+          "lineNumber": 67
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getTitle",
+          "lineNumber": 68
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getAvatarSeed",
+          "lineNumber": 69
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getGender",
+          "lineNumber": 70
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.isResting",
+          "lineNumber": 71
+        },
+        {
+          "caller": "fetchLevelRankings",
+          "callee": "profile.getUpdatedAt",
+          "lineNumber": 73
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profileRepository\r\n                .findPublicWithStatsOrderByThreeLiftDesc(PageRequest.of(0, limit)).getContent",
+          "lineNumber": 79
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profileRepository.findPublicWithStatsOrderByThreeLiftDesc",
+          "lineNumber": 79
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "PageRequest.of",
+          "lineNumber": 80
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "new ArrayList<>",
+          "lineNumber": 82
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 88
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 88
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 89
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 89
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 90
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 90
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "result.add",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier())\r\n                    .evolutionStage(profile.getEvolutionStage())\r\n                    .title(profile.getTitle())\r\n                    .avatarSeed(profile.getAvatarSeed())\r\n                    .gender(profile.getGender())\r\n                    .isResting(profile.isResting())\r\n                    .threeLiftTotal(total)\r\n                    .updatedAt(profile.getUpdatedAt()).build",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier())\r\n                    .evolutionStage(profile.getEvolutionStage())\r\n                    .title(profile.getTitle())\r\n                    .avatarSeed(profile.getAvatarSeed())\r\n                    .gender(profile.getGender())\r\n                    .isResting(profile.isResting())\r\n                    .threeLiftTotal(total).updatedAt",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier())\r\n                    .evolutionStage(profile.getEvolutionStage())\r\n                    .title(profile.getTitle())\r\n                    .avatarSeed(profile.getAvatarSeed())\r\n                    .gender(profile.getGender())\r\n                    .isResting(profile.isResting()).threeLiftTotal",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier())\r\n                    .evolutionStage(profile.getEvolutionStage())\r\n                    .title(profile.getTitle())\r\n                    .avatarSeed(profile.getAvatarSeed())\r\n                    .gender(profile.getGender()).isResting",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier())\r\n                    .evolutionStage(profile.getEvolutionStage())\r\n                    .title(profile.getTitle())\r\n                    .avatarSeed(profile.getAvatarSeed()).gender",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier())\r\n                    .evolutionStage(profile.getEvolutionStage())\r\n                    .title(profile.getTitle()).avatarSeed",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier())\r\n                    .evolutionStage(profile.getEvolutionStage()).title",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel())\r\n                    .tier(profile.getTier()).evolutionStage",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname())\r\n                    .level(profile.getLevel()).tier",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder()\r\n                    .nickname(profile.getUser().getNickname()).level",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder().nickname",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "CharacterRankingResponse.builder",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getUser().getNickname",
+          "lineNumber": 94
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getUser",
+          "lineNumber": 94
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getLevel",
+          "lineNumber": 95
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getTier",
+          "lineNumber": 96
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getEvolutionStage",
+          "lineNumber": 97
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getTitle",
+          "lineNumber": 98
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getAvatarSeed",
+          "lineNumber": 99
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getGender",
+          "lineNumber": 100
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.isResting",
+          "lineNumber": 101
+        },
+        {
+          "caller": "fetchThreeLiftRankings",
+          "callee": "profile.getUpdatedAt",
+          "lineNumber": 103
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "userRepository.findByEmail(email)\r\n                .flatMap(profileRepository::findByUser)\r\n                .filter(CharacterProfile::isPublic)\r\n                .map(profile -> {\r\n                    long higher = profileRepository.countByIsPublicTrueAndLevelGreaterThan(profile.getLevel());\r\n                    long sameAfter = profileRepository.countByIsPublicTrueAndLevelEqualsAndUpdatedAtAfter(\r\n                            profile.getLevel(), profile.getUpdatedAt());\r\n                    return (int) (higher + sameAfter + 1);\r\n                }).orElse",
+          "lineNumber": 111
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "userRepository.findByEmail(email)\r\n                .flatMap(profileRepository::findByUser)\r\n                .filter(CharacterProfile::isPublic).map",
+          "lineNumber": 111
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "userRepository.findByEmail(email)\r\n                .flatMap(profileRepository::findByUser).filter",
+          "lineNumber": 111
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "userRepository.findByEmail(email).flatMap",
+          "lineNumber": 111
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 111
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "profileRepository.countByIsPublicTrueAndLevelGreaterThan",
+          "lineNumber": 115
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "profile.getLevel",
+          "lineNumber": 115
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "profileRepository.countByIsPublicTrueAndLevelEqualsAndUpdatedAtAfter",
+          "lineNumber": 116
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "profile.getLevel",
+          "lineNumber": 117
+        },
+        {
+          "caller": "calculateMyLevelRank",
+          "callee": "profile.getUpdatedAt",
+          "lineNumber": 117
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "userRepository.findByEmail(email)\r\n                .flatMap(user -> profileRepository.findByUser(user)\r\n                        .filter(CharacterProfile::isPublic)\r\n                        .flatMap(profile -> statsRepository.findByUser(user)\r\n                                .map(stats -> {\r\n                                    double bench = stats.getBenchKg() == null ? 0.0 : stats.getBenchKg();\r\n                                    double squat = stats.getSquatKg() == null ? 0.0 : stats.getSquatKg();\r\n                                    double deadlift = stats.getDeadliftKg() == null ? 0.0 : stats.getDeadliftKg();\r\n                                    double total = bench + squat + deadlift;\r\n                                    long higher = profileRepository.countPublicWithThreeLiftGreaterThan(total);\r\n                                    long sameAfter = profileRepository.countPublicWithThreeLiftEqualsAndUpdatedAtAfter(\r\n                                            total, profile.getUpdatedAt());\r\n                                    return (int) (higher + sameAfter + 1);\r\n                                }))).orElse",
+          "lineNumber": 125
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "userRepository.findByEmail(email).flatMap",
+          "lineNumber": 125
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 125
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "profileRepository.findByUser(user)\r\n                        .filter(CharacterProfile::isPublic).flatMap",
+          "lineNumber": 126
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "profileRepository.findByUser(user).filter",
+          "lineNumber": 126
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "profileRepository.findByUser",
+          "lineNumber": 126
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "statsRepository.findByUser(user).map",
+          "lineNumber": 128
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 128
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 130
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "stats.getBenchKg",
+          "lineNumber": 130
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 131
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "stats.getSquatKg",
+          "lineNumber": 131
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 132
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "stats.getDeadliftKg",
+          "lineNumber": 132
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "profileRepository.countPublicWithThreeLiftGreaterThan",
+          "lineNumber": 134
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "profileRepository.countPublicWithThreeLiftEqualsAndUpdatedAtAfter",
+          "lineNumber": 135
+        },
+        {
+          "caller": "calculateMyThreeLiftRank",
+          "callee": "profile.getUpdatedAt",
+          "lineNumber": 136
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 2,
+        "functionCount": 5,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/StatsService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "StatsService",
+          "startLine": 7,
+          "endLine": 11,
+          "methods": [
+            "getStats",
+            "upsertStats"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "StatsService",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "backend/src/main/java/com/ajou/muscleup/service/StatsServiceImpl.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 75,
+      "nonEmptyLines": 67,
+      "functions": [
+        {
+          "name": "getStats",
+          "startLine": 26,
+          "endLine": 44,
+          "params": [
+            "email"
+          ]
+        },
+        {
+          "name": "upsertStats",
+          "startLine": 46,
+          "endLine": 69,
+          "params": [
+            "email",
+            "request"
+          ]
+        },
+        {
+          "name": "getUserOrThrow",
+          "startLine": 71,
+          "endLine": 74,
+          "params": [
+            "email"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "StatsServiceImpl",
+          "startLine": 19,
+          "endLine": 75,
+          "methods": [
+            "getStats",
+            "upsertStats",
+            "getUserOrThrow"
+          ],
+          "properties": [
+            "userRepository",
+            "statsRepository",
+            "characterService"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "getStats",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "upsertStats",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "StatsServiceImpl",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getStats",
+          "callee": "getUserOrThrow",
+          "lineNumber": 29
+        },
+        {
+          "caller": "getStats",
+          "callee": "statsRepository.findByUser(user)\r\n                .map(UserBodyStatsResponse::from).orElse",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getStats",
+          "callee": "statsRepository.findByUser(user).map",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getStats",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 30
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null)\r\n                        .skeletalMuscleKg(null)\r\n                        .bodyFatPercent(null)\r\n                        .mbti(null)\r\n                        .benchKg(null)\r\n                        .squatKg(null)\r\n                        .deadliftKg(null)\r\n                        .updatedAt(null).build",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null)\r\n                        .skeletalMuscleKg(null)\r\n                        .bodyFatPercent(null)\r\n                        .mbti(null)\r\n                        .benchKg(null)\r\n                        .squatKg(null)\r\n                        .deadliftKg(null).updatedAt",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null)\r\n                        .skeletalMuscleKg(null)\r\n                        .bodyFatPercent(null)\r\n                        .mbti(null)\r\n                        .benchKg(null)\r\n                        .squatKg(null).deadliftKg",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null)\r\n                        .skeletalMuscleKg(null)\r\n                        .bodyFatPercent(null)\r\n                        .mbti(null)\r\n                        .benchKg(null).squatKg",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null)\r\n                        .skeletalMuscleKg(null)\r\n                        .bodyFatPercent(null)\r\n                        .mbti(null).benchKg",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null)\r\n                        .skeletalMuscleKg(null)\r\n                        .bodyFatPercent(null).mbti",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null)\r\n                        .skeletalMuscleKg(null).bodyFatPercent",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null)\r\n                        .weightKg(null).skeletalMuscleKg",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null)\r\n                        .gender(null).weightKg",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder()\r\n                        .heightCm(null).gender",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder().heightCm",
+          "lineNumber": 32
+        },
+        {
+          "caller": "getStats",
+          "callee": "UserBodyStatsResponse.builder",
+          "lineNumber": 32
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "getUserOrThrow",
+          "lineNumber": 49
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getWeightKg",
+          "lineNumber": 50
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getWeightKg",
+          "lineNumber": 50
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getWeightKg",
+          "lineNumber": 50
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 51
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "statsRepository.findByUser(user).orElseGet",
+          "lineNumber": 54
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "statsRepository.findByUser",
+          "lineNumber": 54
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "UserBodyStats.builder().user(user).build",
+          "lineNumber": 55
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "UserBodyStats.builder().user",
+          "lineNumber": 55
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "UserBodyStats.builder",
+          "lineNumber": 55
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setHeightCm",
+          "lineNumber": 57
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getHeightCm",
+          "lineNumber": 57
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setGender",
+          "lineNumber": 58
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getGender",
+          "lineNumber": 58
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getGender",
+          "lineNumber": 58
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setWeightKg",
+          "lineNumber": 59
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getWeightKg",
+          "lineNumber": 59
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setSkeletalMuscleKg",
+          "lineNumber": 60
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getSkeletalMuscleKg",
+          "lineNumber": 60
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setBodyFatPercent",
+          "lineNumber": 61
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getBodyFatPercent",
+          "lineNumber": 61
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setMbti",
+          "lineNumber": 62
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getMbti",
+          "lineNumber": 62
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getMbti().toUpperCase",
+          "lineNumber": 62
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getMbti",
+          "lineNumber": 62
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setBenchKg",
+          "lineNumber": 63
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getBenchKg",
+          "lineNumber": 63
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setSquatKg",
+          "lineNumber": 64
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getSquatKg",
+          "lineNumber": 64
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "stats.setDeadliftKg",
+          "lineNumber": 65
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "request.getDeadliftKg",
+          "lineNumber": 65
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "statsRepository.save",
+          "lineNumber": 67
+        },
+        {
+          "caller": "upsertStats",
+          "callee": "characterService.evaluateAndUpdate",
+          "lineNumber": 68
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "userRepository.findByEmail(email).orElseThrow",
+          "lineNumber": 72
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "userRepository.findByEmail",
+          "lineNumber": 72
+        },
+        {
+          "caller": "getUserOrThrow",
+          "callee": "new ResponseStatusException",
+          "lineNumber": 73
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,960 @@
+{
+  "nodes": [
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "type": "file",
+      "name": "WorkoutCrewMemberRepository.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "summary": "크루 멤버십 데이터를 다루는 repository로, 멤버 조회·가입순 목록·인원수 집계·가입 여부 확인·크루 삭제 시 일괄 삭제를 제공한다.",
+      "tags": ["repository", "data-access", "jpa", "crew", "membership"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java:WorkoutCrewMemberRepository",
+      "type": "class",
+      "name": "WorkoutCrewMemberRepository",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "lineRange": [10, 20],
+      "summary": "JpaRepository<WorkoutCrewMember, Long> 확장 인터페이스로 findByCrewAndUser, findAllByCrewOrderByCreatedAtAsc, countByCrew, existsByCrewAndUser, deleteAllByCrew를 선언한다.",
+      "tags": ["repository", "jpa", "interface", "crew"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "type": "file",
+      "name": "WorkoutCrewRepository.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "summary": "크루 엔티티의 기본 CRUD와 초대코드 기반 조회·중복 검사를 담당하는 repository. 초대코드 생성 시 충돌 방지에 existsByInviteCode가 쓰인다.",
+      "tags": ["repository", "data-access", "jpa", "crew", "invite-code"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java:WorkoutCrewRepository",
+      "type": "class",
+      "name": "WorkoutCrewRepository",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "lineRange": [7, 11],
+      "summary": "JpaRepository<WorkoutCrew, Long> 확장 인터페이스. findByInviteCode와 existsByInviteCode를 선언한다.",
+      "tags": ["repository", "jpa", "interface", "crew"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "type": "file",
+      "name": "CrewServiceImpl.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "summary": "운동 크루 도메인의 핵심 서비스 구현체로 크루 생성·조회·가입(자동/승인/초대코드)·탈퇴·강퇴·수정·삭제와 크루 챌린지 CRUD를 모두 담당한다. 나아가 출석 로그와 챌린지 달성률을 가중 합산해 크루 내 경쟁 보드와 '킹' 타이틀까지 계산한다.",
+      "tags": ["service", "business-logic", "crew", "ranking", "orchestration"],
+      "complexity": "complex",
+      "languageNotes": "662줄에 15개의 public API와 20개의 private 헬퍼가 한 클래스에 모여 있어, 경쟁 보드 계산 로직을 별도 컴포넌트로 분리할 여지가 크다."
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:CrewServiceImpl",
+      "type": "class",
+      "name": "CrewServiceImpl",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [31, 662],
+      "summary": "CrewService 인터페이스 구현체. 7개 repository를 주입받고 ATTENDANCE_WEIGHT·CHALLENGE_WEIGHT·RECENT_DAY_WEIGHT 등 점수 가중치 상수를 보유해 크루 경쟁 점수를 산출한다.",
+      "tags": ["service", "spring-bean", "business-logic", "crew"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:create",
+      "type": "function",
+      "name": "create",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [49, 70],
+      "summary": "새 크루를 만들고 생성자를 LEADER 역할 멤버로 자동 등록한 뒤 상세 응답을 돌려준다. 초대코드는 generateInviteCode로 자동 발급된다.",
+      "tags": ["service", "crew", "create", "business-logic"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:list",
+      "type": "function",
+      "name": "list",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [72, 90],
+      "summary": "전체 크루를 최신 생성순으로 정렬해 목록 DTO로 변환하며, 각 항목에 멤버 수와 요청자의 가입 여부를 함께 채운다.",
+      "tags": ["service", "crew", "listing", "dto-mapping"],
+      "complexity": "moderate",
+      "languageNotes": "크루마다 countByCrew/existsByCrewAndUser를 호출하므로 목록이 커지면 N+1 쿼리가 발생한다."
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:getDetail",
+      "type": "function",
+      "name": "getDetail",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [92, 98],
+      "summary": "요청자와 크루를 검증한 뒤 buildDetail에 위임해 지정한 월 기준 크루 상세 정보를 반환한다.",
+      "tags": ["service", "crew", "read-only", "detail"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:join",
+      "type": "function",
+      "name": "join",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [100, 105],
+      "summary": "크루 ID로 가입을 시도하며, 실제 가입/신청 분기는 크루의 joinPolicy를 해석하는 joinWithPolicy가 처리한다.",
+      "tags": ["service", "crew", "join", "business-logic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:joinByInviteCode",
+      "type": "function",
+      "name": "joinByInviteCode",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [107, 113],
+      "summary": "초대코드로 크루를 찾아 가입 절차를 진행하고, 존재하지 않는 코드면 ResponseStatusException을 던진다.",
+      "tags": ["service", "crew", "join", "invite-code"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:listJoinRequests",
+      "type": "function",
+      "name": "listJoinRequests",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [115, 133],
+      "summary": "리더 권한을 확인한 뒤 PENDING 상태의 가입 신청을 신청순으로 조회해 응답 DTO로 변환한다.",
+      "tags": ["service", "crew", "approval-workflow", "authorization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:approveJoinRequest",
+      "type": "function",
+      "name": "approveJoinRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [135, 149],
+      "summary": "리더가 가입 신청을 승인하면 신청자를 크루 멤버로 등록하고 신청 상태를 APPROVED로 바꾸며 승인자·승인 시각을 기록한다.",
+      "tags": ["service", "crew", "approval-workflow", "authorization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:rejectJoinRequest",
+      "type": "function",
+      "name": "rejectJoinRequest",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [151, 164],
+      "summary": "PENDING 상태의 가입 신청만 거절 처리하며 상태를 REJECTED로 바꾸고 결정자·결정 시각을 남긴다.",
+      "tags": ["service", "crew", "approval-workflow", "authorization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:leave",
+      "type": "function",
+      "name": "leave",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [166, 177],
+      "summary": "크루 탈퇴를 처리하되 LEADER는 탈퇴할 수 없도록 막아 크루가 방장 없이 남는 상황을 방지한다.",
+      "tags": ["service", "crew", "membership", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:update",
+      "type": "function",
+      "name": "update",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [179, 190],
+      "summary": "리더만 크루의 이름·설명·가입 정책을 수정할 수 있으며, 수정 후 갱신된 상세 정보를 반환한다.",
+      "tags": ["service", "crew", "update", "authorization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:delete",
+      "type": "function",
+      "name": "delete",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [192, 201],
+      "summary": "리더 권한 확인 후 챌린지·가입 신청·멤버를 순서대로 정리하고 마지막에 크루 자체를 삭제한다.",
+      "tags": ["service", "crew", "delete", "cascade-cleanup"],
+      "complexity": "moderate",
+      "languageNotes": "DB 캐스케이드 대신 애플리케이션에서 자식 레코드를 명시적으로 지우므로 삭제 순서가 외래키 제약을 만족해야 한다."
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:kickMember",
+      "type": "function",
+      "name": "kickMember",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [203, 216],
+      "summary": "리더가 특정 멤버를 크루에서 강제 퇴출하는 로직으로, 리더 자신이나 다른 리더는 강퇴 대상에서 제외된다.",
+      "tags": ["service", "crew", "moderation", "authorization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:createChallenge",
+      "type": "function",
+      "name": "createChallenge",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [218, 233],
+      "summary": "리더가 크루 챌린지를 생성한다. 기간·목표값을 validateChallengeRequest로 검증한 뒤 저장하고 응답 DTO를 만든다.",
+      "tags": ["service", "crew", "challenge", "create"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:updateChallenge",
+      "type": "function",
+      "name": "updateChallenge",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [235, 251],
+      "summary": "기존 크루 챌린지의 제목·기간·목표를 리더 권한으로 수정하고 갱신된 챌린지 응답을 반환한다.",
+      "tags": ["service", "crew", "challenge", "update"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:deleteChallenge",
+      "type": "function",
+      "name": "deleteChallenge",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [253, 263],
+      "summary": "해당 챌린지가 요청한 크루에 속하는지 확인한 뒤 리더 권한으로 삭제한다.",
+      "tags": ["service", "crew", "challenge", "delete"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildDetail",
+      "type": "function",
+      "name": "buildDetail",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [265, 328],
+      "summary": "크루 상세 응답을 조립하는 중심 헬퍼로 멤버 목록, 월간 출석 로그, 챌린지 목록, 경쟁 보드, 킹 타이틀을 한 번에 모아 DTO로 만든다.",
+      "tags": ["service", "crew", "aggregation", "dto-mapping"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildChallengeResponse",
+      "type": "function",
+      "name": "buildChallengeResponse",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [330, 368],
+      "summary": "챌린지 엔티티를 응답 DTO로 변환하면서 기간 내 크루원 운동 횟수를 집계해 달성률과 진행 상태를 계산한다.",
+      "tags": ["service", "crew", "challenge", "progress-calculation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildCompetitionBoard",
+      "type": "function",
+      "name": "buildCompetitionBoard",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [370, 460],
+      "summary": "크루 내부 랭킹 보드를 만드는 가장 복잡한 로직으로, 출석률·챌린지 달성·최근 활동을 가중 합산하고 개근 보너스를 더해 멤버별 점수와 배지를 산출한다.",
+      "tags": ["service", "crew", "ranking", "scoring", "business-logic"],
+      "complexity": "complex",
+      "languageNotes": "ATTENDANCE_WEIGHT·CHALLENGE_WEIGHT·RECENT_DAY_WEIGHT 상수를 조합하는 점수식이 크루 경쟁 기능의 핵심 규칙이다."
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildKingTitles",
+      "type": "function",
+      "name": "buildKingTitles",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [462, 506],
+      "summary": "월간 출석 데이터와 경쟁 보드를 훑어 '출석왕', '점수왕' 같은 타이틀 수상자를 뽑아내는 헬퍼다.",
+      "tags": ["service", "crew", "ranking", "gamification"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:countWorkout",
+      "type": "function",
+      "name": "countWorkout",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [508, 519],
+      "summary": "주어진 기간 동안 크루 멤버들의 운동(출석) 횟수를 합산해 챌린지 달성률 계산에 쓰인다.",
+      "tags": ["service", "crew", "aggregation", "attendance"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildCharacterProfileMap",
+      "type": "function",
+      "name": "buildCharacterProfileMap",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [544, 554],
+      "summary": "크루 멤버들의 캐릭터 프로필을 한 번에 조회해 userId 기준 Map으로 만들어 반복 조회를 줄인다.",
+      "tags": ["service", "crew", "character", "performance"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:joinCrewIfNotExists",
+      "type": "function",
+      "name": "joinCrewIfNotExists",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [556, 567],
+      "summary": "이미 멤버인지 확인한 뒤 아직 아니라면 MEMBER 역할로 크루에 등록하는 멱등성 있는 가입 헬퍼다.",
+      "tags": ["service", "crew", "membership", "idempotent"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:joinWithPolicy",
+      "type": "function",
+      "name": "joinWithPolicy",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [569, 612],
+      "summary": "크루의 joinPolicy에 따라 즉시 가입(AUTO_APPROVE)과 가입 신청 등록(승인제)을 분기하는 핵심 규칙 함수로, 중복 신청도 함께 차단한다.",
+      "tags": ["service", "crew", "join", "policy", "business-logic"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:generateInviteCode",
+      "type": "function",
+      "name": "generateInviteCode",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "lineRange": [651, 661],
+      "summary": "DB 중복 검사를 반복하며 유일한 크루 초대코드를 무작위로 생성한다.",
+      "tags": ["service", "crew", "invite-code", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "type": "file",
+      "name": "EmailVerificationService.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "summary": "회원가입 이메일 인증 흐름을 담당하는 서비스로 인증코드 발송, 코드 검증, 인증 완료 여부 조회를 제공한다. 60초 재발송 제한 등 남용 방지 규칙을 포함한다.",
+      "tags": ["service", "authentication", "email-verification", "security", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:EmailVerificationService",
+      "type": "class",
+      "name": "EmailVerificationService",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "lineRange": [15, 84],
+      "summary": "EmailVerificationRepository와 비동기 EmailSender를 주입받는 Spring @Service. SecureRandom으로 인증코드를 생성한다.",
+      "tags": ["service", "spring-bean", "authentication", "email-verification"],
+      "complexity": "moderate",
+      "languageNotes": "인증코드 생성에 java.util.Random 대신 SecureRandom을 사용해 예측 가능한 코드 발급을 막았다."
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:sendCode",
+      "type": "function",
+      "name": "sendCode",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "lineRange": [24, 56],
+      "summary": "이메일을 정규화한 뒤 최근 발송 이력을 확인해 60초 이내 재발송을 429로 차단하고, 새 인증코드를 저장한 후 메일을 발송한다.",
+      "tags": ["service", "email-verification", "rate-limiting", "security"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:verify",
+      "type": "function",
+      "name": "verify",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "lineRange": [58, 77],
+      "summary": "사용자가 입력한 코드를 최신 발송 건과 대조해 만료·불일치를 검증하고, 성공 시 인증 완료 상태로 표시한다.",
+      "tags": ["service", "email-verification", "validation", "authentication"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:isVerified",
+      "type": "function",
+      "name": "isVerified",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "lineRange": [79, 83],
+      "summary": "해당 이메일이 인증을 마쳤는지 반환하며, 회원가입 진입 시점의 게이트 역할을 한다.",
+      "tags": ["service", "email-verification", "guard", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "type": "file",
+      "name": "ProteinService.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "summary": "단백질 보충제 도메인의 서비스 계약을 정의하는 인터페이스로 생성·수정·삭제·조회·검색 목록·평균 평점 6개 메서드를 선언한다.",
+      "tags": ["service", "interface", "type-definition", "protein", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java:ProteinService",
+      "type": "class",
+      "name": "ProteinService",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "lineRange": [8, 15],
+      "summary": "controller와 구현체 사이의 추상 경계를 만드는 인터페이스. Page<Protein>을 반환해 페이징을 계약에 포함시킨다.",
+      "tags": ["interface", "service", "contract", "protein"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "type": "file",
+      "name": "ProteinServiceImpl.java",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "summary": "ProteinService 구현체로 보충제 등록·수정·삭제·단건 조회와 이름 검색 페이징을 처리하고, 리뷰 평균 평점 집계를 위임한다.",
+      "tags": ["service", "business-logic", "protein", "crud"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:ProteinServiceImpl",
+      "type": "class",
+      "name": "ProteinServiceImpl",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "lineRange": [13, 59],
+      "summary": "ProteinRepository와 ReviewRepository를 주입받는 @Service 구현체로 ProteinService 계약을 만족한다.",
+      "tags": ["service", "spring-bean", "protein", "crud"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:create",
+      "type": "function",
+      "name": "create",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "lineRange": [20, 28],
+      "summary": "요청 DTO와 등록자 정보를 받아 새 보충제 엔티티를 만들어 저장한다.",
+      "tags": ["service", "protein", "create", "dto-mapping"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:update",
+      "type": "function",
+      "name": "update",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "lineRange": [30, 41],
+      "summary": "기존 보충제를 조회해 요청 DTO의 필드로 갱신하고 저장한다.",
+      "tags": ["service", "protein", "update", "dto-mapping"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:get",
+      "type": "function",
+      "name": "get",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "lineRange": [45, 49],
+      "summary": "ID로 보충제를 단건 조회하고 없으면 예외를 던진다.",
+      "tags": ["service", "protein", "read-only", "lookup"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:list",
+      "type": "function",
+      "name": "list",
+      "filePath": "backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "lineRange": [51, 55],
+      "summary": "검색어가 있으면 이름 부분 일치 검색을, 없으면 전체 목록을 페이징해 반환한다.",
+      "tags": ["service", "protein", "search", "pagination"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java:WorkoutCrewMemberRepository",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java:WorkoutCrewMemberRepository",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java:WorkoutCrewRepository",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java:WorkoutCrewRepository",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:CrewServiceImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:CrewServiceImpl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:create",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:list",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:getDetail",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:join",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:joinByInviteCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:listJoinRequests",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:approveJoinRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:rejectJoinRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:leave",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:delete",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:kickMember",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:createChallenge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:updateChallenge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:deleteChallenge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildDetail",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildChallengeResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildCompetitionBoard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildKingTitles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:countWorkout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:buildCharacterProfileMap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:joinCrewIfNotExists",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:joinWithPolicy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:generateInviteCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:EmailVerificationService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:EmailVerificationService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:sendCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:verify",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java:isVerified",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java:ProteinService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java:ProteinService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:ProteinServiceImpl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:ProteinServiceImpl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:create",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:get",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "function:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:list",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/CharacterProfile.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewChallenge.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinPolicy.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/CrewJoinRequestStatus.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrew.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewJoinRequest.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMember.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/WorkoutCrewMemberRole.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/AttendanceLogRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/CharacterProfileRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/CrewChallengeRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/UserRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewJoinRequestRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewMemberRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/WorkoutCrewRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/EmailVerification.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/EmailVerificationRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/dto/protein/ProteinCreateUpdateRequest.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/Protein.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/entity/User.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/ProteinRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/repository/ReviewRepository.java",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/service/CrewServiceImpl.java:CrewServiceImpl",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/CrewService.java",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinServiceImpl.java:ProteinServiceImpl",
+      "target": "class:backend/src/main/java/com/ajou/muscleup/service/ProteinService.java:ProteinService",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:backend/src/main/java/com/ajou/muscleup/service/EmailVerificationService.java",
+      "target": "file:backend/src/main/java/com/ajou/muscleup/service/EmailSender.java",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

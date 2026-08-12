@@ -1,0 +1,105 @@
+{
+  "nodes": [
+    {
+      "id": "file:frontend/src/styles/attendance.css",
+      "type": "file",
+      "name": "attendance.css",
+      "filePath": "frontend/src/styles/attendance.css",
+      "summary": "출석 체크 화면의 다크 테마 레이아웃 전용 스타일시트로, 히어로 영역·달력 그리드·운동 강도 칩·메모 블록·보상 미리보기를 CSS 변수(--mu-*) 기반 디자인 토큰으로 통일한다. 데스크톱은 사이드 패널형 2단 그리드, 모바일은 접이식 섹션과 하단 고정 저장 바로 전환되는 반응형 구조를 담당한다.",
+      "tags": ["stylesheet", "attendance", "responsive-layout", "design-tokens", "dark-theme"],
+      "complexity": "complex",
+      "languageNotes": "Tailwind가 주 스타일링 시스템이지만 달력 셀·칩 상태(.disabled, .lock-badge) 같은 복합 상태 조합은 :root 커스텀 프로퍼티와 시맨틱 클래스로 분리했다. 데스크톱 우선 min-width 쿼리와 모바일 전용 max-width 블록이 함께 쓰인다."
+    },
+    {
+      "id": "file:frontend/src/styles/attendanceShare.css",
+      "type": "file",
+      "name": "attendanceShare.css",
+      "filePath": "frontend/src/styles/attendanceShare.css",
+      "summary": "출석 인증 이미지 공유 화면의 스타일시트로, 그라데이션 배경 위에 캐릭터·문구·데코 스티커를 얹는 공유 카드 캔버스와 편집 컨트롤 패널의 외형을 정의한다. sunset·mint·midnight 테마를 클래스 스위치로 갈아끼우고 wave/jump/run/squat 포즈 애니메이션과 다운로드 버튼 로딩 상태까지 함께 소유한다.",
+      "tags": ["stylesheet", "share-card", "theming", "animation", "responsive-layout"],
+      "complexity": "complex",
+      "languageNotes": "테마 전환을 `.attendance-share-page.theme-*` 클래스에서 --bg-a/--bg-b/--bg-c 변수만 재정의하는 방식으로 구현해, 실제 그라데이션 규칙은 한 곳에만 존재한다."
+    },
+    {
+      "id": "file:frontend/src/styles/characterEffects.css",
+      "type": "file",
+      "name": "characterEffects.css",
+      "filePath": "frontend/src/styles/characterEffects.css",
+      "summary": "캐릭터 아바타에 붙는 연출 효과 전용의 소형 애니메이션 라이브러리로, 호흡·바운스·글로우·오라 웨이브·반짝임 5종 keyframes와 이를 적용하는 유틸리티 클래스만 담는다. 전역 index.css에서 @import되어 아바타 컴포넌트가 클래스 토글만으로 효과를 켜고 끌 수 있게 한다.",
+      "tags": ["stylesheet", "animation", "avatar", "utility", "global-import"],
+      "complexity": "moderate",
+      "languageNotes": "sparkle-2~8은 animation-delay만 다른 변형으로, 동일 keyframes를 재사용해 반짝임의 위상차를 만든다."
+    },
+    {
+      "id": "file:frontend/src/styles/homeLobby.css",
+      "type": "file",
+      "name": "homeLobby.css",
+      "filePath": "frontend/src/styles/homeLobby.css",
+      "summary": "홈 로비 화면의 스타일시트로, 히어로 배너·캐릭터 스테이지·액션 허브·이벤트 슬라이더로 구성된 대시보드형 레이아웃과 네온 계열 시각 언어(--lobby-* 토큰)를 정의한다. 캐릭터 반응·버스트 링·그라데이션 드리프트 등 11종 keyframes로 로비의 살아있는 느낌을 담당한다.",
+      "tags": ["stylesheet", "home-lobby", "dashboard-layout", "animation", "responsive-layout"],
+      "complexity": "complex",
+      "languageNotes": "이벤트 슬라이더는 .event-track의 transform 이동과 .event-dots 인디케이터(dot-1~8)를 CSS만으로 처리하고, JS는 활성 인덱스 클래스만 바꾸는 구조다."
+    },
+    {
+      "id": "file:frontend/src/styles/lounge.css",
+      "type": "file",
+      "name": "lounge.css",
+      "filePath": "frontend/src/styles/lounge.css",
+      "summary": "실시간 라운지(가상 헬스장) 화면의 최대 규모 스타일시트로, 랙·벤치·트레드밀·거울 같은 헬스장 오브젝트를 순수 CSS 도형으로 그리고 아바타 걷기/스쿼트 모션, NPC 캐릭터, 코인·스티커 연출을 정의한다. 그 위에 몰입형 HUD(게이지·칩·채팅 로그·초대 카드)와 미니맵 핑, 텔레포트 전환, 도움말 오버레이 패널을 얹는다.",
+      "tags": ["stylesheet", "lounge", "css-art", "animation", "hud-overlay"],
+      "complexity": "complex",
+      "languageNotes": "NPC 역할별 색상을 `.npc-guide` / `.npc-coach` / `.npc-merchant`에서 --npc-accent·--npc-shirt 등 변수만 바꿔 표현하고, 파츠 도형 규칙은 공통으로 유지한다. gym 오브젝트는 이미지 없이 ::before/::after 의사요소로 구성된다."
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:frontend/src/styles/attendance.css",
+      "target": "file:frontend/src/pages/Attendance.tsx",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/src/styles/attendanceShare.css",
+      "target": "file:frontend/src/pages/AttendanceShareView.tsx",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/src/styles/homeLobby.css",
+      "target": "file:frontend/src/pages/Home.tsx",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/src/styles/characterEffects.css",
+      "target": "file:frontend/src/components/avatar/Effects.tsx",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/src/styles/characterEffects.css",
+      "target": "file:frontend/src/components/CharacterAvatar.tsx",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/src/styles/lounge.css",
+      "target": "file:frontend/src/pages/Lounge.tsx",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/src/styles/lounge.css",
+      "target": "file:frontend/src/pages/Home.tsx",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}
