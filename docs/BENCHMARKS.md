@@ -32,37 +32,85 @@ DB 쪽은 리포지토리의 실제 쿼리, 실시간 쪽은 앱이 이미 가�
 
 ### 순서
 
+표가 있는 DB 가 필요하다. 스키마는 마이그레이션이 아니라 **Hibernate 가 만든다**
+(`ddl-auto=update`) — 빈 DB 를 만들고 앱을 그 DB 로 한 번 띄우면 표가 생긴다.
+
 ```bash
 # 0) 로컬/임시 DB 를 쓴다. 운영 DB 에서 돌리지 말 것.
 export DATABASE_URL="postgresql://user:pw@localhost:5432/muscleup_bench"
 
-# 1) 합성 데이터 (표당 20만 행)
+# 1) 표 만들기 — 앱을 그 DB 로 한 번 띄운다 (뜨고 나면 끈다)
+cd backend && ./gradlew bootRun --args="\
+  --spring.profiles.active=prod \
+  --spring.datasource.url=jdbc:postgresql://localhost:5432/muscleup_bench \
+  --spring.datasource.username=... --spring.datasource.password=..."
+
+# 2) 인덱스를 떨어뜨린다 ⚠️ 1번에서 Hibernate 가 @Index 를 보고 이미 만들었다
+psql "$DATABASE_URL" -c "DROP INDEX IF EXISTS idx_brag_post_created; \
+  DROP INDEX IF EXISTS idx_character_public_rank; \
+  DROP INDEX IF EXISTS idx_attendance_shared_report; \
+  DROP INDEX IF EXISTS idx_program_app_created;"
+
+# 3) 합성 데이터 (표당 20만 행)
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/sql/bench/seed_200k.sql
 
-# 2) 인덱스 없는 상태로 먼저 잰다
+# 4) 인덱스 없는 상태로 먼저 잰다 (7회 돌려 중앙값을 쓴다)
 psql "$DATABASE_URL" -f backend/sql/bench/explain.sql > backend/sql/bench/results/before.txt
 
-# 3) 인덱스를 만든다
+# 5) 인덱스를 만든다
 psql "$DATABASE_URL" -f backend/sql/migration_20260828_query_indexes.sql
-psql "$DATABASE_URL" -c "ANALYZE brag_post; ANALYZE character_profiles; ANALYZE attendance_logs; ANALYZE program_applications;"
 
-# 4) 다시 잰다
-psql "$DATABASE_URL" -f backend/sql/bench/explain.sql > backend/sql/bench/results/after.txt
+# 6) VACUUM ANALYZE — 표마다 따로. 한 번에 여러 문장을 주면 트랜잭션에 묶여 실패한다
+for t in brag_post character_profiles attendance_logs program_applications; do
+  psql "$DATABASE_URL" -c "VACUUM ANALYZE $t;"
+done
 
-# 5) 정리
+# 7) 다시 잰다
+psql "$DATABASE_URL" -f backend/sql/bench/explain.sql > backend/sql/bench/results/after_vacuumed.txt
+
+# 8) 정리
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/sql/bench/cleanup.sql
 ```
 
-### 읽는 법 — 함정 두 개
+### 실측 결과 (2026-09-02 · PostgreSQL 17.4 · 표당 20만 행 · 각 7회 중앙값)
+
+| 쿼리 | 인덱스 없음 | 인덱스+VACUUM | 배수 |
+|---|---:|---:|---:|
+| 자랑방 목록 | 60.21ms | 0.084ms | 717× |
+| 공개 캐릭터 랭킹 | 58.56ms | 0.045ms | 1301× |
+| 공유 인증 관리 | 45.45ms | 0.068ms | 668× |
+| 프로그램 신청 | 56.87ms | 0.023ms | 2472× |
+| **count(\*)** | **57.21ms** | **57.45ms** | **1× (안 변함)** |
+
+네 목록 모두 `Parallel Seq Scan + Sort` → `Index Scan Backward` 로 바뀐다.
+인덱스 넷이 먹는 디스크는 합쳐 **21MB**(표 넷 합계 239MB).
+
+**한 페이지 = 목록 + count 이므로 117.4ms → 57.5ms, 즉 2.0배다.**
+목록만 보면 700~2500배지만 사용자가 기다리는 시간은 절반까지만 준다.
+이제 한 페이지의 99.9%가 count 다.
+
+### 읽는 법 — 함정 네 개
 
 **① `ANALYZE` 를 빼먹으면 인덱스를 만들어 놓고도 안 쓴다.**
-플래너가 옛 통계로 계획을 세우기 때문이다. 3번의 `ANALYZE` 는 선택이 아니다.
+플래너가 옛 통계로 계획을 세우기 때문이다. 6번의 `ANALYZE` 는 선택이 아니다.
 
-**② 쿼리가 빨라진 배수와 사용자가 기다리는 시간은 다르다.**
+**② `VACUUM` 을 빼먹으면 인덱스가 count 를 오히려 느리게 만든다.**
+실제로 겪었다 — 대량 적재 직후 `ANALYZE` 만 하고 재니 count 가 **57ms → 147ms 로
+2.6배 느려졌다.** 인덱스가 생기면서 플래너가 `Index Only Scan` 을 골랐는데,
+visibility map 이 서 있지 않아 결국 힙을 다시 읽었기 때문이다(`Heap Fetches` 가 크다).
+`VACUUM` 뒤에는 `Heap Fetches: 0` 이 되고 57ms 로 돌아온다. **인덱스를 넣었더니
+느려졌다는 결론은 대개 VACUUM 을 안 한 것이다** — 계획의 `Heap Fetches` 를 먼저 볼 것.
+
+**③ 앱을 띄워 표를 만들면 인덱스도 같이 생긴다.**
+엔티티에 `@Index` 가 붙어 있고 `ddl-auto=update` 라, 스키마를 만들려고 앱을 한 번
+띄우는 순간 인덱스 넷이 이미 만들어져 있다. 그 상태에서 잰 "before" 는 before 가
+아니다. 2번의 `DROP INDEX` 가 그래서 있다.
+
+**④ 쿼리가 빨라진 배수와 사용자가 기다리는 시간은 다르다.**
 Spring Data 의 `Page<T>` 는 목록과 함께 `count` 를 한 번 더 날린다. 인덱스는
 정렬을 없애 주지만 count 는 여전히 전체를 세야 한다. `explain.sql` 의 5번 절이
-그 count 를 따로 재는 이유다 — **쿼리가 몇백 배 빨라져도 페이지는 그만큼 안
-빨라진다.** 다음 병목은 정렬이 아니라 count 이고, 커서 페이지네이션이나 근사
+그 count 를 따로 재는 이유다 — **쿼리가 700배 빨라져도 페이지는 2배만
+빨라진다**(위 표). 다음 병목은 정렬이 아니라 count 이고, 커서 페이지네이션이나 근사
 카운트로 접근할 문제다.
 
 인덱스가 먹는 디스크는 6번 절의 `pg_relation_size` 로 함께 나온다. 읽기를 벌고
@@ -101,12 +149,34 @@ node bench/lounge-ramp.mjs --steps 25,50,100,150,200,300 --seconds 16 --repeats 
 
 결과는 표로 찍히고 `bench/results/lounge-ramp.csv` 에 남는다.
 
+### 실측 결과 (2026-09-02 · 한 대·루프백 · 16초 × 3회 중앙값)
+
+| 명 | p50 | p95 | 브로드캐스트/s | 서버 송신 | 1인 수신 | 1인당 B | CPU |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 25 | 2ms | 7ms | 6.4 | 2.7MB/s | 110KB/s | 795 | 3.0% |
+| 50 | 3ms | **9ms** | 7.7 | 12.2MB/s | 250KB/s | 795 | 4.7% |
+| 100 | 8ms | **85ms** | 11.4 | 63.3MB/s | 648KB/s | 795 | 12.2% |
+| 150 | 94ms | 443ms | 12.4 | 137.4MB/s | 938KB/s | 796 | 15.6% |
+| 200 | 499ms | 1115ms | 12.7 | 216.8MB/s | 1110KB/s | 796 | 13.5% |
+| 300 | 51435ms | 55818ms | 10.0 | 376.1MB/s | 1284KB/s | 797 | 18.9% |
+
+**한계는 100명 근처다.** 50명까지는 p95 9ms 로 여유가 크지만, 100명에서 이미
+p95 85ms 로 설계 주기 60ms 를 넘는다. 150에서 꺾이고 200부터는 초 단위,
+300에서는 51초로 사실상 죽는다.
+
+**원인이 숫자로 드러난다.** `1인당 B` 는 795 → 797 로 인원과 무관하게 **고정**인데
+`서버 송신` 만 2.7 → 376MB/s 로 **140배** 뛴다. 인원에 비례해야 할 것이 제곱으로
+크고 있다는 뜻 — 매 틱 전원에게 전원 목록을 보내기 때문이다.
+
+**그리고 CPU 는 무너질 때도 18.9% 밖에 안 된다.** 연산이 막힌 게 아니라 못 보내서
+노는 것이다. 그래서 서버를 늘려도 해결되지 않는다 — 고칠 곳은 페이로드다.
+
 ### 읽는 법
 
 | 열 | 뜻 |
 |---|---|
 | `p50` / `p95` | ping 왕복. 설계 주기가 60ms 이므로 p95 가 그 근처를 넘어가면 체감이 깨진다 |
-| `브로드캐스트/s` | 서버가 실제로 뿌린 횟수. 설계값은 1000/60 ≒ **16.7Hz** — 이 값이 떨어지면 서버가 주기를 못 지키고 있다는 뜻 |
+| `브로드캐스트/s` | 서버가 실제로 뿌린 횟수. **상한**이 1000/60 ≒ 16.7Hz 다 — 다만 서버는 매 틱 무조건 보내지 않고 **변한 게 있을 때만** 보낸다(`server.ts` 의 `pendingBroadcast` 게이트). 그래서 한산할수록 낮게 나오고(25명 6.4), 사람이 늘수록 상한에 가까워진다(200명 12.7). **낮다고 못 따라가는 게 아니다.** 못 따라가는 신호는 인원이 늘었는데 이 값이 **되레 떨어지는 것** — 300명에서 12.7 → 10.0 으로 꺾인 지점이 그것이다 |
 | `1인 수신` | 클라이언트 한 명이 초당 받는 바이트. **모바일에서 먼저 죽는 건 서버가 아니라 이쪽이다** |
 | `서버 송신` | 1인 수신 × 접속 수 = 팬아웃 총량 |
 | `1인당 B` | `lounge:players` 한 번의 크기 ÷ 그 안의 플레이어 수 |

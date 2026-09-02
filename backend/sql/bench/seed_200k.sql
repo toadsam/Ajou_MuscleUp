@@ -69,7 +69,7 @@ WHERE u.email LIKE 'bench+%@bench.local';
 -- is_public 을 약 70% 만 true 로 둔다. 전부 true 면 필터가 무의미해져서
 -- 「필터 컬럼을 인덱스 맨 앞에 둔다」는 판단을 검증할 수 없다.
 INSERT INTO character_profiles
-    (user_id, level, tier, evolution_stage, title, is_public, attendance_points, is_resting, created_at, updated_at)
+    (user_id, level, tier, evolution_stage, title, is_public, attendance_points, is_resting, reroll_count, created_at, updated_at)
 SELECT
     u.id,
     1 + (u.id % 99),
@@ -79,6 +79,7 @@ SELECT
     (u.id % 10) < 7,
     u.id % 500,
     false,
+    0,
     NOW() - ((u.id % 500000) || ' seconds')::interval,
     NOW() - ((u.id % 500000) || ' seconds')::interval
 FROM users u
@@ -91,14 +92,15 @@ ON CONFLICT (user_id) DO NOTHING;
 -- shared 는 약 40%. report_count 는 0 에 몰리게 두되 일부만 크게 — 실제 신고
 -- 분포와 비슷해야 「신고 많은 순」 정렬이 의미가 있다.
 INSERT INTO attendance_logs
-    (user_id, workout_date, did_workout, shared, cheer_count, report_count, hidden_by_admin, created_at, updated_at)
+    (user_id, workout_date, did_workout, shared, cheer_count, report_count, edit_count, hidden_by_admin, created_at, updated_at)
 SELECT
     u.id,
-    CURRENT_DATE - (u.id % 365),
+    CURRENT_DATE - ((u.id % 365)::int),
     true,
     (u.id % 10) < 4,
     u.id % 50,
     CASE WHEN (u.id % 97) = 0 THEN (u.id % 40) ELSE 0 END,
+    0,
     false,
     NOW() - ((u.id % 500000) || ' seconds')::interval,
     NOW() - ((u.id % 500000) || ' seconds')::interval

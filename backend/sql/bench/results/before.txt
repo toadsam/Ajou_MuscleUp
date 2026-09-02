@@ -1,0 +1,161 @@
+�۾�����ð� ����
+
+################ 1. 자랑방 목록 ################
+# BragPostRepository.findAllByOrderByCreatedAtDesc(Pageable)
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=14445.15..14446.32 rows=10 width=183) (actual time=57.782..62.154 rows=10 loops=1)
+   Buffers: shared hit=3557 read=7326
+   ->  Gather Merge  (cost=14445.15..33890.88 rows=166666 width=183) (actual time=57.780..62.151 rows=10 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=3557 read=7326
+         ->  Sort  (cost=13445.13..13653.46 rows=83333 width=183) (actual time=22.392..22.393 rows=4 loops=3)
+               Sort Key: created_at DESC
+               Sort Method: top-N heapsort  Memory: 27kB
+               Buffers: shared hit=3557 read=7326
+               Worker 0:  Sort Method: quicksort  Memory: 25kB
+               Worker 1:  Sort Method: top-N heapsort  Memory: 27kB
+               ->  Parallel Seq Scan on brag_post  (cost=0.00..11644.33 rows=83333 width=183) (actual time=10.486..19.017 rows=66667 loops=3)
+                     Buffers: shared hit=3485 read=7326
+ Planning:
+   Buffers: shared hit=96
+ Planning Time: 1.570 ms
+ Execution Time: 62.237 ms
+(18�� ��)
+
+�۾��ð�: 64.697 ms
+
+################ 2. 공개 캐릭터 랭킹 ################
+# CharacterProfileRepository.findByIsPublicTrueOrderByLevelDescUpdatedAtDesc(Pageable)
+                                                                     QUERY PLAN                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=8290.66..8291.83 rows=10 width=349) (actual time=56.819..61.144 rows=10 loops=1)
+   Buffers: shared hit=907 read=4374
+   ->  Gather Merge  (cost=8290.66..21921.55 rows=116828 width=349) (actual time=56.817..61.140 rows=10 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=907 read=4374
+         ->  Sort  (cost=7290.64..7436.67 rows=58414 width=349) (actual time=16.948..16.949 rows=7 loops=3)
+               Sort Key: level DESC, updated_at DESC
+               Sort Method: top-N heapsort  Memory: 27kB
+               Buffers: shared hit=907 read=4374
+               Worker 0:  Sort Method: top-N heapsort  Memory: 27kB
+               Worker 1:  Sort Method: quicksort  Memory: 25kB
+               ->  Parallel Seq Scan on character_profiles  (cost=0.00..6028.33 rows=58414 width=349) (actual time=4.649..13.928 rows=46667 loops=3)
+                     Filter: is_public
+                     Rows Removed by Filter: 20000
+                     Buffers: shared hit=821 read=4374
+ Planning:
+   Buffers: shared hit=86
+ Planning Time: 1.883 ms
+ Execution Time: 61.170 ms
+(20�� ��)
+
+�۾��ð�: 63.581 ms
+
+################ 3. 공유 인증 관리 ################
+# AttendanceLogRepository.findBySharedTrueOrderByReportCountDescUpdatedAtDesc(Pageable)
+                                                                    QUERY PLAN                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=5662.22..5663.37 rows=10 width=1883) (actual time=44.654..49.239 rows=10 loops=1)
+   Buffers: shared hit=2533
+   ->  Gather Merge  (cost=5662.22..11067.68 rows=47004 width=1883) (actual time=44.652..49.235 rows=10 loops=1)
+         Workers Planned: 1
+         Workers Launched: 1
+         Buffers: shared hit=2533
+         ->  Sort  (cost=4662.21..4779.72 rows=47004 width=1883) (actual time=12.722..12.724 rows=5 loops=2)
+               Sort Key: report_count DESC, updated_at DESC
+               Sort Method: top-N heapsort  Memory: 26kB
+               Buffers: shared hit=2533
+               Worker 0:  Sort Method: quicksort  Memory: 25kB
+               ->  Parallel Seq Scan on attendance_logs  (cost=0.00..3646.47 rows=47004 width=1883) (actual time=0.004..10.100 rows=40000 loops=2)
+                     Filter: shared
+                     Rows Removed by Filter: 60000
+                     Buffers: shared hit=2470
+ Planning:
+   Buffers: shared hit=119
+ Planning Time: 2.319 ms
+ Execution Time: 49.266 ms
+(19�� ��)
+
+�۾��ð�: 51.994 ms
+
+################ 4. 프로그램 신청 목록 ################
+# ProgramApplicationRepository.findAllByOrderByCreatedAtDesc(Pageable)
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=7080.15..7081.32 rows=10 width=106) (actual time=55.321..59.367 rows=10 loops=1)
+   Buffers: shared hit=3518
+   ->  Gather Merge  (cost=7080.15..26525.88 rows=166666 width=106) (actual time=55.320..59.365 rows=10 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=3518
+         ->  Sort  (cost=6080.13..6288.46 rows=83333 width=106) (actual time=8.178..8.179 rows=3 loops=3)
+               Sort Key: created_at DESC
+               Sort Method: top-N heapsort  Memory: 26kB
+               Buffers: shared hit=3518
+               Worker 0:  Sort Method: quicksort  Memory: 25kB
+               Worker 1:  Sort Method: quicksort  Memory: 25kB
+               ->  Parallel Seq Scan on program_applications  (cost=0.00..4279.33 rows=83333 width=106) (actual time=0.004..5.459 rows=66667 loops=3)
+                     Buffers: shared hit=3446
+ Planning:
+   Buffers: shared hit=43
+ Planning Time: 1.688 ms
+ Execution Time: 59.386 ms
+(18�� ��)
+
+�۾��ð�: 61.452 ms
+
+################ 5. 한 페이지 전체 = 목록 + count ################
+# 여기가 사용자가 실제로 기다리는 시간이다.
+# Page<T> 는 위의 목록 쿼리에 더해 아래 count 를 한 번 더 날린다.
+# 인덱스는 정렬을 없애 주지만 count 는 여전히 전체를 세야 한다 —
+# 그래서 쿼리가 몇백 배 빨라져도 페이지는 그만큼 안 빨라진다.
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=12852.88..12852.89 rows=1 width=8) (actual time=49.340..53.342 rows=1 loops=1)
+   Buffers: shared hit=3518 read=7293
+   ->  Gather  (cost=12852.67..12852.88 rows=2 width=8) (actual time=43.857..53.333 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=3518 read=7293
+         ->  Partial Aggregate  (cost=11852.67..11852.68 rows=1 width=8) (actual time=15.535..15.536 rows=1 loops=3)
+               Buffers: shared hit=3518 read=7293
+               ->  Parallel Seq Scan on brag_post  (cost=0.00..11644.33 rows=83333 width=0) (actual time=7.617..13.483 rows=66667 loops=3)
+                     Buffers: shared hit=3518 read=7293
+ Planning:
+   Buffers: shared hit=9
+ Planning Time: 0.094 ms
+ Execution Time: 53.370 ms
+(14�� ��)
+
+�۾��ð�: 53.819 ms
+
+################ 6. 인덱스가 먹는 디스크 ################
+# 인덱스는 공짜가 아니다. 읽기를 벌고 쓰기와 용량을 낸다.
+ index_name | table_name | index_size 
+------------+------------+------------
+(0�� ��)
+
+�۾��ð�: 5.101 ms
+
+# 네 인덱스 합계
+ total_index_size 
+------------------
+ 
+(1�� ��)
+
+�۾��ð�: 0.267 ms
+
+################ 7. 표 크기(비교용) ################
+      table_name      | total_size 
+----------------------+------------
+ brag_post            | 97 MB
+ character_profiles   | 58 MB
+ program_applications | 31 MB
+ attendance_logs      | 31 MB
+(4�� ��)
+
+�۾��ð�: 14.178 ms
+�۾�����ð� ����
