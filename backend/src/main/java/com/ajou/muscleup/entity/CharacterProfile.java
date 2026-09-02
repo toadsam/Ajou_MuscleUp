@@ -10,9 +10,17 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
+// CharacterProfileRepository.findByIsPublicTrueOrderByLevelDescUpdatedAtDesc(Pageable)
+// — 공개 캐릭터 랭킹. 「is_public 으로 거르고 level 로 정렬」이라 필터 컬럼을
+// 앞에 둔 복합 인덱스여야 한다. level 과 updated_at 은 둘 다 DESC 라 오름차순
+// 인덱스를 거꾸로 훑어 그대로 쓸 수 있다.
 @Table(
         name = "character_profiles",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id"}),
+        indexes = @Index(
+                name = "idx_character_public_rank",
+                columnList = "is_public, level, updated_at"
+        )
 )
 public class CharacterProfile extends BaseTimeEntity {
     @Id

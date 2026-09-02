@@ -9,7 +9,12 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "program_applications")
+// ProgramApplicationRepository.findAllByOrderByCreatedAtDesc — 신청 목록을
+// 최신순으로 본다(관리자 화면 · 페이지네이션 있음).
+@Table(
+        name = "program_applications",
+        indexes = @Index(name = "idx_program_app_created", columnList = "created_at")
+)
 public class ProgramApplication extends BaseTimeEntity {
 
     @Id

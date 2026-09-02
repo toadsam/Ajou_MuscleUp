@@ -11,9 +11,18 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
+// (user_id, workout_date) UNIQUE 는 하루 두 번 출석을 막으려고 건 것인데,
+// findByUserIdAndDateRange…(기간 조회)가 이 인덱스를 그대로 범위 스캔에 쓴다.
+//
+// 반면 findBySharedTrueOrderByReportCountDescUpdatedAtDesc(Pageable) — 공유된
+// 인증글을 신고 많은 순으로 보는 관리자 화면 — 은 받쳐 줄 인덱스가 없었다.
 @Table(
         name = "attendance_logs",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "workout_date"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "workout_date"}),
+        indexes = @Index(
+                name = "idx_attendance_shared_report",
+                columnList = "shared, report_count, updated_at"
+        )
 )
 public class AttendanceLog extends BaseTimeEntity {
     @Id
