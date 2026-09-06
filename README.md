@@ -1,425 +1,182 @@
 # 득근득근 MuscleUp
 
-> 운동 기록을 게임처럼 지속하게 만드는 피트니스 커뮤니티 플랫폼
+운동 기록이 캐릭터 성장·랭킹·실시간 라운지로 되돌아오는 피트니스 커뮤니티. 혼자 기획하고 만들고 배포해서 실제 회원 약 50명이 쓰고 있다.
 
-득근득근 MuscleUp은 출석 체크, 캐릭터 성장, 랭킹, 운동 모임, 실시간 라운지, AI 인바디 분석을 하나의 루프로 연결한 풀스택 웹 애플리케이션입니다. 사용자는 매일의 운동 기록을 남기고, 그 기록이 캐릭터 성장과 커뮤니티 활동으로 이어지는 경험을 통해 운동 습관을 지속할 수 있습니다.
+![홈 로비 — 오늘 출석 시작 버튼과 라운지 누적 입장 · 오늘 출석 · 3대 합계](docs/screenshots/home-lobby.webp)
 
-## 목차
+| | |
+|---|---|
+| 기간 | 2025.09 ~ (첫 커밋 2025-09-03, 189 커밋) |
+| 인원 | 1명 — 기획 · UI · API · 인증 · 배포 · 운영 전부 |
+| 배포 | https://ajou-muscle-up.vercel.app (프론트 Vercel · 백엔드 Railway · PostgreSQL) |
+| 영상 | https://youtu.be/0X-BIADC1eQ |
 
-- [프로젝트 개요](#프로젝트-개요)
-- [주요 기능](#주요-기능)
-- [기술 스택](#기술-스택)
-- [아키텍처](#아키텍처)
-- [핵심 설계 포인트](#핵심-설계-포인트)
-- [주요 화면 흐름](#주요-화면-흐름)
-- [API 구성](#api-구성)
-- [프로젝트 구조](#프로젝트-구조)
-- [실행 방법](#실행-방법)
-- [환경변수](#환경변수)
-- [빌드 및 검증](#빌드-및-검증)
-- [배포 구조](#배포-구조)
-- [포트폴리오 관점의 구현 하이라이트](#포트폴리오-관점의-구현-하이라이트)
-- [보안 고려사항](#보안-고려사항)
+## 5분만 있다면
 
-## 프로젝트 개요
+1. [`RefreshTokenService.rotate()`](backend/src/main/java/com/ajou/muscleup/service/RefreshTokenService.java#L39-L51) — 교과서대로 넣은 Refresh 로테이션을 하루 만에 걷어낸 자리. 아래 「넣었다가 뺀 것」에 이유가 있다.
+2. [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) — 이 저장소가 주장하는 성능 수치 두 개를 직접 다시 잴 수 있게 만든 스크립트와 실측표. 쿼리가 700배 빨라졌는데 사용자는 2배만 빨라진 이유가 거기 있다.
+3. [`realtime/src/server.ts`](realtime/src/server.ts) — REST 와 분리한 Socket.IO 라운지 서버. 60ms 틱, 변한 게 있을 때만 브로드캐스트. 100명에서 꺾이고 그 원인이 CPU 가 아니라는 것까지 재 두었다.
 
-운동 앱은 기록을 남기는 순간에는 유용하지만, 꾸준히 돌아오게 만드는 장치는 약한 경우가 많습니다. 이 프로젝트는 운동 기록을 단순한 데이터 입력이 아니라 "오늘의 퀘스트"로 만들고, 출석과 활동이 캐릭터, 랭킹, 크루, 라운지에 즉시 반영되도록 설계했습니다.
+## 무엇이 돌아가나
 
-핵심 목표는 세 가지입니다.
+| | |
+|---|---|
+| ![지금 해야 할 일 · 캐릭터 미리보기 · 라운지 미리보기](docs/screenshots/home-todo.webp) | ![실시간 라운지 — 접속자 · 핑 · 미니맵](docs/screenshots/lounge.webp) |
+| 첫 화면은 소개가 아니라 **오늘의 할 일 목록**이다. 출석이 메인 액션이고 나머지 퀘스트가 그 아래 선다. | 라운지. 캐릭터가 같은 공간을 돌아다니고 채팅·이모트·스티커·파티 요청이 Socket.IO 로 오간다. 좌상단이 접속자 수와 핑. |
+| ![캐릭터 — MASTER · Stage 8 · Level 85](docs/screenshots/character.webp) | ![관리자 대시보드 — 행동 추적 · 검수 · 출석 기록 · 운영 자동화](docs/screenshots/admin.webp) |
+| 운동 기록이 캐릭터가 된다. 티어·단계·점수는 `character_profiles` 컬럼 그대로다. 공개하면 랭킹에 오른다. | 관리자는 조회 화면이 아니라 운영 콘솔이다. 감사 로그, 신고 콘텐츠 검수, 프로그램 신청 상태, 이벤트 CMS, 예약 작업. |
 
-- 운동 기록을 습관화할 수 있는 게임형 피드백 루프 제공
-- 사용자 간 응원, 경쟁, 모임 참여를 통한 커뮤니티 유지
-- AI 기반 분석과 리포트로 개인화된 운동 의사결정 지원
+이 밖에 이메일 인증 + Google 로그인, 월간 출석 로그와 연속 출석, 크루(초대코드·가입 승인·챌린지), 운동 자랑 게시판, 단백질 나눔, AI 인바디 분석(이미지·PDF)과 운동 계획, 공유 링크, 로컬/S3 이중 업로드가 있다.
 
-## 주요 기능
+![AI 인바디 분석 — 현재 vs 목표, 탄단지 비율, 하루 권장 섭취량](docs/screenshots/inbody.webp)
 
-| 영역 | 기능 |
-| --- | --- |
-| 인증 | 이메일 인증, 일반 로그인, Google OAuth 로그인, JWT access/refresh token, 쿠키 기반 세션 유지 |
-| 출석 | 오늘의 운동/휴식 기록, 월간 출석 로그, 연속 출석, 출석 공유 페이지, 응원 및 신고 |
-| 캐릭터 | 운동 기록 기반 캐릭터 성장, 티어, 레벨, 진화 단계, MBTI/성장 파라미터 기반 아바타 렌더링 |
-| 랭킹 | 캐릭터 랭킹, 주간 연속 출석 랭킹, 월간 미디어 공유 랭킹 |
-| AI 피트니스 | 운동 분석, 운동 계획 추천, AI 채팅, 인바디 이미지/PDF 기반 상담, 공유 링크 생성 |
-| 커뮤니티 | 운동 자랑 게시판, 댓글, 좋아요, 리뷰, 단백질 나눔, 단백질 신청 및 채팅 |
-| 크루 | 운동 모임 생성, 초대코드 참가, 가입 승인, 크루 챌린지, 크루 로비, 하이라이트 |
-| 실시간 라운지 | Socket.IO 기반 실시간 접속자 동기화, 캐릭터 이동, 채팅, 이모트, 스티커, 파티 요청 |
-| 이벤트 | 공개 이벤트 목록, 상세 페이지, 조회/클릭 기록, 관리자 이벤트 생성 및 배너 관리 |
-| 관리자 | 사용자 활동 로그, 신고/콘텐츠 관리, 프로그램 신청 관리, 문의 관리, 이벤트 CMS |
-| 파일 | 로컬 업로드와 S3 업로드를 모두 고려한 파일 업로드, 프록시, 목록 조회, 삭제 |
+## 1.0 에서 2.0 으로 — 들은 말과 고친 것
 
-## 기술 스택
+1.0 은 **보여 주는 홈페이지**였다. 기능을 소개하고 분위기를 전달하는 랜딩이었고, 그때는 그게 맞다고 생각했다. 써 본 사람들이 남긴 말이 넷 있었고, 그 말이 2.0 을 만들었다.
 
-### Frontend
+| 사용자가 한 말 (1.0 발표자료 p.24) | 2.0 에서 한 것 |
+|---|---|
+| "처음 사용할 때 어디서 뭘 해야 할지 몰랐어요" | 홈을 로비로 바꿨다. 「오늘 출석 시작」이 첫 화면의 메인 액션이 됐다. |
+| "다른 사람들과 더 많이 소통하고 싶어요" | 게시판으로는 「같이 있다」가 안 됐다. 실시간 라운지와 크루를 만들었다. |
+| "내 운동 데이터를 더 자세히 보고 싶어요" | 숫자를 더 보여 주는 대신 기록이 자라는 걸 보이게 했다 — 캐릭터 레벨·티어·진화, 공개 랭킹. |
+| "AI 답변이 나올 때까지 기다리는 게 길어요" | **아직 못 했다.** 2.0 에서 AI 는 인바디 OCR 로 오히려 무거워졌다. 스트리밍 응답과 캐싱이 다음 차례다. |
 
-| 기술 | 사용 목적 |
-| --- | --- |
-| React 19 | 사용자 화면 구성 |
-| TypeScript | 정적 타입 기반 UI 개발 |
-| Vite | 개발 서버 및 프로덕션 빌드 |
-| React Router | 페이지 라우팅과 보호 라우트 |
-| TanStack React Query | 서버 상태 관리 기반 |
-| Axios / Fetch | REST API 통신 |
-| Tailwind CSS | UI 스타일링 |
-| Recharts | 통계 시각화 |
-| Socket.IO Client | 실시간 라운지 및 친구 채팅 |
-| Vite PWA | PWA manifest, service worker, 이미지 캐싱 |
+넷 중 셋. 안 한 하나를 그대로 적어 두는 편이 나머지 셋을 믿게 만든다고 생각한다.
 
-### Backend
-
-| 기술 | 사용 목적 |
-| --- | --- |
-| Java 17 | 백엔드 런타임 |
-| Spring Boot 3.5 | REST API 서버 |
-| Spring Security | 인증/인가, 필터 체인, 권한 제어 |
-| Spring Data JPA | 도메인 모델 영속화 |
-| MySQL / PostgreSQL | 로컬 및 배포 DB 대응 |
-| JWT | access token, refresh token 발급 및 검증 |
-| JavaMailSender | 이메일 인증 코드 발송 |
-| Google API Client | Google ID Token 검증 |
-| AWS SDK S3 | 이미지/영상 업로드 스토리지 연동 |
-| PDFBox | AI 리포트 PDF 처리 |
-| Gradle | 빌드 및 의존성 관리 |
-
-### Realtime Server
-
-| 기술 | 사용 목적 |
-| --- | --- |
-| Node.js | 실시간 서버 런타임 |
-| TypeScript | Socket 이벤트 타입 관리 |
-| Socket.IO | 라운지 플레이어 동기화, 채팅, 소셜 이벤트 |
-| tsx | 개발 중 TypeScript watch 실행 |
-
-## 아키텍처
+## 구조
 
 ```mermaid
 flowchart LR
-  User[User Browser] --> Frontend[React + Vite PWA]
-  Frontend --> Backend[Spring Boot REST API]
-  Frontend --> Realtime[Socket.IO Realtime Server]
-
-  Backend --> DB[(MySQL / PostgreSQL)]
-  Backend --> Storage[(Local Uploads / S3)]
-  Backend --> Mail[SMTP Mail]
-  Backend --> Google[Google OAuth]
-  Backend --> OpenAI[OpenAI API]
-
-  Realtime --> Lounge[Lounge Room State]
+  User[브라우저] --> FE[React 19 + Vite PWA]
+  FE -->|REST · 쿠키/Bearer| BE[Spring Boot 3.5]
+  FE -->|Socket.IO| RT[Node Realtime]
+  BE --> DB[(PostgreSQL / 로컬 MySQL)]
+  BE --> S3[(로컬 업로드 / S3)]
+  BE --> Mail[SMTP]
+  BE --> Google[Google OAuth]
+  BE --> OpenAI[OpenAI]
+  RT --> Room[라운지 room state]
 ```
 
-서비스는 세 개의 실행 단위로 나뉩니다.
+**REST 와 실시간을 다른 프로세스로 둔 이유.** 라운지는 플레이어 위치·채팅·이모트처럼 초당 여러 번 바뀌는 상태고, 나머지는 하루에 몇 번 바뀌는 상태다. 한 서버에 두면 위치 브로드캐스트가 인증·출석·게시판 요청과 같은 스레드 풀을 놓고 다툰다. 그래서 라운지 서버는 DB 를 모른다 — `lounge:join` 때 받은 프로필을 메모리 room 에 들고 있다가 `/status` 로 접속자 수만 돌려준다.
 
-| 실행 단위 | 역할 | 기본 포트 |
-| --- | --- | --- |
-| `frontend` | 사용자 웹앱, PWA, 라우팅, API 클라이언트 | `5173` |
-| `backend` | 인증, 도메인 API, 파일, 관리자, AI 연동 | `8080` |
-| `realtime` | 라운지 접속자 상태, 이동, 채팅, 소셜 이벤트 | `4001` |
+| 백엔드 | 프론트 | 실시간 |
+|---|---|---|
+| Java 17 · Spring Boot 3.5 · Spring Security · JPA · JWT · PDFBox · AWS SDK S3 | React 19 · TypeScript · Vite · TanStack Query · Tailwind · Recharts · Socket.IO client · Vite PWA | Node · TypeScript · Socket.IO 4 |
+| 컨트롤러 28 · 엔티티 32 · 마이그레이션 SQL 13 | 페이지 36 | 소켓 이벤트 16 |
 
-## 핵심 설계 포인트
+## 넣었다가 뺀 것 — Refresh 로테이션
 
-### 1. 운동 기록을 게임 루프로 연결
+Access 는 짧게, Refresh 는 HttpOnly 쿠키로 길게. 여기까지는 교과서대로다. 1.0 에서 한 발 더 나가 **Refresh 를 쓸 때마다 새 토큰으로 갈아끼우는 로테이션**을 넣었다. 훔친 Refresh 토큰이 두 번째부터 401 이 되니 보안 문서에 쓰기 좋은 기법이다.
 
-출석 체크는 단순 기록으로 끝나지 않고 캐릭터 성장, 랭킹, 라운지 프로필, 크루 활동으로 이어집니다. 사용자가 하루 한 번 행동하면 여러 화면에서 즉시 피드백을 받을 수 있도록 설계했습니다.
+운영에서는 장애가 됐다. 홈 로비는 뜨자마자 출석 로그·출석 요약·캐릭터·통계를 `Promise.all` 로 **동시에** 부른다([`Home.tsx#L202`](frontend/src/pages/Home.tsx#L202)). Access 가 만료된 순간이면 넷이 동시에 401 을 받고 동시에 `/refresh` 를 친다. 첫 요청이 토큰을 갈아끼우면 나머지 셋은 방금 폐기된 토큰을 들고 와서 401 — 사용자 눈에는 **아무 이유 없이 로그아웃**이다.
 
-### 2. REST API와 실시간 서버 분리
+2026-04-01 에 넣었고([`72b38fa`](https://github.com/toadsam/Ajou_MuscleUp/commit/72b38fa)) 같은 날 걷어냈다([`bacef85`](https://github.com/toadsam/Ajou_MuscleUp/commit/bacef85)). 서버는 Refresh 를 그대로 유지하고, 대신 **클라이언트가 재발급을 한 번만 치게** 했다 — fetch 래퍼는 `refreshPromise` 하나를 공유하고([`installFetchAuth.ts#L101`](frontend/src/lib/installFetchAuth.ts#L101)), axios 쪽은 `refreshing` 플래그와 대기열로 같은 일을 한다([`api.ts#L47`](frontend/src/lib/api.ts#L47)). 재사용 탐지는 잃었지만 Refresh 는 여전히 서버 저장소에서 폐기·만료된다.
 
-백엔드는 인증, 도메인 데이터, 관리자 기능을 담당하고, 실시간 라운지는 별도 Socket.IO 서버가 담당합니다. 라운지 서버는 플레이어 위치, 채팅, 이모트, 파티 요청처럼 빈번하게 변하는 상태를 REST API와 분리해 처리합니다.
+배운 것은 기법이 아니라 순서다. **동시성을 먼저 보고 보안 기법을 고른다.** 반대로 하면 사용자가 대가를 치른다.
 
-### 3. 쿠키와 로컬 토큰을 모두 고려한 인증 흐름
+## 잰 것 두 가지
 
-프론트엔드는 요청 인터셉터에서 access token을 자동 첨부하고, 401 응답 발생 시 refresh API를 통해 토큰을 갱신합니다. 백엔드는 쿠키와 Bearer token을 모두 처리할 수 있도록 구성되어 브라우저 환경과 배포 환경의 차이를 흡수합니다.
+재현 절차·함정·원본 수치는 전부 [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) 에 있다. 여기는 결론만.
 
-### 4. AI 기능의 서비스화
+**목록 4개에 인덱스 — 쿼리는 700배, 사용자는 2배.** 자랑방·공개 랭킹·공유 인증 관리·프로그램 신청 목록은 전부 `Pageable` 인데 정렬 컬럼에 인덱스가 없었다. 회원이 50명이라 아무 화면도 느리지 않았고, 티가 나기 전에 확인하려고 표당 20만 행을 넣고 쟀다.
 
-AI 분석, 운동 계획, 채팅, 인바디 상담, PDF 리포트를 API 단위로 분리했습니다. 사용자는 분석 결과를 개인 기록으로 보관하거나 공유 링크로 외부에 전달할 수 있습니다.
+| 쿼리 | 인덱스 없음 | 인덱스 + VACUUM |
+|---|---:|---:|
+| 자랑방 목록 | 60.21ms | 0.084ms |
+| 공개 캐릭터 랭킹 | 58.56ms | 0.045ms |
+| 프로그램 신청 | 56.87ms | 0.023ms |
+| `count(*)` | 57.21ms | 57.45ms |
 
-### 5. 운영 관리 기능 포함
+(PostgreSQL 17.4 · 표당 20만 행 · 7회 중앙값 · 2026-09-02)
 
-관리자 화면은 단순 조회를 넘어 콘텐츠 삭제, 이벤트 관리, 신청 상태 변경, 문의 상태 변경, 감사 로그 확인까지 포함합니다. 포트폴리오용 데모가 아니라 실제 운영을 염두에 둔 관리 기능을 구현했습니다.
+목록은 700~2500배 빨라졌는데 `Page<T>` 가 같이 날리는 `count` 는 그대로다. **한 페이지는 117ms 에서 57ms, 2배.** 이제 페이지 시간의 99.9% 가 count 고, 다음 병목은 정렬이 아니라 카운트다. 인덱스 넷이 먹는 디스크 21MB(표 239MB) 도 같이 적었다 — 이득만 적고 대가를 안 적으면 절반만 잰 것이다. 그리고 한 번은 인덱스를 넣었더니 count 가 2.6배 **느려졌다**. `VACUUM` 을 빼먹어 visibility map 이 없었고 `Index Only Scan` 이 힙을 다시 읽은 것이다. 그 함정도 문서에 있다.
 
-## 주요 화면 흐름
+**라운지 동시접속 — 100명에서 꺾이고, 원인은 CPU 가 아니다.** 앱이 이미 가진 `ping:check` 왕복으로 25명부터 300명까지 올리며 쟀다.
 
-| 경로 | 설명 |
-| --- | --- |
-| `/` | 출석, 캐릭터, 라운지, 이벤트가 연결된 메인 로비 |
-| `/login`, `/register` | 로그인, 회원가입, 이메일 인증, Google 로그인 |
-| `/attendance` | 오늘의 운동/휴식 기록과 월간 출석 관리 |
-| `/rankings` | 캐릭터 및 활동 기반 랭킹 |
-| `/mypage` | 내 캐릭터, 운동 통계, 성장 기록 |
-| `/ai`, `/ai/inbody` | AI 운동 상담과 인바디 분석 |
-| `/brag` | 운동 자랑 게시판 |
-| `/protein` | 단백질 나눔 게시판과 신청 흐름 |
-| `/crew` | 운동 모임 생성, 탐색, 참가 |
-| `/crew/:crewId/challenges` | 크루 챌린지 관리 |
-| `/lounge` | 실시간 캐릭터 라운지 |
-| `/events` | 공개 이벤트 목록과 상세 |
-| `/admin` | 관리자 대시보드 |
-| `/admin/events` | 이벤트 CMS |
+| 접속 | p95 | 서버 송신 | 1인당 바이트 | CPU |
+|---:|---:|---:|---:|---:|
+| 50 | 9ms | 12.2MB/s | 795 | 4.7% |
+| 100 | 85ms | 63.3MB/s | 795 | 12.2% |
+| 200 | 1115ms | 216.8MB/s | 796 | 13.5% |
+| 300 | 55818ms | 376.1MB/s | 797 | 18.9% |
 
-## API 구성
+(한 대 · 루프백 · 16초 × 3회 중앙값 · 2026-09-02)
 
-| Prefix | 역할 |
-| --- | --- |
-| `/api/auth` | 로그인, 로그아웃, 토큰 갱신, 이메일 인증, Google 로그인, 내 정보 |
-| `/api/users` | 회원가입 |
-| `/api/attendance` | 출석 기록, 공유, 응원, 신고, 출석 랭킹 |
-| `/api/character` | 캐릭터 조회, 평가, 공개 설정, 휴식 상태, 재생성 |
-| `/api/rankings` | 캐릭터 랭킹 |
-| `/api/ai` | AI 분석, 계획, 채팅, 인바디 상담, PDF, 공유 |
-| `/api/brags` | 자랑 게시글, 댓글, 좋아요 |
-| `/api/reviews` | 리뷰 CRUD |
-| `/api/proteins` | 단백질 나눔, 신청, 신청자 채팅 |
-| `/api/crew` | 크루 생성, 참가, 승인, 챌린지 |
-| `/api/events` | 공개 이벤트, 참여 이벤트, 이벤트 지표 |
-| `/api/files` | 파일 업로드, 삭제, 프록시, 목록 조회 |
-| `/api/mypage` | 마이페이지 요약 |
-| `/api/mypage/stats` | 사용자 신체/운동 통계 |
-| `/api/lounge` | 실시간 라운지 입장용 프로필 |
-| `/api/support` | 문의 등록, 지원 챗봇 |
-| `/api/admin` | 관리자 통계, 감사 로그, 콘텐츠 관리, 신청/문의 관리 |
+설계 주기가 60ms 라 p95 가 그 근처를 넘으면 체감이 깨진다. 50명까지는 여유, 100명에서 이미 넘고, 300에서는 사실상 죽는다. 그런데 **1인당 바이트는 795 로 고정인데 서버 송신만 140배** 뛴다 — 매 틱 전원에게 전원 목록을 보내니 바이트가 N² 로 큰다. 무너질 때 CPU 가 18.9% 밖에 안 되는 것이 그 증거다. 연산이 막힌 게 아니라 못 보내서 노는 것이고, 그래서 서버를 늘려도 해결되지 않는다. 고칠 곳은 페이로드다(변경분만 보내기, 관심 영역 제한). 아직 안 고쳤고, 50명 서비스에서 고칠 순서가 아니라고 판단했다.
 
-## 프로젝트 구조
+## 배포하고 나서 생긴 것들
 
-```text
-Ajou_MuscleUp
-├── backend
-│   ├── src/main/java/com/ajou/muscleup
-│   │   ├── config          # Security, JWT, CORS, Scheduler, Storage 설정
-│   │   ├── controller      # REST API 엔드포인트
-│   │   ├── dto             # 요청/응답 DTO
-│   │   ├── entity          # JPA 도메인 모델
-│   │   ├── repository      # Spring Data JPA Repository
-│   │   ├── scheduler       # 이벤트 스케줄링
-│   │   └── service         # 비즈니스 로직
-│   ├── src/main/resources  # Spring profile 설정
-│   ├── src/test            # 테스트와 AI 품질 하네스
-│   └── sql                 # DB 마이그레이션 스크립트
-├── frontend
-│   ├── src
-│   │   ├── components      # 공통 컴포넌트, 아바타 렌더러
-│   │   ├── layouts         # Header, Footer
-│   │   ├── pages           # 라우트 페이지
-│   │   ├── services        # API 서비스 모듈
-│   │   ├── styles          # 화면별 스타일
-│   │   └── types           # 프론트엔드 타입
-│   └── public              # PWA 아이콘 등 정적 파일
-├── realtime
-│   └── src                 # Socket.IO 서버, 라운지 room state
-└── docs                    # 기능 검증 문서
-```
+1.0 은 Route 53 → ACM → CloudFront → S3 정적 배포에 RDS 를 붙였고, 지금은 Vercel + Railway 다. 그 사이에 세 번 막혔다.
 
-## 실행 방법
+- **인증서를 발급했는데 CloudFront 가 못 고른다.** CloudFront 는 us-east-1 인증서만 본다. 다른 리전에서 발급하면 「잘못됐다」가 아니라 「없는 것」처럼 보인다.
+- **배포했는데 옛 화면이 나온다. 사람마다 다르게.** 엣지마다 캐시가 달랐다. Invalidation(`/*`) 을 배포 절차에 넣었다. CDN 은 「올리면 끝」이 아니라 「올리고 지워야 끝」이었다.
+- **키 하나가 없어서 서버가 아예 안 뜬다.** 로컬과 운영 설정이 한 파일에 섞여 있었다. prod 프로파일을 분리하고 값은 전부 `${ENV_VAR}` 로만 받는다. CORS 허용 목록도 같은 이유로 코드에서 빠져나와 `cors.allowed-origins` 가 됐다 — 프론트와 API 도메인이 갈리면서 `setAllowCredentials(true)` 없이는 쿠키가 안 실리는 것을 이때 배웠다.
 
-### 사전 준비
+## 알고 있는 빚
 
-- Java 17
-- Node.js 20 이상 권장
-- MySQL 또는 PostgreSQL
-- OpenAI API Key
-- Google OAuth Client ID/Secret
-- SMTP 계정
-- S3 사용 시 AWS S3 bucket
+- 위 피드백 넷째 — AI 응답 속도. 스트리밍과 캐싱을 안 했다.
+- 페이지네이션의 count. 커서 방식이나 근사 카운트로 가야 한다.
+- 라운지 브로드캐스트가 N². 델타 전송으로 바꿔야 100명을 넘긴다.
+- 자동화된 테스트가 사실상 없다. `backend/src/test` 에는 컨텍스트 로드 하나와 AI 인바디 품질 하네스뿐이다. 품질은 [`docs/inbody-quality-playbook.md`](docs/inbody-quality-playbook.md) 의 8개 케이스를 손으로 돌려 봤다.
+- 초기 커밋 메시지가 성의 없다. 혼자 빠르게 돌리던 시기의 흔적이고, 2026년 8월부터는 무엇을 왜 바꿨는지 적는다.
 
-### 1. 저장소 클론
+## 실행하기
 
-```bash
-git clone https://github.com/toadsam/Ajou_MuscleUp.git
-cd Ajou_MuscleUp
-```
+<details>
+<summary>세 프로세스를 띄운다 — 백엔드 8080 · 실시간 4001 · 프론트 5173</summary>
 
-### 2. Backend 실행
+필요한 것: Java 17, Node 20+, MySQL 또는 PostgreSQL. 이메일 인증·Google 로그인·AI·S3 는 키가 있을 때만 켜진다.
 
-`backend/src/main/resources/application-local.properties` 파일을 만들고 로컬 환경값을 채웁니다.
+**백엔드.** `backend/src/main/resources/application-local.example.properties` 를 `application-local.properties` 로 복사해 값을 채운다(Git 에서 제외돼 있다).
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/muscleup?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
+spring.datasource.url=jdbc:mysql://localhost:3306/muscleup?createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul
 spring.datasource.username=root
-spring.datasource.password=YOUR_DB_PASSWORD
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-
+spring.datasource.password=
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
-
-spring.mail.host=smtp.gmail.com
-spring.mail.port=465
-spring.mail.username=YOUR_MAIL_ADDRESS
-spring.mail.password=YOUR_MAIL_APP_PASSWORD
-spring.mail.properties.mail.smtp.auth=true
-spring.mail.properties.mail.smtp.starttls.enable=false
-spring.mail.properties.mail.smtp.ssl.enable=true
-spring.mail.properties.mail.smtp.ssl.trust=smtp.gmail.com
-
-openai.api.key=YOUR_OPENAI_API_KEY
-google.client-id=YOUR_GOOGLE_CLIENT_ID
-google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
-jwt.secret=CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_VALUE
+jwt.secret=충분히_긴_랜덤_문자열
 cors.allowed-origins=http://localhost:5173
 app.frontend-base-url=http://localhost:5173
 app.cookie.secure=false
 app.cookie.same-site=Lax
+# 선택: spring.mail.* / openai.api.key / google.client-id, google.client-secret / app.s3.*
 ```
-
-서버 실행:
 
 ```bash
-cd backend
-./gradlew bootRun
+cd backend && ./gradlew bootRun        # Windows: .\gradlew.bat bootRun
 ```
 
-Windows PowerShell에서는 다음처럼 실행할 수 있습니다.
-
-```powershell
-cd backend
-.\gradlew.bat bootRun
-```
-
-### 3. Realtime 서버 실행
+**실시간 서버.** `PORT`(기본 4001) 와 `ORIGIN`(기본 http://localhost:5173) 만 본다.
 
 ```bash
-cd realtime
-npm install
-npm run dev
+cd realtime && npm install && npm run dev
 ```
 
-기본 실행 주소는 `http://localhost:4001`입니다.
-
-### 4. Frontend 실행
+**프론트.** `VITE_API_BASE`, `VITE_REALTIME_URL` 이 비어 있으면 위 기본 주소를 쓴다. Google 로그인은 `VITE_GOOGLE_CLIENT_ID`.
 
 ```bash
-cd frontend
-npm install
-npm run dev
+cd frontend && npm install && npm run dev
 ```
 
-프론트엔드 기본 실행 주소는 `http://localhost:5173`입니다.
+운영 프로파일(`application-prod.properties`)은 DB·메일·OpenAI·Google·JWT·S3 값을 전부 환경변수로만 받는다. 벤치마크는 [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) 절차대로 — 운영 DB 에서 돌리지 말 것.
 
-## 환경변수
+</details>
 
-### Backend
-
-| 변수 | 설명 | 예시 |
-| --- | --- | --- |
-| `PORT` | 백엔드 서버 포트 | `8080` |
-| `SPRING_PROFILES_ACTIVE` | Spring profile | `local`, `prod` |
-| `DB_URL` | JDBC URL | `jdbc:postgresql://host:5432/db` |
-| `DB_USERNAME` | DB 사용자 | `muscleup` |
-| `DB_PASSWORD` | DB 비밀번호 | `password` |
-| `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` | PostgreSQL 배포 환경용 변수 | 배포 플랫폼 값 |
-| `MAIL_USERNAME` | SMTP 계정 | `example@gmail.com` |
-| `MAIL_PASSWORD` | SMTP 앱 비밀번호 | `app-password` |
-| `OPENAI_API_KEY` | AI 기능용 API key | `sk-...` |
-| `GOOGLE_CLIENT_ID` | Google OAuth client id | `...apps.googleusercontent.com` |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth secret | `...` |
-| `JWT_SECRET` | JWT 서명 secret | 충분히 긴 랜덤 문자열 |
-| `CORS_ALLOWED_ORIGINS` | 허용할 프론트엔드 origin 목록 | `http://localhost:5173` |
-| `FRONTEND_BASE_URL` | 공유 링크 생성용 프론트엔드 주소 | `http://localhost:5173` |
-| `UPLOAD_DIR` | 로컬 업로드 디렉터리 | `uploads` |
-| `S3_ENABLED` | S3 사용 여부 | `true`, `false` |
-| `S3_BUCKET` | S3 bucket 이름 | `muscleup-bucket` |
-| `AWS_REGION` | AWS region | `ap-northeast-2` |
-| `S3_PREFIX` | S3 object prefix | `uploads` |
-| `S3_PUBLIC_BASE_URL` | 공개 파일 base URL | `https://cdn.example.com` |
-
-### Frontend
-
-| 변수 | 설명 | 예시 |
-| --- | --- | --- |
-| `VITE_API_BASE` | 백엔드 API base URL. 비워두면 Vite proxy 사용 | `http://localhost:8080` |
-| `VITE_REALTIME_URL` | Socket.IO 서버 주소 | `http://localhost:4001` |
-
-### Realtime
-
-| 변수 | 설명 | 예시 |
-| --- | --- | --- |
-| `PORT` | 실시간 서버 포트 | `4001` |
-| `ORIGIN` | 허용할 프론트엔드 origin. 쉼표로 여러 개 지정 가능 | `http://localhost:5173` |
-
-## 빌드 및 검증
-
-### Backend
-
-```bash
-cd backend
-./gradlew test
-./gradlew clean bootJar
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm run lint
-npm run build
-```
-
-### Realtime
-
-```bash
-cd realtime
-npm run build
-```
-
-## 배포 구조
-
-백엔드는 `backend/nixpacks.toml`을 통해 Java 17 기반 빌드와 `bootJar` 실행을 고려해 구성되어 있습니다.
+<details>
+<summary>폴더</summary>
 
 ```text
-Frontend    정적 빌드 산출물을 웹 서버 또는 정적 호스팅에 배포
-Backend     Spring Boot jar 실행, prod profile 사용
-Realtime    Node.js 프로세스로 Socket.IO 서버 실행
-Database    MySQL 또는 PostgreSQL
-Storage     로컬 업로드 또는 S3
+backend/   Spring Boot — config(Security·JWT·CORS) · controller · service · entity · repository · sql(마이그레이션·bench)
+frontend/  React — pages(36) · components · lib(api.ts · installFetchAuth.ts) · services · layouts
+realtime/  Socket.IO — server.ts(이벤트·60ms 틱) · rooms.ts(room state) · bench(부하 스크립트)
+docs/      BENCHMARKS.md · inbody-quality-playbook.md · 홈페이지 마스터 문서 · screenshots
 ```
 
-운영 환경에서는 다음 값을 반드시 환경변수로 주입해야 합니다.
+</details>
 
-- DB 접속 정보
-- `JWT_SECRET`
-- `OPENAI_API_KEY`
-- Google OAuth 값
-- SMTP 계정
-- CORS 허용 origin
-- S3 사용 시 AWS/S3 관련 값
+## 만든 사람
 
-## 포트폴리오 관점의 구현 하이라이트
+정재훈 — 아주대학교. 다른 작업은 [포트폴리오 마을](https://my-portfolio-5ow2.vercel.app)과 [GitHub](https://github.com/toadsam) 에 있다.
 
-### 실시간 라운지
-
-라운지는 단순 채팅방이 아니라 캐릭터가 움직이는 월드 형태의 실시간 공간입니다. 서버는 플레이어 위치, 접속자 목록, 채팅, 타이핑, 이모트, 스티커, 파티 요청을 Socket.IO 이벤트로 관리합니다. 클라이언트는 이동 입력과 렌더링을 분리해 부드러운 상호작용을 제공하도록 구성했습니다.
-
-### 캐릭터 성장 시스템
-
-운동 기록과 사용자 통계를 캐릭터 성장 요소로 연결했습니다. 티어, 진화 단계, 성장 파라미터, 휴식 상태, MBTI 값을 아바타 렌더링에 반영해 사용자의 활동이 시각적으로 드러나도록 설계했습니다.
-
-### AI 인바디 상담
-
-인바디 이미지/PDF 기반 상담, 운동 계획, 채팅, PDF 리포트 생성 흐름을 제공합니다. AI 응답은 단발성 답변이 아니라 히스토리와 공유 기능으로 연결되어 사용자가 결과를 다시 확인하거나 외부에 공유할 수 있습니다.
-
-### 운영 가능한 관리자 기능
-
-관리자 API와 화면을 별도로 구성해 이벤트 CMS, 신고 콘텐츠 관리, 문의 상태 관리, 프로그램 신청 관리, 감사 로그 조회를 처리합니다. 실제 서비스 운영에서 필요한 관리 흐름을 프로젝트 범위 안에 포함했습니다.
-
-### 공유 중심 기능
-
-출석 공유, AI 상담 공유, 운동 자랑 게시글, 단백질 나눔, 이벤트 상세 페이지처럼 외부 링크나 커뮤니티 반응으로 이어지는 기능을 여러 도메인에 배치했습니다. 개인 기록 앱이 아니라 커뮤니티 서비스로 동작하도록 설계한 부분입니다.
-
-## 보안 고려사항
-
-- JWT access token과 refresh token을 분리했습니다.
-- refresh token은 서버 저장소와 함께 관리해 만료/폐기 흐름을 처리합니다.
-- 관리자 API는 관리자 권한이 있는 사용자만 접근하도록 보호합니다.
-- CORS origin은 환경별로 분리합니다.
-- 파일 업로드는 로컬 저장소와 S3 저장소를 모두 지원하도록 추상화했습니다.
-- 운영 환경의 secret은 코드에 포함하지 않고 환경변수로 주입하는 것을 전제로 합니다.
-
-## 작성자
-
-| 항목 | 내용 |
-| --- | --- |
-| 프로젝트 | 득근득근 MuscleUp |
-| 형태 | Full-stack web application |
-| 주요 구현 범위 | React PWA, Spring Boot REST API, Socket.IO realtime server, AI integration, admin dashboard |
-| 목적 | 운동 기록을 지속 가능한 커뮤니티 경험으로 바꾸는 서비스 구현 |
-
-## 라이선스
-
-이 저장소는 포트폴리오 공개를 목적으로 합니다. 별도 라이선스가 명시되기 전까지 코드와 자산의 무단 사용, 복제, 배포를 허용하지 않습니다.
+코드와 화면은 포트폴리오 공개 목적이며, 별도 표기 전까지 무단 사용·복제·배포를 허용하지 않는다.
