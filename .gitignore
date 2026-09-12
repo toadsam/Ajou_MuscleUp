@@ -6,15 +6,26 @@
 frontend/.env
 backend/src/main/resources/application-local.properties
 backend/src/main/resources/application.properties
+# application-test.properties 에는 메일 계정·DB·jwt.secret 이 리터럴로 들어 있다.
+# 자격증명을 먼저 교체한 뒤 `git rm --cached` 로 추적에서 빼야 한다(히스토리에는
+# 그대로 남으므로, 교체가 먼저다). 예시 파일은 application-local.example.properties.
+backend/src/main/resources/application-test.properties
 
-# Node/Yarn/PNPM caches
-frontend/node_modules/
+# Node/Yarn/PNPM caches — frontend 만 막혀 있고 realtime 이 빠져 있어서
+# realtime/node_modules 파일 560개가 커밋돼 있었다.
+node_modules/
 frontend/.yarn/
 frontend/.pnpm-store/
 
 # Build outputs
 frontend/dist/
 frontend/build/
+realtime/dist/
+
+# 런타임에 사용자가 올린 파일. 소스가 아니다.
+# 운영은 S3(app.s3.enabled)를 쓰고, 로컬 파일시스템 모드일 때만 여기에 쌓인다.
+uploads/
+backend/uploads/
 
 # Java/Gradle build artifacts
 backend/build/

@@ -1,0 +1,316 @@
+<div id="muscleup-comment-flow">
+  <h1>댓글 수정 요청은 어디를 지나갈까?</h1>
+  <p class="text-muted">득근득근 실제 코드 기준 · React → 인증 → Spring Security → Service → DB → 화면</p>
+
+  <div class="nav nav-pills" role="tablist" aria-label="학습 내용">
+    <button class="nav-link active" id="flow-tab" role="tab" aria-controls="flow-panel" aria-selected="true" type="button">요청 흐름</button>
+    <button class="nav-link" id="branch-tab" role="tab" aria-controls="branch-panel" aria-selected="false" type="button">실패 경로</button>
+    <button class="nav-link" id="check-tab" role="tab" aria-controls="check-panel" aria-selected="false" type="button">이해 확인</button>
+  </div>
+
+  <section id="flow-panel" role="tabpanel" aria-labelledby="flow-tab">
+    <h2>저장 버튼부터 화면 갱신까지</h2>
+    <p class="text-small text-muted">단계를 누르면 실제 파일, 코드, 입력과 출력을 볼 수 있습니다.</p>
+
+    <div class="viz-grid" aria-label="댓글 수정 처리 단계">
+      <button class="btn viz-tile is-selected" type="button" aria-pressed="true" data-flow-step="0">
+        <strong>1. 저장</strong><br><span class="text-small">React 화면</span>
+      </button>
+      <button class="btn viz-tile" type="button" aria-pressed="false" data-flow-step="1">
+        <strong>2. 인증 첨부</strong><br><span class="text-small">전역 fetch</span>
+      </button>
+      <button class="btn viz-tile" type="button" aria-pressed="false" data-flow-step="2">
+        <strong>3. JWT 해석</strong><br><span class="text-small">인증 필터</span>
+      </button>
+      <button class="btn viz-tile" type="button" aria-pressed="false" data-flow-step="3">
+        <strong>4. URL 권한</strong><br><span class="text-small">Security</span>
+      </button>
+      <button class="btn viz-tile" type="button" aria-pressed="false" data-flow-step="4">
+        <strong>5. 요청 변환</strong><br><span class="text-small">Controller + DTO</span>
+      </button>
+      <button class="btn viz-tile" type="button" aria-pressed="false" data-flow-step="5">
+        <strong>6. 소유권·수정</strong><br><span class="text-small">Service + DB</span>
+      </button>
+      <button class="btn viz-tile" type="button" aria-pressed="false" data-flow-step="6">
+        <strong>7. 화면 반영</strong><br><span class="text-small">JSON → state</span>
+      </button>
+    </div>
+
+    <div class="card" id="flow-detail" aria-live="polite">
+      <div class="viz-row">
+        <span class="viz-badge" id="flow-number">1 / 7</span>
+        <strong id="flow-title">사용자가 댓글 저장을 누른다</strong>
+      </div>
+      <p id="flow-file"><code>frontend/src/pages/BragDetail.tsx:853</code></p>
+      <p id="flow-plain">수정할 댓글 ID와 새 내용을 PATCH 요청으로 보냅니다.</p>
+      <pre><code id="flow-code">PATCH /api/brags/comments/{commentId}
+{ "content": editingCommentText.trim() }</code></pre>
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <tbody>
+            <tr><th scope="row">들어오는 것</th><td id="flow-input">댓글 ID, 수정한 문자열</td></tr>
+            <tr><th scope="row">나가는 것</th><td id="flow-output">HTTP PATCH 요청</td></tr>
+            <tr><th scope="row">여기서 기억할 것</th><td id="flow-key">화면은 DB를 직접 수정하지 않고 서버에 요청합니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="viz-row">
+      <button class="btn btn-ghost" id="flow-prev" type="button" disabled>이전 단계</button>
+      <button class="btn btn-primary" id="flow-next" type="button">다음 단계</button>
+    </div>
+
+    <hr>
+    <h2>권한 검사는 두 번, 목적은 다릅니다</h2>
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr><th>검사 위치</th><th>묻는 질문</th><th>근거</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>SecurityConfig</code></td>
+            <td>댓글 API에 들어올 수 있는 사용자인가?</td>
+            <td>JWT 역할이 USER 또는 ADMIN</td>
+          </tr>
+          <tr>
+            <td><code>BragInteractionServiceImpl</code></td>
+            <td>이 특정 댓글을 수정할 수 있는가?</td>
+            <td>작성자 ID 일치 또는 DB의 ADMIN 역할</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="branch-panel" role="tabpanel" aria-labelledby="branch-tab" hidden>
+    <h2>조건이 달라지면 어디에서 멈출까?</h2>
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr><th>상황</th><th>멈추는 위치</th><th>HTTP 결과</th><th>DB 변경</th></tr></thead>
+        <tbody>
+          <tr><td>Access Token 정상</td><td>끝까지 통과</td><td>200</td><td>변경됨</td></tr>
+          <tr><td>Access 만료, Refresh 성공</td><td>전역 fetch가 재발급 후 원요청 재시도</td><td>최종 200</td><td>변경됨</td></tr>
+          <tr><td>인증 최종 실패</td><td>Spring Security</td><td>401</td><td>변경 없음</td></tr>
+          <tr><td>내용이 공백뿐</td><td>DTO <code>@NotBlank</code></td><td>400</td><td>변경 없음</td></tr>
+          <tr><td>댓글 ID가 없음</td><td>Service <code>findById</code></td><td>404</td><td>변경 없음</td></tr>
+          <tr><td>남의 댓글, 일반 사용자</td><td>Service 소유권 검사</td><td>403</td><td>변경 없음</td></tr>
+          <tr><td>남의 댓글, 관리자</td><td>소유권 검사 통과</td><td>200</td><td>변경됨</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>코드에서 확인된 주의점</h2>
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr><th>관찰</th><th>현재 의미</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>DB 컬럼은 500자, DTO에는 <code>@Size(max=500)</code> 없음</td>
+            <td>긴 내용이 요청 검증보다 DB 저장 단계에서 실패할 가능성</td>
+          </tr>
+          <tr>
+            <td><code>BragComment</code>에 <code>@Version</code> 없음</td>
+            <td>동시 수정 충돌을 탐지하지 않아 마지막 저장이 덮어쓸 가능성</td>
+          </tr>
+          <tr>
+            <td>조회한 엔티티를 수정한 뒤 <code>save(c)</code> 호출</td>
+            <td>트랜잭션의 관리 엔티티라 변경 감지만으로도 갱신 가능하며 save는 중복일 수 있음</td>
+          </tr>
+          <tr>
+            <td>전용 <code>updateComment</code> 테스트를 검색 범위에서 찾지 못함</td>
+            <td>본인·타인·관리자 세 권한 경로를 자동 검증할 근거가 약함</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="check-panel" role="tabpanel" aria-labelledby="check-tab" hidden>
+    <h2>코드를 닫고 먼저 답해 보기</h2>
+    <details>
+      <summary>1. 프론트에서 수정 버튼을 숨기는데 서버에서도 권한을 검사하는 이유는?</summary>
+      <p>브라우저 화면은 사용자가 바꿀 수 있고 API를 직접 호출할 수도 있습니다. 실제 보안 경계는 서버이므로 댓글 작성자 ID를 서버에서 다시 확인해야 합니다.</p>
+    </details>
+    <details>
+      <summary>2. 토큰이 만료됐는데 사용자가 곧바로 로그인 화면으로 가지 않을 수 있는 이유는?</summary>
+      <p>앱 시작 시 설치된 전역 fetch가 401을 가로채 Refresh Token으로 Access Token을 재발급하고 원래 PATCH 요청을 한 번 다시 보내기 때문입니다.</p>
+    </details>
+    <details>
+      <summary>3. SecurityConfig 검사와 Service 검사의 차이는?</summary>
+      <p>SecurityConfig는 USER·ADMIN이 댓글 API에 들어올 수 있는지 검사합니다. Service는 들어온 사용자가 그 댓글의 작성자이거나 관리자인지 검사합니다.</p>
+    </details>
+    <details>
+      <summary>4. findById로 가져온 댓글에서 save를 빼도 수정될 수 있는 이유는?</summary>
+      <p><code>@Transactional</code> 안에서 조회한 엔티티는 영속성 컨텍스트가 관리합니다. 필드가 바뀌면 트랜잭션 종료 시 Hibernate 변경 감지가 UPDATE를 만들 수 있습니다.</p>
+    </details>
+    <details>
+      <summary>5. 수정 성공 후 댓글 목록을 다시 요청하지 않아도 화면이 바뀌는 이유는?</summary>
+      <p>서버가 돌려준 수정 댓글을 이용해 React의 comments 배열에서 ID가 같은 항목 하나만 교체하기 때문입니다.</p>
+    </details>
+
+    <hr>
+    <h2>30초 설명 기준</h2>
+    <p>댓글 저장 시 React가 PATCH 요청을 보냅니다. 전역 fetch가 Access Token을 붙이고, 만료됐다면 한 번만 재발급한 뒤 재시도합니다. 서버의 JWT 필터가 이메일과 역할을 SecurityContext에 넣고, SecurityConfig가 USER·ADMIN의 API 진입을 허용합니다. Controller가 URL·JSON을 Java 값으로 바꾸고, Service가 DB 사용자와 댓글 작성자를 비교합니다. 본인이나 관리자면 트랜잭션 안에서 내용을 바꾸고 DTO를 반환하며, 프론트는 받은 댓글 하나만 화면 상태에서 교체합니다.</p>
+
+    <label class="form-check">
+      <input class="form-check-input" type="checkbox">
+      <span class="form-check-label">파일을 보지 않고 30초 흐름을 설명할 수 있다</span>
+    </label>
+    <label class="form-check">
+      <input class="form-check-input" type="checkbox">
+      <span class="form-check-label">401·400·403·404가 각각 어디에서 생기는지 설명할 수 있다</span>
+    </label>
+    <label class="form-check">
+      <input class="form-check-input" type="checkbox">
+      <span class="form-check-label">URL 권한과 객체 소유권 검사의 차이를 설명할 수 있다</span>
+    </label>
+  </section>
+</div>
+
+<style>
+  #muscleup-comment-flow {
+    display: grid;
+    gap: 1rem;
+  }
+  #muscleup-comment-flow [role="tabpanel"] {
+    display: grid;
+    gap: 1rem;
+  }
+  #muscleup-comment-flow [role="tabpanel"][hidden] {
+    display: none;
+  }
+  #muscleup-comment-flow .viz-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+  #muscleup-comment-flow .viz-tile {
+    text-align: left;
+  }
+  #muscleup-comment-flow #flow-detail {
+    display: grid;
+    gap: .5rem;
+  }
+  #muscleup-comment-flow pre {
+    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  #muscleup-comment-flow details {
+    padding-block: .5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  #muscleup-comment-flow summary {
+    cursor: pointer;
+    font-weight: 500;
+  }
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('muscleup-comment-flow');
+  if (!root) return;
+
+  const steps = [
+    {
+      title: '사용자가 댓글 저장을 누른다',
+      file: 'frontend/src/pages/BragDetail.tsx:853',
+      plain: '수정할 댓글 ID와 새 내용을 PATCH 요청으로 보냅니다.',
+      code: 'PATCH /api/brags/comments/{commentId}\n{ "content": editingCommentText.trim() }',
+      input: '댓글 ID, 수정한 문자열',
+      output: 'HTTP PATCH 요청',
+      key: '화면은 DB를 직접 수정하지 않고 서버에 요청합니다.'
+    },
+    {
+      title: '전역 fetch가 인증 정보를 붙인다',
+      file: 'frontend/src/lib/installFetchAuth.ts:129',
+      plain: 'localStorage의 Access Token을 Authorization 헤더에 넣습니다. 401이면 하나의 refreshPromise로 재발급하고 원요청을 재시도합니다.',
+      code: 'Authorization: Bearer {accessToken}\n401 → POST /api/auth/refresh → 원래 PATCH 재시도',
+      input: '인증이 없는 PATCH 요청 모양',
+      output: 'Bearer 토큰과 쿠키가 포함된 요청',
+      key: 'BragDetail의 지역 api 함수 밖에도 인증 흐름이 숨어 있습니다.'
+    },
+    {
+      title: 'JWT 필터가 사용자 신원을 만든다',
+      file: 'backend/.../config/JwtAuthenticationFilter.java:33',
+      plain: 'Bearer 헤더를 먼저 보고, 없으면 accessToken 쿠키를 봅니다. 서명·만료와 type=access를 확인한 뒤 이메일과 역할을 SecurityContext에 등록합니다.',
+      code: 'validateToken(token)\n&& "access".equals(getTokenType(token))\n→ principal=email, authority=role',
+      input: 'Access Token',
+      output: '인증된 이메일과 역할',
+      key: '@AuthenticationPrincipal의 이메일은 이 단계에서 만들어집니다.'
+    },
+    {
+      title: 'Spring Security가 URL 접근을 검사한다',
+      file: 'backend/.../config/SecurityConfig.java:88',
+      plain: '/api/brags/** 요청은 USER 또는 ADMIN 역할이어야 통과합니다.',
+      code: '.requestMatchers("/api/brags/**")\n.hasAnyRole("USER", "ADMIN")',
+      input: '인증된 사용자 역할과 요청 URL',
+      output: 'Controller 진입 또는 401/403',
+      key: '여기서는 특정 댓글의 주인인지까지 확인하지 않습니다.'
+    },
+    {
+      title: 'Controller가 HTTP 요청을 Java 값으로 바꾼다',
+      file: 'backend/.../controller/BragInteractionController.java:42',
+      plain: 'JWT의 이메일, URL의 commentId, JSON의 content를 받아 Service로 전달합니다. @Valid가 공백 내용을 먼저 거부합니다.',
+      code: '@PatchMapping("/comments/{commentId}")\nupdateComment(email, commentId, @Valid req)',
+      input: 'HTTP 헤더·경로·JSON',
+      output: 'String email, Long commentId, DTO req',
+      key: 'Controller는 연결과 변환을 맡고 실제 수정 규칙은 Service에 둡니다.'
+    },
+    {
+      title: 'Service가 소유권을 확인하고 댓글을 바꾼다',
+      file: 'backend/.../service/BragInteractionServiceImpl.java:68',
+      plain: '이메일로 User를, ID로 댓글을 조회합니다. 작성자가 아니면서 관리자도 아니면 403을 던지고, 통과하면 content를 수정합니다.',
+      code: 'if (comment.user.id != user.id && !isAdmin(user))\n  throw 403;\ncomment.setContent(req.getContent().trim());',
+      input: '인증 이메일, 댓글 ID, 새 내용',
+      output: '수정된 관리 엔티티와 응답 DTO',
+      key: '특정 데이터의 소유권을 확인하는 실제 보안 경계입니다.'
+    },
+    {
+      title: '서버 응답으로 화면의 댓글 하나를 교체한다',
+      file: 'frontend/src/pages/BragDetail.tsx:857',
+      plain: '서버가 200과 수정된 댓글 JSON을 반환합니다. React는 댓글 전체를 다시 받지 않고 ID가 같은 항목 하나만 교체합니다.',
+      code: 'setComments(prev => prev.map(cc =>\n  cc.id === c.id ? updated : cc\n));',
+      input: 'BragCommentResponse JSON',
+      output: '수정 내용이 반영된 화면 상태',
+      key: 'DB 저장 성공 결과를 기준으로 화면을 갱신합니다.'
+    }
+  ];
+
+  const buttons = Array.from(root.querySelectorAll('[data-flow-step]'));
+  const number = root.querySelector('#flow-number');
+  const title = root.querySelector('#flow-title');
+  const file = root.querySelector('#flow-file code');
+  const plain = root.querySelector('#flow-plain');
+  const code = root.querySelector('#flow-code');
+  const input = root.querySelector('#flow-input');
+  const output = root.querySelector('#flow-output');
+  const key = root.querySelector('#flow-key');
+  const prev = root.querySelector('#flow-prev');
+  const next = root.querySelector('#flow-next');
+  let current = 0;
+
+  function showStep(index) {
+    current = Math.max(0, Math.min(steps.length - 1, index));
+    const step = steps[current];
+    number.textContent = `${current + 1} / ${steps.length}`;
+    title.textContent = step.title;
+    file.textContent = step.file;
+    plain.textContent = step.plain;
+    code.textContent = step.code;
+    input.textContent = step.input;
+    output.textContent = step.output;
+    key.textContent = step.key;
+    buttons.forEach((button, i) => {
+      const selected = i === current;
+      button.setAttribute('aria-pressed', String(selected));
+      button.classList.toggle('is-selected', selected);
+    });
+    prev.disabled = current === 0;
+    next.disabled = current === steps.length - 1;
+    next.textContent = current === steps.length - 1 ? '마지막 단계' : '다음 단계';
+  }
+
+  buttons.forEach((button, index) => button.addEventListener('click', () => showStep(index)));
+  prev.addEventListener('click', () => showStep(current - 1));
+  next.addEventListener('click', () => showStep(current + 1));
+})();
+</script>
