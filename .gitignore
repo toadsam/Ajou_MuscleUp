@@ -39,3 +39,8 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+
+# 분석 도구 캐시 · 런타임 업로드 · Office 잠금 파일
+.ua/
+uploads/
+~$*
