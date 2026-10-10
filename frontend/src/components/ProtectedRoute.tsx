@@ -91,7 +91,17 @@ export default function ProtectedRoute({ children }: Props) {
   }, []);
 
   if (authState === "checking") {
-    return <div className="pt-24 text-center text-white/70">인증 확인 중...</div>;
+    return (
+      <div className="flex flex-col items-center gap-3 pt-28 text-center text-sm text-steel-400" role="status">
+        <span className="dg-loading-plates" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+        <span>인증 확인 중...</span>
+      </div>
+    );
   }
 
   if (authState === "unauthorized") {

@@ -1,6 +1,9 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import Barbell from "../components/gym/Barbell";
+import { barbellWeight } from "../components/gym/plates";
+import CountUp from "../components/gym/CountUp";
 import type { GrowthParams } from "../components/avatar/types";
 import "../styles/homeLobby.css";
 import { logEvent } from "../utils/analytics";
@@ -63,28 +66,24 @@ const ACTIONS = [
     id: "attendance",
     label: "출석 체크하기",
     desc: "오늘의 첫 퀘스트",
-    icon: "🔥",
     to: "/attendance",
   },
   {
     id: "lounge",
     label: "라운지 입장하기",
     desc: "지금 함께 운동",
-    icon: "🏋️",
     to: "/lounge",
   },
   {
     id: "character",
     label: "내 캐릭터 보기",
     desc: "성장 결과 확인",
-    icon: "📈",
     to: "/mypage",
   },
   {
     id: "crew",
     label: "운동 모임 가기",
     desc: "팀 출석률 확인",
-    icon: "👥",
     to: "/crew",
   },
 ];
@@ -349,19 +348,10 @@ export default function Home() {
 
   const loungeCountLabel = loungeCount !== null ? loungeCount : "--";
 
-  const formatNumber = (value?: number | null) => {
-    if (value === null || value === undefined) return "--";
-    return Math.round(value).toLocaleString("ko-KR");
-  };
-
-  const totalThreeLiftLabel = metrics
-    ? `${formatNumber(metrics.totalThreeLiftKg)}kg`
-    : "--";
-
   const heroStats = [
-    { label: "라운지 누적 입장", value: formatNumber(metrics?.loungeVisitCount) },
-    { label: "오늘 기록된 출석", value: formatNumber(metrics?.todayAttendanceCount) },
-    { label: "모두의 3대 합", value: totalThreeLiftLabel },
+    { label: "라운지 누적 입장", value: metrics?.loungeVisitCount, unit: "" },
+    { label: "오늘 기록된 출석", value: metrics?.todayAttendanceCount, unit: "" },
+    { label: "모두의 3대 합", value: metrics?.totalThreeLiftKg, unit: "KG" },
   ];
 
   const visibleActions = useMemo(() => {
@@ -370,17 +360,14 @@ export default function Home() {
   }, [isMobile]);
 
   const renderCharacterPreviewCard = (className = "") => (
-    <div className={`character-preview ${className}`.trim()}>
+    <div className={`character-preview dg-steel dg-lift ${className}`.trim()}>
       <div className="card-header">
-        <div>
-          <span className="eyebrow">내 캐릭터</span>
-          <h3>캐릭터 미리보기</h3>
-        </div>
+        <h3>캐릭터 미리보기</h3>
         <Link to="/mypage" className="mini-link">
-          성장 기록 보기 →
+          성장 기록 보기
         </Link>
       </div>
-      <div className="character-stage">
+      <div className="character-stage dg-rubber">
         {character ? (
           <div className={`avatar-shell ${showReaction ? "reacted" : ""}`}>
             <AvatarRenderer
@@ -391,68 +378,99 @@ export default function Home() {
               gender={character.gender}
               mbti={mbti}
               isResting={character.isResting ?? false}
-              size={180}
+              size={170}
             />
           </div>
         ) : (
           <div className="avatar-placeholder">
-            <span>로그인 후 캐릭터가 표시됩니다</span>
+            <span>로그인하면 내 캐릭터가 여기 섭니다</span>
           </div>
         )}
-        <div className="character-meta">
-          <strong>{character ? `${character.tier} · Stage ${character.evolutionStage}` : "캐릭터 준비 중"}</strong>
-          <p>{character ? `Lv.${character.level} ${character.title ?? ""}` : "출석과 운동 기록이 캐릭터를 키웁니다."}</p>
-        </div>
+        <div className="stage-floor dg-platform" />
       </div>
-      <div className="character-reward">
-        <span>출석 완료 시 캐릭터가 리액션합니다</span>
-        <div className="reaction-dots">
-          <span />
-          <span />
-          <span />
-        </div>
+      <div className="character-meta">
+        {character ? (
+          <>
+            <div className="chip-row">
+              <span className="dg-chip chip-tier">{character.tier}</span>
+              <span className="dg-chip chip-steel">STAGE {character.evolutionStage}</span>
+            </div>
+            <strong>{character.title || "이름 없는 리프터"}</strong>
+            <p className="font-num">LV {character.level}</p>
+          </>
+        ) : (
+          <>
+            <strong>캐릭터 준비 중</strong>
+            <p>출석과 운동 기록이 캐릭터를 키웁니다.</p>
+          </>
+        )}
       </div>
     </div>
   );
 
   return (
     <section className="home-lobby">
-      <div className="home-lobby-bg" />
       <div className="home-lobby-wrap">
-        <header className="hero">
+        <header className="hero dg-steel">
           <div className="hero-text">
-            <div className="hero-badge">
-              <span className="pulse-dot" />
-              게임형 피트니스 로비
-            </div>
             <h1>
-              <span className="hero-line brand">득근득근</span>
-              <span className="hero-line strong-copy">오늘의 땀으로 성장 폭발</span>
-              <span className="hero-line highlight">서로를 키우는 커뮤니티</span>
+              <span className="hero-line">오늘의 땀으로</span>
+              <span className="hero-line accent">성장 폭발</span>
             </h1>
             {isMobile && renderCharacterPreviewCard("hero-character-mobile")}
             <p>
               출석 체크가 오늘의 첫 퀘스트가 되고, 캐릭터가 나의 성장을 보여주는 곳.
-              지금 바로 로비에서 시작하세요.
+              운동한 날마다 바벨에 원판이 한 장씩 올라갑니다.
             </p>
             <div className="hero-actions">
-              <Link to="/attendance" className="cta primary">
+              <Link to="/attendance" className="dg-btn dg-btn-primary">
                 오늘 출석 시작
               </Link>
-              <Link to="/crew" className="cta ghost">
+              <Link to="/crew" className="dg-btn dg-btn-steel">
                 운동모임 가기
               </Link>
             </div>
             <div className={`hero-stats ${isMobile && !showMobileOverview ? "mobile-collapsed" : ""}`}>
               {heroStats.map((stat) => (
-                <div key={stat.label}>
-                  <strong>{stat.value}</strong>
+                <div key={stat.label} className="dg-well">
+                  <strong className="font-num">
+                    <CountUp value={stat.value === undefined ? null : Math.round(stat.value)} />
+                    {stat.unit && stat.value !== undefined && <small className="unit">{stat.unit}</small>}
+                  </strong>
                   <span>{stat.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
+          <div className="hero-stage dg-rubber">
+            <div className="hero-stage-head">
+              <span>이번 주 바벨</span>
+              <strong className="font-num">
+                <CountUp value={barbellWeight(weekStats.workoutDays)} decimals={barbellWeight(weekStats.workoutDays) % 1 ? 2 : 0} />
+                <small> KG</small>
+              </strong>
+            </div>
+            <div className="hero-stage-bar">
+              <Barbell
+                liftable
+                height={isMobile ? 104 : 150}
+                loaded={weekStats.workoutDays}
+                label={`이번 주 운동 ${weekStats.workoutDays}일, 원판 ${weekStats.workoutDays}장`}
+              />
+            </div>
+            <div className="hero-stage-floor" aria-hidden="true">
+              <span />
+              <span className="dg-platform" />
+              <span />
+            </div>
+            <p className="hero-stage-note">
+              {user
+                ? `이번 주 ${weekStats.workoutDays}일 운동 · 하루에 원판 한 장`
+                : "로그인하고 출석하면 원판이 올라갑니다"}
+              <span className="hero-stage-hint"> · 바벨을 눌러 들어 보세요</span>
+            </p>
+          </div>
         </header>
 
         {isMobile && (
@@ -460,26 +478,28 @@ export default function Home() {
             <button
               type="button"
               className="mobile-toggle-btn"
+              aria-expanded={showMobileOverview}
               onClick={() => setShowMobileOverview((prev) => !prev)}
             >
-              {showMobileOverview ? "오늘 요약 접기 ▲" : "오늘 요약 펼치기 ▼"}
+              {showMobileOverview ? "오늘 요약 접기" : "오늘 요약 펼치기"}
             </button>
             <button
               type="button"
               className="mobile-toggle-btn"
+              aria-expanded={showMobileCommunity}
               onClick={() => setShowMobileCommunity((prev) => !prev)}
             >
-              {showMobileCommunity ? "커뮤니티 접기 ▲" : "커뮤니티 펼치기 ▼"}
+              {showMobileCommunity ? "커뮤니티 접기" : "커뮤니티 펼치기"}
             </button>
           </div>
         )}
 
         {activeEvents.length > 0 && (!isMobile || showMobileOverview) && (
-          <section className="event-banner">
+          <section className="event-banner dg-steel">
             <div className="event-banner-head">
-              <span className="eyebrow">진행 중 이벤트</span>
+              <h3>진행 중 이벤트</h3>
               <Link to="/events" className="mini-link">
-                전체 이벤트 보기 →
+                전체 이벤트 보기
               </Link>
             </div>
             <div
@@ -523,134 +543,146 @@ export default function Home() {
         )}
 
         <div className="lobby-grid">
-          <div className="action-preview">
-            <div className="hero-orbit">
-              <div className="orbit-ring" />
-              <div className="orbit-ring ring-2" />
-              <div className={`action-hub ${showReaction ? "reacted" : ""}`}>
-                <div className="action-header">
-                  <div>
-                    <span className="eyebrow">오늘의 액션</span>
-                    <h2>지금 해야 할 일</h2>
-                  </div>
-                  <div className={`attendance-status ${isAttendanceDone ? "done" : "pending"}`}>
-                    {todayLabel}
-                  </div>
-                </div>
+          <div className={`action-hub dg-whiteboard ${showReaction ? "reacted" : ""}`}>
+            <div className="action-header">
+              <h2>지금 해야 할 일</h2>
+              <span className={`attendance-status ${isAttendanceDone ? "done" : "pending"}`}>{todayLabel}</span>
+            </div>
 
-                <div className="action-list">
-                  {visibleActions.map((action) => {
-                    const isAttendance = action.id === "attendance";
-                    return (
-                      <Link
-                        key={action.id}
-                        to={action.to}
-                        className={`action-btn ${isAttendance && !isAttendanceDone ? "urgent" : ""} ${
-                          isAttendance && isAttendanceDone ? "complete" : ""
-                        } ${isAttendance && showReaction ? "burst" : ""}`}
-                      >
-                        <span className="action-icon">{action.icon}</span>
-                        <span>
-                          <strong>{isAttendance && isAttendanceDone ? "오늘 완료!" : action.label}</strong>
-                          <small>{action.desc}</small>
-                        </span>
-                        {isAttendance && isAttendanceDone && <span className="check">✓</span>}
-                      </Link>
-                    );
-                  })}
-                </div>
+            <div className="action-list">
+              {visibleActions.map((action, index) => {
+                const isAttendance = action.id === "attendance";
+                const done = isAttendance && isAttendanceDone;
+                return (
+                  <Link
+                    key={action.id}
+                    to={action.to}
+                    className={`action-btn ${isAttendance && !isAttendanceDone ? "urgent" : ""} ${
+                      done ? "complete" : ""
+                    } ${isAttendance && showReaction ? "burst" : ""} dg-rise`}
+                    style={{ animationDelay: `${120 + index * 70}ms` }}
+                  >
+                    <span className={`action-box ${done ? "dg-pop" : ""}`} aria-hidden="true">
+                      {done && (
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 13l5 5L21 5" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="action-text">
+                      <strong>{done ? "오늘 출석 완료" : action.label}</strong>
+                      <small>{action.desc}</small>
+                    </span>
+                    <span className="action-arrow" aria-hidden="true">
+                      →
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
 
-                <div className="action-stats">
-                  <div>
-                    <span>연속 출석</span>
-                    <strong>{summary?.currentStreak ?? 0}일</strong>
-                  </div>
-                  <div>
-                    <span>오늘 상태</span>
-                    <strong>{todayLog ? "완료" : "대기"}</strong>
-                  </div>
-                  <div>
-                    <span>이번 주</span>
-                    <strong>{weekStats.workoutDays}/7</strong>
-                  </div>
-                </div>
-
-                {loading && <div className="hub-note">로딩 중...</div>}
-                {error && <div className="hub-error">{error}</div>}
-                {!user && <div className="hub-note">로그인하면 로비 상태가 연동됩니다.</div>}
+            <div className="action-stats">
+              <div>
+                <span>연속 출석</span>
+                <strong>{summary?.currentStreak ?? 0}일</strong>
+              </div>
+              <div>
+                <span>오늘 상태</span>
+                <strong>{todayLog ? "완료" : "대기"}</strong>
+              </div>
+              <div>
+                <span>이번 주</span>
+                <strong>{weekStats.workoutDays}/7</strong>
               </div>
             </div>
+
+            {loading && <div className="hub-note">불러오는 중...</div>}
+            {error && <div className="hub-error">{error}</div>}
+            {!user && <div className="hub-note">로그인하면 내 기록이 보드에 적힙니다.</div>}
+            <div className="board-tray" aria-hidden="true">
+              <span className="marker blue" />
+              <span className="marker red" />
+            </div>
           </div>
+
           {!isMobile && renderCharacterPreviewCard()}
 
           {(!isMobile || showMobileCommunity) && (
-          <div className="lounge-preview">
-            <div className="card-header">
-              <div>
-                <span className="eyebrow">소셜 라운지</span>
+            <div className="lounge-preview dg-steel dg-lift">
+              <div className="card-header">
                 <h3>라운지 미리보기</h3>
+                <span className="card-header-note">접속 즉시 동기화</span>
               </div>
-              <Link to="/lounge" className="mini-link">
-                라운지 입장 →
-              </Link>
-            </div>
-            <div className="lounge-canvas">
-              <div className="lounge-avatars">
-                {Array.from({ length: 8 }).map((_, idx) => (
-                  <span key={`avatar-${idx}`} className={`lounge-dot dot-${idx + 1}`} />
-                ))}
+              <div className="lounge-canvas dg-rubber" aria-hidden="true">
+                <span className="rack" />
+                <span className="rack-bar" />
+                <span className="dumbbell-rack">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <div className="lounge-avatars">
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <span key={`avatar-${idx}`} className={`lounge-dot dot-${idx + 1}`} />
+                  ))}
+                </div>
+                <span className="lounge-floor" />
               </div>
               <div className="lounge-info">
-                <strong>🔥 지금 라운지에 {loungeCountLabel}명이 운동 중</strong>
-                <p>캐릭터들이 움직이며 함께 운동하는 공간입니다.</p>
+                <strong>지금 라운지에 {loungeCountLabel}명이 운동 중</strong>
+                <p>캐릭터로 들어가 같이 운동하고 채팅하는 공간입니다.</p>
               </div>
-            </div>
-            <div className="lounge-actions">
-              <Link to="/lounge" className="cta primary">
-                라운지 입장하기 →
+              <Link to="/lounge" className="dg-btn dg-btn-primary lounge-cta">
+                라운지 입장하기
               </Link>
-              <div className="lounge-meta">
-                <span>실시간 채팅 · 협력 이벤트</span>
-                <span>접속 즉시 동기화</span>
-              </div>
             </div>
-          </div>
           )}
         </div>
 
         {(!isMobile || showMobileCommunity) && (
-        <div className="quest-strip">
-          <div>
-            <span className="eyebrow">출석 → 성장 → 라운지</span>
-            <h3>오늘의 루프가 게임이 됩니다</h3>
-            <p>
-              출석을 완료하면 캐릭터가 즉시 반응하고, 라운지에서 다른 유저들과
-              실시간으로 연결됩니다.
-            </p>
+          <div className="quest-strip dg-steel">
+            <div>
+              <h3>오늘의 루프가 게임이 됩니다</h3>
+              <p>
+                출석을 완료하면 캐릭터가 바로 반응하고, 라운지에서 다른 멤버와
+                실시간으로 연결됩니다.
+              </p>
+            </div>
+            <ol className="quest-steps">
+              <li>
+                <span className="step-plate plate-red" />
+                <div>
+                  <small className="font-num">STEP 1</small>
+                  <p>출석 체크</p>
+                </div>
+              </li>
+              <li>
+                <span className="step-plate plate-blue" />
+                <div>
+                  <small className="font-num">STEP 2</small>
+                  <p>캐릭터 성장</p>
+                </div>
+              </li>
+              <li>
+                <span className="step-plate plate-yellow" />
+                <div>
+                  <small className="font-num">STEP 3</small>
+                  <p>라운지 진입</p>
+                </div>
+              </li>
+            </ol>
           </div>
-          <div className="quest-icons">
-            <div>
-              <span>✅</span>
-              <p>출석 체크</p>
-            </div>
-            <div>
-              <span>⚡</span>
-              <p>캐릭터 성장</p>
-            </div>
-            <div>
-              <span>🧭</span>
-              <p>라운지 진입</p>
-            </div>
-          </div>
-        </div>
         )}
-
       </div>
 
       {isMobile && (
         <div className="mobile-fixed-actions" aria-label="빠른 이동">
-          <Link to="/attendance" className="mobile-fixed-action primary">출석하기</Link>
-          <Link to="/crew" className="mobile-fixed-action secondary">운동모임</Link>
+          <Link to="/attendance" className="dg-btn dg-btn-primary">
+            출석하기
+          </Link>
+          <Link to="/crew" className="dg-btn dg-btn-steel">
+            운동모임
+          </Link>
         </div>
       )}
     </section>

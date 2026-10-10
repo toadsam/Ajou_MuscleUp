@@ -53,6 +53,41 @@ const extractSummary = (content: string) => {
 
 const buildShareUrl = (postId: number) => `${window.location.origin}/brag/${postId}`;
 
+// 템플릿 아이콘(예전 이모지 자리) — 짧은 stroke SVG
+function TemplateIcon({ kind }: { kind: "trophy" | "flame" | "camera" }) {
+  const common = {
+    viewBox: "0 0 24 24",
+    className: "h-5 w-5",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2.4,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  if (kind === "trophy") {
+    return (
+      <svg {...common}>
+        <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
+        <path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8" />
+      </svg>
+    );
+  }
+  if (kind === "flame") {
+    return (
+      <svg {...common}>
+        <path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 1.5 1 2.5 2 3 0-3-.5-5.5.5-8z" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  );
+}
+
 export default function BragList() {
   const [posts, setPosts] = useState<BragPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,9 +149,9 @@ export default function BragList() {
   }, [posts, search, visibilityFilter]);
 
   const featuredTemplates = [
-    { label: "PR 달성", desc: "무게나 횟수를 자랑하는 가장 쉬운 템플릿", emoji: "🏆" },
-    { label: "오늘 운동", desc: "오늘 한 운동과 한 줄 소감을 빠르게 기록", emoji: "🔥" },
-    { label: "체형 변화", desc: "Before / After 비교 사진 중심 공유", emoji: "📸" },
+    { label: "PR 달성", desc: "무게나 횟수를 자랑하는 가장 쉬운 템플릿", icon: "trophy" as const },
+    { label: "오늘 운동", desc: "오늘 한 운동과 한 줄 소감을 빠르게 기록", icon: "flame" as const },
+    { label: "체형 변화", desc: "Before / After 비교 사진 중심 공유", icon: "camera" as const },
   ];
 
   const toggleLike = async (postId: number) => {
@@ -148,69 +183,86 @@ export default function BragList() {
   };
 
   return (
-    <section className="min-h-screen bg-slate-950 pt-28 pb-24 text-white">
+    <section className="min-h-screen pt-28 pb-24 text-white">
       <div className="mx-auto max-w-6xl space-y-6 px-6 lg:px-10">
-        <header className="grid gap-4 rounded-[28px] border border-white/10 bg-gradient-to-br from-orange-500/18 via-amber-400/10 to-white/5 p-6 lg:grid-cols-[1.1fr,0.9fr]">
+        <header className="dg-steel grid gap-4 p-6 lg:grid-cols-[1.1fr,0.9fr]">
           <div className="space-y-3">
-            <p className="text-sm font-semibold tracking-[0.28em] text-orange-200">BRAG</p>
-            <h1 className="text-3xl font-extrabold md:text-5xl">운동 자랑방</h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-white/70">
+            <p className="font-num text-sm font-bold text-orange-300">Brag</p>
+            <h1 className="text-3xl md:text-5xl">운동 자랑방</h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-steel-300">
               기록이 짧아도 괜찮습니다. 오늘 운동, PR 달성, 체형 변화처럼 자랑할 주제만 고르면
               초보도 빠르게 올릴 수 있게 만들었습니다.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/brag/write" className="rounded-full bg-orange-500 px-5 py-2 font-semibold text-black">
+              <Link to="/brag/write" className="dg-btn dg-btn-primary px-5">
                 빠르게 자랑 올리기
               </Link>
-              <a href="#brag-feed" className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/75">
+              <a href="#brag-feed" className="dg-btn dg-btn-steel px-5 text-sm">
                 최근 자랑 보기
               </a>
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-1">
-            {featuredTemplates.map((item) => (
-              <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                <div className="text-2xl">{item.emoji}</div>
-                <div className="mt-3 font-semibold">{item.label}</div>
-                <p className="mt-1 text-sm text-white/60">{item.desc}</p>
+            {featuredTemplates.map((item, idx) => (
+              <div
+                key={item.label}
+                className="dg-well dg-rise group flex items-start gap-3 p-4"
+                style={{ animationDelay: `${idx * 60}ms` }}
+              >
+                <span className="grid h-10 w-10 flex-none place-items-center rounded-md border-2 border-black bg-plate-yellow text-black shadow-sm transition-transform duration-150 group-hover:-rotate-6">
+                  <TemplateIcon kind={item.icon} />
+                </span>
+                <div>
+                  <div className="font-bold">{item.label}</div>
+                  <p className="mt-1 text-sm text-steel-300">{item.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </header>
 
-        <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-[0.65fr,1fr]">
+        <div className="dg-well grid gap-4 p-4 lg:grid-cols-[0.65fr,1fr]">
           <div>
-            <div className="text-sm font-semibold text-white">초보용 필터</div>
-            <p className="mt-1 text-xs text-white/55">친구 공개 글만 따로 보거나 운동 종목으로 바로 찾을 수 있습니다.</p>
+            <div className="font-display text-lg text-white">초보용 필터</div>
+            <p className="mt-1 text-xs text-steel-400">친구 공개 글만 따로 보거나 운동 종목으로 바로 찾을 수 있습니다.</p>
           </div>
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
+            <div className="relative inline-grid grid-cols-2 border-b-2 border-steel-700" role="tablist">
               <button
                 type="button"
+                role="tab"
+                aria-selected={visibilityFilter === "ALL"}
                 onClick={() => setVisibilityFilter("ALL")}
-                className={`rounded-full px-3 py-1 text-sm ${visibilityFilter === "ALL" ? "bg-orange-500 text-black" : "bg-black/30 text-gray-300"}`}
+                className={`px-4 pb-2 pt-1 text-sm font-bold transition-colors ${visibilityFilter === "ALL" ? "text-white" : "text-steel-400 hover:text-steel-200"}`}
               >
                 전체 보기
               </button>
               <button
                 type="button"
+                role="tab"
+                aria-selected={visibilityFilter === "FRIENDS"}
                 onClick={() => setVisibilityFilter("FRIENDS")}
-                className={`rounded-full px-3 py-1 text-sm ${visibilityFilter === "FRIENDS" ? "bg-sky-500 text-black" : "bg-black/30 text-gray-300"}`}
+                className={`px-4 pb-2 pt-1 text-sm font-bold transition-colors ${visibilityFilter === "FRIENDS" ? "text-white" : "text-steel-400 hover:text-steel-200"}`}
               >
                 친구 공개만
               </button>
+              <span
+                aria-hidden
+                className="absolute -bottom-[2px] left-0 h-1 w-1/2 bg-plate-red transition-transform duration-300 ease-out"
+                style={{ transform: `translateX(${visibilityFilter === "FRIENDS" ? 100 : 0}%)` }}
+              />
             </div>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="종목, 제목, 내용으로 검색"
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm"
+              className="w-full rounded border-2 border-black bg-steel-900 px-4 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow"
             />
           </div>
         </div>
 
         {shareMessage && (
-          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          <div className="dg-pop dg-well border-l-[6px] border-l-plate-green px-4 py-3 text-sm font-semibold text-green-200">
             {shareMessage}
           </div>
         )}
@@ -218,53 +270,65 @@ export default function BragList() {
         {loading && (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={`brag-skeleton-${idx}`} className="overflow-hidden rounded-[26px] border border-white/10 bg-white/5">
-                <div className="h-56 animate-pulse bg-white/10" />
+              <div key={`brag-skeleton-${idx}`} className="overflow-hidden rounded-xl border-[3px] border-black bg-steel-800 shadow-md">
+                <div className="grid h-56 place-items-center bg-steel-900">
+                  <span className="dg-loading-plates" aria-label="불러오는 중">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                </div>
                 <div className="space-y-3 p-5">
-                  <div className="h-4 w-2/5 animate-pulse rounded bg-white/10" />
-                  <div className="h-6 w-4/5 animate-pulse rounded bg-white/10" />
-                  <div className="h-4 w-full animate-pulse rounded bg-white/10" />
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
+                  <div className="h-4 w-2/5 animate-pulse rounded bg-steel-700" />
+                  <div className="h-6 w-4/5 animate-pulse rounded bg-steel-700" />
+                  <div className="h-4 w-full animate-pulse rounded bg-steel-700" />
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-steel-700" />
                 </div>
               </div>
             ))}
           </div>
         )}
-        {error && <p className="text-red-400">{error}</p>}
+        {error && <p className="text-red-300">{error}</p>}
         {!loading && !error && filtered.length === 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/60">
+          <div className="dg-well p-8 text-center text-steel-400">
             아직 표시할 자랑글이 없습니다. 첫 번째 자랑을 올려보세요.
           </div>
         )}
 
         <div id="brag-feed" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((post) => {
+          {filtered.map((post, idx) => {
             const cover = post.mediaUrls?.[0];
             const likeState = likes[post.id];
             const summary = extractSummary(post.content);
+            const likeCount = likeState?.count ?? post.likeCount ?? 0;
             return (
-              <article key={post.id} className="overflow-hidden rounded-[26px] border border-white/10 bg-white/5">
+              <article
+                key={post.id}
+                className="dg-lift dg-rise overflow-hidden rounded-xl border-[3px] border-black bg-steel-800 shadow-md"
+                style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
+              >
                 {cover ? (
-                  <div className="relative h-56 overflow-hidden border-b border-white/10">
+                  <div className="relative h-56 overflow-hidden border-b-[3px] border-black">
                     {isVideo(cover) ? (
                       <video src={withBase(cover)} className="h-full w-full object-cover" muted controls />
                     ) : (
                       <img loading="lazy" decoding="async" src={withBase(cover)} alt={post.title} className="h-full w-full object-cover" />
                     )}
-                    <div className="absolute left-4 top-4 flex gap-2 text-xs">
+                    <div className="absolute left-3 top-3 flex gap-2 text-xs">
                       {post.visibility === "FRIENDS" && (
-                        <span className="rounded-full bg-sky-500/85 px-3 py-1 font-semibold text-black">친구 공개</span>
+                        <span className="dg-chip bg-plate-blue text-white">친구 공개</span>
                       )}
                       {post.movement && (
-                        <span className="rounded-full bg-black/70 px-3 py-1 font-semibold text-white">{post.movement}</span>
+                        <span className="dg-chip bg-steel-900 text-chalk">{post.movement}</span>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <div className="flex h-40 items-end bg-gradient-to-br from-orange-500/25 via-amber-300/10 to-transparent p-5">
+                  <div className="dg-rubber flex h-40 items-end border-b-[3px] border-black p-5">
                     <div>
-                      <div className="text-xs uppercase tracking-[0.28em] text-orange-200">Workout Brag</div>
-                      <div className="mt-2 text-lg font-bold">{post.movement || "오늘 운동 기록"}</div>
+                      <div className="font-num text-sm font-bold text-orange-300">Workout Brag</div>
+                      <div className="mt-1 text-lg font-bold">{post.movement || "오늘 운동 기록"}</div>
                     </div>
                   </div>
                 )}
@@ -273,48 +337,52 @@ export default function BragList() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="font-semibold text-white">{post.authorNickname ?? "익명 회원"}</div>
-                      <div className="text-xs text-white/45">
+                      <div className="text-xs text-steel-400">
                         {post.createdAt ? new Date(post.createdAt).toLocaleString("ko-KR") : ""}
                       </div>
                     </div>
                     {post.weight && (
-                      <div className="rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-xs text-orange-100">
+                      <div className="dg-chip bg-plate-yellow text-base text-black">
                         {post.weight}
                       </div>
                     )}
                   </div>
 
                   <div>
-                    <Link to={`/brag/${post.id}`} className="line-clamp-2 text-xl font-bold hover:text-orange-200">
+                    <Link to={`/brag/${post.id}`} className="line-clamp-2 text-xl font-bold transition-colors hover:text-orange-300">
                       {post.title}
                     </Link>
-                    <p className="mt-2 min-h-[64px] text-sm leading-relaxed text-white/70">{summary || "운동 기록이 등록되어 있습니다."}</p>
+                    <p className="mt-2 min-h-[64px] text-sm leading-relaxed text-steel-300">{summary || "운동 기록이 등록되어 있습니다."}</p>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 text-xs text-white/55">
-                    {post.movement && <span className="rounded-full bg-white/5 px-3 py-1">{post.movement}</span>}
-                    <span className="rounded-full bg-white/5 px-3 py-1">좋아요 {likeState?.count ?? post.likeCount ?? 0}</span>
-                    <span className="rounded-full bg-white/5 px-3 py-1">상세 보기 가능</span>
+                  <div className="flex flex-wrap gap-2 text-xs text-steel-300">
+                    {post.movement && <span className="dg-chip bg-steel-700">{post.movement}</span>}
+                    <span className="dg-chip bg-steel-700">좋아요 {likeCount}</span>
+                    <span className="dg-chip bg-steel-700">상세 보기 가능</span>
                   </div>
 
                   <div className="flex gap-2">
                     <button
                       onClick={() => void toggleLike(post.id)}
-                      className={`flex-1 rounded-full border px-3 py-2 text-sm ${
-                        likeState?.liked
-                          ? "border-orange-300/60 bg-orange-400/20 text-orange-100"
-                          : "border-white/10 text-white/75"
+                      aria-pressed={!!likeState?.liked}
+                      className={`dg-btn dg-chalk-burst min-h-[42px] flex-1 px-3 text-sm ${
+                        likeState?.liked ? "bg-plate-red text-white" : "bg-steel-700 text-steel-100"
                       }`}
                     >
-                      좋아요 {likeState?.count ?? post.likeCount ?? 0}
+                      <span key={likeState?.liked ? "on" : "off"} className="dg-pop inline-flex">
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill={likeState?.liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2.5} strokeLinejoin="round" aria-hidden>
+                          <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                        </svg>
+                      </span>
+                      좋아요 <span key={likeCount} className="dg-pop font-num inline-block text-base font-black">{likeCount}</span>
                     </button>
                     <button
                       onClick={() => void handleShare(post)}
-                      className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/75"
+                      className="dg-btn dg-btn-steel dg-chalk-burst min-h-[42px] px-4 text-sm"
                     >
                       공유
                     </button>
-                    <Link to={`/brag/${post.id}`} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">
+                    <Link to={`/brag/${post.id}`} className="dg-btn min-h-[42px] bg-chalk px-4 text-sm text-black">
                       보기
                     </Link>
                   </div>

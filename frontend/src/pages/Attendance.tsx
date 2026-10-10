@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import UploadDropzone from "../components/UploadDropzone";
 import "../styles/attendance.css";
 import { renderAttendanceShareCard } from "../utils/attendanceShareCard";
+import { useCountUp } from "../hooks/useCountUp";
+import { useInView } from "../hooks/useInView";
 
 type AttendanceLog = {
   date: string;
@@ -111,6 +113,96 @@ const streakBonus = (streak: number) => {
   return 0;
 };
 
+// ---------- 표현용 부품 (로직 없음) ----------
+
+function StrokeIcon({ children, size = 16 }: { children: ReactNode; size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+const CheckIcon = ({ size = 16 }: { size?: number }) => (
+  <StrokeIcon size={size}>
+    <path d="M5 12.5l4.5 4.5L19 7" />
+  </StrokeIcon>
+);
+
+const CrossIcon = ({ size = 16 }: { size?: number }) => (
+  <StrokeIcon size={size}>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </StrokeIcon>
+);
+
+const ChevronIcon = ({ open }: { open: boolean }) => (
+  <span className={`att-chevron ${open ? "open" : ""}`}>
+    <StrokeIcon size={14}>
+      <path d="M6 9l6 6 6-6" />
+    </StrokeIcon>
+  </span>
+);
+
+const PencilIcon = () => (
+  <StrokeIcon size={12}>
+    <path d="M4 20h4L19 9l-4-4L4 16z" />
+  </StrokeIcon>
+);
+
+const CameraIcon = () => (
+  <StrokeIcon size={12}>
+    <rect x="3" y="7" width="18" height="13" rx="2" />
+    <circle cx="12" cy="13.5" r="3.5" />
+    <path d="M9 7l1.5-3h3L15 7" />
+  </StrokeIcon>
+);
+
+function WorkoutIcon({ id }: { id: string }) {
+  if (id === "cardio") {
+    return (
+      <StrokeIcon size={22}>
+        <path d="M3 12h4l2-5 4 10 2-5h6" />
+      </StrokeIcon>
+    );
+  }
+  if (id === "stretch") {
+    return (
+      <StrokeIcon size={22}>
+        <circle cx="12" cy="4.5" r="2" />
+        <path d="M12 7v6l-4 7M12 13l4 7M5 9.5l7 0.5 7-0.5" />
+      </StrokeIcon>
+    );
+  }
+  return (
+    <StrokeIcon size={22}>
+      <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
+    </StrokeIcon>
+  );
+}
+
+// 처음 화면에 보일 때 0 에서 값까지 굴러 올라가는 숫자
+function CountUp({ value, duration = 900 }: { value: number; duration?: number }) {
+  const [ref, inView] = useInView<HTMLSpanElement>();
+  const shown = useCountUp(value, { duration, start: inView });
+  return (
+    <span ref={ref} className="tabular-nums">
+      {Math.round(shown)}
+    </span>
+  );
+}
+
+const WEEK_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
+
 export default function Attendance() {
   const [month, setMonth] = useState(() => new Date());
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
@@ -133,6 +225,9 @@ export default function Attendance() {
   const [mobileStep, setMobileStep] = useState<"record" | "media" | "share">("record");
   const [showCalendarCard, setShowCalendarCard] = useState(false);
   const [showInsightCards, setShowInsightCards] = useState(false);
+  // 표현용: 저장이 끝날 때마다 1 씩 올라가 원판 '철컥' 연출을 다시 재생한다.
+  const [plateKey, setPlateKey] = useState(0);
+  const [gaugeRef, gaugeInView] = useInView<HTMLDivElement>();
   const appOrigin = window.location.origin;
   const publicShareOrigin = API_BASE || window.location.origin;
   const appShareLinkForSlug = (slug: string) => `${appOrigin}/attendance/share/${slug}`;
@@ -292,6 +387,7 @@ export default function Attendance() {
         expEarned: res.expEarned ?? 0,
       });
       await reloadMonth();
+      setPlateKey((prev) => prev + 1);
     } catch (e: any) {
       showToast({ type: "error", message: e?.message || "저장에 실패했어요." });
     } finally {
@@ -354,7 +450,8 @@ export default function Attendance() {
 
       setSharing(true);
       const autoSlug = await ensureShareSlug();
-      window.open(`${appShareLinkForSlug(autoSlug)}?auto=share&from=attendance`, "_blank", "noopener,noreferrer");
+      // 새 탭(window.open)은 await 뒤라 모바일에서 팝업 차단에 걸렸다. 같은 탭으로 넘어간다.
+      window.location.assign(`${appShareLinkForSlug(autoSlug)}?auto=share&from=attendance`);
       return;
 
       const ensuredLog = todayLog as AttendanceLog;
@@ -503,54 +600,67 @@ export default function Attendance() {
 
   const titleLabel = `${month.getFullYear()}년 ${String(month.getMonth() + 1).padStart(2, "0")}월`;
 
+  const todayDidWorkout = Boolean(todayLog?.didWorkout);
+  const toggleIndex = didWorkout ? 0 : 1;
+  const stepIndex = mobileStep === "record" ? 0 : mobileStep === "media" ? 1 : 2;
+
   return (
     <section className="attendance-shell">
       <div className="attendance-bg" />
       <div className="attendance-wrap">
-        <header className="attendance-hero">
-          <p className="attendance-eyebrow">MuscleUp Attendance Engine</p>
+        <header className="attendance-hero dg-rise">
+          <p className="attendance-eyebrow font-num">MuscleUp Attendance Engine</p>
           <h1>출석 체크</h1>
           <p>운동 기록과 사진/영상을 함께 저장하고, 바로 자랑 링크로 공유해보세요.</p>
         </header>
 
         <div className="mobile-top-summary">
           <div className="mobile-summary-badges">
-            <span className="mobile-summary-badge">이번달 운동 {summary?.monthWorkoutCount ?? 0}일</span>
-            <span className="mobile-summary-badge">현재 스트릭 {currentStreak}일</span>
+            <span className="mobile-summary-badge dg-chip">이번달 운동 {summary?.monthWorkoutCount ?? 0}일</span>
+            <span className="mobile-summary-badge dg-chip">현재 스트릭 {currentStreak}일</span>
           </div>
           <div className="mobile-summary-actions">
             <button
               type="button"
-              className="ghost-btn"
+              className="ghost-btn dg-btn dg-btn-steel"
               onClick={() => setShowCalendarCard((prev) => !prev)}
+              aria-expanded={showCalendarCard}
             >
-              {showCalendarCard ? "▲ 캘린더 닫기" : "▼ 캘린더 펼치기"}
+              <ChevronIcon open={showCalendarCard} />
+              {showCalendarCard ? "캘린더 닫기" : "캘린더 펼치기"}
             </button>
             <button
               type="button"
-              className="ghost-btn"
+              className="ghost-btn dg-btn dg-btn-steel"
               onClick={() => setShowInsightCards((prev) => !prev)}
+              aria-expanded={showInsightCards}
             >
-              {showInsightCards ? "▲ 통계 닫기" : "▼ 통계 펼치기"}
+              <ChevronIcon open={showInsightCards} />
+              {showInsightCards ? "통계 닫기" : "통계 펼치기"}
             </button>
           </div>
         </div>
 
         <div className="attendance-grid">
-          <div className={`attendance-card calendar-card mobile-collapsible ${showCalendarCard ? "is-open" : ""}`}>
+          <div className={`attendance-card dg-steel calendar-card mobile-collapsible ${showCalendarCard ? "is-open" : ""}`}>
             <div className="calendar-header">
               <div>
                 <h2>월간 캘린더</h2>
                 <p>운동/휴식/메모를 한눈에 볼 수 있어요.</p>
               </div>
               <div className="calendar-nav">
-                <button onClick={goPrevMonth} className="ghost-btn">이전</button>
-                <span>{titleLabel}</span>
-                <button onClick={goNextMonth} className="ghost-btn">다음</button>
+                <button onClick={goPrevMonth} className="ghost-btn dg-btn dg-btn-steel">이전</button>
+                <span key={monthKey} className="calendar-title font-num dg-pop">{titleLabel}</span>
+                <button onClick={goNextMonth} className="ghost-btn dg-btn dg-btn-steel">다음</button>
               </div>
             </div>
 
-            {loading && <div className="muted">불러오는 중...</div>}
+            {loading && (
+              <div className="muted att-loading">
+                <span className="dg-loading-plates" aria-hidden="true"><i /><i /><i /><i /></span>
+                불러오는 중...
+              </div>
+            )}
             {error && <div className="error-text">{error}</div>}
 
             <div className="calendar-weekdays">
@@ -559,21 +669,23 @@ export default function Attendance() {
               ))}
             </div>
 
-            <div className="calendar-grid">
+            <div className="calendar-grid" key={monthKey}>
               {calendarCells.map((cell, idx) => {
                 if (!cell) return <div key={`empty-${idx}`} className="calendar-cell empty" />;
                 const log = logMap.get(cell.key);
                 const did = log?.didWorkout;
-                const memoIcon = log?.memo?.trim() ? "M" : "";
-                const mediaIcon = (log?.mediaUrls?.length ?? 0) > 0 ? "P" : "";
+                const hasMemo = Boolean(log?.memo?.trim());
+                const hasMedia = (log?.mediaUrls?.length ?? 0) > 0;
                 const isToday = cell.key === todayKey;
                 const isSelectable = Boolean(log);
+                const isSelected = selectedDateKey === cell.key;
                 return (
                   <div
                     key={cell.key}
-                    className={`calendar-cell ${did ? "done" : log ? "rest" : ""} ${isToday ? "today" : ""} ${
-                      isSelectable ? "cursor-pointer" : ""
-                    } ${selectedDateKey === cell.key ? "ring-2 ring-orange-300/60" : ""}`}
+                    className={`calendar-cell dg-rise ${did ? "done" : log ? "rest" : "none"} ${isToday ? "today" : ""} ${
+                      isSelectable ? "cursor-pointer is-selectable" : ""
+                    } ${isSelected ? "selected" : ""}`}
+                    style={{ animationDelay: `${idx * 12}ms` }}
                     onClick={() => {
                       if (isSelectable) {
                         setSelectedDateKey(cell.key);
@@ -581,10 +693,13 @@ export default function Attendance() {
                     }}
                     title={isSelectable ? "기록 조회" : ""}
                   >
-                    <div className="calendar-day">{cell.day}</div>
+                    <div className="calendar-day font-num">{cell.day}</div>
+                    <span className="att-disc" aria-hidden="true">
+                      <i />
+                    </span>
                     <div className="calendar-meta">
-                      <span>{did ? "O" : log ? "R" : ""}</span>
-                      <span>{memoIcon || mediaIcon}</span>
+                      <span className="sr-only">{did ? "운동" : log ? "휴식" : ""}</span>
+                      {hasMemo ? <PencilIcon /> : hasMedia ? <CameraIcon /> : null}
                     </div>
                   </div>
                 );
@@ -593,58 +708,92 @@ export default function Attendance() {
           </div>
 
           <div className={`attendance-side mobile-collapsible ${showInsightCards ? "is-open" : ""}`}>
-            <div className="attendance-card streak-card">
+            <div className="attendance-card dg-steel streak-card">
               <div className="streak-header">
                 <div>
                   <h3>연속 출석</h3>
                   <p>{currentStreak ? `${currentStreak}일 연속 출석 중` : "다시 시작할 시간"}</p>
                 </div>
-                <div className={`streak-flame ${currentStreak ? "live" : "off"}`}><span className="flame-core" /></div>
+                <div className={`streak-plate ${currentStreak ? "live" : "off"}`} aria-hidden="true">
+                  <strong className="font-num">
+                    <CountUp value={currentStreak} />
+                  </strong>
+                  <small className="font-num">DAYS</small>
+                </div>
               </div>
-              <div className="streak-progress">
-                <div className="streak-bar"><div className="streak-fill" style={{ width: `${streakProgress * 100}%` }} /></div>
+              <div className="streak-progress" ref={gaugeRef}>
+                <div
+                  className="streak-gauge"
+                  role="progressbar"
+                  aria-label="다음 보상까지 진행률"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(streakProgress * 100)}
+                >
+                  {Array.from({ length: nextMilestone }, (_, i) => (
+                    <span
+                      key={i}
+                      className={gaugeInView && i < currentStreak ? "on" : ""}
+                      style={{ transitionDelay: `${Math.min(i, 29) * 40}ms` }}
+                    />
+                  ))}
+                </div>
                 <div className="streak-meta"><span>다음 보상: {nextMilestone}일</span><span>이번 달 최고 {bestStreak}일</span></div>
               </div>
             </div>
 
-            <div className="attendance-card summary-card">
-              <h3>이번 달 요약</h3>
-              <div className="summary-row"><span>운동 출석</span><strong>{summary?.monthWorkoutCount ?? 0}일</strong></div>
-              <div className="summary-row"><span>현재 스트릭</span><strong>{currentStreak}일</strong></div>
-              <div className="summary-row"><span>최고 스트릭</span><strong>{bestStreak}일</strong></div>
+            <div className="attendance-card summary-card dg-whiteboard">
+              <h3 className="board-title font-pen">이번 달 요약</h3>
+              <div className="summary-row"><span>운동 출석</span><strong><CountUp value={summary?.monthWorkoutCount ?? 0} />일</strong></div>
+              <div className="summary-row"><span>현재 스트릭</span><strong><CountUp value={currentStreak} />일</strong></div>
+              <div className="summary-row"><span>최고 스트릭</span><strong><CountUp value={bestStreak} />일</strong></div>
             </div>
 
-            <div className="attendance-card weekly-card">
+            <div className="attendance-card dg-steel weekly-card">
               <h3>주간 리포트</h3>
               <div className="weekly-grid">
                 {weekStats.days.map((day, idx) => (
-                  <div key={day.key} className={`weekly-dot ${day.log?.didWorkout ? "active" : ""}`} style={{ animationDelay: `${idx * 0.05}s` }} />
+                  <div key={day.key} className="weekly-day">
+                    <div
+                      className={`weekly-dot ${day.log?.didWorkout ? "active" : ""} ${day.key === todayKey ? "today" : ""}`}
+                      style={{ animationDelay: `${idx * 0.05}s` }}
+                    >
+                      <i />
+                    </div>
+                    <span>{WEEK_LABELS[idx]}</span>
+                  </div>
                 ))}
               </div>
-              <div className="weekly-row"><span>이번 주 출석</span><strong>{weekStats.workoutDays} / 7</strong></div>
+              <div className="weekly-row"><span>이번 주 출석</span><strong className="font-num"><CountUp value={weekStats.workoutDays} duration={600} /> / 7</strong></div>
               <div className="weekly-row"><span>가장 많이 한 운동</span><strong>{weekStats.mostType ? WORKOUT_TYPES.find((item) => item.id === weekStats.mostType)?.label : "-"}</strong></div>
               <div className="weekly-row"><span>평균 강도</span><strong>{weekStats.avgIntensity ? INTENSITIES[Math.round(weekStats.avgIntensity) - 1]?.label : "-"}</strong></div>
             </div>
-            <div className="attendance-card weekly-card">
+            <div className="attendance-card dg-steel weekly-card">
               <h3>주간 연속출석 랭킹</h3>
-              <div className="space-y-2 text-sm">
-                {weeklyRank.length === 0 && <p className="text-white/50">기록 없음</p>}
+              <div className="rank-list">
+                {weeklyRank.length === 0 && <p className="rank-empty">기록 없음</p>}
                 {weeklyRank.map((item, idx) => (
-                  <div key={item.userId} className="flex items-center justify-between">
-                    <span>{idx + 1}. {item.nickname}</span>
-                    <strong>{item.score}일</strong>
+                  <div key={item.userId} className="rank-row dg-rise" style={{ animationDelay: `${idx * 50}ms` }}>
+                    <span className="rank-name">
+                      <span className={`rank-no font-num ${idx === 0 ? "top" : ""}`}>{idx + 1}</span>
+                      {item.nickname}
+                    </span>
+                    <strong className="font-num">{item.score}일</strong>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="attendance-card weekly-card">
+            <div className="attendance-card dg-steel weekly-card">
               <h3>월간 미디어 인증 랭킹</h3>
-              <div className="space-y-2 text-sm">
-                {mediaRank.length === 0 && <p className="text-white/50">기록 없음</p>}
+              <div className="rank-list">
+                {mediaRank.length === 0 && <p className="rank-empty">기록 없음</p>}
                 {mediaRank.map((item, idx) => (
-                  <div key={`m-${item.userId}`} className="flex items-center justify-between">
-                    <span>{idx + 1}. {item.nickname}</span>
-                    <strong>{item.score}회</strong>
+                  <div key={`m-${item.userId}`} className="rank-row dg-rise" style={{ animationDelay: `${idx * 50}ms` }}>
+                    <span className="rank-name">
+                      <span className={`rank-no font-num ${idx === 0 ? "top" : ""}`}>{idx + 1}</span>
+                      {item.nickname}
+                    </span>
+                    <strong className="font-num">{item.score}회</strong>
                   </div>
                 ))}
               </div>
@@ -653,42 +802,42 @@ export default function Attendance() {
         </div>
 
         {selectedLog && selectedDateKey && (
-          <div className="attendance-card mt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">출석 기록 조회</h3>
+          <div key={selectedDateKey} className="attendance-card dg-steel log-view dg-rise space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg font-bold text-chalk">출석 기록 조회</h3>
               <button
                 type="button"
-                className="ghost-btn"
+                className="ghost-btn dg-btn dg-btn-steel"
                 onClick={() => setSelectedDateKey(null)}
               >
                 닫기
               </button>
             </div>
-            <div className="text-sm text-white/70">{selectedDateKey}</div>
+            <div className="font-num text-base text-steel-300">{selectedDateKey}</div>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-white/20 px-3 py-1">
+              <span className={`dg-chip ${selectedLog.didWorkout ? "bg-plate-red text-white" : "bg-steel-700 text-chalk"}`}>
                 상태: {selectedLog.didWorkout ? "운동" : "휴식"}
               </span>
               {selectedLog.workoutIntensity && (
-                <span className="rounded-full border border-orange-400/60 px-3 py-1 text-orange-200">
+                <span className="dg-chip bg-plate-yellow text-black">
                   강도: {selectedLog.workoutIntensity}
                 </span>
               )}
               {(selectedLog.workoutTypes ?? []).map((type) => (
-                <span key={type} className="rounded-full border border-white/20 px-3 py-1">
+                <span key={type} className="dg-chip bg-steel-700 text-chalk">
                   {type}
                 </span>
               ))}
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/90 whitespace-pre-line">
+            <div className="log-memo dg-whiteboard whitespace-pre-line">
               {selectedLog.memo?.trim() || "메모 없음"}
             </div>
             {(selectedLog.mediaUrls?.length ?? 0) > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {(selectedLog.mediaUrls ?? []).map((rawUrl) => {
+                {(selectedLog.mediaUrls ?? []).map((rawUrl, idx) => {
                   const url = withBase(rawUrl);
                   return (
-                    <div key={rawUrl} className="rounded-xl border border-white/10 bg-black/30 overflow-hidden">
+                    <div key={rawUrl} className="dg-well overflow-hidden dg-rise" style={{ animationDelay: `${idx * 50}ms` }}>
                       {isVideo(url) ? (
                         <video src={url} className="w-full h-24 object-cover" controls />
                       ) : (
@@ -702,16 +851,19 @@ export default function Attendance() {
           </div>
         )}
 
-        <div className={`attendance-card action-card ${mobileStep === "share" ? "has-mobile-save-gap" : ""}`}>
+        <div className={`attendance-card dg-steel action-card ${mobileStep === "share" ? "has-mobile-save-gap" : ""}`}>
           <div className="action-header">
             <div>
               <h2>오늘의 운동 체크</h2>
               <p>기록 + 사진/영상까지 남기고 자랑 링크를 만들어보세요.</p>
             </div>
-            <div className={`status-pill ${didWorkout ? "active" : "rest"}`}>{didWorkout ? "운동 완료" : "휴식"}</div>
+            <div key={didWorkout ? "on" : "off"} className={`status-pill dg-chip dg-pop ${didWorkout ? "active" : "rest"}`}>
+              {didWorkout ? "운동 완료" : "휴식"}
+            </div>
           </div>
 
-          <div className="attendance-mobile-steps">
+          <div className="attendance-mobile-steps" style={{ "--i": stepIndex } as CSSProperties}>
+            <span className="step-slider" aria-hidden="true" />
             <button type="button" onClick={() => jumpTo("att-record")} className={`step-btn ${mobileStep === "record" ? "active" : ""}`}>
               1단계 기록
             </button>
@@ -725,9 +877,10 @@ export default function Attendance() {
 
           <div id="att-record" className={`stack-section ${mobileStep !== "record" ? "step-mobile-hidden" : ""}`}>
           <div className="action-row">
-            <div className="toggle-group">
-              <button onClick={() => setDidWorkout(true)} className={`toggle-btn ${didWorkout ? "selected" : ""}`}>운동했다</button>
-              <button onClick={() => setDidWorkout(false)} className={`toggle-btn ${!didWorkout ? "selected" : ""}`}>쉬었다</button>
+            <div className={`toggle-group ${didWorkout ? "" : "is-rest"}`} style={{ "--i": toggleIndex } as CSSProperties}>
+              <span className="toggle-slider" aria-hidden="true" />
+              <button onClick={() => setDidWorkout(true)} className={`toggle-btn ${didWorkout ? "selected" : ""}`} aria-pressed={didWorkout}>운동했다</button>
+              <button onClick={() => setDidWorkout(false)} className={`toggle-btn ${!didWorkout ? "selected" : ""}`} aria-pressed={!didWorkout}>쉬었다</button>
             </div>
             {hasTodayLog && <span className="lock-badge">오늘 기록 있음 (수정 가능)</span>}
           </div>
@@ -736,42 +889,69 @@ export default function Attendance() {
             {WORKOUT_TYPES.map((option) => {
               const active = workoutTypes.includes(option.id);
               return (
-                <button key={option.id} onClick={() => toggleWorkoutType(option.id)} className={`workout-chip ${active ? "active" : ""}`} disabled={!didWorkout}>
-                  <span className="chip-icon">{option.icon}</span>
+                <button
+                  key={option.id}
+                  onClick={() => toggleWorkoutType(option.id)}
+                  className={`workout-chip ${active ? "active" : ""}`}
+                  disabled={!didWorkout}
+                  aria-pressed={active}
+                >
+                  <span className="chip-icon"><WorkoutIcon id={option.id} /></span>
                   <span className="chip-text"><strong>{option.label}</strong><small>{option.hint}</small></span>
+                  <span className="chip-check" aria-hidden="true">{active && <CheckIcon size={14} />}</span>
                 </button>
               );
             })}
           </div>
 
           <div className={`intensity-row ${!didWorkout ? "disabled" : ""}`}>
-            {INTENSITIES.map((option) => (
-              <button key={option.id} onClick={() => setWorkoutIntensity(option.id)} className={`intensity-chip ${workoutIntensity === option.id ? "active" : ""}`} disabled={!didWorkout}>
-                <span className="chip-icon">I</span>
-                <span><strong>{option.label}</strong><small>{option.tag}</small></span>
-              </button>
-            ))}
+            {INTENSITIES.map((option) => {
+              const active = workoutIntensity === option.id;
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => setWorkoutIntensity(option.id)}
+                  className={`intensity-chip ${active ? "active" : ""}`}
+                  disabled={!didWorkout}
+                  aria-pressed={active}
+                >
+                  <span className="power-meter" aria-hidden="true">
+                    {[1, 2, 3].map((level) => (
+                      <i key={level} className={level <= option.power ? "on" : ""} />
+                    ))}
+                  </span>
+                  <span className="chip-text"><strong>{option.label}</strong><small>{option.tag}</small></span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="memo-block">
+          <div className="memo-block memo-board dg-whiteboard">
             <textarea value={memo} onChange={(e) => setMemo(e.target.value)} maxLength={200} rows={3} placeholder="오늘 운동 한 줄 요약" />
             <div className="memo-meta">
-              <span>{memo.length}/200</span>
-              <span className="keyword-tag">보너스 키워드: {keywordMatches.length ? keywordMatches.join(", ") : "-"}</span>
+              <span className="font-num">{memo.length}/200</span>
+              <span className="keyword-tag">
+                보너스 키워드:{" "}
+                {keywordMatches.length
+                  ? keywordMatches.map((keyword) => (
+                      <span key={keyword} className="keyword-chip dg-pop">{keyword}</span>
+                    ))
+                  : "-"}
+              </span>
             </div>
           </div>
 
           <div className="memo-block">
             <textarea value={shareComment} onChange={(e) => setShareComment(e.target.value)} maxLength={280} rows={2} placeholder="공유할 자랑 멘트 (선택)" />
             <div className="memo-meta">
-              <span>{shareComment.length}/280</span>
+              <span className="font-num">{shareComment.length}/280</span>
               <div className="flex flex-wrap gap-2">
                 {SHARE_COMMENT_TEMPLATES.map((template) => (
                   <button
                     key={template}
                     type="button"
                     onClick={() => setShareComment(template)}
-                    className="rounded-full border border-white/20 px-2 py-1 text-xs text-white/70 hover:border-white/40"
+                    className={`template-chip ${shareComment === template ? "active" : ""}`}
                   >
                     {template}
                   </button>
@@ -784,8 +964,8 @@ export default function Attendance() {
 
           <div id="att-media" className={`stack-section ${mobileStep !== "media" ? "step-mobile-hidden" : ""}`}>
           <div className="space-y-3">
-            <p className="text-sm text-white/70">사진/영상 첨부 (최대 10개)</p>
-            <p className="text-xs text-emerald-200/90">사진 없이도 출석 기록과 공유가 가능합니다.</p>
+            <p className="text-sm text-steel-300">사진/영상 첨부 (최대 10개)</p>
+            <p className="text-xs text-emerald-300">사진 없이도 출석 기록과 공유가 가능합니다.</p>
             <UploadDropzone
               onUploaded={(url) => setMediaUrls((prev) => (prev.length >= 10 ? prev : [...prev, url]))}
               accept="image/*,video/*"
@@ -797,9 +977,9 @@ export default function Attendance() {
                 {mediaUrls.map((rawUrl) => {
                   const url = withBase(rawUrl);
                   return (
-                    <div key={rawUrl} className="rounded-xl border border-white/10 bg-black/30 overflow-hidden">
+                    <div key={rawUrl} className="dg-well overflow-hidden dg-plate-in">
                       {isVideo(url) ? <video src={url} className="w-full h-24 object-cover" controls /> : <img src={url} alt="attendance media" className="w-full h-24 object-cover" />}
-                      <button type="button" onClick={() => setMediaUrls((prev) => prev.filter((u) => u !== rawUrl))} className="w-full text-xs py-1 border-t border-white/10 text-red-300">
+                      <button type="button" onClick={() => setMediaUrls((prev) => prev.filter((u) => u !== rawUrl))} className="media-remove">
                         삭제
                       </button>
                     </div>
@@ -813,43 +993,69 @@ export default function Attendance() {
 
           <div id="att-share" className={`stack-section ${mobileStep !== "share" ? "step-mobile-hidden" : ""}`}>
           <div className="action-footer">
-            <div className="reward-preview">
-              <span>예상 EXP</span>
-              <strong>{didWorkout ? `+${estimatedExp}` : "+0"}</strong>
-              <small>스트릭 + 미디어 보너스 포함</small>
+            <div className="att-rack">
+              <div key={`bar-${plateKey}`} className={`att-bar ${plateKey ? "landed" : ""}`} aria-hidden="true">
+                <span className="att-bar-shaft" />
+                <span className="att-bar-stop" />
+                <span className="att-bar-sleeve">
+                  {hasTodayLog ? (
+                    <span
+                      className={`att-plate ${todayDidWorkout ? "red" : "steel"} ${plateKey ? "dg-plate-in" : ""}`}
+                      style={{ "--from": "64px" } as CSSProperties}
+                    >
+                      {todayDidWorkout && <b className="font-num">25</b>}
+                    </span>
+                  ) : (
+                    <span className="att-plate ghost" />
+                  )}
+                  <span className="att-bar-collar" />
+                </span>
+                {plateKey > 0 && hasTodayLog && (
+                  <span className="att-puff">
+                    {Array.from({ length: 8 }, (_, i) => (
+                      <i key={i} style={{ "--a": `${i * 45}deg` } as CSSProperties} />
+                    ))}
+                  </span>
+                )}
+              </div>
+              <div className="reward-preview">
+                <span>예상 EXP</span>
+                <strong className="font-num">{didWorkout ? <>+<CountUp value={estimatedExp} duration={500} /></> : "+0"}</strong>
+                <small>스트릭 + 미디어 보너스 포함</small>
+              </div>
             </div>
-            <button onClick={saveToday} disabled={saving} className="primary-btn section-save-btn">
+            <button onClick={saveToday} disabled={saving} className="primary-btn dg-btn dg-btn-primary section-save-btn">
               {saving ? "저장 중..." : hasTodayLog ? "출석 기록 수정 저장" : "출석 기록 저장"}
             </button>
           </div>
 
           {todayLog && (
             <div className="mt-4 flex flex-wrap gap-3">
-              <button onClick={quickShare} disabled={sharing} className="rounded-xl border border-emerald-400/60 px-4 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10">
+              <button onClick={quickShare} disabled={sharing} className="share-btn dg-btn dg-btn-primary">
                 {sharing ? "공유 중..." : "원클릭 자랑하기"}
               </button>
-              <button onClick={copyShareLink} disabled={sharing} className="rounded-xl border border-orange-400/60 px-4 py-2 text-sm text-orange-200 hover:bg-orange-500/10">
+              <button onClick={copyShareLink} disabled={sharing} className="share-btn dg-btn dg-btn-steel">
                 {sharing ? "생성 중..." : todayLog.shareSlug ? "자랑 링크 복사" : "자랑 링크 만들기"}
               </button>
-              <button onClick={saveInstaImage} className="rounded-xl border border-fuchsia-400/60 px-4 py-2 text-sm text-fuchsia-200 hover:bg-fuchsia-500/10">
+              <button onClick={saveInstaImage} className="share-btn dg-btn dg-btn-steel">
                 인스타용 이미지 저장
               </button>
               {todayLog.shared && (
-                <button onClick={unshareToday} disabled={sharing} className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/70 hover:border-white/40">
+                <button onClick={unshareToday} disabled={sharing} className="share-btn dg-btn dg-btn-steel">
                   공유 해제
                 </button>
               )}
-              <span className="text-xs text-white/60 self-center">응원 {todayLog.cheerCount ?? 0} · 수정 {todayLog.editCount ?? 0}회</span>
+              <span className="share-stats self-center">응원 {todayLog.cheerCount ?? 0} · 수정 {todayLog.editCount ?? 0}회</span>
             </div>
           )}
           </div>
 
           <div className={`mobile-save-bar ${mobileStep === "share" ? "show" : ""}`}>
             <div className="mobile-save-meta">
-              <strong>{didWorkout ? `EXP +${estimatedExp}` : "휴식 모드"}</strong>
+              <strong className="font-num">{didWorkout ? `EXP +${estimatedExp}` : "휴식 모드"}</strong>
               <span>{hasTodayLog ? "오늘 기록 수정" : "오늘 기록 저장"}</span>
             </div>
-            <button onClick={saveToday} disabled={saving} className="primary-btn mobile-save-btn">
+            <button onClick={saveToday} disabled={saving} className="primary-btn dg-btn dg-btn-primary mobile-save-btn">
               {saving ? "저장 중..." : "저장"}
             </button>
           </div>
@@ -857,10 +1063,11 @@ export default function Attendance() {
       </div>
 
       {toast && (
-        <div className={`toast ${toast.type}`}>
+        <div className={`toast ${toast.type} dg-pop`} role="status">
+          <span className="toast-icon">{toast.type === "success" ? <CheckIcon size={18} /> : <CrossIcon size={18} />}</span>
           <div>
             <strong>{toast.message}</strong>
-            {toast.type === "success" && (toast.expEarned ?? 0) > 0 && <span className="toast-exp">EXP +{toast.expEarned}</span>}
+            {toast.type === "success" && (toast.expEarned ?? 0) > 0 && <span className="toast-exp font-num">EXP +{toast.expEarned}</span>}
           </div>
         </div>
       )}

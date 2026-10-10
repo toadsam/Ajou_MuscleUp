@@ -5,6 +5,15 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
 import { crewApi } from "../services/crewApi";
 import type { CrewJoinPolicy, CrewListItem } from "../types/crew";
+import { useCountUp } from "../hooks/useCountUp";
+
+function CountNumber({ value }: { value: number }) {
+  const v = useCountUp(value, { duration: 900 });
+  return <>{Math.round(v)}</>;
+}
+
+// 인기 모임 1~3위 원판 색(노랑 · 회색 · 빨강)
+const MEDAL = ["bg-plate-yellow text-black", "bg-steel-300 text-black", "bg-plate-red text-white"];
 
 type CrewSeed = {
   tier: CharacterTier;
@@ -33,9 +42,9 @@ const seedFromCrew = (crew: CrewListItem): CrewSeed => {
 };
 
 const crewEnergy = (memberCount: number) => {
-  if (memberCount >= 20) return { label: "LEGEND", className: "text-amber-200 bg-amber-500/20 border-amber-300/40" };
-  if (memberCount >= 10) return { label: "HYPE", className: "text-cyan-100 bg-cyan-500/20 border-cyan-300/40" };
-  return { label: "START", className: "text-emerald-100 bg-emerald-500/20 border-emerald-300/40" };
+  if (memberCount >= 20) return { label: "LEGEND", className: "bg-plate-yellow text-black" };
+  if (memberCount >= 10) return { label: "HYPE", className: "bg-plate-red text-white" };
+  return { label: "START", className: "bg-plate-green text-white" };
 };
 
 export default function CrewHub() {
@@ -115,44 +124,42 @@ export default function CrewHub() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-slate-950 pt-24 pb-24 text-white">
-      <div className="pointer-events-none absolute -left-28 top-12 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-24 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
+    <section className="relative min-h-screen overflow-hidden pt-24 pb-24 text-white">
       <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-10">
-        <header className="relative rounded-3xl border border-cyan-200/20 bg-gradient-to-br from-cyan-700/20 via-slate-900/70 to-emerald-700/20 p-5 sm:p-6">
-          <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[11px] font-black tracking-[0.14em] text-cyan-100">
+        <header className="dg-steel relative p-5 sm:p-6">
+          <div className="dg-chip absolute right-6 top-5 bg-steel-700 text-sm text-chalk">
             MuscleUp
           </div>
-          <p className="text-xs tracking-[0.2em] text-cyan-200">CREW HUB</p>
-          <h1 className="mt-2 text-3xl font-black sm:text-4xl">모임 찾기 · 만들기</h1>
-          <p className="mt-2 text-sm text-gray-300">
+          <p className="font-num text-sm font-bold text-plate-yellow">Crew Hub</p>
+          <h1 className="mt-1 text-3xl sm:text-4xl">모임 찾기 · 만들기</h1>
+          <p className="mt-2 text-sm text-steel-300">
             모임을 선택하면 챌린지 전용 화면으로 이동합니다. 캐릭터를 중심으로 성장과 경쟁을 확인하세요.
           </p>
           <div className="mt-4 grid grid-cols-3 gap-2 sm:max-w-xl">
-            <div className="rounded-xl border border-white/10 bg-black/25 p-3">
-              <p className="text-[11px] text-gray-400">내 모임</p>
-              <p className="text-xl font-black text-cyan-100">{joinedGroups.length}</p>
+            <div className="dg-well p-3">
+              <p className="text-xs text-steel-400">내 모임</p>
+              <p className="font-num text-3xl font-black text-plate-yellow"><CountNumber value={joinedGroups.length} /></p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/25 p-3">
-              <p className="text-[11px] text-gray-400">전체 모임</p>
-              <p className="text-xl font-black text-emerald-100">{groups.length}</p>
+            <div className="dg-well p-3">
+              <p className="text-xs text-steel-400">전체 모임</p>
+              <p className="font-num text-3xl font-black text-white"><CountNumber value={groups.length} /></p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/25 p-3">
-              <p className="text-[11px] text-gray-400">참여 인원</p>
-              <p className="text-xl font-black text-amber-100">{totalMembers}</p>
+            <div className="dg-well p-3">
+              <p className="text-xs text-steel-400">참여 인원</p>
+              <p className="font-num text-3xl font-black text-white"><CountNumber value={totalMembers} /></p>
             </div>
           </div>
         </header>
 
-        {error && <p className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+        {error && <p className="dg-pop dg-well border-l-4 border-l-plate-red p-3 text-sm text-red-200">{error}</p>}
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="dg-steel p-4 sm:p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold tracking-wide text-cyan-100">오늘 인기 모임</h2>
-            <span className="text-xs text-gray-400">TOP 3</span>
+            <h2 className="font-display text-lg">오늘 인기 모임</h2>
+            <span className="font-num text-base font-black text-plate-yellow">TOP 3</span>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            {featuredGroups.map((crew) => {
+            {featuredGroups.map((crew, idx) => {
               const energy = crewEnergy(crew.memberCount);
               const avatar = seedFromCrew(crew);
               return (
@@ -160,17 +167,21 @@ export default function CrewHub() {
                   key={crew.id}
                   type="button"
                   onClick={() => navigate(`/crew/${crew.id}/challenges`)}
-                  className="group rounded-2xl border border-white/15 bg-black/25 p-3 text-left transition hover:-translate-y-0.5 hover:border-cyan-300/50"
+                  className="dg-lift dg-rise group rounded-lg border-[3px] border-black bg-steel-900 p-3 text-left shadow-md"
+                  style={{ animationDelay: `${idx * 60}ms` }}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${energy.className}`}>{energy.label}</span>
-                    <span className="text-[11px] text-gray-400">{crew.memberCount}명</span>
+                    <span className="flex items-center gap-2">
+                      <span className={`font-num grid h-7 w-7 place-items-center rounded-full border-2 border-black text-sm font-black ${MEDAL[idx]}`}>{idx + 1}</span>
+                      <span className={`dg-chip text-xs ${energy.className}`}>{energy.label}</span>
+                    </span>
+                    <span className="font-num text-sm font-bold text-steel-300">{crew.memberCount}명</span>
                   </div>
                   <div className="mt-2 flex items-center gap-3">
                     <AvatarRenderer avatarSeed={avatar.seed} tier={avatar.tier} stage={avatar.stage} size={52} />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black">{crew.name}</p>
-                      <p className="truncate text-xs text-gray-300">리더 {crew.ownerNickname}</p>
+                      <p className="truncate text-xs text-steel-300">리더 {crew.ownerNickname}</p>
                     </div>
                   </div>
                 </button>
@@ -181,14 +192,14 @@ export default function CrewHub() {
 
         <div className="grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="space-y-4">
-            <form onSubmit={onCreate} className="rounded-2xl border border-cyan-300/25 bg-cyan-500/10 p-4 space-y-3">
-              <h2 className="text-lg font-bold">새 모임 만들기</h2>
+            <form onSubmit={onCreate} className="dg-steel border-t-[8px] border-t-plate-red p-4 space-y-3">
+              <h2 className="font-display text-lg">새 모임 만들기</h2>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={60}
                 placeholder="모임 이름"
-                className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+                className="dg-well w-full px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow"
               />
               <textarea
                 value={description}
@@ -196,44 +207,44 @@ export default function CrewHub() {
                 rows={3}
                 maxLength={300}
                 placeholder="모임 소개"
-                className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+                className="dg-well w-full px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow"
               />
               <select
                 value={joinPolicy}
                 onChange={(e) => setJoinPolicy(e.target.value as CrewJoinPolicy)}
-                className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+                className="dg-well w-full px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow"
               >
                 <option value="AUTO_APPROVE">가입 방식: 즉시 참여</option>
                 <option value="LEADER_APPROVE">가입 방식: 방장 승인 필요</option>
               </select>
-              <button type="submit" className="w-full rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">
+              <button type="submit" className="dg-btn dg-btn-primary w-full min-h-[44px] text-sm">
                 모임 생성하고 입장
               </button>
             </form>
 
-            <form onSubmit={onJoinByCode} className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
-              <h2 className="text-lg font-bold">초대코드로 참가</h2>
+            <form onSubmit={onJoinByCode} className="dg-steel p-4 space-y-3">
+              <h2 className="font-display text-lg">초대코드로 참가</h2>
               <input
                 value={inviteCodeInput}
                 onChange={(e) => setInviteCodeInput(e.target.value)}
                 maxLength={20}
                 placeholder="예: A1B2C3D4"
-                className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm uppercase"
+                className="dg-well w-full px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow font-num text-lg font-bold uppercase"
               />
-              <button type="submit" className="w-full rounded-lg border border-cyan-300/40 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-200">
+              <button type="submit" className="dg-btn dg-btn-steel dg-chalk-burst w-full min-h-[44px] text-sm">
                 코드로 참여
               </button>
               {joinResultMessage && (
-                <p className="rounded-lg border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                <p className="dg-pop dg-well border-l-[6px] border-l-plate-green px-3 py-2 text-xs font-semibold text-green-200">
                   {joinResultMessage}
                 </p>
               )}
             </form>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <h3 className="text-sm font-semibold text-gray-300">내가 참여 중인 모임</h3>
+            <div className="dg-steel p-4">
+              <h3 className="text-sm font-bold text-steel-200">내가 참여 중인 모임</h3>
               <div className="mt-3 space-y-2">
-                {joinedGroups.length === 0 && <p className="text-xs text-gray-400">아직 참여 중인 모임이 없습니다.</p>}
+                {joinedGroups.length === 0 && <p className="text-xs text-steel-400">아직 참여 중인 모임이 없습니다.</p>}
                 {joinedGroups.map((crew) => {
                   const avatar = seedFromCrew(crew);
                   return (
@@ -241,14 +252,14 @@ export default function CrewHub() {
                       key={crew.id}
                       type="button"
                       onClick={() => navigate(`/crew/${crew.id}/challenges`)}
-                      className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-2 text-left hover:border-cyan-300/40"
+                      className="group flex w-full items-center gap-3 rounded-md border-2 border-black border-l-[6px] border-l-plate-green bg-steel-900 p-2 text-left transition-all duration-150 hover:-translate-y-0.5 hover:bg-steel-800 hover:shadow-sm"
                     >
                       <AvatarRenderer avatarSeed={avatar.seed} tier={avatar.tier} stage={avatar.stage} size={56} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{crew.name}</p>
-                        <p className="truncate text-xs text-gray-400">{crew.ownerNickname} · {crew.memberCount}명</p>
+                        <p className="truncate text-xs text-steel-400">{crew.ownerNickname} · {crew.memberCount}명</p>
                       </div>
-                      <span className="text-xs text-cyan-200">입장</span>
+                      <span className="text-xs font-bold text-plate-yellow transition-transform group-hover:translate-x-0.5">입장</span>
                     </button>
                   );
                 })}
@@ -256,60 +267,74 @@ export default function CrewHub() {
             </div>
           </aside>
 
-          <main className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <main className="dg-steel p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold">모임 탐색</h2>
-              <span className="text-xs text-gray-400">총 {groups.length}개</span>
+              <h2 className="font-display text-lg">모임 탐색</h2>
+              <span className="text-xs text-steel-400">총 {groups.length}개</span>
             </div>
 
-            {loading && <p className="text-sm text-gray-400">불러오는 중...</p>}
-            {!loading && groups.length === 0 && <p className="text-sm text-gray-400">등록된 모임이 없습니다.</p>}
+            {loading && (
+              <p className="flex items-center gap-3 text-sm text-steel-400">
+                <span className="dg-loading-plates" aria-label="불러오는 중">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                불러오는 중...
+              </p>
+            )}
+            {!loading && groups.length === 0 && <p className="text-sm text-steel-400">등록된 모임이 없습니다.</p>}
 
             <div className="grid gap-3 md:grid-cols-2">
-              {groups.map((crew) => {
+              {groups.map((crew, idx) => {
                 const avatar = seedFromCrew(crew);
                 return (
-                  <article key={crew.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <article
+                    key={crew.id}
+                    className={`dg-well dg-rise p-4 transition-transform duration-150 hover:-translate-y-0.5 ${crew.joined ? "border-l-[6px] border-l-plate-green" : ""}`}
+                    style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
+                  >
                     <div className="mb-2 flex items-center justify-between">
-                      <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${crewEnergy(crew.memberCount).className}`}>
+                      <span className={`dg-chip text-xs ${crewEnergy(crew.memberCount).className}`}>
                         {crewEnergy(crew.memberCount).label}
                       </span>
-                      <span className="text-[11px] text-gray-400">{crew.memberCount}명</span>
+                      <span className="font-num text-sm font-bold text-steel-300">{crew.memberCount}명</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <AvatarRenderer avatarSeed={avatar.seed} tier={avatar.tier} stage={avatar.stage} size={70} />
                       <div className="min-w-0">
                         <h3 className="truncate font-bold">{crew.name}</h3>
-                        <p className="text-xs text-gray-400">리더 {crew.ownerNickname}</p>
+                        <p className="text-xs text-steel-400">리더 {crew.ownerNickname}</p>
                       </div>
                     </div>
-                    <p className="mt-3 line-clamp-2 text-sm text-gray-300">{crew.description || "소개가 아직 없습니다."}</p>
-                    <div className="mt-4 flex items-center gap-2">
+                    <p className="mt-3 line-clamp-2 text-sm text-steel-300">{crew.description || "소개가 아직 없습니다."}</p>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => navigate(`/crew/${crew.id}/challenges`)}
-                        className="rounded-lg bg-cyan-400 px-3 py-2 text-xs font-bold text-slate-950"
+                        className="dg-btn dg-btn-primary min-h-[34px] px-3 text-xs"
                       >
                         챌린지 보기
                       </button>
                       <button
                         type="button"
                         onClick={() => navigate(`/crew/${crew.id}/lobby`)}
-                        className="rounded-lg border border-cyan-300/40 bg-cyan-500/10 px-2 py-2 text-xs text-cyan-100"
+                        className="dg-btn dg-btn-steel min-h-[34px] px-2.5 text-xs"
                       >
                         로비
                       </button>
                       <button
                         type="button"
                         onClick={() => navigate(`/crew/${crew.id}/highlights`)}
-                        className="rounded-lg border border-amber-300/40 bg-amber-500/10 px-2 py-2 text-xs text-amber-100"
+                        className="dg-btn dg-btn-steel min-h-[34px] px-2.5 text-xs"
                       >
                         하이라이트
                       </button>
                       {crew.joined ? (
-                        <span className="rounded-lg bg-emerald-500/15 px-2 py-1 text-xs text-emerald-200">참여중</span>
+                        <span className="dg-chip bg-plate-green text-xs text-white">참여중</span>
                       ) : (
-                        <span className="rounded-lg bg-white/10 px-2 py-1 text-xs text-gray-300">참여 전</span>
+                        <span className="dg-chip bg-steel-700 text-xs text-steel-300">참여 전</span>
                       )}
                     </div>
                   </article>

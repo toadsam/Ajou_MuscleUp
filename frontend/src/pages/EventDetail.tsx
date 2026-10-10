@@ -50,30 +50,40 @@ export default function EventDetail() {
   };
 
   if (loading) {
-    return <section className="min-h-screen bg-slate-950 pt-28 px-6 text-white">로딩 중...</section>;
+    return (
+      <section className="flex min-h-screen items-start gap-3 pt-28 px-6 text-white">
+        <span className="dg-loading-plates" aria-label="불러오는 중">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+        로딩 중...
+      </section>
+    );
   }
   if (error || !event) {
-    return <section className="min-h-screen bg-slate-950 pt-28 px-6 text-red-300">{error || "이벤트를 찾을 수 없습니다."}</section>;
+    return <section className="min-h-screen pt-28 px-6 text-red-200">{error || "이벤트를 찾을 수 없습니다."}</section>;
   }
 
   return (
-    <section className="min-h-screen bg-slate-950 pt-28 pb-24 text-white">
+    <section className="min-h-screen pt-28 pb-24 text-white">
       <div className="mx-auto max-w-4xl px-6 lg:px-10 space-y-6">
         <img
           src={event.bannerUrl || event.thumbnailUrl}
           alt={event.title}
-          className="w-full rounded-2xl border border-white/10 object-cover"
+          className="dg-rise w-full rounded-2xl border-[3px] border-black object-cover shadow-xl"
         />
 
-        <div className="space-y-2">
-          <h1 className="text-4xl font-extrabold">{event.title}</h1>
-          <p className="text-gray-300">{event.summary}</p>
-          <p className="text-sm text-gray-400">{formatPeriod(event.startAt, event.endAt)}</p>
-          <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">{event.status}</span>
+        <div className="dg-rise space-y-2" style={{ animationDelay: "80ms" }}>
+          <h1 className="text-4xl">{event.title}</h1>
+          <p className="text-steel-300">{event.summary}</p>
+          <p className="font-num text-base font-semibold text-steel-400">{formatPeriod(event.startAt, event.endAt)}</p>
+          <span className="dg-chip bg-plate-yellow text-sm text-black">{event.status}</span>
         </div>
 
         <article
-          className="prose prose-invert max-w-none rounded-2xl border border-white/10 bg-white/5 p-5"
+          className="dg-steel prose prose-invert max-w-none p-6"
           dangerouslySetInnerHTML={{ __html: event.content }}
         />
 
@@ -81,14 +91,14 @@ export default function EventDetail() {
           <button
             type="button"
             onClick={handleCta}
-            className="rounded-lg bg-cyan-500 px-4 py-2 font-semibold text-slate-950 hover:bg-cyan-400"
+            className="dg-btn dg-btn-primary"
           >
             {event.ctaText}
           </button>
           <button
             type="button"
             onClick={handleShare}
-            className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 font-semibold hover:bg-white/10"
+            className="dg-btn dg-btn-steel"
           >
             링크 복사
           </button>

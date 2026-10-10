@@ -16,6 +16,9 @@ type ReviewEditState = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+// 글쓰기 입력칸: 철판 안쪽의 어두운 칸 + 포커스 시 노란 외곽선
+const FIELD =
+  "dg-well w-full p-3 text-white placeholder:text-steel-500 transition-colors focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow";
 type Protein = { id: number; name: string };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -124,13 +127,30 @@ export default function WriteReview() {
   };
 
   return (
-    <section className="pt-32 p-12 min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
-      <div className="max-w-2xl mx-auto bg-gray-800/70 backdrop-blur-md p-8 rounded-2xl shadow-xl">
-        <h2 className="text-3xl font-bold mb-8 text-center">{editing ? "리뷰 수정" : "리뷰 작성"}</h2>
+    <section className="pt-32 px-5 pb-12 sm:px-12 min-h-screen text-white">
+      <div className="dg-steel dg-rise max-w-2xl mx-auto p-8">
+        <h2 className="font-display text-3xl mb-8 text-center">{editing ? "리뷰 수정" : "리뷰 작성"}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block mb-2">별점</label>
+            <label className="block mb-2 font-semibold text-steel-200">별점</label>
+            <div className="mb-2 flex items-end gap-1.5" aria-hidden>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setForm({ ...form, rating: n })}
+                  className={`w-4 rounded-sm border-2 border-black transition-all duration-150 hover:-translate-y-0.5 ${
+                    n <= form.rating ? "bg-plate-red shadow-sm" : "bg-steel-700"
+                  }`}
+                  style={{ height: 22 + n * 5 }}
+                />
+              ))}
+              <span key={form.rating} className="dg-pop font-num ml-2 text-3xl font-black leading-none text-plate-yellow">
+                {form.rating}
+              </span>
+            </div>
             <input
               type="number"
               name="stars"
@@ -138,50 +158,50 @@ export default function WriteReview() {
               onChange={(e) => setForm({ ...form, rating: Math.min(5, Math.max(1, Number(e.target.value))) })}
               min={1}
               max={5}
-              className="w-full border border-gray-600 rounded p-3 bg-gray-900 text-white focus:outline-none"
+              className={FIELD}
             />
           </div>
 
           <div>
-            <label className="block mb-2">내용</label>
+            <label className="block mb-2 font-semibold text-steel-200">내용</label>
             <textarea
               name="text"
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
-              className="w-full border border-gray-600 rounded p-3 bg-gray-900 text-white h-32 focus:outline-none"
+              className={`${FIELD} h-32`}
               required
             />
           </div>
 
           <div>
-            <label className="block mb-2">제품 선택</label>
+            <label className="block mb-2 font-semibold text-steel-200">제품 선택</label>
             <select
-              className="w-full border border-gray-600 rounded p-3 bg-gray-900 text-white focus:outline-none"
+              className={FIELD}
               value={form.proteinId}
               onChange={(e) => setForm({ ...form, proteinId: Number(e.target.value) })}
               disabled={!hasProtein}
             >
               {proteins.map((p) => (
-                <option key={p.id} value={p.id} className="bg-gray-900">
+                <option key={p.id} value={p.id} className="bg-steel-900">
                   {p.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {err && <p className="text-sm text-red-400">{err}</p>}
+          {err && <p className="dg-pop dg-well border-l-4 border-l-plate-red p-3 text-sm text-red-200">{err}</p>}
 
           <div className="flex gap-3">
             <button
               type="button"
               onClick={() => navigate("/reviews")}
-              className="px-4 py-3 rounded-lg border border-gray-600 text-sm font-semibold text-gray-200 hover:bg-gray-700 transition"
+              className="dg-btn dg-btn-steel px-4 text-sm"
             >
               목록으로
             </button>
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-60"
+              className="dg-btn dg-btn-primary flex-1"
               disabled={submitting}
             >
               {submitting ? "저장 중.." : editing ? "수정하기" : "등록하기"}

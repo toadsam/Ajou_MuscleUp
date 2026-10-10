@@ -1,25 +1,13 @@
-export default function Logo({ isScrolled }: { isScrolled: boolean }) {
+// 득근 로고 — 25kg 원판을 정면에서 본 모양
+export default function Logo() {
   return (
-    <div className="flex items-center space-x-2">
-      {/* 아이콘 (덤벨 모양) */}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 64 64"
-        className="w-10 h-10"
-      >
-        <rect x="14" y="22" width="6" height="20" fill="#ec4899" />
-        <rect x="44" y="22" width="6" height="20" fill="#6366f1" />
-        <rect x="20" y="28" width="24" height="8" fill="#a855f7" />
+    <div className="flex items-center gap-2.5">
+      <svg viewBox="0 0 34 34" className="h-9 w-9" aria-hidden="true">
+        <circle cx="17" cy="17" r="15" fill="#D9302A" stroke="#0E0E10" strokeWidth="3" />
+        <circle cx="17" cy="17" r="9" fill="none" stroke="#0E0E10" strokeWidth="1.5" opacity="0.5" />
+        <circle cx="17" cy="17" r="4.5" fill="#B8BBC0" stroke="#0E0E10" strokeWidth="2" />
       </svg>
-
-      {/* 텍스트 로고 */}
-      <span
-        className={`font-extrabold tracking-widest text-2xl md:text-3xl ${
-          isScrolled ? "text-gray-900" : "text-white"
-        }`}
-      >
-        득근
-      </span>
+      <span className="font-display text-2xl text-chalk md:text-[28px]">득근</span>
     </div>
   );
 }

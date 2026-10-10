@@ -141,7 +141,8 @@ export default function CharacterAvatar({
         height={size}
         viewBox="0 0 200 240"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label="character-avatar"
+        role="img"
+        aria-label={`캐릭터 아바타 · ${tier} · 레벨 ${level}`}
       >
         <g className="background-layer">
           {Array.from({ length: ringCount }).map((_, idx) => (
@@ -379,8 +380,10 @@ export default function CharacterAvatar({
             y={yBottom + 18}
             textAnchor="middle"
             fill={palette.accent}
-            fontSize="14"
-            fontWeight={700}
+            fontSize="16"
+            fontWeight={800}
+            fontFamily="'Big Shoulders Display', 'IBM Plex Sans KR', sans-serif"
+            letterSpacing="0.04em"
           >
             Lv.{level}
           </text>

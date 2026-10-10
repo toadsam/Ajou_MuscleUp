@@ -6,8 +6,10 @@ import "./index.css";
 import App from "./App.tsx";
 import { bootstrapAuthSession, installFetchAuth } from "./lib/installFetchAuth";
 import { queryClient } from "./lib/queryClient";
+import { installChalkBurst } from "./lib/chalkBurst";
 
 installFetchAuth();
+installChalkBurst();
 void bootstrapAuthSession();
 
 function isSafariBrowser() {

@@ -3,6 +3,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
+import Barbell from "../components/gym/Barbell";
+
+// 신청 폼 입력칸: 철판 안쪽의 어두운 칸 + 포커스 시 노란 외곽선
+const FIELD =
+  "dg-well w-full px-4 py-3 text-white placeholder:text-steel-500 transition-colors focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow";
 
 type TrackId = "starter" | "cut" | "growth" | "balance";
 type QuestionId = "experience" | "frequency" | "confidence" | "goal" | "challenge" | "style";
@@ -88,8 +93,8 @@ const programs: ProgramDefinition[] = [
     title: "입문반",
     shortLabel: "Starter",
     eyebrow: "습관 만들기",
-    accent: "from-amber-300 via-orange-300 to-rose-300",
-    ring: "shadow-[0_18px_60px_-30px_rgba(251,146,60,0.6)]",
+    accent: "bg-plate-yellow",
+    ring: "border-t-plate-yellow",
     description: "운동이 낯설어도 괜찮습니다. 루틴을 처음 만들고, 몸을 안전하게 깨우는 단계입니다.",
     target: "운동이 처음이거나, 다시 시작하는 사람",
     summary: "무리 없는 시작, 자세 적응, 기본 루틴 정착에 집중합니다.",
@@ -100,8 +105,8 @@ const programs: ProgramDefinition[] = [
     title: "감량반",
     shortLabel: "Cut",
     eyebrow: "체형 관리",
-    accent: "from-emerald-200 via-teal-200 to-cyan-200",
-    ring: "shadow-[0_18px_60px_-30px_rgba(45,212,191,0.55)]",
+    accent: "bg-plate-green",
+    ring: "border-t-plate-green",
     description: "체중 감량과 체형 정리를 목표로, 유산소와 기초 근력을 균형 있게 설계합니다.",
     target: "살을 빼고 싶고 식단 관리도 함께 잡고 싶은 사람",
     summary: "감량 목표에 맞춘 루틴과 식단 공유 흐름이 중심입니다.",
@@ -112,8 +117,8 @@ const programs: ProgramDefinition[] = [
     title: "성장반",
     shortLabel: "Growth",
     eyebrow: "근력 향상",
-    accent: "from-sky-200 via-indigo-200 to-fuchsia-200",
-    ring: "shadow-[0_18px_60px_-30px_rgba(96,165,250,0.55)]",
+    accent: "bg-plate-blue",
+    ring: "border-t-plate-blue",
     description: "근력 향상과 근육 성장을 목표로, 웨이트 중심 루틴과 기록 관리에 집중합니다.",
     target: "몸을 키우고 싶고 운동 강도를 올릴 준비가 된 사람",
     summary: "점진적 과부하, 운동 기록, 식단 의지가 잘 맞는 반입니다.",
@@ -124,8 +129,8 @@ const programs: ProgramDefinition[] = [
     title: "유지반",
     shortLabel: "Balance",
     eyebrow: "꾸준한 관리",
-    accent: "from-stone-200 via-zinc-100 to-slate-200",
-    ring: "shadow-[0_18px_60px_-30px_rgba(148,163,184,0.45)]",
+    accent: "bg-plate-white",
+    ring: "border-t-plate-white",
     description: "큰 벌크업이나 감량보다, 건강한 생활 패턴을 오래 유지하는 데 초점을 둡니다.",
     target: "지금 몸 상태를 안정적으로 유지하고 싶은 사람",
     summary: "부담 없이 오래 가는 루틴, 컨디션 관리, 밸런스 있는 식단이 핵심입니다.",
@@ -506,66 +511,54 @@ export default function Programs() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#0d0f12] via-[#151826] to-[#0b0d14] px-4 pb-32 pt-24 text-white sm:px-6 lg:px-10">
-      <div className="absolute inset-x-0 top-0 h-[26rem] bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.22),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(45,212,191,0.2),_transparent_32%),linear-gradient(180deg,_rgba(255,255,255,0.65),_rgba(244,239,231,0))]" />
-      <div className="absolute -left-20 top-40 h-72 w-72 rounded-full bg-orange-200/60 blur-3xl" />
-      <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-cyan-200/50 blur-3xl" />
-
+    <section className="relative min-h-screen overflow-hidden px-4 pb-32 pt-24 text-white sm:px-6 lg:px-10">
       <div className="relative mx-auto flex max-w-7xl flex-col gap-8 sm:gap-10">
-        <header className="grid gap-6 rounded-[1.6rem] border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_-40px_rgba(120,53,15,0.45)] backdrop-blur sm:gap-8 sm:rounded-[2rem] sm:p-8 xl:grid-cols-[1.15fr_0.85fr] xl:p-10">
+        <header className="dg-steel grid gap-6 p-5 sm:gap-8 sm:p-8 xl:grid-cols-[1.15fr_0.85fr] xl:p-10">
           <div className="space-y-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-orange-300">Programs</p>
+            <p className="font-num text-base font-bold text-orange-300">Programs</p>
             <div className="space-y-3">
-              <h1 className="max-w-3xl text-2xl font-black tracking-tight text-white sm:text-4xl">
+              <h1 className="max-w-3xl text-2xl text-white sm:text-4xl">
                 설문으로 현재 운동 상태를 파악하고, 나에게 맞는 반을 바로 신청하세요.
               </h1>
-              <p className="max-w-2xl text-sm leading-6 text-gray-300 sm:text-base sm:leading-7 lg:text-lg">
+              <p className="max-w-2xl text-sm leading-6 text-steel-300 sm:text-base sm:leading-7 lg:text-lg">
                 기존 식단방/잡담방을 4개 반 구조로 개편했습니다. 입문, 감량, 성장, 유지 중 어떤 흐름이 맞는지
                 간단한 설문으로 추천하고, 결과를 바탕으로 바로 반 신청까지 이어집니다.
               </p>
             </div>
             <div className="hidden flex-wrap gap-3 text-sm font-semibold sm:flex">
-              <button
-                type="button"
-                onClick={() => jumpTo(surveyRef)}
-                className="rounded-full bg-slate-900/80 px-5 py-3 text-white transition hover:-translate-y-0.5"
-              >
+              <button type="button" onClick={() => jumpTo(surveyRef)} className="dg-btn dg-btn-primary px-5">
                 설문으로 추천받기
               </button>
-              <button
-                type="button"
-                onClick={() => jumpTo(applyRef)}
-                className="rounded-full border border-white/20 bg-white/10 px-5 py-3 text-white transition hover:border-white hover:bg-white/15"
-              >
+              <button type="button" onClick={() => jumpTo(applyRef)} className="dg-btn dg-btn-steel px-5">
                 직접 반 선택하기
               </button>
             </div>
           </div>
 
-          <div className="rounded-[1.25rem] bg-slate-900/80 p-4 text-stone-100 shadow-[0_24px_80px_-45px_rgba(28,25,23,0.9)] sm:rounded-[1.75rem] sm:p-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">Page Flow</p>
+          <div className="dg-whiteboard p-4 sm:p-6">
+            <p className="font-pen text-3xl leading-none">Page Flow</p>
             <div className="mt-4 grid gap-2 sm:hidden">
               {["반 소개", "6문항 설문", "추천 확인", "신청 완료"].map((item, index) => (
-                <div key={item} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200">
-                  <span className="mr-2 text-orange-300">0{index + 1}</span>
+                <div key={item} className="rounded border-2 border-dashed border-board-frame px-3 py-2 text-sm font-semibold">
+                  <span className="font-num mr-2 font-black text-board-red">0{index + 1}</span>
                   {item}
                 </div>
               ))}
             </div>
-            <div className="mt-5 hidden space-y-4 sm:block">
+            <div className="mt-5 hidden space-y-3 sm:block">
               {[
                 ["1. 반 소개 확인", "4개 반의 분위기와 추천 대상을 먼저 확인합니다."],
                 ["2. 6문항 설문 진행", "운동 경험, 빈도, 목표, 스타일을 단계별로 답합니다."],
                 ["3. 추천 반 확인", "추천 이유와 현재 단계 설명을 함께 제공합니다."],
                 ["4. 반 신청 완료", "추천 반 또는 원하는 반을 직접 선택해 신청합니다."],
               ].map(([title, text], index) => (
-                <div key={title} className="flex gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-300 text-sm font-black text-white">
+                <div key={title} className="flex gap-4 rounded border-2 border-dashed border-board-frame p-3">
+                  <div className="font-num flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-board-ink text-base font-black text-board-red">
                     0{index + 1}
                   </div>
                   <div>
-                    <p className="font-semibold text-white">{title}</p>
-                    <p className="mt-1 text-sm leading-6 text-gray-300">{text}</p>
+                    <p className="font-bold">{title}</p>
+                    <p className="mt-1 text-sm leading-6 opacity-80">{text}</p>
                   </div>
                 </div>
               ))}
@@ -574,35 +567,35 @@ export default function Programs() {
         </header>
 
         <section className="sm:hidden">
-          <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
+          <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3">
             {programs.map((program) => {
               const isSelected = selectedTrack === program.id;
               const isRecommended = recommendation?.trackId === program.id;
               return (
                 <article
                   key={`mobile-${program.id}`}
-                  className={`min-w-[86%] snap-start rounded-[1.3rem] border p-4 transition ${
-                    isSelected ? "border-white/30 bg-slate-900/85 text-white" : "border-white/15 bg-white/5 text-white"
+                  className={`min-w-[86%] snap-start rounded-xl border-[3px] border-t-[8px] p-4 shadow-md transition-colors ${program.ring} ${
+                    isSelected ? "border-x-plate-yellow border-b-plate-yellow bg-steel-700" : "border-x-black border-b-black bg-steel-800"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${isSelected ? "text-orange-200" : "text-gray-400"}`}>
+                      <p className={`text-xs font-bold ${isSelected ? "text-orange-300" : "text-steel-400"}`}>
                         {program.eyebrow}
                       </p>
-                      <h2 className="mt-1 text-xl font-black">{program.title}</h2>
+                      <h2 className="font-display mt-1 text-xl">{program.title}</h2>
                     </div>
-                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-gray-100">{program.shortLabel}</span>
+                    <span className="dg-chip bg-steel-900 text-xs text-chalk">{program.shortLabel}</span>
                   </div>
-                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-200">{program.description}</p>
-                  {isRecommended && <p className="mt-2 text-xs font-semibold text-orange-200">설문 추천 반</p>}
+                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-steel-200">{program.description}</p>
+                  {isRecommended && <p className="dg-pop dg-chip mt-2 bg-plate-yellow text-xs text-black">설문 추천 반</p>}
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedTrack(program.id);
                       jumpTo(applyRef);
                     }}
-                    className="mt-4 w-full rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+                    className={`dg-btn mt-4 w-full min-h-[42px] text-sm ${isSelected ? "dg-btn-primary" : "dg-btn-steel"}`}
                   >
                     이 반 선택
                   </button>
@@ -613,40 +606,42 @@ export default function Programs() {
         </section>
 
         <section className="hidden gap-5 sm:grid lg:grid-cols-2 xl:grid-cols-4">
-          {programs.map((program) => {
+          {programs.map((program, idx) => {
             const isSelected = selectedTrack === program.id;
             const isRecommended = recommendation?.trackId === program.id;
             return (
               <article
                 key={program.id}
-                className={`rounded-[1.8rem] border p-6 transition ${
-                  isSelected
-                    ? "border-white/30 bg-slate-900/80 text-white"
-                    : "border-white/70 bg-white/5 text-white"
-                } ${isSelected ? program.ring : "shadow-[0_20px_60px_-40px_rgba(120,53,15,0.25)]"}`}
+                className={`dg-rise dg-lift relative flex flex-col rounded-xl border-[3px] border-t-[10px] p-6 shadow-md ${program.ring} ${
+                  isSelected ? "border-x-plate-yellow border-b-plate-yellow bg-steel-700" : "border-x-black border-b-black bg-steel-800"
+                }`}
+                style={{ animationDelay: `${idx * 60}ms` }}
               >
+                {isSelected && (
+                  <span className="dg-pop absolute -right-2 -top-4 grid h-8 w-8 place-items-center rounded-full border-[3px] border-black bg-plate-yellow text-black shadow-sm" aria-hidden>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12.5l4.5 4.5L19 7.5" />
+                    </svg>
+                  </span>
+                )}
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className={`text-xs font-semibold uppercase tracking-[0.28em] ${isSelected ? "text-orange-200" : "text-gray-400"}`}>
+                    <p className={`text-sm font-bold ${isSelected ? "text-orange-300" : "text-steel-400"}`}>
                       {program.eyebrow}
                     </p>
-                    <h2 className="mt-2 text-2xl font-black">{program.title}</h2>
+                    <h2 className="font-display mt-2 text-2xl">{program.title}</h2>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      isSelected ? "bg-white/10 text-white" : "bg-white/10 text-gray-300"
-                    }`}
-                  >
+                  <span className="dg-chip bg-steel-900 text-sm text-chalk">
                     {program.shortLabel}
                   </span>
                 </div>
 
-                <p className={`mt-4 text-sm leading-6 ${isSelected ? "text-gray-200" : "text-gray-300"}`}>
+                <p className={`mt-4 text-sm leading-6 ${isSelected ? "text-steel-100" : "text-steel-300"}`}>
                   {program.description}
                 </p>
 
-                <div className="mt-5 rounded-2xl border border-current/10 bg-black/5 p-4">
-                  <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${isSelected ? "text-orange-200" : "text-gray-400"}`}>
+                <div className="dg-well mt-5 p-4">
+                  <p className={`text-xs font-bold ${isSelected ? "text-orange-300" : "text-steel-400"}`}>
                     추천 대상
                   </p>
                   <p className="mt-2 text-sm leading-6">{program.target}</p>
@@ -655,20 +650,20 @@ export default function Programs() {
                 <ul className="mt-5 space-y-2 text-sm leading-6">
                   {program.highlights.map((item) => (
                     <li key={item} className="flex gap-3">
-                      <span className={`mt-2 h-2 w-2 rounded-full bg-gradient-to-r ${program.accent}`} />
+                      <span className={`mt-1.5 h-3 w-1.5 flex-none rounded-sm border border-black ${program.accent}`} />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
 
-                <div className="mt-6 flex items-center justify-between gap-3">
+                <div className="mt-auto flex items-center justify-between gap-3 pt-6">
                   <div>
                     {isRecommended && (
-                      <p className={`text-sm font-semibold ${isSelected ? "text-orange-200" : "text-orange-700"}`}>
+                      <p className="dg-pop dg-chip mb-1 bg-plate-yellow text-xs text-black">
                         설문 추천 반
                       </p>
                     )}
-                    <p className={`text-xs ${isSelected ? "text-gray-300" : "text-gray-400"}`}>{program.summary}</p>
+                    <p className={`text-xs ${isSelected ? "text-steel-200" : "text-steel-400"}`}>{program.summary}</p>
                   </div>
                   <button
                     type="button"
@@ -676,11 +671,7 @@ export default function Programs() {
                       setSelectedTrack(program.id);
                       jumpTo(applyRef);
                     }}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                      isSelected
-                        ? "bg-white/15 text-white hover:bg-white/25"
-                        : "bg-slate-900/80 text-white hover:-translate-y-0.5"
-                    }`}
+                    className={`dg-btn min-h-[40px] flex-none px-4 text-sm ${isSelected ? "dg-btn-primary" : "dg-btn-steel"}`}
                   >
                     이 반 선택
                   </button>
@@ -691,30 +682,37 @@ export default function Programs() {
         </section>
 
         <section ref={surveyRef} className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-7 shadow-[0_24px_80px_-45px_rgba(68,64,60,0.35)] backdrop-blur sm:p-8">
+          <div className="dg-steel p-7 sm:p-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">Survey</p>
-                <h3 className="mt-2 text-3xl font-black text-white">반 추천 설문</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-300">
+                <p className="font-num text-base font-bold text-orange-300">Survey</p>
+                <h3 className="font-display mt-1 text-3xl text-white">반 추천 설문</h3>
+                <p className="mt-2 text-sm leading-6 text-steel-300">
                   총 6문항입니다. 답변을 완료하면 바로 추천 반과 이유를 보여줍니다.
                 </p>
               </div>
-              <div className="min-w-44 rounded-2xl bg-slate-900/80 px-4 py-3 text-white">
-                <p className="text-xs uppercase tracking-[0.22em] text-orange-300">Progress</p>
-                <p className="mt-1 text-2xl font-black">{progress}%</p>
+              <div className="dg-well min-w-44 px-4 py-3 text-white">
+                <p className="font-num text-sm font-bold text-orange-300">Progress</p>
+                <p key={progress} className="dg-pop font-num mt-1 text-4xl font-black">{progress}%</p>
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3">
+            {/* 답한 문항 수만큼 바벨에 원판이 끼워진다 */}
+            <div className="dg-well mt-5 px-3 py-2">
+              <Barbell loaded={answeredCount} slots={surveyQuestions.length} height={84} liftable />
+            </div>
+
+            <div className="mt-5 flex gap-3">
               {steps.map((step) => {
                 const isComplete = surveyQuestions
                   .filter((question) => question.step === step)
                   .every((question) => answers[question.id]);
                 return (
                   <div key={step} className="flex-1">
-                    <div className={`h-2 rounded-full ${isComplete ? "bg-slate-900/80" : "bg-white/15"}`} />
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">Step {step}</p>
+                    <div
+                      className={`h-3 rounded-sm border-2 border-black transition-colors duration-300 ${isComplete ? "bg-plate-green" : "bg-steel-900"}`}
+                    />
+                    <p className={`font-num mt-2 text-sm font-bold ${isComplete ? "text-green-300" : "text-steel-400"}`}>Step {step}</p>
                   </div>
                 );
               })}
@@ -724,12 +722,12 @@ export default function Programs() {
               {steps.map((step) => (
                 <div key={step} className="space-y-5">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-100 text-sm font-black text-orange-700">
+                    <div className="font-num flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-black bg-orange-500 text-lg font-black text-black">
                       {step}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">Step {step}</p>
-                      <p className="text-base font-semibold text-white">
+                      <p className="font-num text-sm font-bold text-steel-400">Step {step}</p>
+                      <p className="text-base font-bold text-white">
                         {step === 1 && "운동 기반 파악"}
                         {step === 2 && "목표와 강도 파악"}
                         {step === 3 && "운영 스타일 파악"}
@@ -740,9 +738,9 @@ export default function Programs() {
                   {surveyQuestions
                     .filter((question) => question.step === step)
                     .map((question) => (
-                      <div key={question.id} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+                      <div key={question.id} className="dg-well p-5">
                         <p className="text-lg font-bold text-white">{question.prompt}</p>
-                        <p className="mt-1 text-sm leading-6 text-gray-400">{question.helper}</p>
+                        <p className="mt-1 text-sm leading-6 text-steel-400">{question.helper}</p>
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
                           {question.options.map((option) => {
                             const active = answers[question.id] === option.value;
@@ -750,15 +748,30 @@ export default function Programs() {
                               <button
                                 key={option.value}
                                 type="button"
+                                aria-pressed={active}
                                 onClick={() => handleAnswer(question.id, option.value)}
-                                className={`rounded-[1.25rem] border px-4 py-4 text-left transition ${
+                                className={`dg-chalk-burst rounded-md border-[3px] px-4 py-4 text-left transition-all duration-100 ${
                                   active
-                                    ? "border-white/30 bg-slate-900/80 text-white"
-                                    : "border-white/10 bg-white/5 text-gray-200 hover:border-white/30"
+                                    ? "translate-y-[3px] border-plate-yellow bg-steel-700 text-white shadow-none"
+                                    : "border-black bg-steel-800 text-steel-200 shadow hover:-translate-y-0.5 hover:shadow-md"
                                 }`}
                               >
-                                <p className="font-semibold">{option.label}</p>
-                                <p className={`mt-1 text-sm leading-6 ${active ? "text-gray-200" : "text-gray-400"}`}>
+                                <p className="flex items-center gap-2 font-bold">
+                                  <span
+                                    aria-hidden
+                                    className={`grid h-5 w-5 flex-none place-items-center rounded-full border-2 border-black ${
+                                      active ? "dg-pop bg-plate-yellow text-black" : "bg-steel-900"
+                                    }`}
+                                  >
+                                    {active && (
+                                      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M5 12.5l4.5 4.5L19 7.5" />
+                                      </svg>
+                                    )}
+                                  </span>
+                                  {option.label}
+                                </p>
+                                <p className={`mt-1 text-sm leading-6 ${active ? "text-steel-200" : "text-steel-400"}`}>
                                   {option.hint}
                                 </p>
                               </button>
@@ -773,18 +786,18 @@ export default function Programs() {
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-7 text-white shadow-[0_24px_80px_-45px_rgba(28,25,23,0.85)] sm:p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">Result</p>
-              <h3 className="mt-2 text-3xl font-black">추천 반 결과</h3>
+            <div className="dg-steel p-7 text-white sm:p-8">
+              <p className="font-num text-base font-bold text-orange-300">Result</p>
+              <h3 className="font-display mt-1 text-3xl">추천 반 결과</h3>
 
               {recommendation ? (
                 <>
-                  <div className="mt-6 rounded-[1.5rem] bg-white/6 p-5">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-200">추천 반</p>
-                    <div className="mt-3 flex items-end justify-between gap-4">
+                  <div key={recommendation.trackId} className="dg-pop dg-well mt-6 border-l-[8px] border-l-plate-yellow p-5">
+                    <p className="text-sm font-bold text-orange-300">추천 반</p>
+                    <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
                       <div>
-                        <p className="text-3xl font-black text-white">{trackLookup[recommendation.trackId].title}</p>
-                        <p className="mt-1 text-sm text-gray-300">{recommendation.readiness}</p>
+                        <p className="font-display text-3xl text-white">{trackLookup[recommendation.trackId].title}</p>
+                        <p className="mt-1 text-sm text-steel-300">{recommendation.readiness}</p>
                       </div>
                       <button
                         type="button"
@@ -792,7 +805,7 @@ export default function Programs() {
                           setSelectedTrack(recommendation.trackId);
                           jumpTo(applyRef);
                         }}
-                        className="rounded-full bg-orange-300 px-4 py-2 text-sm font-semibold text-stone-950 transition hover:bg-orange-200"
+                        className="dg-btn dg-btn-primary min-h-[42px] px-4 text-sm"
                       >
                         추천 반으로 신청
                       </button>
@@ -800,30 +813,35 @@ export default function Programs() {
                   </div>
 
                   <div className="mt-5 space-y-3">
-                    {recommendation.reasons.map((reason) => (
-                      <div key={reason} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-gray-200">
+                    {recommendation.reasons.map((reason, idx) => (
+                      <div
+                        key={reason}
+                        className="dg-rise flex gap-3 rounded border-2 border-black bg-steel-800 p-4 text-sm leading-6 text-steel-200"
+                        style={{ animationDelay: `${idx * 70}ms` }}
+                      >
+                        <span className="font-num text-lg font-black leading-6 text-plate-yellow">{idx + 1}</span>
                         {reason}
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-200">코칭 포인트</p>
-                    <p className="mt-2 text-sm leading-6 text-gray-300">{recommendation.coachingPoint}</p>
+                  <div className="dg-whiteboard mt-5 p-5">
+                    <p className="font-pen text-2xl leading-none">코칭 포인트</p>
+                    <p className="mt-2 text-sm font-semibold leading-6">{recommendation.coachingPoint}</p>
                   </div>
                 </>
               ) : (
-                <div className="mt-6 rounded-[1.5rem] border border-dashed border-white/15 bg-white/5 p-6 text-sm leading-6 text-gray-300">
+                <div className="dg-well mt-6 border-dashed p-6 text-sm leading-6 text-steel-300">
                   설문 6문항에 모두 답하면 추천 반과 이유를 바로 보여줍니다. 설문 전에도 아래 신청 영역에서 직접 반을
                   선택할 수 있습니다.
                 </div>
               )}
             </div>
 
-            <div className="rounded-[2rem] border border-white/10 bg-white/5 p-7 shadow-[0_24px_80px_-45px_rgba(68,64,60,0.35)] sm:p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-gray-400">UI Text</p>
-              <h3 className="mt-2 text-2xl font-black text-white">프로젝트에 바로 넣을 문구</h3>
-              <div className="mt-5 space-y-5 text-sm leading-6 text-gray-300">
+            <div className="dg-steel p-7 sm:p-8">
+              <p className="font-num text-base font-bold text-steel-400">UI Text</p>
+              <h3 className="font-display mt-1 text-2xl text-white">프로젝트에 바로 넣을 문구</h3>
+              <div className="mt-5 space-y-5 text-sm leading-6 text-steel-300">
                 <div>
                   <p className="font-semibold text-white">상단 소개 문구</p>
                   <p>설문으로 현재 운동 상태를 파악하고, 나에게 맞는 반을 추천받아 바로 신청해보세요.</p>
@@ -849,18 +867,18 @@ export default function Programs() {
         </section>
 
         <section ref={applyRef} className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 p-7 text-white shadow-[0_24px_80px_-45px_rgba(28,25,23,0.85)] sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">Apply</p>
-            <h3 className="mt-2 text-3xl font-black">반 신청</h3>
-            <p className="mt-3 text-sm leading-6 text-gray-300">
+          <div className="dg-steel p-7 text-white sm:p-8">
+            <p className="font-num text-base font-bold text-orange-300">Apply</p>
+            <h3 className="font-display mt-1 text-3xl">반 신청</h3>
+            <p className="mt-3 text-sm leading-6 text-steel-300">
               추천 반을 그대로 신청해도 되고, 운영 방향을 보고 원하는 반을 직접 선택해도 됩니다.
             </p>
 
-            <div className="mt-6 rounded-[1.5rem] bg-white/6 p-5">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-200">현재 선택한 반</p>
-              <p className="mt-2 text-3xl font-black">{selectedProgram.title}</p>
-              <p className="mt-3 text-sm leading-6 text-gray-300">{selectedProgram.description}</p>
-              <div className="mt-5 space-y-2 text-sm text-gray-200">
+            <div key={selectedTrack} className={`dg-pop dg-well mt-6 border-t-[8px] p-5 ${selectedProgram.ring}`}>
+              <p className="text-sm font-bold text-orange-300">현재 선택한 반</p>
+              <p className="font-display mt-2 text-3xl">{selectedProgram.title}</p>
+              <p className="mt-3 text-sm leading-6 text-steel-300">{selectedProgram.description}</p>
+              <div className="mt-5 space-y-2 text-sm text-steel-200">
                 <p>추천 대상: {selectedProgram.target}</p>
                 <p>운영 포인트: {selectedProgram.summary}</p>
               </div>
@@ -871,15 +889,19 @@ export default function Programs() {
                 <button
                   key={program.id}
                   type="button"
+                  aria-pressed={selectedTrack === program.id}
                   onClick={() => setSelectedTrack(program.id)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
+                  className={`rounded-md border-[3px] px-4 py-4 text-left transition-all duration-100 ${
                     selectedTrack === program.id
-                      ? "border-orange-300 bg-orange-300 text-stone-950"
-                      : "border-white/10 bg-white/5 text-white hover:border-white/25"
+                      ? "translate-y-[3px] border-black bg-plate-yellow text-black shadow-none"
+                      : "border-black bg-steel-800 text-white shadow hover:-translate-y-0.5 hover:shadow-md"
                   }`}
                 >
-                  <p className="font-semibold">{program.title}</p>
-                  <p className={`mt-1 text-sm leading-6 ${selectedTrack === program.id ? "text-gray-200" : "text-gray-300"}`}>
+                  <p className="flex items-center gap-2 font-bold">
+                    <span aria-hidden className={`h-4 w-1.5 rounded-sm border border-black ${program.accent}`} />
+                    {program.title}
+                  </p>
+                  <p className={`mt-1 text-sm leading-6 ${selectedTrack === program.id ? "text-black/75" : "text-steel-300"}`}>
                     {program.summary}
                   </p>
                 </button>
@@ -887,27 +909,27 @@ export default function Programs() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="rounded-[2rem] border border-white/10 bg-white/5 p-7 shadow-[0_24px_80px_-45px_rgba(68,64,60,0.35)] backdrop-blur sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-300">Application Form</p>
-            <h3 className="mt-2 text-3xl font-black text-white">신청 정보를 입력하세요</h3>
-            <p className="mt-3 text-sm leading-6 text-gray-300">
+          <form onSubmit={handleSubmit} className="dg-steel p-7 sm:p-8">
+            <p className="font-num text-base font-bold text-orange-300">Application Form</p>
+            <h3 className="font-display mt-1 text-3xl text-white">신청 정보를 입력하세요</h3>
+            <p className="mt-3 text-sm leading-6 text-steel-300">
               설문 결과는 추천 근거로만 사용됩니다. 최종 신청 반은 아래에서 직접 선택한 값으로 접수됩니다.
             </p>
 
             <div className="mt-6 space-y-4">
-              <label className="block text-sm font-semibold text-gray-200">
+              <label className="block text-sm font-semibold text-steel-200">
                 이름
                 <input
                   name="name"
                   required
                   value={form.name}
                   onChange={handleFormChange}
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-white/40"
+                  className={`mt-2 ${FIELD}`}
                   placeholder="홍길동"
                 />
               </label>
 
-              <label className="block text-sm font-semibold text-gray-200">
+              <label className="block text-sm font-semibold text-steel-200">
                 이메일
                 <input
                   type="email"
@@ -915,12 +937,12 @@ export default function Programs() {
                   required
                   value={form.email}
                   onChange={handleFormChange}
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-white/40"
+                  className={`mt-2 ${FIELD}`}
                   placeholder="you@example.com"
                 />
               </label>
 
-              <label className="block text-sm font-semibold text-gray-200">
+              <label className="block text-sm font-semibold text-steel-200">
                 한 줄 목표
                 <textarea
                   name="personalGoal"
@@ -928,52 +950,49 @@ export default function Programs() {
                   value={form.personalGoal}
                   onChange={handleFormChange}
                   rows={4}
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-white/40"
+                  className={`mt-2 ${FIELD}`}
                   placeholder="예: 3개월 동안 주 3회 운동 습관을 만들고 체지방을 줄이고 싶어요."
                 />
               </label>
 
-              <label className="block text-sm font-semibold text-gray-200">
+              <label className="block text-sm font-semibold text-steel-200">
                 참여 다짐
                 <input
                   name="commitment"
                   required
                   value={form.commitment}
                   onChange={handleFormChange}
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-white/40"
+                  className={`mt-2 ${FIELD}`}
                   placeholder="예: 주 3회 이상 참여하며 운동 기록을 남길게요."
                 />
               </label>
             </div>
 
-            <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">신청 요약</p>
-              <div className="mt-3 space-y-2 text-sm leading-6 text-gray-300">
+            <div className="dg-whiteboard mt-6 p-5">
+              <p className="font-pen text-2xl leading-none">신청 요약</p>
+              <div className="mt-3 space-y-2 text-sm leading-6">
                 <p>
-                  최종 신청 반: <span className="font-semibold text-white">{selectedProgram.title}</span>
+                  최종 신청 반: <span className="font-bold text-board-red">{selectedProgram.title}</span>
                 </p>
                 <p>
                   설문 추천 반:{" "}
-                  <span className="font-semibold text-white">
+                  <span className="font-bold text-board-blue">
                     {recommendation ? trackLookup[recommendation.trackId].title : "아직 없음"}
                   </span>
                 </p>
                 <p>
                   안내 문구:{" "}
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold">
                     추천 반으로 바로 신청하거나, 원하는 반을 직접 골라 참여할 수 있습니다.
                   </span>
                 </p>
               </div>
             </div>
 
-            {error && <p className="mt-4 text-sm font-semibold text-red-600">{error}</p>}
-            {submitted && <p className="mt-4 text-sm font-semibold text-emerald-700">신청이 접수되었습니다.</p>}
+            {error && <p className="dg-pop dg-well mt-4 border-l-4 border-l-plate-red p-3 text-sm font-semibold text-red-200">{error}</p>}
+            {submitted && <p className="dg-pop mt-4 text-sm font-semibold text-green-300">신청이 접수되었습니다.</p>}
 
-            <button
-              type="submit"
-              className="mt-6 w-full rounded-full bg-slate-900/80 px-5 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5"
-            >
+            <button type="submit" className="dg-btn dg-btn-primary mt-6 w-full min-h-[56px] text-base">
               {selectedProgram.title} 신청하기
             </button>
           </form>
@@ -981,19 +1000,11 @@ export default function Programs() {
       </div>
 
       <div className="programs-mobile-action-dock fixed inset-x-0 bottom-4 z-40 px-4 sm:hidden">
-        <div className="mx-auto flex max-w-md gap-3 rounded-2xl border border-white/15 bg-[#070b17]/90 p-2 shadow-[0_16px_44px_-24px_rgba(0,0,0,0.9)] backdrop-blur">
-          <button
-            type="button"
-            onClick={() => jumpTo(surveyRef)}
-            className="flex-1 rounded-xl bg-fuchsia-500 px-4 py-3 text-sm font-bold text-white"
-          >
+        <div className="mx-auto flex max-w-md gap-3 rounded-lg border-[3px] border-black bg-steel-800 p-2 shadow-xl">
+          <button type="button" onClick={() => jumpTo(surveyRef)} className="dg-btn dg-btn-primary flex-1 text-sm">
             설문 이동
           </button>
-          <button
-            type="button"
-            onClick={() => jumpTo(applyRef)}
-            className="flex-1 rounded-xl border border-cyan-300/40 bg-cyan-500/20 px-4 py-3 text-sm font-bold text-cyan-100"
-          >
+          <button type="button" onClick={() => jumpTo(applyRef)} className="dg-btn dg-btn-steel flex-1 text-sm">
             신청 이동
           </button>
         </div>

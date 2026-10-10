@@ -304,6 +304,8 @@ export default function Lounge() {
   const [isPortraitMobile, setIsPortraitMobile] = useState(false);
   const [showMobileMinimap, setShowMobileMinimap] = useState(true);
   const [showMobileHudDetails, setShowMobileHudDetails] = useState(false);
+  // 표현용: 데스크톱 HUD 의 디버그성 칩(핑·시프트·프리셋·이동 모드) 접기
+  const [showHudDebug, setShowHudDebug] = useState(false);
   const [selectedNpc, setSelectedNpc] = useState<Npc | null>(null);
   const [hoveredNpc, setHoveredNpc] = useState<Npc | null>(null);
   const [emoteMap, setEmoteMap] = useState<Record<string, EmoteEvent>>({});
@@ -1412,8 +1414,10 @@ export default function Lounge() {
 
   const mapBackground = useMemo(
     () => ({
+      // 헬스장 뒷벽: 단색 철판 벽 + 패널 이음매
+      backgroundColor: "#1f2023",
       backgroundImage:
-        "linear-gradient(180deg, rgba(11,18,32,0.94) 0%, rgba(12,25,44,0.96) 42%, rgba(19,37,58,0.98) 63%, rgba(9,15,28,0.99) 100%), radial-gradient(circle at 78% 18%, rgba(56,189,248,0.2), transparent 42%), radial-gradient(circle at 24% 9%, rgba(45,212,191,0.22), transparent 34%)",
+        "repeating-linear-gradient(90deg, transparent 0 237px, #18181b 237px 240px)",
     }),
     []
   );
@@ -2009,13 +2013,30 @@ export default function Lounge() {
         }
       : null;
 
+  // 표현용 파생값: E 키가 실제로 반응할 대상(가까운 쪽)만 하이라이트한다. 로직은 onInteract 와 같은 기준.
+  const interactFocus: "npc" | "equipment" | null = (() => {
+    if (!nearestNpc) return nearestEquipment ? "equipment" : null;
+    if (!nearestEquipment || !localPosition) return "npc";
+    const npcDist = Math.hypot(localPosition.x - nearestNpc.x, localPosition.y - nearestNpc.y);
+    const eqDist = Math.hypot(
+      localPosition.x - (nearestEquipment.x + nearestEquipment.w / 2),
+      localPosition.y - (nearestEquipment.y + nearestEquipment.h / 2)
+    );
+    return npcDist <= eqDist ? "npc" : "equipment";
+  })();
+  const nearEquipmentId = interactFocus === "equipment" ? nearestEquipment?.id ?? null : null;
+  const nearNpcId = interactFocus === "npc" ? nearestNpc?.id ?? null : null;
+  const hudDebugOpen = isMobile ? showMobileHudDetails : showHudDebug;
+  const pingTone = pingMs === null ? "" : pingMs < 120 ? "hud-ping-ok" : pingMs < 250 ? "hud-ping-mid" : "hud-ping-bad";
+  const sidebarTabIndex = Math.max(0, ["players", "profile", "equipment", "chat"].indexOf(sidebarTab));
+
   const tabPanelAnimClass = `transform transition-all duration-200 ${tabEntering ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`;
   const mobileControlsRaised =
     isMobile && ((isImmersiveFullscreen && sidebarTab === "chat") || Boolean(interactionSubject));
 
   return (
     <section
-      className={`${isImmersiveFullscreen ? "p-0" : isMobile ? "pt-20 pb-8 px-3" : "pt-28 pb-16 px-5 md:px-10"} bg-gradient-to-br from-slate-950 via-gray-950 to-black min-h-screen text-white lounge-root`}
+      className={`${isImmersiveFullscreen ? "p-0" : isMobile ? "pt-20 pb-8 px-3" : "pt-28 pb-16 px-5 md:px-10"} dg-rubber min-h-screen text-chalk lounge-root`}
       data-quality={movementQuality}
     >
       <div
@@ -2024,10 +2045,10 @@ export default function Lounge() {
       >
         {!isImmersiveFullscreen && (
           <header className="flex flex-col gap-3">
-            <p className="text-xs uppercase tracking-[0.4em] text-emerald-300">
+            <p className="dg-chip w-fit bg-plate-red text-xs text-white">
               라운지
             </p>
-            <h1 className="text-3xl md:text-4xl font-extrabold">
+            <h1 className="text-3xl md:text-4xl">
               2D 운동 라운지
             </h1>
             <p className="text-gray-300">
@@ -2036,45 +2057,49 @@ export default function Lounge() {
           </header>
         )}
 
-        {loading && <div className="text-gray-300">라운지 연결을 준비 중입니다...</div>}
-        {error && <div className="text-rose-300">{error}</div>}
+        {loading && (
+          <div className="flex items-center gap-3 text-gray-300">
+            <span className="dg-loading-plates" aria-label="불러오는 중"><i /><i /><i /><i /></span>
+            라운지 연결을 준비 중입니다...
+          </div>
+        )}
+        {error && <div className="dg-well border-l-4 border-l-plate-red px-3 py-2 text-rose-300">{error}</div>}
 
         <div className={`grid ${isImmersiveFullscreen ? "grid-cols-1 gap-0 h-full" : "lg:grid-cols-[1.4fr,0.6fr] gap-6"} lounge-main-grid`}>
           <div className="space-y-4">
             {!isImmersiveFullscreen && !isMobile && (
               <div className="flex items-center justify-between text-sm text-gray-300">
-                <span>
-                  상태:{" "}
+                <span className="flex items-center gap-2">
                   <span
-                    className={`font-semibold ${
-                      connected ? "text-emerald-300" : "text-rose-300"
+                    className={`dg-chip text-xs ${
+                      connected ? "bg-plate-green text-white" : "bg-plate-red text-white"
                     }`}
                   >
                     {connected ? "연결됨" : "연결 끊김"}
                   </span>
-                </span>
-                <div className="flex items-center gap-3 text-xs text-gray-400">
-                  <span>
+                  <span className="text-xs text-gray-400">
                     {character
                       ? `Lv.${character.level} ${character.tier} | 단계 ${character.evolutionStage}`
                       : "캐릭터 로딩 중..."}
                   </span>
-                  <span className="text-[10px] text-white/60">
+                </span>
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <span className="font-num text-[11px] text-gray-500">
                     {pingMs !== null ? `핑 ${pingMs}ms` : "핑 확인 중..."}
                   </span>
-                  <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1">
+                  <div className="lounge-ctl gap-1 px-1 py-0.5 text-[11px]">
                     <button
                       onClick={() => setZoom((prev) => clampZoom(prev - 0.1))}
                       aria-label="축소"
-                      className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
+                      className="rounded px-2 py-0.5 font-num text-sm font-black hover:bg-steel-600 active:translate-y-px"
                     >
                       -
                     </button>
-                    <span className="text-[10px] text-white/70">{Math.round(zoom * 100)}%</span>
+                    <span className="font-num text-[12px] text-gray-300">{Math.round(zoom * 100)}%</span>
                     <button
                       onClick={() => setZoom((prev) => clampZoom(prev + 0.1))}
                       aria-label="확대"
-                      className="px-2 py-1 text-[10px] font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 rounded"
+                      className="rounded px-2 py-0.5 font-num text-sm font-black hover:bg-steel-600 active:translate-y-px"
                     >
                       +
                     </button>
@@ -2082,16 +2107,16 @@ export default function Lounge() {
                   <button
                     onClick={() => setShowHelp((prev) => !prev)}
                     aria-label="도움말 토글"
-                    className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                    className="lounge-ctl text-[11px]"
                   >
                     ?
                   </button>
-                    <label className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/70">
+                    <label className="lounge-ctl text-[11px] text-gray-300">
                     물리
                     <select
                       value={movementPreset}
                       onChange={(event) => setMovementPreset(event.target.value as MovementPresetKey)}
-                      className="ml-2 rounded bg-slate-900/90 px-1 py-0.5 text-[10px] text-white focus-visible:outline-none"
+                      className="ml-1 px-1 py-0.5 text-[11px]"
                       aria-label="이동 프리셋"
                     >
                       <option value="classic">클래식</option>
@@ -2110,7 +2135,7 @@ export default function Lounge() {
                       }
                     }}
                     aria-label="전체화면 토글"
-                    className="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                    className="lounge-ctl text-[11px]"
                   >
                     {isFullscreen ? "전체화면 종료" : "전체화면"}
                   </button>
@@ -2130,31 +2155,31 @@ export default function Lounge() {
                       void shell.requestFullscreen().catch(() => {});
                     }
                   }}
-                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] text-white/85"
+                  className="lounge-ctl px-3 py-1.5 text-[11px]"
                 >
                   전체화면
                 </button>
                 <button
                   onClick={() => setShowHelp((prev) => !prev)}
-                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] text-white/75"
+                  className="lounge-ctl px-3 py-1.5 text-[11px]"
                 >
                   도움말
                 </button>
-                <span className={`rounded-full border px-3 py-1.5 ${connected ? "border-emerald-300/30 text-emerald-200" : "border-rose-300/30 text-rose-200"}`}>
+                <span className={`dg-chip py-1 text-[11px] text-white ${connected ? "bg-plate-green" : "bg-plate-red"}`}>
                   {connected ? "연결됨" : "연결 끊김"} {pingMs !== null ? `| ${pingMs}ms` : ""}
                 </span>
               </div>
             )}
 
             {!isImmersiveFullscreen && !isMobile && (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-3">
+            <div className="dg-steel space-y-3 px-5 py-4">
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="text-white/70">소셜</span>
+                <span className="font-display text-sm text-gray-300">소셜</span>
                 {EMOTES.map((emote) => (
                   <button
                     key={emote}
                     onClick={() => sendEmote(emote)}
-                    className="rounded-md border border-white/10 bg-black/25 px-2 py-1 text-[11px] text-cyan-100 hover:bg-cyan-500/20"
+                    className="lounge-ctl font-num text-[13px] uppercase"
                   >
                     {emote}
                   </button>
@@ -2163,7 +2188,7 @@ export default function Lounge() {
                   <button
                     key={sticker}
                     onClick={() => sendSticker(sticker)}
-                    className="rounded-md border border-white/10 bg-black/25 px-2 py-1 text-sm hover:bg-emerald-500/20"
+                    className="lounge-ctl px-2 py-0.5 text-sm"
                   >
                     {sticker}
                   </button>
@@ -2172,9 +2197,7 @@ export default function Lounge() {
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <button
                   onClick={() => setVoiceEnabled((prev) => !prev)}
-                  className={`rounded-md border px-2 py-1 ${
-                    voiceEnabled ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-100" : "border-white/10 bg-black/25 text-white/70"
-                  }`}
+                  className={`lounge-ctl ${voiceEnabled ? "lounge-ctl-on" : ""}`}
                 >
                   {voiceEnabled ? "보이스 켜짐" : "보이스 꺼짐"}
                 </button>
@@ -2185,11 +2208,11 @@ export default function Lounge() {
                   onTouchStart={() => setVoicePtT(true)}
                   onTouchEnd={() => setVoicePtT(false)}
                   disabled={!voiceEnabled}
-                  className="rounded-md border border-white/10 bg-black/25 px-2 py-1 text-white/80 disabled:opacity-40"
+                  className={`lounge-ctl ${voicePtT && voiceEnabled ? "lounge-ctl-danger" : ""}`}
                 >
                   누르고 말하기
                 </button>
-                <span className="text-white/60">
+                <span className="text-gray-400">
                   보이스:{" "}
                   {{
                     idle: "대기",
@@ -2198,12 +2221,12 @@ export default function Lounge() {
                     error: "오류",
                   }[voiceStatus]}
                 </span>
-                <label className="rounded-md border border-white/10 bg-black/25 px-2 py-1 text-white/70">
+                <label className="lounge-ctl text-gray-300">
                   품질
                   <select
                     value={movementQuality}
                     onChange={(event) => setMovementQuality(event.target.value as "high" | "balanced" | "performance")}
-                    className="ml-2 rounded bg-slate-900/90 px-1 py-0.5 text-[10px] text-white"
+                    className="ml-1 px-1 py-0.5 text-[11px]"
                   >
                     <option value="high">높음</option>
                     <option value="balanced">균형</option>
@@ -2213,7 +2236,7 @@ export default function Lounge() {
                 {followingSocketId && (
                   <button
                     onClick={() => setFollowingSocketId(null)}
-                    className="rounded-md border border-amber-300/50 bg-amber-400/20 px-2 py-1 text-amber-100"
+                    className="lounge-ctl lounge-ctl-warn"
                   >
                     따라가기 중지
                   </button>
@@ -2230,11 +2253,11 @@ export default function Lounge() {
                       finishedMs: null,
                     })
                   }
-                  className="rounded-md border border-indigo-300/50 bg-indigo-500/20 px-2 py-1 text-indigo-100"
+                  className="dg-btn dg-btn-primary min-h-0 px-3 py-1 text-xs"
                 >
                   타임어택 시작
                 </button>
-                <span className="text-white/70">
+                <span className="font-num text-[13px] text-gray-300">
                   {miniGame.active
                     ? `남은 시간 ${Math.ceil(miniTimeLeftMs / 1000)}초 | 코인 ${Object.keys(miniGame.collectedIds).length}/${miniGameCoins.length}`
                     : miniGame.finishedMs
@@ -2245,8 +2268,8 @@ export default function Lounge() {
               {partyInvites.length > 0 && (
                 <div className="space-y-1">
                   {partyInvites.slice(-2).map((invite) => (
-                    <div key={`${invite.type}-${invite.fromSocketId}-${invite.ts}`} className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-xs">
-                      <span className="text-white/80">
+                    <div key={`${invite.type}-${invite.fromSocketId}-${invite.ts}`} className="lounge-row dg-rise flex items-center justify-between border-l-4 border-l-plate-yellow px-2 py-1.5 text-xs">
+                      <span className="text-gray-200">
                         {invite.nickname} | {invite.type === "follow" ? "따라가기 요청" : "순간이동 요청"}
                       </span>
                       <div className="flex gap-1">
@@ -2265,7 +2288,7 @@ export default function Lounge() {
                             }
                             setPartyInvites((prev) => prev.filter((item) => item.ts !== invite.ts));
                           }}
-                          className="rounded bg-emerald-400/20 px-2 py-0.5 text-emerald-100"
+                          className="lounge-ctl lounge-ctl-on px-2 py-0.5"
                         >
                           수락
                         </button>
@@ -2281,7 +2304,7 @@ export default function Lounge() {
                             }
                             setPartyInvites((prev) => prev.filter((item) => item.ts !== invite.ts));
                           }}
-                          className="rounded bg-rose-400/20 px-2 py-0.5 text-rose-100"
+                          className="lounge-ctl lounge-ctl-danger px-2 py-0.5"
                         >
                           거절
                         </button>
@@ -2293,12 +2316,12 @@ export default function Lounge() {
             </div>
             )}
 
-            <div className={`${isImmersiveFullscreen ? "rounded-none border-0 bg-transparent p-0 shadow-none h-full" : "rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_0_30px_rgba(16,185,129,0.1)]"}`}>
+            <div className={`${isImmersiveFullscreen ? "rounded-none border-0 bg-transparent p-0 shadow-none h-full" : "dg-steel p-4"}`}>
               <div
                 ref={(element) => {
                   viewportRef.current = element;
                 }}
-                className={`relative w-full overflow-hidden ${isImmersiveFullscreen ? "h-[100dvh] rounded-none border-0" : isMobile ? "h-[68dvh] min-h-[360px] rounded-2xl border border-white/10" : "h-[78vh] rounded-2xl border border-white/10"} lounge-viewport`}
+                className={`relative w-full overflow-hidden ${isImmersiveFullscreen ? "h-[100dvh] rounded-none border-0" : isMobile ? "h-[68dvh] min-h-[360px] rounded-md border-[3px] border-black" : "h-[78vh] rounded-md border-[3px] border-black"} lounge-viewport`}
                 style={mapBackground}
                 onWheel={(event) => {
                   if (!event.ctrlKey) return;
@@ -2308,20 +2331,16 @@ export default function Lounge() {
                 }}
               >
                 <div className="lounge-hud">
-                  <div className="hud-chip">
-                    <span className="hud-label">접속</span>
-                    <strong>{players.length}</strong>
-                  </div>
-                  <div className="hud-chip">
-                    <span className="hud-label">핑</span>
-                    <strong>{pingMs !== null ? `${pingMs}ms` : "..."}</strong>
-                  </div>
-                  <div className="hud-chip hud-chip-wide">
-                    <span className="hud-label">상호작용</span>
-                    <strong>{nearestInteractableLabel}</strong>
-                  </div>
-                  {(!isMobile || showMobileHudDetails) && (
-                    <>
+                  <div className="hud-primary">
+                    <div className="hud-chip hud-chip-major">
+                      <span className="hud-label">접속</span>
+                      <strong key={`hud-count-${players.length}`} className="dg-pop">{players.length}</strong>
+                    </div>
+                    <div className={`hud-chip hud-chip-major hud-chip-wide hud-chip-interact ${interactFocus ? "hud-chip-ready" : ""}`}>
+                      <span className="hud-label">상호작용</span>
+                      <strong key={`hud-interact-${nearestInteractableLabel}`} className="dg-pop">{nearestInteractableLabel}</strong>
+                    </div>
+                    {(!isMobile || showMobileHudDetails) && (
                       <div className="hud-chip hud-chip-wide">
                         <span className="hud-label">드라이브</span>
                         <div className="hud-gauge">
@@ -2329,36 +2348,55 @@ export default function Lounge() {
                         </div>
                         <strong>{attendanceGauge}%</strong>
                       </div>
-                      <div className={`hud-chip ${isSprinting ? "hud-chip-active" : ""}`}>
-                        <span className="hud-label">시프트</span>
-                        <strong>{isSprinting ? "부스트" : "걷기"}</strong>
-                      </div>
-                      <div className="hud-chip">
-                        <span className="hud-label">프리셋</span>
-                        <strong>
-                          {{
-                            classic: "클래식",
-                            hardcore: "하드코어",
-                            casual: "캐주얼",
-                          }[movementPreset]}
-                        </strong>
-                      </div>
-                      <div className={`hud-chip ${onLadderRef.current ? "hud-chip-active" : ""}`}>
-                        <span className="hud-label">이동 모드</span>
-                        <strong>{onLadderRef.current ? "사다리" : "지상"}</strong>
-                      </div>
-                    </>
-                  )}
-                  {isMobile && (
+                    )}
+                  </div>
+                  <div className="hud-debug">
                     <button
                       type="button"
-                      onClick={() => setShowMobileHudDetails((prev) => !prev)}
-                      className="hud-chip hud-chip-toggle"
+                      onClick={() =>
+                        isMobile ? setShowMobileHudDetails((prev) => !prev) : setShowHudDebug((prev) => !prev)
+                      }
+                      className="hud-chip hud-chip-mini hud-chip-toggle"
+                      aria-expanded={hudDebugOpen}
+                      aria-label="HUD 상세 정보 토글"
                     >
+                      <i className={`hud-ping-dot ${pingTone}`} aria-hidden />
                       <span className="hud-label">HUD</span>
-                      <strong>{showMobileHudDetails ? "요약" : "상세"}</strong>
+                      <strong>{hudDebugOpen ? "요약" : "상세"}</strong>
                     </button>
-                  )}
+                    {hudDebugOpen && (
+                      <>
+                        <div className="hud-chip hud-chip-mini dg-rise">
+                          <span className="hud-label">핑</span>
+                          <strong>{pingMs !== null ? `${pingMs}ms` : "..."}</strong>
+                        </div>
+                        <div
+                          className={`hud-chip hud-chip-mini dg-rise ${isSprinting ? "hud-chip-active" : ""}`}
+                          style={{ animationDelay: "40ms" }}
+                        >
+                          <span className="hud-label">시프트</span>
+                          <strong>{isSprinting ? "부스트" : "걷기"}</strong>
+                        </div>
+                        <div className="hud-chip hud-chip-mini dg-rise" style={{ animationDelay: "80ms" }}>
+                          <span className="hud-label">프리셋</span>
+                          <strong>
+                            {{
+                              classic: "클래식",
+                              hardcore: "하드코어",
+                              casual: "캐주얼",
+                            }[movementPreset]}
+                          </strong>
+                        </div>
+                        <div
+                          className={`hud-chip hud-chip-mini dg-rise ${onLadderRef.current ? "hud-chip-active" : ""}`}
+                          style={{ animationDelay: "120ms" }}
+                        >
+                          <span className="hud-label">이동 모드</span>
+                          <strong>{onLadderRef.current ? "사다리" : "지상"}</strong>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
                 {isImmersiveFullscreen && (
                   <>
@@ -2401,11 +2439,15 @@ export default function Lounge() {
                       <div className="immersive-panel immersive-panel-right">
                         <div className="immersive-panel-title">접속 {players.length}명</div>
                         <div className="immersive-scroll">
-                          {sortedPlayers.map((player) => (
-                            <div key={`immersive-list-${player.socketId}`} className="immersive-row">
+                          {sortedPlayers.map((player, index) => (
+                            <div
+                              key={`immersive-list-${player.socketId}`}
+                              className={`immersive-row dg-rise ${player.socketId === mySocketId ? "lounge-row-me" : ""}`}
+                              style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
+                            >
                               <div>
-                                <div className="font-semibold text-white">{player.nickname}</div>
-                                <div className="text-[11px] text-white/55">Lv.{player.level} {player.tier}</div>
+                                <div className="font-semibold text-chalk">{player.nickname}</div>
+                                <div className="font-num text-[12px] text-gray-400">Lv.{player.level} {player.tier}</div>
                               </div>
                               <div className="flex gap-1 text-[10px]">
                                 {player.socketId !== mySocketId && (
@@ -2456,7 +2498,7 @@ export default function Lounge() {
                             </div>
                             <div className="profile-line">
                               <span>최근 출석</span>
-                              <span className="font-semibold text-white">{selectedPlayer.recentAttendanceCount ?? 0}</span>
+                              <span className="font-num text-base font-black text-chalk">{selectedPlayer.recentAttendanceCount ?? 0}</span>
                             </div>
                             <div className="profile-line">
                               <span>진행 이벤트</span>
@@ -2485,7 +2527,7 @@ export default function Lounge() {
                               <span className="immersive-chat-text">{msg.filteredMessage}</span>
                             </div>
                           ))}
-                          {chatRows.length === 0 && <div className="text-xs text-white/45">대화를 시작해보세요.</div>}
+                          {chatRows.length === 0 && <div className="text-xs text-gray-400">대화를 시작해보세요.</div>}
                         </div>
                         <div className="mt-2 flex gap-2">
                           <input
@@ -2509,12 +2551,12 @@ export default function Lounge() {
                             onBlur={() => setTypingState(false)}
                             maxLength={200}
                             placeholder="메시지를 입력하세요"
-                            className="flex-1 rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                            className="lounge-input flex-1 px-3 py-2 text-sm"
                           />
                           <button
                             onClick={handleChatSend}
                             disabled={!connected}
-                            className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
+                            className="dg-btn dg-btn-primary min-h-0 px-4 py-2 text-sm"
                           >
                             전송
                           </button>
@@ -2526,7 +2568,7 @@ export default function Lounge() {
                       <div className="immersive-invites">
                         {partyInvites.slice(-2).map((invite) => (
                           <div key={`immersive-invite-${invite.type}-${invite.fromSocketId}-${invite.ts}`} className="immersive-invite-card">
-                            <span className="text-white/80">
+                            <span className="text-gray-200">
                               {invite.nickname} | {invite.type === "follow" ? "따라가기 요청" : "순간이동 요청"}
                             </span>
                             <div className="flex gap-1">
@@ -2545,7 +2587,7 @@ export default function Lounge() {
                                   }
                                   setPartyInvites((prev) => prev.filter((item) => item.ts !== invite.ts));
                                 }}
-                                className="rounded bg-emerald-400/20 px-2 py-0.5 text-emerald-100"
+                                className="lounge-ctl lounge-ctl-on px-2 py-0.5"
                               >
                                 수락
                               </button>
@@ -2561,7 +2603,7 @@ export default function Lounge() {
                                   }
                                   setPartyInvites((prev) => prev.filter((item) => item.ts !== invite.ts));
                                 }}
-                                className="rounded bg-rose-400/20 px-2 py-0.5 text-rose-100"
+                                className="lounge-ctl lounge-ctl-danger px-2 py-0.5"
                               >
                                 거절
                               </button>
@@ -2576,17 +2618,14 @@ export default function Lounge() {
                   className="absolute inset-0 will-change-transform"
                   style={{ ...cameraStyle, width: mapSize.width, height: mapSize.height }}
                 >
-                  <div className="absolute inset-8 border border-cyan-200/10 rounded-3xl pointer-events-none" />
-                  <div className="absolute inset-16 border border-white/5 rounded-[28px] pointer-events-none" />
                   <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-12 left-[12%] h-44 w-44 rounded-full bg-cyan-300/20 blur-3xl" />
-                    <div className="absolute top-14 right-[16%] h-52 w-52 rounded-full bg-emerald-300/20 blur-3xl" />
                     <div className="absolute top-40 left-[2%] h-40 w-[620px] mountain-layer mountain-near" />
                     <div className="absolute top-48 left-[30%] h-40 w-[760px] mountain-layer mountain-far" />
                     <div className="absolute top-36 right-[2%] h-44 w-[680px] mountain-layer mountain-near" />
-                    <div className="absolute top-24 left-24 h-2 w-[520px] rounded-full bg-gradient-to-r from-emerald-500/30 to-transparent opacity-60" />
-                    <div className="absolute top-36 left-32 h-2 w-[420px] rounded-full bg-gradient-to-r from-sky-400/30 to-transparent opacity-45" />
-                    <div className="absolute bottom-28 right-32 h-2 w-[520px] rounded-full bg-gradient-to-l from-emerald-500/35 to-transparent opacity-45" />
+                    {/* 벽에 칠한 원판 색 줄 */}
+                    <div className="absolute top-24 left-24 h-2 w-[520px] bg-plate-red opacity-40" />
+                    <div className="absolute top-36 left-32 h-2 w-[420px] bg-plate-blue opacity-30" />
+                    <div className="absolute bottom-28 right-32 h-2 w-[520px] bg-plate-yellow opacity-25" />
                     <div className="zone-label" style={{ left: 150, top: 805 }}>
                       프리웨이트
                     </div>
@@ -2596,7 +2635,7 @@ export default function Lounge() {
                   </div>
 
                   <svg
-                    className="absolute inset-0 opacity-30 pointer-events-none"
+                    className="absolute inset-0 opacity-[0.12] pointer-events-none"
                     width={mapSize.width}
                     height={mapSize.height}
                     viewBox={`0 0 ${mapSize.width} ${mapSize.height}`}
@@ -2604,9 +2643,9 @@ export default function Lounge() {
                   >
                     <defs>
                       <pattern id="dumbbell-pattern" width="160" height="160" patternUnits="userSpaceOnUse">
-                        <rect x="20" y="80" width="120" height="8" rx="4" fill="rgba(148,163,184,0.18)" />
-                        <rect x="10" y="70" width="18" height="28" rx="4" fill="rgba(148,163,184,0.2)" />
-                        <rect x="132" y="70" width="18" height="28" rx="4" fill="rgba(148,163,184,0.2)" />
+                        <rect x="20" y="80" width="120" height="8" rx="1" fill="#6E7178" />
+                        <rect x="10" y="70" width="18" height="28" rx="2" fill="#6E7178" />
+                        <rect x="132" y="70" width="18" height="28" rx="2" fill="#6E7178" />
                       </pattern>
                     </defs>
                     <rect width="100%" height="100%" fill="url(#dumbbell-pattern)" />
@@ -2677,14 +2716,20 @@ export default function Lounge() {
                       key={item.id}
                       className={`absolute gym-${item.type} gym-interactive ${
                         selectedEquipment?.id === item.id ? "gym-selected" : ""
-                      }`}
+                      } ${nearEquipmentId === item.id ? "gym-near" : ""}`}
                       style={{ left: item.x, top: item.y, width: item.w, height: item.h }}
                       onMouseEnter={() => setHoveredEquipment(item)}
                       onMouseLeave={() => setHoveredEquipment((prev) => (prev?.id === item.id ? null : prev))}
                       onClick={() =>
                         handleEquipmentClick(item)
                       }
-                    />
+                    >
+                      {nearEquipmentId === item.id && (
+                        <span className="gym-key-hint" aria-hidden>
+                          E
+                        </span>
+                      )}
+                    </div>
                   ))}
                   {hoveredEquipment && (
                     <div
@@ -2711,7 +2756,7 @@ export default function Lounge() {
                       <button
                         key={npc.id}
                         type="button"
-                        className={`absolute npc-sprite npc-${npc.mood} ${selected ? "npc-selected" : ""} ${hovered ? "npc-hovered" : ""}`}
+                        className={`absolute npc-sprite npc-${npc.mood} ${selected ? "npc-selected" : ""} ${hovered ? "npc-hovered" : ""} ${nearNpcId === npc.id ? "npc-near" : ""}`}
                         style={{ left: npc.x, top: npc.y }}
                         onMouseEnter={() => setHoveredNpc(npc)}
                         onMouseLeave={() => setHoveredNpc((prev) => (prev?.id === npc.id ? null : prev))}
@@ -2738,6 +2783,11 @@ export default function Lounge() {
                           <span className="npc-leg npc-leg-right" />
                         </span>
                         <span className="npc-nameplate">
+                          {nearNpcId === npc.id && (
+                            <span className="npc-key-hint" aria-hidden>
+                              E
+                            </span>
+                          )}
                           {npc.name}
                         </span>
                       </button>
@@ -2781,8 +2831,9 @@ export default function Lounge() {
                           <div className="sticker-bubble">{stickerMap[player.socketId].sticker}</div>
                         )}
                         {showProximity && (
-                          <div className="proximity-badge">
-                            {player.nickname} | Lv.{player.level} | {player.tier} | S{player.evolutionStage}
+                          // 이름·레벨·티어는 아바타 아래 이름표(PlayerAvatar)에 이미 있으므로 여기서는 단계만 보여 준다.
+                          <div className="proximity-badge" title={`${player.nickname} | Lv.${player.level} | ${player.tier}`}>
+                            단계 {player.evolutionStage}
                           </div>
                         )}
                         {isTyping && !speech && (
@@ -3007,8 +3058,11 @@ export default function Lounge() {
                 )}
 
                 {!connected && (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-300 bg-black/40">
-                    연결 대기 중...
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-gray-300">
+                    <div className="dg-steel flex items-center gap-3 px-6 py-4 font-semibold">
+                      <span className="dg-loading-plates" aria-label="불러오는 중"><i /><i /><i /><i /></span>
+                      연결 대기 중...
+                    </div>
                   </div>
                 )}
 
@@ -3037,8 +3091,13 @@ export default function Lounge() {
           </div>
 
           {!isImmersiveFullscreen && <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
-              <div className="grid grid-cols-4 gap-1 text-xs">
+            <div className="dg-steel p-2">
+              <div className="relative grid grid-cols-4 text-xs">
+                <span
+                  aria-hidden
+                  className="lounge-tab-indicator"
+                  style={{ width: "25%", transform: `translateX(${sidebarTabIndex * 100}%)` }}
+                />
                 {[
                   { key: "players", label: "플레이어" },
                   { key: "profile", label: "프로필" },
@@ -3048,10 +3107,10 @@ export default function Lounge() {
                   <button
                     key={tab.key}
                     onClick={() => setSidebarTab(tab.key as "players" | "profile" | "equipment" | "chat")}
-                    className={`rounded-lg px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 ${
+                    className={`relative z-10 rounded px-2 py-2 font-semibold transition-colors active:translate-y-px ${
                       sidebarTab === tab.key
-                        ? "bg-emerald-400 text-black font-semibold"
-                        : "text-gray-300 hover:bg-white/10"
+                        ? "text-black"
+                        : "text-gray-300 hover:text-chalk"
                     }`}
                   >
                     {tab.label}
@@ -3061,28 +3120,27 @@ export default function Lounge() {
             </div>
 
             {sidebarTab === "players" && (
-              <div className={`${tabPanelAnimClass} rounded-2xl border border-white/10 bg-white/5 p-4`}>
+              <div className={`${tabPanelAnimClass} dg-steel p-4`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">플레이어</h2>
-                  <span className="text-xs text-gray-400">접속 {players.length}명</span>
+                  <h2 className="font-display text-lg">플레이어</h2>
+                  <span className="dg-chip bg-steel-700 text-xs text-chalk">접속 {players.length}명</span>
                 </div>
                 <div className="max-h-[35vh] space-y-2 overflow-y-auto pr-1">
-                  {sortedPlayers.map((player) => (
+                  {sortedPlayers.map((player, index) => (
                     <div
                       key={`list-${player.socketId}`}
-                      className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                        player.socketId === mySocketId
-                          ? "border border-emerald-400/40 bg-emerald-500/20"
-                          : "border border-white/5 bg-white/5"
+                      className={`lounge-row dg-rise flex items-center justify-between px-3 py-2 text-sm ${
+                        player.socketId === mySocketId ? "lounge-row-me" : ""
                       }`}
+                      style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
                     >
                       <div className="font-semibold">{player.nickname}</div>
-                      <div className="flex items-center gap-2 text-xs text-gray-300">
-                        <span>Lv.{player.level} {player.tier}</span>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                        <span className="font-num text-[12px]">Lv.{player.level} {player.tier}</span>
                         {player.socketId !== mySocketId && (
                           <button
                             onClick={() => toggleMute(player.nickname)}
-                            className="rounded text-[10px] text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                            className="lounge-ctl px-1.5 py-0.5 text-[10px]"
                           >
                             {mutedUsers[player.nickname] ? "음소거 해제" : "음소거"}
                           </button>
@@ -3090,7 +3148,7 @@ export default function Lounge() {
                         {player.socketId !== mySocketId && (
                           <button
                             onClick={() => socketRef.current?.emit("party:follow-request", { toSocketId: player.socketId })}
-                            className="rounded text-[10px] text-cyan-300/80 hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60"
+                            className="lounge-ctl px-1.5 py-0.5 text-[10px]"
                           >
                             따라가기
                           </button>
@@ -3098,7 +3156,7 @@ export default function Lounge() {
                         {player.socketId !== mySocketId && (
                           <button
                             onClick={() => socketRef.current?.emit("party:teleport-request", { toSocketId: player.socketId })}
-                            className="rounded text-[10px] text-amber-300/80 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60"
+                            className="lounge-ctl lounge-ctl-warn px-1.5 py-0.5 text-[10px]"
                           >
                             순간이동 요청
                           </button>
@@ -3112,41 +3170,44 @@ export default function Lounge() {
             )}
 
             {sidebarTab === "profile" && (
-              <div className={`${tabPanelAnimClass} rounded-2xl border border-white/10 bg-white/5 p-4`}>
+              <div className={`${tabPanelAnimClass} dg-steel p-4`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">프로필 카드</h2>
+                  <h2 className="font-display text-lg">프로필 카드</h2>
                   {selectedPlayer && (
                     <button
                       onClick={() => setSelectedPlayer(null)}
-                      className="rounded text-xs text-gray-400 hover:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                      className="lounge-ctl text-xs"
                     >
                       닫기
                     </button>
                   )}
                 </div>
                 {selectedPlayer ? (
-                  <div className="space-y-3 text-sm text-gray-300">
+                  <div key={`profile-${selectedPlayer.socketId}`} className="dg-rise space-y-3 text-sm text-gray-300">
                     <div className="flex items-center gap-3">
-                      <AvatarRenderer
-                        avatarSeed={selectedPlayer.avatarSeed ?? `${selectedPlayer.nickname}-seed`}
-                        growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
-                        tier={selectedPlayer.tier}
-                        stage={selectedPlayer.evolutionStage}
-                        gender={selectedPlayer.gender}
-                        mbti={selectedPlayer.mbti}
-                        isResting={selectedPlayer.isResting ?? false}
-                        size={90}
-                      />
-                      <div>
-                        <div className="font-semibold text-white">{selectedPlayer.nickname}</div>
-                        <div className="text-xs text-gray-400">
-                          Lv.{selectedPlayer.level} {selectedPlayer.tier} 단계 {selectedPlayer.evolutionStage}
+                      <div className="dg-well p-1">
+                        <AvatarRenderer
+                          avatarSeed={selectedPlayer.avatarSeed ?? `${selectedPlayer.nickname}-seed`}
+                          growthParams={selectedPlayer.growthParams ?? defaultGrowthParams}
+                          tier={selectedPlayer.tier}
+                          stage={selectedPlayer.evolutionStage}
+                          gender={selectedPlayer.gender}
+                          mbti={selectedPlayer.mbti}
+                          isResting={selectedPlayer.isResting ?? false}
+                          size={90}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-display text-lg text-chalk">{selectedPlayer.nickname}</div>
+                        <div className="flex flex-wrap items-center gap-1 text-xs">
+                          <span className="dg-chip bg-plate-yellow text-black">Lv.{selectedPlayer.level} {selectedPlayer.tier}</span>
+                          <span className="dg-chip bg-steel-700 text-chalk">단계 {selectedPlayer.evolutionStage}</span>
                         </div>
                       </div>
                     </div>
                     <div className="profile-line">
                       <span>최근 출석</span>
-                      <span className="font-semibold text-white">{selectedPlayer.recentAttendanceCount ?? 0}</span>
+                      <span className="font-num text-base font-black text-chalk">{selectedPlayer.recentAttendanceCount ?? 0}</span>
                     </div>
                     <div className="profile-line">
                       <span>진행 이벤트</span>
@@ -3166,37 +3227,37 @@ export default function Lounge() {
             )}
 
             {sidebarTab === "equipment" && (
-              <div className={`${tabPanelAnimClass} rounded-2xl border border-white/10 bg-white/5 p-4`}>
+              <div className={`${tabPanelAnimClass} dg-steel p-4`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">장비 정보</h2>
+                  <h2 className="font-display text-lg">장비 정보</h2>
                   {(selectedEquipment || selectedNpc) && (
                     <button
                       onClick={() => {
                         setSelectedEquipment(null);
                         setSelectedNpc(null);
                       }}
-                      className="rounded text-xs text-gray-400 hover:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                      className="lounge-ctl text-xs"
                     >
                       닫기
                     </button>
                   )}
                 </div>
                 {selectedNpc ? (
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <div className="font-semibold text-cyan-200">{selectedNpc.name} | {selectedNpc.title}</div>
-                    <div className="rounded-xl border border-cyan-200/20 bg-cyan-400/5 px-3 py-2 text-cyan-100">
+                  <div key={`npc-${selectedNpc.id}`} className="dg-rise space-y-2 text-sm text-gray-300">
+                    <div className="font-semibold text-plate-yellow">{selectedNpc.name} | {selectedNpc.title}</div>
+                    <div className="rounded-md border-2 border-black bg-board px-3 py-2 font-semibold text-board-ink shadow-sm">
                       {selectedNpc.lines[0]}
                     </div>
                     {selectedNpc.lines[1] && (
                       <p className="text-gray-300">{selectedNpc.lines[1]}</p>
                     )}
-                    <div className="text-xs text-gray-500">NPC 기본 상호작용 모드입니다. 이후 추가 액션을 연결할 수 있습니다.</div>
+                    <div className="text-xs text-gray-400">NPC 기본 상호작용 모드입니다. 이후 추가 액션을 연결할 수 있습니다.</div>
                   </div>
                 ) : selectedEquipment ? (
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <div className="font-semibold text-white">{selectedEquipment.name}</div>
+                  <div key={`eq-${selectedEquipment.id}`} className="dg-rise space-y-2 text-sm text-gray-300">
+                    <div className="dg-well border-l-4 border-l-plate-yellow px-3 py-2 font-semibold text-chalk">{selectedEquipment.name}</div>
                     <p className="text-gray-300">{selectedEquipment.description}</p>
-                    <div className="text-xs text-gray-500">아이템을 다시 클릭하면 강조 표시됩니다.</div>
+                    <div className="text-xs text-gray-400">아이템을 다시 클릭하면 강조 표시됩니다.</div>
                   </div>
                 ) : (
                   <div className="text-sm text-gray-400">맵에서 장비 또는 NPC를 클릭하면 상세 정보를 확인할 수 있습니다.</div>
@@ -3205,43 +3266,43 @@ export default function Lounge() {
             )}
 
             {sidebarTab === "chat" && (
-              <div className={`${tabPanelAnimClass} flex h-[35vh] flex-col rounded-2xl border border-white/10 bg-white/5 p-4`}>
-                <h2 className="mb-3 text-lg font-semibold">실시간 채팅</h2>
+              <div className={`${tabPanelAnimClass} dg-steel flex h-[35vh] flex-col p-4`}>
+                <h2 className="mb-3 font-display text-lg">실시간 채팅</h2>
                 <div className="flex-1 space-y-2 overflow-y-auto pr-2 text-sm">
                   {chatRows.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`rounded-xl border px-3 py-2 ${
+                      className={`lounge-msg px-3 py-2 ${
                         msg.system
-                          ? "border-sky-300/30 bg-sky-500/10 text-sky-100"
-                          : "border-white/10 bg-black/20 text-gray-100"
+                          ? "lounge-msg-system text-gray-200"
+                          : "text-gray-100"
                       }`}
                     >
                       {msg.system ? (
                         <div className="mb-1 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200">시스템</span>
-                          <span className="text-[10px] text-sky-200/80">{msg.timeLabel}</span>
+                          <span className="text-[11px] font-semibold text-sky-300">시스템</span>
+                          <span className="font-num text-[11px] text-gray-400">{msg.timeLabel}</span>
                         </div>
                       ) : (
                         msg.groupStart && (
                           <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
-                            <span className="font-semibold text-emerald-300">{msg.nickname}</span>
-                            <span className="text-gray-400">{msg.timeLabel}</span>
+                            <span className="font-semibold text-plate-yellow">{msg.nickname}</span>
+                            <span className="font-num text-[11px] text-gray-400">{msg.timeLabel}</span>
                           </div>
                         )
                       )}
                       <div className="break-words">{msg.filteredMessage}</div>
                       {!msg.system && (
-                        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-gray-400">
+                        <div className="mt-1 flex items-center justify-end gap-1.5 text-[10px] text-gray-400">
                           <button
                             onClick={() => toggleMute(msg.nickname)}
-                            className="rounded hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                            className="rounded px-1 hover:bg-steel-700 hover:text-chalk active:translate-y-px"
                           >
                             {mutedUsers[msg.nickname] ? "음소거 해제" : "음소거"}
                           </button>
                           <button
                             onClick={() => alert(`신고가 접수되었습니다: ${msg.nickname}`)}
-                            className="rounded hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+                            className="rounded px-1 hover:bg-steel-700 hover:text-chalk active:translate-y-px"
                           >
                             신고
                           </button>
@@ -3280,12 +3341,12 @@ export default function Lounge() {
                     onBlur={() => setTypingState(false)}
                     maxLength={200}
                     placeholder="메시지를 입력하세요 (최대 200자)"
-                    className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                    className="lounge-input min-w-0 flex-1 px-3 py-2 text-sm"
                   />
                   <button
                     onClick={handleChatSend}
                     disabled={!connected}
-                    className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-300 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/80"
+                    className="dg-btn dg-btn-primary min-h-0 px-4 py-2 text-sm"
                   >
                     전송
                   </button>
@@ -3298,9 +3359,9 @@ export default function Lounge() {
 
       {showMobileOrientationPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-sm rounded-2xl border border-emerald-300/30 bg-slate-950 p-6 shadow-2xl">
-            <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">모바일 안내</p>
-            <h3 className="mt-2 text-lg font-bold text-white">가로 화면으로 전환이 필요합니다</h3>
+          <div className="dg-steel dg-pop w-full max-w-sm p-6">
+            <p className="dg-chip w-fit bg-plate-yellow text-xs text-black">모바일 안내</p>
+            <h3 className="mt-3 font-display text-xl text-chalk">가로 화면으로 전환이 필요합니다</h3>
             <p className="mt-3 text-sm leading-relaxed text-gray-300">
               라운지는 모바일에서 가로 모드와 전체화면으로 보는 편이 훨씬 편합니다. 계속 진행할까요?
             </p>
@@ -3308,7 +3369,7 @@ export default function Lounge() {
               <button
                 type="button"
                 onClick={() => setShowMobileOrientationPrompt(false)}
-                className="flex-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-gray-200"
+                className="dg-btn dg-btn-steel min-h-0 flex-1 px-3 py-2 text-sm"
               >
                 나중에
               </button>
@@ -3318,7 +3379,7 @@ export default function Lounge() {
                   void requestImmersiveLandscape();
                   setShowMobileOrientationPrompt(false);
                 }}
-                className="flex-1 rounded-lg bg-emerald-400 px-3 py-2 text-sm font-semibold text-black"
+                className="dg-btn dg-btn-primary min-h-0 flex-1 px-3 py-2 text-sm"
               >
                 확인
               </button>
@@ -3329,18 +3390,27 @@ export default function Lounge() {
 
       {showOnboarding && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-lg rounded-2xl border border-emerald-300/30 bg-slate-900 p-6 shadow-2xl">
-            <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">라운지 가이드</p>
-            <h3 className="mt-2 text-xl font-bold text-white">{onboardingSteps[onboardingStep].title}</h3>
-            <p className="mt-3 text-sm leading-relaxed text-gray-300">{onboardingSteps[onboardingStep].desc}</p>
+          <div className="dg-steel dg-pop w-full max-w-lg p-6">
+            <p className="dg-chip w-fit bg-plate-yellow text-xs text-black">라운지 가이드</p>
+            <div key={`onboarding-${onboardingStep}`} className="dg-rise">
+              <h3 className="mt-3 font-display text-2xl text-chalk">{onboardingSteps[onboardingStep].title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-gray-300">{onboardingSteps[onboardingStep].desc}</p>
+            </div>
             <div className="mt-5 flex items-center justify-between">
-              <span className="text-xs text-gray-400">{onboardingStep + 1} / {onboardingSteps.length}</span>
+              <span className="flex items-center gap-2 font-num text-sm text-gray-400">
+                <span className="lounge-steps" aria-hidden>
+                  {onboardingSteps.map((_, index) => (
+                    <i key={`step-${index}`} className={index <= onboardingStep ? "on" : ""} />
+                  ))}
+                </span>
+                {onboardingStep + 1} / {onboardingSteps.length}
+              </span>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setOnboardingStep((prev) => Math.max(0, prev - 1))}
                   disabled={onboardingStep === 0}
-                  className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-gray-200 disabled:opacity-40"
+                  className="dg-btn dg-btn-steel min-h-0 px-3 py-1.5 text-xs"
                 >
                   이전
                 </button>
@@ -3348,7 +3418,7 @@ export default function Lounge() {
                   <button
                     type="button"
                     onClick={() => setOnboardingStep((prev) => Math.min(onboardingSteps.length - 1, prev + 1))}
-                    className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-black"
+                    className="dg-btn dg-btn-primary min-h-0 px-3 py-1.5 text-xs"
                   >
                     다음
                   </button>
@@ -3359,7 +3429,7 @@ export default function Lounge() {
                       localStorage.setItem("lounge_onboarding_seen_v1", "1");
                       setShowOnboarding(false);
                     }}
-                    className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-black"
+                    className="dg-btn dg-btn-primary min-h-0 px-3 py-1.5 text-xs"
                   >
                     시작하기
                   </button>

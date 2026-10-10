@@ -17,6 +17,8 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { useCountUp } from "../hooks/useCountUp";
+import { useInView } from "../hooks/useInView";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -73,7 +75,35 @@ const consultationSectionRules: Array<{ key: string; title: string; keywords: st
   { key: "nextCheck", title: "다음 인바디 체크 포인트", keywords: ["다음인바디", "체크포인트", "다음측정", "nextcheck"] },
 ];
 
-const nutritionColors = ["#38bdf8", "#22c55e", "#f59e0b"];
+// 차트 색 — 화면 전체에서 의미를 하나로 고정한다. 현재 = 철판 회색, 목표 = 원판 빨강.
+const CHART = {
+  current: "#BDBEC1",
+  target: "#D9302A",
+  axis: "#55585F",
+  grid: "#3A3D43",
+  tick: "#A6A8AD",
+  ink: "#0E0E10",
+  chalk: "#E8E6E0",
+  chalkText: "#EEECE6",
+  panel: "#26272B",
+  cursor: "rgba(255,255,255,0.06)",
+} as const;
+const NUM_FONT = "'Big Shoulders Display', 'IBM Plex Sans KR', sans-serif";
+const axisTick = { fill: CHART.tick, fontFamily: NUM_FONT, fontSize: 14, fontWeight: 700 };
+const tooltipContentStyle = {
+  background: CHART.panel,
+  border: `3px solid ${CHART.ink}`,
+  borderRadius: 6,
+  boxShadow: `0 4px 0 ${CHART.ink}`,
+  color: CHART.chalkText,
+};
+const tooltipLabelStyle = { color: CHART.chalkText, fontWeight: 700 };
+const tooltipItemStyle = { color: CHART.chalkText, fontFamily: NUM_FONT, fontWeight: 700, fontSize: 15 };
+// 탄단지 — 단백질 파랑, 탄수화물 노랑, 지방 초록
+const nutritionColors: Record<string, string> = { 단백질: "#2F6FD0", 탄수화물: "#F0BE2E", 지방: "#2E9C55" };
+// 기록지(화이트보드) 위 입력칸
+const boardField =
+  "mt-2 block w-full rounded-md border-2 border-steel-300 bg-white px-3 py-2 text-sm font-normal text-board-ink placeholder:text-steel-500 transition-colors hover:border-steel-500 focus:border-board-blue focus:outline-none";
 const MIN_SECTION_DIGEST_ITEMS = 3;
 const MAX_SECTION_DIGEST_ITEMS = 4;
 const workflowCards = [
@@ -355,7 +385,12 @@ export default function InbodyConsult() {
           margin: 0 auto !important;
           padding-left: 16px !important;
           padding-right: 16px !important;
-          background: #020617 !important;
+          background: #1a1a1c !important;
+        }
+        [data-pdf-capture="true"][data-pdf-exporting="1"],
+        [data-pdf-capture="true"][data-pdf-exporting="1"] * {
+          animation: none !important;
+          transition: none !important;
         }
         [data-pdf-capture="true"][data-pdf-exporting="1"] [class*="sm:grid-cols-2"],
         [data-pdf-capture="true"][data-pdf-exporting="1"] [class*="sm:grid-cols-3"],
@@ -388,6 +423,8 @@ export default function InbodyConsult() {
         d.open = true;
       });
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(null)));
+      // 웹 폰트(Black Han Sans, Big Shoulders 등)가 다 로드된 뒤에 캡처해야 글꼴이 바뀌지 않는다.
+      if (document.fonts?.ready) await document.fonts.ready;
 
       const blocks = Array.from(
         target.querySelectorAll<HTMLElement>('[data-pdf-block="1"]')
@@ -399,7 +436,7 @@ export default function InbodyConsult() {
         const canvas = await html2canvas(node, {
           scale: 2,
           useCORS: true,
-          backgroundColor: "#020617",
+          backgroundColor: "#1a1a1c",
           logging: false,
         });
 
@@ -464,72 +501,70 @@ export default function InbodyConsult() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-slate-950 px-6 pb-20 pt-28 text-slate-100 lg:px-10">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute -right-16 top-48 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute bottom-8 left-1/3 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
-      </div>
+    <section className="relative min-h-screen overflow-hidden px-6 pb-20 pt-28 text-chalk lg:px-10">
       <div ref={captureRef} data-pdf-capture="true" className="relative mx-auto max-w-6xl space-y-6">
-        <div data-pdf-block="1" className="relative overflow-hidden rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-cyan-950/40 p-6 shadow-[0_20px_70px_-30px_rgba(34,211,238,0.55)] backdrop-blur md:p-8">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-cyan-300/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-emerald-300/15 blur-3xl" />
-          <p className="relative inline-flex rounded-full border border-cyan-300/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">
-            AI InBody Studio
-          </p>
-          <h1 className="relative mt-3 text-3xl font-bold leading-tight md:text-4xl">인바디 AI 상담 대시보드</h1>
-          <p className="relative mt-3 max-w-3xl text-sm text-slate-200 md:text-base">OCR 추출, 핵심 수치 재확인, 맞춤 상담과 차트, PDF 보고서까지 한 화면에서 빠르게 처리합니다.</p>
+        <div data-pdf-block="1" className="dg-steel dg-rise relative p-6 md:p-8">
+          <p className="dg-chip relative bg-plate-yellow text-sm text-black">AI InBody Studio</p>
+          <h1 className="relative mt-3 text-3xl leading-tight md:text-4xl">인바디 AI 상담 대시보드</h1>
+          <p className="relative mt-3 max-w-3xl text-sm text-steel-300 md:text-base">OCR 추출, 핵심 수치 재확인, 맞춤 상담과 차트, PDF 보고서까지 한 화면에서 빠르게 처리합니다.</p>
           <div className="relative mt-5 grid gap-3 md:grid-cols-3">
-            {workflowCards.map((card) => (
-              <div key={card.step} className="rounded-2xl border border-cyan-300/20 bg-slate-950/45 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/90">{card.step}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-100">{card.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-300">{card.desc}</p>
+            {workflowCards.map((card, idx) => (
+              <div
+                key={card.step}
+                className="dg-well dg-rise p-4 transition-transform duration-150 hover:-translate-y-0.5"
+                style={{ animationDelay: `${120 + idx * 60}ms` }}
+              >
+                <p className="font-num text-base font-black tracking-wide text-plate-yellow">{card.step}</p>
+                <p className="mt-1 text-sm font-semibold text-chalk">{card.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-steel-300">{card.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <form
-          data-pdf-block="1"
-          onSubmit={onSubmit}
-          className="grid gap-4 rounded-3xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-[0_20px_70px_-40px_rgba(2,132,199,0.5)] backdrop-blur md:grid-cols-2"
-        >
+        <form data-pdf-block="1" onSubmit={onSubmit} className="dg-whiteboard dg-rise grid gap-4 p-6 md:grid-cols-2" style={{ animationDelay: "60ms" }}>
           <div className="md:col-span-2">
-            <p className="text-sm">상담 시작 방식</p>
+            <p className="text-sm font-bold">상담 시작 방식</p>
             <div className="mt-2 grid gap-3 md:grid-cols-2">
-              {consultModes.map((mode) => (
-                <button
-                  key={mode.value}
-                  type="button"
-                  onClick={() => setConsultMode(mode.value)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
-                    consultMode === mode.value
-                      ? "border-cyan-300/60 bg-cyan-500/10 shadow-[0_0_30px_-18px_rgba(34,211,238,0.9)]"
-                      : "border-slate-700 bg-slate-950/50 hover:border-cyan-300/35"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-slate-100">{mode.label}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-400">{mode.desc}</p>
-                </button>
-              ))}
+              {consultModes.map((mode) => {
+                const selected = consultMode === mode.value;
+                return (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setConsultMode(mode.value)}
+                    className={`rounded-md border-2 px-4 py-4 text-left transition duration-150 ${
+                      selected
+                        ? "-translate-y-0.5 border-board-ink border-l-[8px] border-l-board-red bg-white shadow-md"
+                        : "border-steel-300 bg-white/60 hover:-translate-y-0.5 hover:border-board-ink hover:bg-white"
+                    }`}
+                  >
+                    <p className="flex items-center gap-2 text-sm font-bold text-board-ink">
+                      {mode.label}
+                      {selected && <CheckMark className="dg-pop h-4 w-4 text-board-red" />}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-steel-600">{mode.desc}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="grid gap-3 md:col-span-2 md:grid-cols-3">
-            <label className="block text-sm">
+            <label className="block text-sm font-semibold">
               성별(선택)
               <select
                 value={profileGender}
                 onChange={(e) => setProfileGender(e.target.value as ProfileGender | "")}
-                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm focus:border-cyan-300/60 focus:outline-none"
+                className={boardField}
               >
                 <option value="">선택 안 함</option>
                 <option value="MALE">남성</option>
                 <option value="FEMALE">여성</option>
               </select>
             </label>
-            <label className="block text-sm">
+            <label className="block text-sm font-semibold">
               나이(선택)
               <input
                 type="number"
@@ -538,10 +573,10 @@ export default function InbodyConsult() {
                 value={profileAge}
                 onChange={(e) => setProfileAge(e.target.value)}
                 placeholder="예: 29"
-                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+                className={boardField}
               />
             </label>
-            <label className="block text-sm">
+            <label className="block text-sm font-semibold">
               키(cm, 선택)
               <input
                 type="number"
@@ -550,21 +585,21 @@ export default function InbodyConsult() {
                 value={profileHeightCm}
                 onChange={(e) => setProfileHeightCm(e.target.value)}
                 placeholder="예: 170"
-                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+                className={boardField}
               />
             </label>
           </div>
 
           {consultMode === "upload" ? (
-            <label className="block text-sm">
+            <label className="block text-sm font-semibold">
               인바디 파일 (이미지/PDF)
               <input
                 type="file"
                 accept="image/*,.pdf,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-cyan-400/90 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-slate-950 hover:border-cyan-300/40"
+                className={`${boardField} file:mr-3 file:cursor-pointer file:rounded file:border-2 file:border-board-ink file:bg-board-ink file:px-3 file:py-1 file:text-xs file:font-bold file:text-white hover:border-board-ink`}
               />
-              <p className="mt-1 text-xs text-slate-400">{file?.name ? `선택 파일: ${file.name}` : "선택된 파일 없음"}</p>
+              <p className="mt-1 text-xs font-normal text-steel-600">{file?.name ? `선택 파일: ${file.name}` : "선택된 파일 없음"}</p>
             </label>
           ) : (
             <div className="grid gap-3 md:col-span-2 md:grid-cols-2 xl:grid-cols-3">
@@ -579,44 +614,51 @@ export default function InbodyConsult() {
                 ["visceral_fat_level", "내장지방 레벨"],
                 ["inbody_score", "인바디 점수"],
               ].map(([key, label]) => (
-                <label key={key} className="block text-sm">
+                <label key={key} className="block text-sm font-semibold">
                   {label}
                   <input
                     type="text"
                     value={manualMetrics[key] || ""}
                     onChange={(e) => setManualMetrics((prev) => ({ ...prev, [key]: e.target.value }))}
                     placeholder={key === "weight_kg" ? "예: 55.2" : "직접 입력"}
-                    className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+                    className={boardField}
                   />
                 </label>
               ))}
             </div>
           )}
 
-          <label className="block text-sm">
+          <label className="block text-sm font-semibold">
             목표
             <input
               type="text"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               placeholder="예: 12주 동안 체지방 8kg 감량"
-              className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+              className={boardField}
             />
-            <p className="mt-1 text-xs text-slate-400">비워두면 AI가 자동 목표를 추천합니다.</p>
+            <p className="mt-1 text-xs font-normal text-steel-600">비워두면 AI가 자동 목표를 추천합니다.</p>
           </label>
 
           <div className="md:col-span-2">
-            <p className="text-sm">목표 강도</p>
-            <div className="mt-2 flex gap-2">
+            <p className="text-sm font-bold">목표 강도</p>
+            <div className="relative mt-2 inline-grid grid-cols-3 rounded-md border-2 border-board-ink bg-white p-1">
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-1 left-1 top-1 rounded border-2 border-black bg-plate-red shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.3,1.3,0.5,1)]"
+                style={{
+                  width: "calc((100% - 0.5rem) / 3)",
+                  transform: `translateX(${Math.max(0, goalIntensityOptions.findIndex((o) => o.value === goalIntensity)) * 100}%)`,
+                }}
+              />
               {goalIntensityOptions.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
+                  aria-pressed={goalIntensity === opt.value}
                   onClick={() => setGoalIntensity(opt.value)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                    goalIntensity === opt.value
-                      ? "bg-gradient-to-r from-emerald-400 to-cyan-300 text-slate-900 shadow-[0_0_24px_-12px_rgba(16,185,129,0.95)]"
-                      : "border border-slate-600 text-slate-200 hover:border-cyan-300/50 hover:text-cyan-100"
+                  className={`relative z-10 min-w-[4.5rem] rounded px-4 py-1.5 text-xs font-bold transition-colors ${
+                    goalIntensity === opt.value ? "text-white" : "text-board-ink hover:text-board-red"
                   }`}
                 >
                   {opt.label}
@@ -625,52 +667,79 @@ export default function InbodyConsult() {
             </div>
           </div>
 
-          <label className="block text-sm md:col-span-2">
+          <label className="block text-sm font-semibold md:col-span-2">
             추가 메모
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="예: 주 4회 운동 가능, 무릎 부담 운동은 피하고 싶음"
-              className="mt-2 block w-full rounded-xl border border-cyan-300/20 bg-slate-950/80 px-3 py-2 text-sm placeholder:text-slate-500 focus:border-cyan-300/60 focus:outline-none"
+              className={boardField}
             />
           </label>
 
-          <div className="md:col-span-2 flex items-center gap-3">
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-300 px-5 py-2.5 font-semibold text-slate-950 shadow-[0_0_30px_-14px_rgba(34,197,94,0.85)] transition hover:brightness-105 disabled:opacity-60"
-            >
+          <div className="flex flex-wrap items-center gap-3 md:col-span-2">
+            <button type="submit" disabled={loading} className="dg-btn dg-btn-primary">
               {loading ? "AI 상담 중..." : consultMode === "upload" ? "분석 시작" : "직접 입력 상담 시작"}
             </button>
             {result && (
-              <button
-                type="button"
-                onClick={exportPdf}
-                disabled={pdfLoading}
-                className="rounded-xl border border-cyan-300/35 bg-cyan-500/5 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:opacity-60"
-              >
+              <button type="button" onClick={exportPdf} disabled={pdfLoading} className="dg-btn dg-btn-steel text-sm">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+                </svg>
                 {pdfLoading ? "PDF 생성 중..." : "PDF 다운로드"}
               </button>
             )}
+            {(loading || pdfLoading) && (
+              <span className="dg-loading-plates" aria-label="불러오는 중">
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+            )}
           </div>
-          <p className="md:col-span-2 text-xs text-slate-400">의료 진단이 아닌 운동/영양 코칭 참고 자료입니다.</p>
+          <p className="text-xs text-steel-600 md:col-span-2">의료 진단이 아닌 운동/영양 코칭 참고 자료입니다.</p>
         </form>
 
-        {error && <div data-pdf-block="1" className="rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
+        {error && (
+          <div data-pdf-block="1" className="dg-well dg-pop border-l-[6px] border-l-plate-red p-4 text-sm text-red-200">
+            {error}
+          </div>
+        )}
 
-        {!result && (
-          <div data-pdf-block="1" className="relative overflow-hidden rounded-3xl border border-slate-700/80 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-6 md:p-8">
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_30%,rgba(56,189,248,0.22),rgba(15,23,42,0)_58%)]" />
-            <h3 className="text-xl font-semibold text-slate-100">상담 시작 전 안내</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+        {loading && (
+          <div className="dg-steel dg-rise flex items-center gap-4 p-6">
+            <span className="dg-loading-plates" aria-label="불러오는 중">
+              <i />
+              <i />
+              <i />
+              <i />
+            </span>
+            <p className="text-sm font-semibold text-steel-200">AI 상담 중...</p>
+          </div>
+        )}
+
+        {!result && !loading && (
+          <div data-pdf-block="1" className="dg-steel dg-rise relative p-6 md:p-8" style={{ animationDelay: "120ms" }}>
+            <h3 className="font-display text-xl text-chalk">상담 시작 전 안내</h3>
+            <p className="mt-2 text-sm leading-relaxed text-steel-300">
               인바디 원본 수치가 잘 보이는 이미지나 PDF를 올리면 정확도가 올라갑니다. 목표를 구체적으로 작성할수록 상담 카드 품질이 좋아집니다.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">파일 권장: 정면 촬영, 그림자 최소화</div>
-              <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">목표 예시: 8주 체지방률 3%p 감량</div>
-              <div className="rounded-xl border border-amber-300/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">결과 제공: 차트 + 주차별 목표 + PDF</div>
+              {[
+                { text: "파일 권장: 정면 촬영, 그림자 최소화", stripe: "border-l-plate-blue" },
+                { text: "목표 예시: 8주 체지방률 3%p 감량", stripe: "border-l-plate-green" },
+                { text: "결과 제공: 차트 + 주차별 목표 + PDF", stripe: "border-l-plate-yellow" },
+              ].map((tip, idx) => (
+                <div
+                  key={tip.text}
+                  className={`dg-well dg-plate-in border-l-[6px] px-4 py-3 text-xs text-steel-200 ${tip.stripe}`}
+                  style={{ animationDelay: `${200 + idx * 60}ms` }}
+                >
+                  {tip.text}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -685,56 +754,46 @@ export default function InbodyConsult() {
             </div>
 
             <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-900 p-6 shadow-[0_18px_50px_-30px_rgba(34,211,238,0.65)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">Beginner Friendly Summary</p>
-                <h2 className="mt-2 text-2xl font-bold text-slate-50">한눈에 보는 현재 상태와 다음 액션</h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              <div className="dg-steel dg-rise border-l-[8px] border-l-plate-yellow p-6">
+                <p className="font-num text-base font-black tracking-wide text-plate-yellow">Beginner Friendly Summary</p>
+                <h2 className="mt-2 font-display text-2xl text-chalk">한눈에 보는 현재 상태와 다음 액션</h2>
+                <p className="mt-2 text-sm leading-relaxed text-steel-300">
                   아래 카드만 읽어도 지금 상태, 우선순위, 식단/운동 방향을 빠르게 이해할 수 있게 정리했습니다.
                 </p>
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {beginnerHighlights.map((item) => (
-                    <div key={item.title} className="rounded-2xl border border-cyan-300/20 bg-slate-950/60 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200/85">{item.eyebrow}</p>
-                      <p className="mt-1 text-base font-semibold text-slate-50">{item.title}</p>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-300">{item.description}</p>
+                  {beginnerHighlights.map((item, idx) => (
+                    <div
+                      key={item.title}
+                      className="dg-well dg-rise p-4 transition-transform duration-150 hover:-translate-y-0.5"
+                      style={{ animationDelay: `${80 + idx * 50}ms` }}
+                    >
+                      <p className="text-xs font-bold text-yellow-300">{item.eyebrow}</p>
+                      <p className="mt-1 text-base font-semibold text-chalk">{item.title}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-steel-300">{item.description}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-900 p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">Quick Actions</p>
-                <h3 className="mt-2 text-xl font-bold text-slate-50">초보자용 실행 체크리스트</h3>
-                <div className="mt-4 space-y-3">
-                  {actionChecklist.map((item, idx) => (
-                    <div key={`${item}-${idx}`} className="flex gap-3 rounded-2xl border border-emerald-300/20 bg-slate-950/60 p-4">
-                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-400 font-bold text-slate-950">
-                        {idx + 1}
-                      </div>
-                      <p className="text-sm leading-relaxed text-slate-200">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ChecklistBoard key={actionChecklist.join("|")} items={actionChecklist} />
             </div>
 
             {prioritySections.length > 0 && (
               <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-2">
-                {prioritySections.map((section) => {
+                {prioritySections.map((section, sIdx) => {
                   const visual = sectionVisual(section.key);
                   const digest = buildSectionDigest(section.key, section.content, result);
                   return (
-                    <div key={`priority-${section.key}`} className={`rounded-2xl border p-5 ${visual.cardClass}`}>
-                      <p className={`text-sm font-semibold ${visual.titleClass}`}>[{visual.tag}] {section.title}</p>
-                      <p className="mt-3 text-base font-semibold leading-relaxed text-slate-50">{digest.summary}</p>
+                    <div
+                      key={`priority-${section.key}`}
+                      className={`dg-steel dg-rise border-l-[8px] p-5 ${visual.stripe}`}
+                      style={{ animationDelay: `${sIdx * 60}ms` }}
+                    >
+                      <p className={`text-sm font-bold ${visual.titleClass}`}>[{visual.tag}] {section.title}</p>
+                      <p className="mt-3 text-base font-semibold leading-relaxed text-chalk">{digest.summary}</p>
                       <div className="mt-4 space-y-2">
                         {digest.items.slice(0, 3).map((item, idx) => (
-                          <div key={`priority-item-${section.key}-${idx}`} className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/35 p-3">
-                            <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${visual.badgeClass}`}>
-                              {idx + 1}
-                            </div>
-                            <p className="text-sm leading-relaxed text-slate-100">{item}</p>
-                          </div>
+                          <NumberedRow key={`priority-item-${section.key}-${idx}`} index={idx} badgeClass={visual.badgeClass} text={item} />
                         ))}
                       </div>
                     </div>
@@ -745,22 +804,26 @@ export default function InbodyConsult() {
 
             {(consultationSectionMap.priority || consultationSectionMap.riskSignals || consultationSectionMap.misconceptions) && (
               <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-                <div className="rounded-3xl border border-pink-400/35 bg-gradient-to-br from-pink-500/12 via-slate-900 to-slate-950 p-6 shadow-[0_18px_50px_-30px_rgba(236,72,153,0.55)]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-pink-200">Priority Ladder</p>
-                  <h3 className="mt-2 text-xl font-bold text-slate-50">무엇부터 바꿔야 하는지 순서대로 정리</h3>
+                <div className="dg-steel dg-rise border-l-[8px] border-l-plate-red p-6">
+                  <p className="font-num text-base font-black tracking-wide text-red-300">Priority Ladder</p>
+                  <h3 className="mt-2 font-display text-xl text-chalk">무엇부터 바꿔야 하는지 순서대로 정리</h3>
                   <div className="mt-4 space-y-3">
                     {buildSectionDigest(
                       "priority",
                       consultationSectionMap.priority?.content || consultationSectionMap.issues?.content || "",
                       result
                     ).items.slice(0, 3).map((item, idx) => (
-                      <div key={`priority-ladder-${idx}`} className="flex items-start gap-3 rounded-2xl border border-pink-300/20 bg-slate-950/50 p-4">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pink-300 text-sm font-black text-slate-950">
+                      <div
+                        key={`priority-ladder-${idx}`}
+                        className="dg-well dg-plate-in flex items-start gap-3 p-4"
+                        style={{ animationDelay: `${100 + idx * 60}ms`, ["--from" as string]: "-40px" }}
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded border-2 border-black bg-plate-red font-num text-lg font-black text-white shadow-sm">
                           {idx + 1}
                         </div>
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-pink-200">Priority {idx + 1}</p>
-                          <p className="mt-1 text-sm leading-relaxed text-slate-100">{item}</p>
+                          <p className="font-num text-sm font-black tracking-wide text-red-300">Priority {idx + 1}</p>
+                          <p className="mt-1 text-sm leading-relaxed text-steel-100">{item}</p>
                         </div>
                       </div>
                     ))}
@@ -769,14 +832,17 @@ export default function InbodyConsult() {
 
                 <div className="space-y-4">
                   {consultationSectionMap.riskSignals && (
-                    <div className="rounded-3xl border border-red-400/40 bg-gradient-to-br from-red-500/12 via-red-950/40 to-slate-950 p-6 shadow-[0_18px_50px_-30px_rgba(248,113,113,0.55)]">
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-red-200">Risk Signals</p>
-                      <h3 className="mt-2 text-xl font-bold text-slate-50">이런 신호가 보이면 방향을 다시 봐야 함</h3>
+                    <div className="dg-steel dg-rise border-l-[8px] border-l-plate-red p-6" style={{ animationDelay: "60ms" }}>
+                      <p className="flex items-center gap-2 font-num text-base font-black tracking-wide text-red-300">
+                        <WarnIcon />
+                        Risk Signals
+                      </p>
+                      <h3 className="mt-2 font-display text-xl text-chalk">이런 신호가 보이면 방향을 다시 봐야 함</h3>
                       <div className="mt-4 space-y-3">
                         {buildSectionDigest("riskSignals", consultationSectionMap.riskSignals.content, result).items.slice(0, 3).map((item, idx) => (
-                          <div key={`risk-signal-${idx}`} className="rounded-2xl border border-red-300/20 bg-slate-950/55 p-4">
-                            <p className="text-sm font-semibold text-red-100">경고 {idx + 1}</p>
-                            <p className="mt-2 text-sm leading-relaxed text-slate-100">{item}</p>
+                          <div key={`risk-signal-${idx}`} className="dg-well dg-rise p-4" style={{ animationDelay: `${120 + idx * 50}ms` }}>
+                            <p className="text-sm font-bold text-red-300">경고 {idx + 1}</p>
+                            <p className="mt-2 text-sm leading-relaxed text-steel-100">{item}</p>
                           </div>
                         ))}
                       </div>
@@ -784,14 +850,14 @@ export default function InbodyConsult() {
                   )}
 
                   {consultationSectionMap.misconceptions && (
-                    <div className="rounded-3xl border border-fuchsia-400/35 bg-gradient-to-br from-fuchsia-500/10 via-slate-900 to-slate-950 p-6">
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200">Beginner Corrections</p>
-                      <h3 className="mt-2 text-xl font-bold text-slate-50">초보자가 가장 자주 오해하는 포인트</h3>
+                    <div className="dg-steel dg-rise border-l-[8px] border-l-plate-yellow p-6" style={{ animationDelay: "120ms" }}>
+                      <p className="font-num text-base font-black tracking-wide text-yellow-300">Beginner Corrections</p>
+                      <h3 className="mt-2 font-display text-xl text-chalk">초보자가 가장 자주 오해하는 포인트</h3>
                       <div className="mt-4 space-y-3">
                         {buildSectionDigest("misconceptions", consultationSectionMap.misconceptions.content, result).items.slice(0, 3).map((item, idx) => (
-                          <div key={`misconception-${idx}`} className="rounded-2xl border border-fuchsia-300/20 bg-slate-950/55 p-4">
-                            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-fuchsia-200">오해 정정 {idx + 1}</p>
-                            <p className="mt-2 text-sm leading-relaxed text-slate-100">{item}</p>
+                          <div key={`misconception-${idx}`} className="dg-well dg-rise p-4" style={{ animationDelay: `${160 + idx * 50}ms` }}>
+                            <p className="text-xs font-bold text-yellow-300">오해 정정 {idx + 1}</p>
+                            <p className="mt-2 text-sm leading-relaxed text-steel-100">{item}</p>
                           </div>
                         ))}
                       </div>
@@ -810,17 +876,21 @@ export default function InbodyConsult() {
                   { key: "donts", title: "금지", subtitle: "하지 말아야 할 것", section: consultationSectionMap.donts },
                 ]
                   .filter((item) => item.section)
-                  .map((item) => {
+                  .map((item, cIdx) => {
                     const visual = sectionVisual(item.key);
                     const digest = buildSectionDigest(item.key, item.section?.content || "", result);
                     return (
-                      <div key={`detail-${item.key}`} className={`rounded-3xl border p-5 ${visual.cardClass}`}>
-                        <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${visual.titleClass}`}>{item.title}</p>
-                        <h3 className="mt-2 text-lg font-bold text-slate-50">{item.subtitle}</h3>
-                        <p className="mt-3 text-sm font-medium leading-relaxed text-slate-100">{digest.summary}</p>
+                      <div
+                        key={`detail-${item.key}`}
+                        className={`dg-steel dg-rise border-t-[8px] p-5 transition-transform duration-150 hover:-translate-y-0.5 ${visual.stripeTop}`}
+                        style={{ animationDelay: `${cIdx * 60}ms` }}
+                      >
+                        <p className={`dg-chip ${visual.badgeClass}`}>{item.title}</p>
+                        <h3 className="mt-2 font-display text-lg text-chalk">{item.subtitle}</h3>
+                        <p className="mt-3 text-sm font-medium leading-relaxed text-steel-100">{digest.summary}</p>
                         <div className="mt-4 space-y-2">
                           {digest.items.slice(0, 3).map((line, idx) => (
-                            <div key={`detail-line-${item.key}-${idx}`} className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 text-sm leading-relaxed text-slate-100">
+                            <div key={`detail-line-${item.key}-${idx}`} className="dg-well px-3 py-3 text-sm leading-relaxed text-steel-100">
                               {line}
                             </div>
                           ))}
@@ -831,74 +901,90 @@ export default function InbodyConsult() {
               </div>
             )}
 
-            <div data-pdf-block="1" className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5">
-              <h3 className="text-sm font-semibold text-amber-100">입력값 재확인 (핵심 4개)</h3>
-              <p className="mt-1 text-xs text-amber-50">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
+            <div data-pdf-block="1" className="dg-whiteboard p-5">
+              <h3 className="font-pen text-3xl leading-none text-board-red">입력값 재확인 (핵심 4개)</h3>
+              <p className="mt-1 text-xs text-steel-600">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {CORE_KEYS.map((key) => (
-                  <label key={key} className="text-xs text-slate-100">
+                  <label key={key} className="text-xs font-semibold">
                     {metricLabels[key]}
                     <input
                       type="text"
                       value={confirmedMetrics[key] || ""}
                       onChange={(e) => setConfirmedMetrics((prev) => ({ ...prev, [key]: e.target.value }))}
-                      className="mt-1 w-full rounded-lg border border-amber-200/20 bg-slate-900/90 px-2 py-2 text-sm focus:border-amber-300/60 focus:outline-none"
+                      className={`${boardField} font-num text-base font-bold`}
                     />
                   </label>
                 ))}
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <label className="text-xs text-amber-50">
+                <label className="text-xs font-semibold">
                   재상담 목표 (선택)
                   <input
                     type="text"
                     value={reviewGoal}
                     onChange={(e) => setReviewGoal(e.target.value)}
                     placeholder={goal || "예: 체지방 감량 + 근육량 유지"}
-                    className="mt-1 w-full rounded-lg border border-amber-200/20 bg-slate-900/90 px-2 py-2 text-sm focus:border-amber-300/60 focus:outline-none"
+                    className={boardField}
                   />
                 </label>
-                <label className="text-xs text-amber-50">
+                <label className="text-xs font-semibold">
                   재상담 추가 메모 (선택)
                   <input
                     type="text"
                     value={reviewNotes}
                     onChange={(e) => setReviewNotes(e.target.value)}
                     placeholder={notes || "예: 식단은 현실적으로 간단하게"}
-                    className="mt-1 w-full rounded-lg border border-amber-200/20 bg-slate-900/90 px-2 py-2 text-sm focus:border-amber-300/60 focus:outline-none"
+                    className={boardField}
                   />
                 </label>
               </div>
-              <button
-                type="button"
-                onClick={rerunWithConfirmedMetrics}
-                disabled={reviewLoading}
-                className="mt-3 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-amber-200 disabled:opacity-60"
-              >
-                {reviewLoading ? "재상담 중..." : "확정값으로 재상담"}
-              </button>
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={rerunWithConfirmedMetrics}
+                  disabled={reviewLoading}
+                  className="dg-btn dg-chalk-burst bg-plate-yellow text-sm text-black"
+                >
+                  {reviewLoading ? "재상담 중..." : "확정값으로 재상담"}
+                </button>
+                {reviewLoading && (
+                  <span className="dg-loading-plates" aria-label="불러오는 중">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
+              </div>
             </div>
 
             <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-3">
-              {metricInsightCards.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-slate-700/80 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-[0_14px_40px_-28px_rgba(34,211,238,0.65)]">
+              {metricInsightCards.map((item, idx) => (
+                <div
+                  key={item.label}
+                  className="dg-steel dg-rise dg-lift p-5"
+                  style={{ animationDelay: `${idx * 60}ms` }}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
-                      <p className="mt-1 text-2xl font-bold text-slate-50">{item.value}</p>
+                      <p className="text-xs font-semibold text-steel-400">{item.label}</p>
+                      <AnimatedValue value={item.value} className="mt-1 font-num text-4xl font-black text-chalk" />
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.toneClass}`}>{item.badge}</span>
+                    <span className={`dg-chip dg-pop text-xs ${item.toneClass}`} style={{ animationDelay: `${300 + idx * 60}ms` }}>
+                      {item.badge}
+                    </span>
                   </div>
-                  <p className="mt-3 text-sm font-medium text-slate-100">{item.headline}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-300">{item.description}</p>
+                  <p className="mt-3 text-sm font-semibold text-chalk">{item.headline}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-steel-300">{item.description}</p>
                 </div>
               ))}
             </div>
 
             {personalInterpretation.length > 0 && (
-              <div data-pdf-block="1" className="rounded-2xl border border-cyan-300/30 bg-cyan-500/5 p-5">
-                <h3 className="text-sm font-semibold text-cyan-100">개인 기준 해석 요약</h3>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-cyan-50">
+              <div data-pdf-block="1" className="dg-steel dg-rise border-l-[8px] border-l-plate-blue p-5">
+                <h3 className="text-sm font-bold text-blue-300">개인 기준 해석 요약</h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-steel-200 marker:text-blue-300">
                   {personalInterpretation.map((line, idx) => (
                     <li key={`${line}-${idx}`}>{line}</li>
                   ))}
@@ -907,90 +993,175 @@ export default function InbodyConsult() {
             )}
 
             <div data-pdf-block="1" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Object.entries(metricLabels).map(([key, label]) => (
-                <MetricCard key={key} label={label} value={result.metrics?.[key] || "-"} />
+              {Object.entries(metricLabels).map(([key, label], idx) => (
+                <MetricCard key={key} label={label} value={result.metrics?.[key] || "-"} delay={idx * 40} />
               ))}
             </div>
 
             <div data-pdf-block="1" className="grid gap-4 lg:grid-cols-2">
               <ChartCard title="현재 vs 목표 (고정 축)">
-                <p className="mb-3 text-sm leading-relaxed text-slate-300">
-                  파란 막대는 현재, 초록 막대는 목표입니다. 두 막대 차이가 클수록 우선적으로 조정해야 할 항목입니다.
-                </p>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={compositionData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="name" stroke="#cbd5e1" />
-                      <YAxis stroke="#cbd5e1" domain={compositionDomain} />
-                      <Tooltip formatter={(v: any) => `${v}`} />
-                      <Legend />
-                      <Bar dataKey="current" name="현재" fill="#38bdf8" radius={[6, 6, 0, 0]} />
-                      <Bar dataKey="target" name="목표" fill="#22c55e" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {(inView) => (
+                  <>
+                    <p className="mb-3 text-sm leading-relaxed text-steel-300">
+                      회색 막대는 현재, 빨간 막대는 목표입니다. 두 막대 차이가 클수록 우선적으로 조정해야 할 항목입니다.
+                    </p>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart key={inView ? "in" : "out"} data={compositionData} barGap={6}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
+                          <XAxis dataKey="name" stroke={CHART.axis} tick={axisTick} tickLine={false} />
+                          <YAxis stroke={CHART.axis} domain={compositionDomain} tick={axisTick} tickLine={false} />
+                          <Tooltip
+                            formatter={(v: any) => `${v}`}
+                            cursor={{ fill: CHART.cursor }}
+                            contentStyle={tooltipContentStyle}
+                            labelStyle={tooltipLabelStyle}
+                            itemStyle={tooltipItemStyle}
+                          />
+                          <Legend iconType="square" formatter={legendText} />
+                          <Bar
+                            dataKey="current"
+                            name="현재"
+                            fill={CHART.current}
+                            stroke={CHART.ink}
+                            strokeWidth={2}
+                            radius={[3, 3, 0, 0]}
+                            animationDuration={900}
+                            animationEasing="ease-out"
+                          />
+                          <Bar
+                            dataKey="target"
+                            name="목표"
+                            fill={CHART.target}
+                            stroke={CHART.ink}
+                            strokeWidth={2}
+                            radius={[3, 3, 0, 0]}
+                            animationBegin={220}
+                            animationDuration={900}
+                            animationEasing="ease-out"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
               </ChartCard>
 
               <ChartCard title="탄단지 비율">
-                <p className="mb-3 text-sm leading-relaxed text-slate-300">
-                  식단을 숫자로 보기 어렵다면 이 원형 차트만 보셔도 됩니다. 비율이 너무 한쪽으로 치우치면 식단 균형을 다시 잡는 게 좋습니다.
-                </p>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={macroData} dataKey="ratio" nameKey="name" cx="50%" cy="50%" outerRadius={105} label>
-                        {macroData.map((_, idx) => (
-                          <Cell key={idx} fill={nutritionColors[idx % nutritionColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                {macroGuide && (
-                  <div className="mt-3 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm">
-                    <p className="font-semibold text-slate-100">하루 권장 섭취량</p>
-                    <p className="mt-1 text-slate-200">
-                      총 {macroGuide.calories} kcal
-                      {" | "}탄수화물 {macroGuide.carb}g
-                      {" | "}단백질 {macroGuide.protein}g
-                      {" | "}지방 {macroGuide.fat}g
+                {(inView) => (
+                  <>
+                    <p className="mb-3 text-sm leading-relaxed text-steel-300">
+                      식단을 숫자로 보기 어렵다면 이 원형 차트만 보셔도 됩니다. 비율이 너무 한쪽으로 치우치면 식단 균형을 다시 잡는 게 좋습니다.
                     </p>
-                    <p className="mt-2 text-xs text-slate-400">
-                      1일 3끼 기준(대략): 탄수화물 {macroGuide.carbPerMeal}g / 단백질 {macroGuide.proteinPerMeal}g / 지방 {macroGuide.fatPerMeal}g
-                    </p>
-                  </div>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart key={inView ? "in" : "out"}>
+                          <Pie
+                            data={macroData}
+                            dataKey="ratio"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={42}
+                            outerRadius={100}
+                            stroke={CHART.ink}
+                            strokeWidth={3}
+                            label={renderMacroLabel}
+                            labelLine={{ stroke: CHART.axis }}
+                            animationDuration={900}
+                          >
+                            {macroData.map((entry, idx) => (
+                              <Cell key={idx} fill={nutritionColors[entry.name] ?? CHART.current} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(v: unknown) => `${v}%`}
+                            contentStyle={tooltipContentStyle}
+                            labelStyle={tooltipLabelStyle}
+                            itemStyle={tooltipItemStyle}
+                          />
+                          <Legend iconType="square" formatter={legendText} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    {macroGuide && (
+                      <div className="dg-well mt-3 p-3 text-sm">
+                        <p className="font-semibold text-chalk">하루 권장 섭취량</p>
+                        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-steel-200">
+                          <span>
+                            총 <CountNumber value={macroGuide.calories} className="font-num text-lg font-black text-chalk" /> kcal
+                          </span>
+                          <MacroSwatch color={nutritionColors["탄수화물"]} label="탄수화물" value={macroGuide.carb} />
+                          <MacroSwatch color={nutritionColors["단백질"]} label="단백질" value={macroGuide.protein} />
+                          <MacroSwatch color={nutritionColors["지방"]} label="지방" value={macroGuide.fat} />
+                        </p>
+                        <p className="mt-2 text-xs text-steel-400">
+                          1일 3끼 기준(대략): 탄수화물 {macroGuide.carbPerMeal}g / 단백질 {macroGuide.proteinPerMeal}g / 지방 {macroGuide.fatPerMeal}g
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </ChartCard>
             </div>
 
             <div data-pdf-block="1">
-            <ChartCard title="주차별 목표 추이 (고정 축)">
-              <p className="mb-3 text-sm leading-relaxed text-slate-300">
-                주차별로 체중과 체지방량이 어떻게 변해야 하는지 보여줍니다. 급격한 하락보다 꾸준한 하락이 더 안정적인 계획입니다.
-              </p>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={weeklyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="week" stroke="#cbd5e1" />
-                    <YAxis stroke="#cbd5e1" domain={weeklyDomain} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="weight" name="목표 체중" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="fat" name="목표 체지방량" stroke="#38bdf8" strokeWidth={3} dot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </ChartCard>
+              <ChartCard title="주차별 목표 추이 (고정 축)">
+                {(inView) => (
+                  <>
+                    <p className="mb-3 text-sm leading-relaxed text-steel-300">
+                      주차별로 체중과 체지방량이 어떻게 변해야 하는지 보여줍니다. 급격한 하락보다 꾸준한 하락이 더 안정적인 계획입니다.
+                    </p>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart key={inView ? "in" : "out"} data={weeklyData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+                          <XAxis dataKey="week" stroke={CHART.axis} tick={axisTick} tickLine={false} />
+                          <YAxis stroke={CHART.axis} domain={weeklyDomain} tick={axisTick} tickLine={false} />
+                          <Tooltip
+                            cursor={{ stroke: CHART.axis, strokeWidth: 2 }}
+                            contentStyle={tooltipContentStyle}
+                            labelStyle={tooltipLabelStyle}
+                            itemStyle={tooltipItemStyle}
+                          />
+                          <Legend formatter={legendText} />
+                          <Line
+                            type="monotone"
+                            dataKey="weight"
+                            name="목표 체중"
+                            stroke={CHART.target}
+                            strokeWidth={4}
+                            dot={{ r: 5, fill: CHART.target, stroke: CHART.ink, strokeWidth: 2 }}
+                            activeDot={{ r: 7, fill: CHART.target, stroke: CHART.ink, strokeWidth: 2 }}
+                            animationDuration={1200}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="fat"
+                            name="목표 체지방량"
+                            stroke={CHART.chalk}
+                            strokeWidth={3}
+                            strokeDasharray="7 5"
+                            dot={{ r: 5, fill: CHART.chalk, stroke: CHART.ink, strokeWidth: 2 }}
+                            activeDot={{ r: 7, fill: CHART.chalk, stroke: CHART.ink, strokeWidth: 2 }}
+                            animationBegin={200}
+                            animationDuration={1200}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
+              </ChartCard>
             </div>
 
             {result.warnings?.length > 0 && (
-              <div data-pdf-block="1" className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5">
-                <h3 className="font-semibold text-amber-100">검토 알림</h3>
-                <ul className="mt-2 list-disc pl-5 text-sm text-amber-50">
+              <div data-pdf-block="1" className="dg-steel dg-rise border-l-[8px] border-l-plate-yellow p-5">
+                <h3 className="flex items-center gap-2 font-bold text-yellow-300">
+                  <WarnIcon />
+                  검토 알림
+                </h3>
+                <ul className="mt-2 list-disc pl-5 text-sm text-steel-200 marker:text-yellow-300">
                   {result.warnings.map((warning, idx) => (
                     <li key={idx}>{warning}</li>
                   ))}
@@ -998,43 +1169,49 @@ export default function InbodyConsult() {
               </div>
             )}
 
-            <div data-pdf-block="1" className="rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-slate-900 to-slate-900/70 p-6 shadow-[0_16px_50px_-30px_rgba(6,182,212,0.8)]">
-              <h3 className="text-xl font-semibold">AI 상세 상담 카드</h3>
-              <div className="mt-4 rounded-xl border border-cyan-500/40 bg-gradient-to-br from-cyan-500/20 to-sky-500/10 p-4">
-                <p className="text-sm font-semibold text-cyan-200">핵심 3줄 요약</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-cyan-50">
+            <div data-pdf-block="1" className="dg-steel p-6">
+              <h3 className="font-display text-2xl text-chalk">AI 상세 상담 카드</h3>
+              <div className="dg-whiteboard mt-4 p-4">
+                <p className="font-pen text-3xl leading-none text-board-red">핵심 3줄 요약</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm marker:text-board-blue">
                   {summaryLines.map((line, idx) => (
                     <li key={idx}>{line}</li>
                   ))}
                 </ul>
               </div>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                {consultationSections.map((section) => {
+                {consultationSections.map((section, sIdx) => {
                   const visual = sectionVisual(section.key);
                   const digest = buildSectionDigest(section.key, section.content, result);
                   return (
-                    <div data-pdf-block="1" key={section.key} className={`rounded-2xl border p-5 ${visual.cardClass}`}>
-                      <p className={`text-sm font-semibold ${visual.titleClass}`}>[{visual.tag}] {section.title}</p>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-300">{sectionHelper(section.key)}</p>
-                      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/45 p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">한 줄 결론</p>
-                        <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-50">{digest.summary}</p>
+                    <div
+                      data-pdf-block="1"
+                      key={section.key}
+                      className={`dg-well dg-rise border-l-[6px] p-5 ${visual.stripe}`}
+                      style={{ animationDelay: `${Math.min(sIdx, 10) * 50}ms` }}
+                    >
+                      <p className={`text-sm font-bold ${visual.titleClass}`}>[{visual.tag}] {section.title}</p>
+                      <p className="mt-2 text-xs leading-relaxed text-steel-400">{sectionHelper(section.key)}</p>
+                      <div className="mt-4 rounded border border-steel-700 bg-steel-800 p-4">
+                        <p className="text-xs font-bold text-steel-400">한 줄 결론</p>
+                        <p className="mt-2 text-sm font-semibold leading-relaxed text-chalk">{digest.summary}</p>
                       </div>
                       <div className="mt-4 grid gap-3">
                         {digest.items.map((item, idx) => (
-                          <div key={`${section.key}-${idx}`} className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/35 p-3">
-                            <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${visual.badgeClass}`}>
+                          <div key={`${section.key}-${idx}`} className="flex gap-3 rounded border border-steel-700 bg-steel-800 p-3">
+                            <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 border-black font-num text-sm font-black ${visual.badgeClass}`}>
                               {idx + 1}
                             </div>
-                            <p className="text-sm leading-relaxed text-slate-100">{item}</p>
+                            <p className="text-sm leading-relaxed text-steel-100">{item}</p>
                           </div>
                         ))}
                       </div>
-                      <details className="ai-raw-snippet mt-4 rounded-xl border border-white/10 bg-slate-950/30 p-3">
-                        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">
+                      <details className="ai-raw-snippet group mt-4 rounded border border-steel-700 bg-steel-900 p-3">
+                        <summary className="flex cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden gap-2 text-xs font-bold text-steel-300 hover:text-chalk">
+                          <Chevron />
                           원문 보기
                         </summary>
-                        <pre className="mt-3 whitespace-pre-wrap text-xs leading-relaxed text-slate-200">{section.content}</pre>
+                        <pre className="mt-3 whitespace-pre-wrap font-sans text-xs leading-relaxed text-steel-200">{section.content}</pre>
                       </details>
                     </div>
                   );
@@ -1042,10 +1219,13 @@ export default function InbodyConsult() {
               </div>
             </div>
 
-            <details data-pdf-block="1" className="ai-full-raw rounded-2xl border border-slate-700/80 bg-slate-900/90 p-6">
-              <summary className="cursor-pointer text-lg font-semibold text-slate-200">원문 전체 펼쳐보기</summary>
-              <p className="mt-2 text-sm text-slate-400">필요할 때만 전체 상담 문장을 확인하세요.</p>
-              <pre className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-100">{normalizedConsultation}</pre>
+            <details data-pdf-block="1" className="ai-full-raw dg-steel group p-6">
+              <summary className="flex cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden gap-2 text-lg font-semibold text-steel-200 hover:text-chalk">
+                <Chevron />
+                원문 전체 펼쳐보기
+              </summary>
+              <p className="mt-2 text-sm text-steel-400">필요할 때만 전체 상담 문장을 확인하세요.</p>
+              <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed text-steel-100">{normalizedConsultation}</pre>
             </details>
           </div>
         )}
@@ -1119,52 +1299,62 @@ function extractCoreMetrics(metrics: Record<string, string>): Record<string, str
   };
 }
 
+const SECTION_TONES = {
+  red: { stripe: "border-l-plate-red", stripeTop: "border-t-plate-red", titleClass: "text-red-300", badgeClass: "bg-plate-red text-white" },
+  yellow: { stripe: "border-l-plate-yellow", stripeTop: "border-t-plate-yellow", titleClass: "text-yellow-300", badgeClass: "bg-plate-yellow text-black" },
+  green: { stripe: "border-l-plate-green", stripeTop: "border-t-plate-green", titleClass: "text-green-300", badgeClass: "bg-plate-green text-black" },
+  blue: { stripe: "border-l-plate-blue", stripeTop: "border-t-plate-blue", titleClass: "text-blue-300", badgeClass: "bg-plate-blue text-white" },
+  steel: { stripe: "border-l-steel-600", stripeTop: "border-t-steel-600", titleClass: "text-steel-200", badgeClass: "bg-steel-600 text-chalk" },
+} as const;
+
+// 섹션 색: 빨강 = 경고/우선, 노랑 = 주의/강조, 초록 = 좋은 점/실행, 파랑 = 진단/정보
 function sectionVisual(key: string) {
+  const tone = (tag: string, color: keyof typeof SECTION_TONES) => ({ tag, ...SECTION_TONES[color] });
   switch (key) {
     case "overall":
-      return { tag: "\ucd1d\ud3c9", cardClass: "border-violet-500/40 bg-violet-500/10", titleClass: "text-violet-200", badgeClass: "bg-violet-300 text-slate-950" };
+      return tone("총평", "yellow");
     case "diagnosis":
-      return { tag: "\uc9c4\ub2e8", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200", badgeClass: "bg-sky-300 text-slate-950" };
+      return tone("진단", "blue");
     case "metrics":
-      return { tag: "\ud574\uc11d", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200", badgeClass: "bg-cyan-300 text-slate-950" };
+      return tone("해석", "blue");
     case "strengths":
-      return { tag: "\uac15\uc810", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
+      return tone("강점", "green");
     case "issues":
-      return { tag: "\uc6b0\uc120", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200", badgeClass: "bg-rose-300 text-slate-950" };
+      return tone("우선", "red");
     case "priority":
-      return { tag: "\uc21c\uc11c", cardClass: "border-pink-500/40 bg-pink-500/10", titleClass: "text-pink-200", badgeClass: "bg-pink-300 text-slate-950" };
+      return tone("순서", "red");
     case "plan":
-      return { tag: "\uc2e4\ud589", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200", badgeClass: "bg-amber-300 text-slate-950" };
+      return tone("실행", "yellow");
     case "exercisePlan":
-      return { tag: "\uc6b4\ub3d9", cardClass: "border-blue-500/40 bg-blue-500/10", titleClass: "text-blue-200", badgeClass: "bg-blue-300 text-slate-950" };
+      return tone("운동", "blue");
     case "nutritionPlan":
-      return { tag: "\uc2dd\ub2e8", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
+      return tone("식단", "green");
     case "lifestylePlan":
-      return { tag: "\uc0dd\ud65c", cardClass: "border-teal-500/40 bg-teal-500/10", titleClass: "text-teal-200", badgeClass: "bg-teal-300 text-slate-950" };
+      return tone("생활", "green");
     case "riskSignals":
-      return { tag: "\uacbd\uace0", cardClass: "border-red-500/40 bg-red-500/10", titleClass: "text-red-200", badgeClass: "bg-red-300 text-slate-950" };
+      return tone("경고", "red");
     case "misconceptions":
-      return { tag: "\uc624\ud574", cardClass: "border-fuchsia-500/40 bg-fuchsia-500/10", titleClass: "text-fuchsia-200", badgeClass: "bg-fuchsia-300 text-slate-950" };
+      return tone("오해", "yellow");
     case "donts":
-      return { tag: "\uae08\uc9c0", cardClass: "border-red-500/40 bg-red-500/10", titleClass: "text-red-200", badgeClass: "bg-red-300 text-slate-950" };
+      return tone("금지", "red");
     case "fourWeeks":
-      return { tag: "4\uc8fc", cardClass: "border-lime-500/40 bg-lime-500/10", titleClass: "text-lime-200", badgeClass: "bg-lime-300 text-slate-950" };
+      return tone("4주", "green");
     case "nextCheck":
-      return { tag: "\uccb4\ud06c", cardClass: "border-orange-500/40 bg-orange-500/10", titleClass: "text-orange-200", badgeClass: "bg-orange-300 text-slate-950" };
+      return tone("체크", "yellow");
     case "current":
-      return { tag: "\ud604\uc7ac", cardClass: "border-sky-500/40 bg-sky-500/10", titleClass: "text-sky-200", badgeClass: "bg-sky-300 text-slate-950" };
+      return tone("현재", "blue");
     case "goal":
-      return { tag: "\ubaa9\ud45c", cardClass: "border-cyan-500/40 bg-cyan-500/10", titleClass: "text-cyan-200", badgeClass: "bg-cyan-300 text-slate-950" };
+      return tone("목표", "red");
     case "nutrition":
-      return { tag: "\uc2dd\ub2e8", cardClass: "border-emerald-500/40 bg-emerald-500/10", titleClass: "text-emerald-200", badgeClass: "bg-emerald-300 text-slate-950" };
+      return tone("식단", "green");
     case "exercise":
-      return { tag: "\uc6b4\ub3d9", cardClass: "border-rose-500/40 bg-rose-500/10", titleClass: "text-rose-200", badgeClass: "bg-rose-300 text-slate-950" };
+      return tone("운동", "blue");
     case "checkpoint":
-      return { tag: "\uccb4\ud06c", cardClass: "border-amber-500/40 bg-amber-500/10", titleClass: "text-amber-200", badgeClass: "bg-amber-300 text-slate-950" };
+      return tone("체크", "yellow");
     case "caution":
-      return { tag: "\uc8fc\uc758", cardClass: "border-orange-500/40 bg-orange-500/10", titleClass: "text-orange-200", badgeClass: "bg-orange-300 text-slate-950" };
+      return tone("주의", "yellow");
     default:
-      return { tag: "\uc0c1\ub2f4", cardClass: "border-slate-600 bg-slate-950", titleClass: "text-slate-200", badgeClass: "bg-slate-300 text-slate-950" };
+      return tone("상담", "steel");
   }
 }
 
@@ -1795,15 +1985,15 @@ function interpretVisceralFatWithContext(value: number, context: PersonalContext
 }
 
 function positiveInsight(badge: string, headline: string, description: string): MetricInsight {
-  return { badge, headline, description, toneClass: "bg-emerald-400/15 text-emerald-200 border border-emerald-300/30" };
+  return { badge, headline, description, toneClass: "bg-plate-green text-black" };
 }
 
 function cautionInsight(badge: string, headline: string, description: string): MetricInsight {
-  return { badge, headline, description, toneClass: "bg-amber-400/15 text-amber-100 border border-amber-300/30" };
+  return { badge, headline, description, toneClass: "bg-plate-yellow text-black" };
 }
 
 function neutralInsight(headline: string, description: string): MetricInsight {
-  return { badge: "확인 필요", headline, description, toneClass: "bg-slate-400/15 text-slate-100 border border-slate-300/30" };
+  return { badge: "확인 필요", headline, description, toneClass: "bg-steel-700 text-chalk" };
 }
 
 function beginnerStateTitle(bodyFatPercent: number, bmi: number) {
@@ -1843,33 +2033,177 @@ function buildDomain(values: number[], padding: number): [number, number] {
 
 function Badge({ label, warning }: { label: string; warning?: boolean }) {
   return (
-    <span
-      className={`rounded-full border px-3 py-1 text-xs ${
-        warning ? "border-amber-300/60 bg-amber-300/10 text-amber-100" : "border-cyan-300/35 bg-cyan-500/5 text-cyan-100"
-      }`}
-    >
+    <span className={`dg-chip text-sm ${warning ? "dg-pop bg-plate-yellow text-black" : "bg-steel-700 text-chalk"}`}>
+      {warning && <WarnIcon />}
       {label}
     </span>
   );
 }
 
-function ChartCard({ title, children }: { title: string; children: ReactNode }) {
+// 차트 카드: 화면에 들어오는 순간 차트를 다시 그려 막대가 차오르게 한다.
+// 화면 밖에서도 차트는 완성된 상태로 그려져 있으므로 PDF 캡처에는 영향이 없다.
+function ChartCard({ title, children }: { title: string; children: (inView: boolean) => ReactNode }) {
+  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.3 });
   return (
-    <div className="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-5 shadow-[0_12px_40px_-25px_rgba(56,189,248,0.55)]">
-      <h3 className="text-lg font-semibold text-slate-100">{title}</h3>
-      <div className="mt-3">{children}</div>
+    <div ref={ref} className="dg-steel p-5">
+      <h3 className="px-1 font-display text-xl text-chalk">{title}</h3>
+      <div className="mt-3">{children(inView)}</div>
     </div>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({ label, value, delay = 0 }: { label: string; value: string; delay?: number }) {
   return (
-    <div className="rounded-xl border border-slate-700/80 bg-gradient-to-b from-slate-900 to-slate-900/70 p-4 shadow-[inset_0_1px_0_0_rgba(148,163,184,0.15)]">
-      <p className="text-xs text-slate-400">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-slate-100">{value}</p>
+    <div
+      className="dg-rise rounded-md border-[3px] border-black bg-steel-800 p-4 shadow-md transition duration-150 hover:-translate-y-0.5 hover:shadow-xl"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <p className="text-xs font-semibold text-steel-400">{label}</p>
+      <AnimatedValue value={value} className="mt-1 font-num text-2xl font-black text-chalk" />
     </div>
   );
 }
+
+// "23.5kg" 처럼 앞자리가 숫자인 값만 0 에서 굴려 올린다. 화면 밖에서는 최종값을 그대로 보여 준다(PDF 캡처 대비).
+function AnimatedValue({ value, className }: { value: string; className?: string }) {
+  const [ref, inView] = useInView<HTMLParagraphElement>({ threshold: 0 });
+  const match = /^(-?\d+(?:\.\d+)?)(.*)$/.exec((value ?? "").trim());
+  const target = match ? Number(match[1]) : 0;
+  const decimals = match && match[1].includes(".") ? match[1].split(".")[1].length : 0;
+  const counted = useCountUp(match ? target : null, { duration: 900, start: inView });
+  return (
+    <p ref={ref} className={className}>
+      {match && inView ? `${counted.toFixed(decimals)}${match[2]}` : value}
+    </p>
+  );
+}
+
+function CountNumber({ value, className }: { value: number; className?: string }) {
+  const [ref, inView] = useInView<HTMLSpanElement>({ threshold: 0 });
+  const decimals = Number.isInteger(value) ? 0 : 1;
+  const counted = useCountUp(value, { duration: 900, start: inView });
+  return (
+    <span ref={ref} className={className}>
+      {inView ? counted.toFixed(decimals) : value}
+    </span>
+  );
+}
+
+function MacroSwatch({ color, label, value }: { color: string; label: string; value: number }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <i className="inline-block h-3 w-3 rounded-sm border-2 border-black" style={{ background: color }} aria-hidden="true" />
+      {label} <CountNumber value={value} className="font-num text-base font-black text-chalk" />g
+    </span>
+  );
+}
+
+function NumberedRow({ index, badgeClass, text }: { index: number; badgeClass: string; text: string }) {
+  return (
+    <div className="dg-well dg-rise flex gap-3 p-3" style={{ animationDelay: `${100 + index * 50}ms` }}>
+      <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 border-black font-num text-sm font-black ${badgeClass}`}>
+        {index + 1}
+      </div>
+      <p className="text-sm leading-relaxed text-steel-100">{text}</p>
+    </div>
+  );
+}
+
+// 화이트보드 체크리스트. 체크 표시는 화면에서만 쓰는 표현용 상태다.
+function ChecklistBoard({ items }: { items: string[] }) {
+  const [checked, setChecked] = useState<Set<number>>(() => new Set());
+  const toggle = (idx: number) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  return (
+    <div className="dg-whiteboard dg-rise p-6" style={{ animationDelay: "80ms" }}>
+      <p className="font-num text-base font-black tracking-wide text-board-blue">Quick Actions</p>
+      <h3 className="mt-1 font-pen text-3xl leading-none text-board-red">초보자용 실행 체크리스트</h3>
+      <div className="mt-4 space-y-2">
+        {items.map((item, idx) => {
+          const done = checked.has(idx);
+          return (
+            <button
+              key={`${item}-${idx}`}
+              type="button"
+              aria-pressed={done}
+              onClick={() => toggle(idx)}
+              className="dg-rise flex w-full gap-3 rounded-md border-2 border-transparent p-3 text-left transition hover:-translate-y-0.5 hover:border-steel-300 hover:bg-white"
+              style={{ animationDelay: `${140 + idx * 50}ms` }}
+            >
+              <span
+                key={done ? "on" : "off"}
+                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded border-2 border-board-ink font-num text-base font-black ${
+                  done ? "dg-pop bg-plate-green text-black" : "bg-white text-board-ink"
+                }`}
+              >
+                {done ? <CheckMark className="h-4 w-4" /> : idx + 1}
+              </span>
+              <span className={`text-sm leading-relaxed ${done ? "text-steel-500 line-through decoration-board-red decoration-2" : "text-board-ink"}`}>
+                {item}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CheckMark({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
+
+function WarnIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3l10 18H2L12 3z" />
+      <path d="M12 10v5M12 18v.5" />
+    </svg>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-90"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={3}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+type MacroLabelProps = { x?: number; y?: number; textAnchor?: "start" | "middle" | "end" | "inherit"; name?: string; value?: number };
+
+const renderMacroLabel = (props: MacroLabelProps) => (
+  <text
+    x={props.x}
+    y={props.y}
+    fill={CHART.chalkText}
+    textAnchor={props.textAnchor}
+    dominantBaseline="central"
+    style={{ fontFamily: NUM_FONT, fontWeight: 800, fontSize: 15 }}
+  >
+    {`${props.name} ${props.value}%`}
+  </text>
+);
+
+const legendText = (value: string) => <span style={{ color: CHART.tick, fontWeight: 700 }}>{value}</span>;
 
 function parseOptionalInt(raw: string): number | null {
   const trimmed = raw.trim();

@@ -3,6 +3,39 @@ import type { FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { crewApi } from "../services/crewApi";
 import type { CrewChallenge, CrewDetail, CrewListItem } from "../types/crew";
+import { useCountUp } from "../hooks/useCountUp";
+import { useInView } from "../hooks/useInView";
+
+// 칸으로 나뉜 게이지: 화면에 들어오면 칸이 하나씩 켜진다.
+function SegGauge({ value, cells = 10, on = "bg-plate-green" }: { value: number; cells?: number; on?: string }) {
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const lit = Math.round((Math.max(0, Math.min(100, value)) / 100) * cells);
+  return (
+    <div ref={ref} className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${cells}, minmax(0, 1fr))` }} aria-hidden>
+      {Array.from({ length: cells }, (_, i) => (
+        <span
+          key={i}
+          className={`h-2.5 rounded-[2px] border border-black transition-colors duration-200 ${inView && i < lit ? on : "bg-steel-800"}`}
+          style={{ transitionDelay: `${i * 50}ms` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CountNumber({ value }: { value: number }) {
+  const v = useCountUp(value, { duration: 900 });
+  const digits = Number.isInteger(value) ? 0 : Math.min(2, String(value).split(".")[1]?.length ?? 0);
+  return <>{v.toFixed(digits)}</>;
+}
+
+// 1~3위 메달 원판(노랑 · 회색 · 빨강)
+const RANK_PLATE: Record<number, string> = {
+  1: "bg-plate-yellow text-black",
+  2: "bg-steel-300 text-black",
+  3: "bg-plate-red text-white",
+};
+
 
 const currentMonthKey = () => {
   const now = new Date();
@@ -35,15 +68,15 @@ const challengeStatusText: Record<CrewChallenge["status"], string> = {
 };
 
 const challengeStatusClass: Record<CrewChallenge["status"], string> = {
-  UPCOMING: "bg-sky-500/15 text-sky-300 border-sky-300/40",
-  ONGOING: "bg-emerald-500/15 text-emerald-300 border-emerald-300/40",
-  ENDED: "bg-slate-500/20 text-slate-300 border-slate-300/30",
+  UPCOMING: "bg-plate-blue text-white",
+  ONGOING: "bg-plate-green text-white",
+  ENDED: "bg-steel-700 text-steel-300",
 };
 
 const kingStyleByTitle: Record<string, { icon: string; className: string }> = {
-  "성실왕": { icon: "C", className: "border-cyan-300/50 bg-cyan-500/15 text-cyan-100" },
-  "연승왕": { icon: "S", className: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100" },
-  "도전왕": { icon: "D", className: "border-amber-300/50 bg-amber-500/15 text-amber-100" },
+  "성실왕": { icon: "C", className: "border-l-plate-yellow" },
+  "연승왕": { icon: "S", className: "border-l-plate-green" },
+  "도전왕": { icon: "D", className: "border-l-plate-red" },
 };
 
 export default function Crew() {
@@ -292,76 +325,101 @@ export default function Crew() {
   };
 
   return (
-    <section className="min-h-screen bg-slate-950 pt-28 pb-24 text-white">
+    <section className="min-h-screen pt-28 pb-24 text-white">
       <div className="mx-auto grid max-w-6xl gap-6 px-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:px-10">
         <aside className="space-y-5">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-sm text-cyan-300">CREW</p>
-            <h1 className="mt-1 text-2xl font-extrabold">운동 모임</h1>
-            <p className="mt-2 text-sm text-gray-300">챌린지 운영, 랭킹 경쟁, 팀 출석 관리까지 한 화면에서 처리하세요.</p>
+          <div className="dg-steel p-5">
+            <p className="font-num text-sm font-bold text-plate-yellow">Crew</p>
+            <h1 className="mt-1 text-2xl">운동 모임</h1>
+            <p className="mt-2 text-sm text-steel-300">챌린지 운영, 랭킹 경쟁, 팀 출석 관리까지 한 화면에서 처리하세요.</p>
           </div>
 
-          <form onSubmit={onCreate} className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-            <h2 className="text-lg font-bold">모임 만들기</h2>
-            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="모임 이름" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-cyan-400" />
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} placeholder="모임 소개 (선택)" rows={3} className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-cyan-400" />
-            <button type="submit" className="w-full rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">모임 생성</button>
+          <form onSubmit={onCreate} className="dg-steel space-y-3 p-4">
+            <h2 className="font-display text-lg">모임 만들기</h2>
+            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="모임 이름" className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} placeholder="모임 소개 (선택)" rows={3} className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+            <button type="submit" className="dg-btn dg-btn-primary w-full min-h-[44px] text-sm">모임 생성</button>
           </form>
 
-          <form onSubmit={onJoinByCode} className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-            <h2 className="text-lg font-bold">초대코드 참가</h2>
-            <input value={inviteCodeInput} onChange={(e) => setInviteCodeInput(e.target.value)} maxLength={20} placeholder="예: A1B2C3D4" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm uppercase outline-none focus:border-cyan-400" />
-            <button type="submit" className="w-full rounded-lg border border-cyan-300/40 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-200">코드로 참여</button>
+          <form onSubmit={onJoinByCode} className="dg-steel space-y-3 p-4">
+            <h2 className="font-display text-lg">초대코드 참가</h2>
+            <input value={inviteCodeInput} onChange={(e) => setInviteCodeInput(e.target.value)} maxLength={20} placeholder="예: A1B2C3D4" className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow font-num text-lg font-bold uppercase" />
+            <button type="submit" className="dg-btn dg-btn-steel dg-chalk-burst w-full min-h-[44px] text-sm">코드로 참여</button>
           </form>
 
-          <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-3">
-            <h2 className="px-1 text-sm font-semibold text-gray-300">모임 목록</h2>
-            {loading && <p className="px-1 py-2 text-sm text-gray-400">불러오는 중...</p>}
-            {!loading && groups.length === 0 && <p className="px-1 py-2 text-sm text-gray-400">아직 모임이 없습니다.</p>}
-            {groups.map((group) => (
-              <button key={group.id} type="button" onClick={() => setSelectedId(group.id)} className={`w-full rounded-xl border p-3 text-left transition ${selectedId === group.id ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-black/20 hover:border-white/25"}`}>
+          <div className="dg-steel space-y-2 p-4">
+            <h2 className="px-1 text-sm font-bold text-steel-200">모임 목록</h2>
+            {loading && (
+              <p className="flex items-center gap-2 px-1 py-2 text-sm text-steel-400">
+                <span className="dg-loading-plates" aria-label="불러오는 중">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                불러오는 중...
+              </p>
+            )}
+            {!loading && groups.length === 0 && <p className="px-1 py-2 text-sm text-steel-400">아직 모임이 없습니다.</p>}
+            {groups.map((group, idx) => (
+              <button
+                key={group.id}
+                type="button"
+                aria-pressed={selectedId === group.id}
+                onClick={() => setSelectedId(group.id)}
+                className={`dg-rise w-full rounded-md border-2 border-l-[6px] border-black p-3 text-left transition-all duration-150 ${
+                  selectedId === group.id
+                    ? "border-l-plate-red bg-steel-700 shadow-sm"
+                    : "border-l-steel-700 bg-steel-900 hover:-translate-y-0.5 hover:bg-steel-800 hover:shadow-sm"
+                }`}
+                style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}
+              >
                 <div className="flex items-center justify-between gap-2">
                   <strong className="line-clamp-1 text-sm">{group.name}</strong>
-                  {group.joined && <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-xs text-emerald-300">참여중</span>}
+                  {group.joined && <span className="dg-chip bg-plate-green text-xs text-white">참여중</span>}
                 </div>
-                <p className="mt-1 line-clamp-2 text-xs text-gray-400">{group.description || "소개 없음"}</p>
-                <p className="mt-2 text-xs text-gray-500">리더 {group.ownerNickname} · {group.memberCount}명</p>
+                <p className="mt-1 line-clamp-2 text-xs text-steel-400">{group.description || "소개 없음"}</p>
+                <p className="mt-2 text-xs text-steel-500">리더 {group.ownerNickname} · {group.memberCount}명</p>
               </button>
             ))}
           </div>
         </aside>
 
         <main className="space-y-4">
-          {error && <p className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
-          {!selectedGroup && <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-gray-300">왼쪽에서 모임을 선택해주세요.</div>}
+          {error && <p className="dg-pop dg-well border-l-4 border-l-plate-red p-3 text-sm text-red-200">{error}</p>}
+          {!selectedGroup && <div className="dg-steel p-6 text-steel-300">왼쪽에서 모임을 선택해주세요.</div>}
 
           {selectedGroup && (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div key={selectedGroup.id} className="dg-steel dg-rise p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-2">
-                  <input value={detail?.name ?? selectedGroup.name} onChange={(e) => setDetail((prev) => (prev ? { ...prev, name: e.target.value } : prev))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-xl font-extrabold" />
-                  <textarea value={detail?.description ?? selectedGroup.description ?? ""} onChange={(e) => setDetail((prev) => (prev ? { ...prev, description: e.target.value } : prev))} rows={2} className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-gray-300" />
+                  <input value={detail?.name ?? selectedGroup.name} onChange={(e) => setDetail((prev) => (prev ? { ...prev, name: e.target.value } : prev))} className="dg-well px-3 py-2 font-display text-xl text-white focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+                  <textarea value={detail?.description ?? selectedGroup.description ?? ""} onChange={(e) => setDetail((prev) => (prev ? { ...prev, description: e.target.value } : prev))} rows={2} className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow text-steel-200" />
                   {detail && (
-                    <div className="flex items-center gap-2 text-xs text-cyan-300">
-                      <span>초대코드: <span className="font-bold">{detail.inviteCode}</span></span>
-                      <button type="button" onClick={() => void copyInviteLink()} className="rounded-md border border-cyan-300/40 px-2 py-1 text-cyan-200 hover:bg-cyan-500/10">
-                        {copiedLink ? "복사됨" : "링크 복사"}
+                    <div className="flex items-center gap-2 text-xs text-steel-300">
+                      <span>초대코드: <span className="font-num text-base font-black text-plate-yellow">{detail.inviteCode}</span></span>
+                      <button
+                        type="button"
+                        onClick={() => void copyInviteLink()}
+                        className={`dg-btn dg-chalk-burst min-h-[30px] px-2.5 text-xs ${copiedLink ? "bg-plate-green text-white" : "bg-steel-700 text-chalk"}`}
+                      >
+                        <span key={copiedLink ? "done" : "idle"} className="dg-pop inline-block">{copiedLink ? "복사됨" : "링크 복사"}</span>
                       </button>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
                   {selectedGroup.joined ? (
-                    <button type="button" onClick={() => void onLeave(selectedGroup.id)} className="rounded-lg border border-red-300/40 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">모임 탈퇴</button>
+                    <button type="button" onClick={() => void onLeave(selectedGroup.id)} className="dg-btn min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 탈퇴</button>
                   ) : (
-                    <button type="button" onClick={() => void onJoin(selectedGroup.id)} className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">모임 참여</button>
+                    <button type="button" onClick={() => void onJoin(selectedGroup.id)} className="dg-btn dg-btn-primary min-h-[40px] px-3 text-sm">모임 참여</button>
                   )}
                   {detail?.leader && (
                     <>
-                      <button type="button" onClick={() => void onUpdateCrew()} className="rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-200">모임 수정</button>
-                      <button type="button" onClick={() => void onDeleteCrew()} className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">모임 삭제</button>
+                      <button type="button" onClick={() => void onUpdateCrew()} className="dg-btn dg-btn-steel min-h-[40px] px-3 text-sm">모임 수정</button>
+                      <button type="button" onClick={() => void onDeleteCrew()} className="dg-btn min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 삭제</button>
                     </>
                   )}
                 </div>
@@ -372,93 +430,89 @@ export default function Crew() {
           {detail && (
             <>
               <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr]">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-bold">월간 출석 랭킹 ({detail.month})</h3>
-                    <span className="text-sm text-gray-400">기준일수 {detail.targetDays}일</span>
+                <div className="dg-steel p-5">
+                  <div className="mb-4 flex items-center justify-between gap-2">
+                    <h3 className="font-display text-lg">월간 출석 랭킹 ({detail.month})</h3>
+                    <span className="text-sm text-steel-400">기준일수 {detail.targetDays}일</span>
                   </div>
                   <div className="space-y-2">
                     {detail.members.map((member, idx) => (
-                      <div key={member.userId} className="rounded-xl border border-white/10 bg-black/20 p-3">
+                      <div key={member.userId} className="dg-well dg-rise p-3" style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}>
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400">#{idx + 1}</span>
+                            <span className="font-num w-7 text-center text-lg font-black text-steel-500">{idx + 1}</span>
                             <strong>{member.nickname}</strong>
-                            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-300">{member.role}</span>
+                            <span className="dg-chip bg-steel-700 text-xs text-steel-300">{member.role}</span>
                             {detail.leader && member.role !== "LEADER" && (
-                              <button type="button" onClick={() => void onKickMember(member.userId)} className="rounded-full border border-red-400/40 px-2 py-0.5 text-xs text-red-300">강퇴</button>
+                              <button type="button" onClick={() => void onKickMember(member.userId)} className="rounded border-2 border-black bg-steel-900 px-2 py-0.5 text-xs font-bold text-red-300 transition-colors hover:bg-plate-red hover:text-white">강퇴</button>
                             )}
                           </div>
-                          <span className="text-sm font-bold text-cyan-300">{member.attendanceRate}%</span>
+                          <span className="font-num text-xl font-black text-plate-yellow"><CountNumber value={member.attendanceRate} />%</span>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                          <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${Math.min(member.attendanceRate, 100)}%` }} />
-                        </div>
-                        <p className="mt-2 text-xs text-gray-400">운동 {member.workoutDays} / {member.targetDays}</p>
+                        <SegGauge value={member.attendanceRate} />
+                        <p className="mt-2 text-xs text-steel-400">운동 {member.workoutDays} / {member.targetDays}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="text-lg font-bold">경쟁 보드</h3>
-                  <p className="mt-1 text-xs text-gray-400">종합 점수 = 출석 + 챌린지 + 최근 활동 + 보너스</p>
+                <div className="dg-steel p-5">
+                  <h3 className="font-display text-lg">경쟁 보드</h3>
+                  <p className="mt-1 text-xs text-steel-400">종합 점수 = 출석 + 챌린지 + 최근 활동 + 보너스</p>
 
                   <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    {detail.kingTitles?.map((king) => (
+                    {detail.kingTitles?.map((king, idx) => (
                       <div
                         key={king.title}
-                        className={`rounded-xl border p-3 ${kingStyleByTitle[king.title]?.className ?? "border-white/20 bg-white/10 text-white"} animate-pulse`}
+                        className={`dg-well dg-plate-in border-l-[6px] p-3 ${kingStyleByTitle[king.title]?.className ?? "border-l-steel-500"}`}
+                        style={{ animationDelay: `${idx * 90}ms` }}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 text-xs font-bold">
+                          <span className="font-num inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-black bg-steel-700 text-xs font-black text-chalk">
                             {kingStyleByTitle[king.title]?.icon ?? "K"}
                           </span>
-                          <p className="text-xs">{king.title}</p>
+                          <p className="text-xs font-bold text-steel-200">{king.title}</p>
                         </div>
                         <p className="mt-2 text-sm font-bold text-white">{king.nickname}</p>
-                        <p className="text-xs opacity-90">{king.metric}</p>
+                        <p className="text-xs text-steel-300">{king.metric}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
-                    <div className="grid grid-cols-[56px_1fr_84px_92px] bg-white/5 px-3 py-2 text-[11px] text-gray-300">
+                  <div className="dg-well mt-4 overflow-hidden">
+                    <div className="grid grid-cols-[56px_1fr_84px_92px] border-b-2 border-black bg-steel-800 px-3 py-2 text-xs font-bold text-steel-300">
                       <span>순위</span>
                       <span>닉네임</span>
                       <span>출석률</span>
                       <span>점수</span>
                     </div>
                     <div className="max-h-72 overflow-y-auto">
-                      {detail.competitionBoard?.map((row) => (
+                      {detail.competitionBoard?.map((row, idx) => (
                         <div
                           key={row.userId}
-                          className={`grid grid-cols-[56px_1fr_84px_92px] border-t border-white/10 px-3 py-2 text-sm ${
-                            row.rank <= 3 ? "bg-amber-500/5" : ""
+                          className={`dg-rise grid grid-cols-[56px_1fr_84px_92px] items-center border-t border-steel-800 px-3 py-2 text-sm transition-colors hover:bg-steel-800 ${
+                            row.rank <= 3 ? "bg-steel-800/60" : ""
                           }`}
+                          style={{ animationDelay: `${Math.min(idx, 12) * 45}ms` }}
                         >
-                          <span
-                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                              row.rank === 1
-                                ? "bg-amber-300 text-slate-900"
-                                : row.rank === 2
-                                ? "bg-slate-300 text-slate-900"
-                                : row.rank === 3
-                                ? "bg-orange-300 text-slate-900"
-                                : "bg-white/10 text-cyan-200"
-                            }`}
-                          >
-                            {row.rank}
-                          </span>
+                          {RANK_PLATE[row.rank] ? (
+                            <span
+                              className={`font-num relative inline-flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-black text-sm font-black shadow-sm ${RANK_PLATE[row.rank]}`}
+                            >
+                              {row.rank}
+                            </span>
+                          ) : (
+                            <span className="font-num inline-flex h-8 w-8 items-center justify-center text-xl font-black text-steel-500">{row.rank}</span>
+                          )}
                           <div className="min-w-0">
                             <p className="truncate font-semibold">{row.nickname}</p>
-                            <p className="text-[11px] text-gray-400">
+                            <p className="text-xs text-steel-400">
                               출석 {row.attendanceScore} + 도전 {row.challengeScore} + 최근 {row.recentScore}
                               {row.bonusScore > 0 ? ` + 보너스 ${row.bonusScore}` : ""}
                             </p>
                           </div>
-                          <span className="text-gray-300">{row.attendanceRate}%</span>
-                          <span className="font-semibold text-amber-200">{row.score}</span>
+                          <span className="font-num font-bold text-steel-300">{row.attendanceRate}%</span>
+                          <span className="font-num text-xl font-black text-plate-yellow"><CountNumber value={row.score} /></span>
                         </div>
                       ))}
                     </div>
@@ -467,79 +521,81 @@ export default function Crew() {
               </div>
 
               {detail.leader && (
-                <form onSubmit={onCreateChallenge} className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
-                  <h3 className="text-lg font-bold">챌린지 만들기</h3>
-                  <input value={challengeTitle} onChange={(e) => setChallengeTitle(e.target.value)} placeholder="챌린지 제목" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                  <textarea value={challengeDescription} onChange={(e) => setChallengeDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+                <form onSubmit={onCreateChallenge} className="dg-steel border-t-[8px] border-t-plate-red p-5 space-y-3">
+                  <h3 className="font-display text-lg">챌린지 만들기</h3>
+                  <input value={challengeTitle} onChange={(e) => setChallengeTitle(e.target.value)} placeholder="챌린지 제목" className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+                  <textarea value={challengeDescription} onChange={(e) => setChallengeDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <input type="date" value={challengeStartDate} onChange={(e) => setChallengeStartDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                    <input type="date" value={challengeEndDate} onChange={(e) => setChallengeEndDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                    <input type="number" min={1} max={31} value={challengeTargetDays} onChange={(e) => setChallengeTargetDays(Number(e.target.value))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+                    <input type="date" value={challengeStartDate} onChange={(e) => setChallengeStartDate(e.target.value)} className="dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+                    <input type="date" value={challengeEndDate} onChange={(e) => setChallengeEndDate(e.target.value)} className="dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+                    <input type="number" min={1} max={31} value={challengeTargetDays} onChange={(e) => setChallengeTargetDays(Number(e.target.value))} className="dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
                   </div>
-                  <button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">챌린지 생성</button>
+                  <button type="submit" className="dg-btn dg-btn-primary min-h-[44px] px-4 text-sm">챌린지 생성</button>
                 </form>
               )}
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
-                <h3 className="text-lg font-bold">모임 챌린지</h3>
-                {detail.challenges.length === 0 && <p className="text-sm text-gray-400">등록된 챌린지가 없습니다.</p>}
+              <div className="dg-steel p-5 space-y-3">
+                <h3 className="font-display text-lg">모임 챌린지</h3>
+                {detail.challenges.length === 0 && <p className="text-sm text-steel-400">등록된 챌린지가 없습니다.</p>}
 
                 {detail.challenges.map((challenge) => {
                   const topMember = challenge.members[0];
                   const isEditing = editingChallengeId === challenge.id;
                   return (
-                    <div key={challenge.id} className="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+                    <div key={challenge.id} className={`dg-well p-4 space-y-3 border-l-[6px] ${challenge.status === "ONGOING" ? "border-l-plate-green" : challenge.status === "UPCOMING" ? "border-l-plate-blue" : "border-l-steel-600"}`}>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
                             <strong>{challenge.title}</strong>
-                            <span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[challenge.status]}`}>
+                            <span className={`dg-chip text-xs ${challengeStatusClass[challenge.status]}`}>
                               {challengeStatusText[challenge.status]}
                             </span>
                           </div>
-                          <p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate} · 목표 {challenge.targetWorkoutDays}일</p>
-                          {challenge.description && <p className="mt-2 text-sm text-gray-300">{challenge.description}</p>}
+                          <p className="mt-1 text-xs text-steel-400">{challenge.startDate} ~ {challenge.endDate} · 목표 {challenge.targetWorkoutDays}일</p>
+                          {challenge.description && <p className="mt-2 text-sm text-steel-300">{challenge.description}</p>}
                         </div>
 
                         {detail.leader && (
                           <div className="flex items-center gap-2">
-                            <button type="button" onClick={() => startEditChallenge(challenge)} className="rounded-lg border border-cyan-300/40 px-2 py-1 text-xs text-cyan-200">수정</button>
-                            <button type="button" onClick={() => void onDeleteChallenge(challenge.id)} className="rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">삭제</button>
+                            <button type="button" onClick={() => startEditChallenge(challenge)} className="dg-btn dg-btn-steel min-h-[30px] px-2.5 text-xs">수정</button>
+                            <button type="button" onClick={() => void onDeleteChallenge(challenge.id)} className="dg-btn min-h-[30px] bg-steel-900 px-2.5 text-xs text-red-300 hover:bg-plate-red hover:text-white">삭제</button>
                           </div>
                         )}
                       </div>
 
                       {topMember && (
-                        <div className="rounded-lg border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                        <div className="flex flex-wrap items-center gap-2 rounded border-2 border-black bg-steel-800 px-3 py-2 text-xs text-steel-200">
+                          <span className="font-num grid h-6 w-6 place-items-center rounded-full border-2 border-black bg-plate-yellow text-xs font-black text-black">1</span>
                           현재 1위: <strong>{topMember.nickname}</strong> · {topMember.completionRate}% ({topMember.workoutDays}/{topMember.targetWorkoutDays})
                         </div>
                       )}
 
                       {isEditing && detail.leader && (
-                        <form onSubmit={submitEditChallenge} className="rounded-xl border border-cyan-300/25 bg-cyan-500/10 p-3 space-y-2">
-                          <p className="text-sm font-semibold text-cyan-200">챌린지 수정</p>
-                          <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="챌린지 제목" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                          <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+                        <form onSubmit={submitEditChallenge} className="dg-pop rounded-md border-2 border-dashed border-plate-yellow bg-steel-800 p-3 space-y-2">
+                          <p className="text-sm font-bold text-plate-yellow">챌린지 수정</p>
+                          <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="챌린지 제목" className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+                          <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className="w-full dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
                           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                            <input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                            <input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                            <input type="number" min={1} max={31} value={editTargetDays} onChange={(e) => setEditTargetDays(Number(e.target.value))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+                            <input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} className="dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+                            <input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)} className="dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
+                            <input type="number" min={1} max={31} value={editTargetDays} onChange={(e) => setEditTargetDays(Number(e.target.value))} className="dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow" />
                           </div>
                           <div className="flex gap-2">
-                            <button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">저장</button>
-                            <button type="button" onClick={cancelEditChallenge} className="rounded-lg border border-white/25 px-3 py-2 text-sm text-gray-200">취소</button>
+                            <button type="submit" className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">저장</button>
+                            <button type="button" onClick={cancelEditChallenge} className="dg-btn dg-btn-steel min-h-[40px] px-4 text-sm">취소</button>
                           </div>
                         </form>
                       )}
 
                       <div className="grid gap-2 md:grid-cols-2">
                         {challenge.members.map((member) => (
-                          <div key={`${challenge.id}-${member.userId}`} className="rounded-lg border border-white/10 bg-black/25 p-3 text-sm">
-                            <div className="flex items-center justify-between">
-                              <span>{member.nickname}</span>
-                              <span className="text-cyan-300">{member.completionRate}%</span>
+                          <div key={`${challenge.id}-${member.userId}`} className="rounded border-2 border-black bg-steel-800 p-3 text-sm">
+                            <div className="mb-1.5 flex items-center justify-between">
+                              <span className="font-semibold">{member.nickname}</span>
+                              <span className="font-num text-lg font-black text-plate-yellow">{member.completionRate}%</span>
                             </div>
-                            <p className="mt-1 text-xs text-gray-400">배지: {member.badge} · {member.workoutDays}/{member.targetWorkoutDays}</p>
+                            <SegGauge value={member.completionRate} cells={member.targetWorkoutDays > 0 && member.targetWorkoutDays <= 14 ? member.targetWorkoutDays : 10} on="bg-plate-yellow" />
+                            <p className="mt-1.5 text-xs text-steel-400">배지: {member.badge} · {member.workoutDays}/{member.targetWorkoutDays}</p>
                           </div>
                         ))}
                       </div>

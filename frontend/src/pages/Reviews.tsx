@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
+import { useCountUp } from "../hooks/useCountUp";
+import { useInView } from "../hooks/useInView";
 
 type Review = {
   id: number;
@@ -71,6 +73,33 @@ const getTrustBadge = (rating: number) => {
   if (rating >= 3) return "확인 필요";
   return "신중 추천";
 };
+
+// 점수 칸: 숫자는 0 에서 굴러 올라가고, 아래 10칸 게이지가 하나씩 켜진다.
+function ScoreWell({ label, value, max, percent = false }: { label: string; value: number; max: number; percent?: boolean }) {
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const v = useCountUp(value, { duration: 900, start: inView });
+  const lit = Math.round((Math.max(0, Math.min(max, value)) / max) * 10);
+  return (
+    <div ref={ref} className="dg-well p-4">
+      <p className="text-xs font-semibold text-steel-400">{label}</p>
+      <p className={`font-num mt-1 text-4xl font-black ${percent ? "text-orange-300" : "text-plate-yellow"}`}>
+        {percent ? `${Math.round(v)}%` : v.toFixed(1)}
+        {!percent && <span className="ml-1 text-lg text-steel-400">/ 5</span>}
+      </p>
+      <div className="mt-2 grid grid-cols-10 gap-[3px]" aria-hidden>
+        {Array.from({ length: 10 }, (_, i) => (
+          <span
+            key={i}
+            className={`h-2.5 rounded-[2px] border border-black transition-colors duration-200 ${
+              inView && i < lit ? (percent ? "bg-orange-400" : "bg-plate-green") : "bg-steel-800"
+            }`}
+            style={{ transitionDelay: `${i * 60}ms` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Reviews() {
   const [items, setItems] = useState<Review[]>([]);
@@ -149,43 +178,40 @@ export default function Reviews() {
   const { region, gym } = parseLocation(selectedInfo?.category);
 
   return (
-    <section className="min-h-screen bg-gradient-to-br from-[#0d0f12] via-[#151826] to-[#0b0d14] px-5 pb-16 pt-24 text-white lg:px-12">
+    <section className="min-h-screen px-5 pb-16 pt-24 text-white lg:px-12">
       <div className="mx-auto max-w-6xl space-y-8">
-        <header className="grid gap-5 rounded-[30px] border border-white/10 bg-gradient-to-br from-emerald-500/12 via-white/5 to-orange-500/10 p-6 lg:grid-cols-[1.1fr,0.9fr]">
+        <header className="dg-steel grid gap-5 p-6 lg:grid-cols-[1.1fr,0.9fr]">
           <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.4em] text-orange-200">Review + Trust</p>
-            <h2 className="text-3xl font-extrabold md:text-5xl">공동구매 신뢰 후기</h2>
-            <p className="max-w-2xl text-sm text-white/65">
+            <p className="font-num text-sm font-bold text-orange-300">Review + Trust</p>
+            <h2 className="font-display text-3xl md:text-5xl">공동구매 신뢰 후기</h2>
+            <p className="max-w-2xl text-sm text-steel-300">
               이 페이지는 단백질 맛 후기만 보는 곳이 아니라, 대표 구매자가 믿을 만한지,
               분배 약속을 잘 지키는지 확인하는 공간입니다.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link
-                to="/reviews/write"
-                className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2 font-semibold"
-              >
+              <Link to="/reviews/write" className="dg-btn dg-btn-primary px-5">
                 후기 작성하기
               </Link>
               {selectedProtein && (
-                <Link
-                  to={`/proteins/${selectedProtein}`}
-                  className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/75"
-                >
+                <Link to={`/proteins/${selectedProtein}`} className="dg-btn dg-btn-steel px-5 text-sm">
                   모집글 보기
                 </Link>
               )}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-            <div className="text-xs font-semibold tracking-[0.24em] text-emerald-200">이 후기로 보는 것</div>
-            <div className="mt-4 grid gap-3 md:grid-cols-3 lg:grid-cols-1">
+          <div className="dg-whiteboard p-5">
+            <div className="font-pen text-3xl leading-none">이 후기로 보는 것</div>
+            <div className="mt-3 grid gap-2 md:grid-cols-3 lg:grid-cols-1">
               {[
                 "제품 만족도",
                 "대표 구매자 신뢰도",
                 "분배 약속 이행 여부",
-              ].map((item) => (
-                <div key={item} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/75">
+              ].map((item, idx) => (
+                <div key={item} className="flex items-center gap-2 text-sm font-semibold">
+                  <span className="font-num grid h-6 w-6 flex-none place-items-center rounded-full border-2 border-board-ink text-xs font-black">
+                    {idx + 1}
+                  </span>
                   {item}
                 </div>
               ))}
@@ -193,122 +219,121 @@ export default function Reviews() {
           </div>
         </header>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="dg-well p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              <span className="text-white/60">모집글 선택</span>
+              <span className="font-semibold text-steel-300">모집글 선택</span>
               <select
-                className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white"
+                className="rounded border-2 border-black bg-steel-800 px-3 py-2 font-semibold text-white transition-colors hover:bg-steel-700 focus:border-plate-yellow"
                 value={selectedProtein ?? ""}
                 onChange={(e) => setSelectedProtein(Number(e.target.value))}
               >
                 {proteins.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#0d0f12]">
+                  <option key={p.id} value={p.id} className="bg-steel-900">
                     {p.name}
                   </option>
                 ))}
               </select>
             </div>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-200">{region}</span>
-              <span className="rounded-full bg-orange-500/20 px-3 py-1 text-orange-200">{gym}</span>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-white/60">공동구매 후기 기반</span>
+            <div className="flex flex-wrap gap-2 text-sm">
+              <span className="dg-chip bg-plate-green text-white">{region}</span>
+              <span className="dg-chip bg-orange-500 text-black">{gym}</span>
+              <span className="dg-chip bg-steel-700 text-steel-200">공동구매 후기 기반</span>
             </div>
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-lg font-semibold">한눈에 보는 신뢰도</h3>
+          <div className="dg-steel p-6">
+            <h3 className="font-display text-xl">한눈에 보는 신뢰도</h3>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs text-white/50">평균 만족도</p>
-                <p className="mt-2 text-2xl font-semibold text-emerald-200">{summary.avg.toFixed(1)} / 5</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs text-white/50">대표 신뢰도</p>
-                <p className="mt-2 text-2xl font-semibold text-emerald-200">{summary.trust.toFixed(1)} / 5</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs text-white/50">분배 약속 이행</p>
-                <p className="mt-2 text-2xl font-semibold text-emerald-200">{summary.punctual.toFixed(1)} / 5</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs text-white/50">재참여 의향</p>
-                <p className="mt-2 text-2xl font-semibold text-orange-200">{summary.reDeal}%</p>
-              </div>
+              <ScoreWell label="평균 만족도" value={summary.avg} max={5} />
+              <ScoreWell label="대표 신뢰도" value={summary.trust} max={5} />
+              <ScoreWell label="분배 약속 이행" value={summary.punctual} max={5} />
+              <ScoreWell label="재참여 의향" value={summary.reDeal} max={100} percent />
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-lg font-semibold">초보자 판단 기준</h3>
-            <div className="mt-4 space-y-3 text-sm text-white/70">
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="dg-steel p-6">
+            <h3 className="font-display text-xl">초보자 판단 기준</h3>
+            <div className="mt-4 space-y-3 text-sm text-steel-200">
+              <div className="dg-well border-l-[6px] border-l-plate-green p-4">
                 평점이 4점 이상이면 기본 신뢰는 괜찮은 편입니다.
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="dg-well border-l-[6px] border-l-plate-yellow p-4">
                 후기에서 분배 시간, 약속 장소, 응답 속도를 먼저 확인하세요.
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="dg-well border-l-[6px] border-l-plate-blue p-4">
                 대표 구매자와 다시 거래하겠다는 의견이 많으면 안정적입니다.
               </div>
             </div>
           </div>
         </div>
 
-        {loading && <p className="text-gray-300">후기를 불러오는 중입니다...</p>}
-        {error && <p className="text-red-400">{error}</p>}
+        {loading && (
+          <p className="flex items-center gap-3 text-steel-300">
+            <span className="dg-loading-plates" aria-label="불러오는 중">
+              <i />
+              <i />
+              <i />
+              <i />
+            </span>
+            후기를 불러오는 중입니다...
+          </p>
+        )}
+        {error && <p className="dg-well border-l-4 border-l-plate-red p-3 text-red-200">{error}</p>}
         {!loading && items.length === 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/60">
+          <div className="dg-well p-8 text-center text-steel-400">
             아직 등록된 후기가 없습니다.
           </div>
         )}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {items.map((r) => {
+          {items.map((r, idx) => {
             const { product, share } = splitReview(r.content);
             return (
               <article
                 key={r.id}
-                className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl shadow-lg"
+                className="dg-steel dg-lift dg-rise p-6"
+                style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}
               >
-                <div className="flex items-center justify-between text-sm text-white/60">
-                  <span className="font-semibold">{r.userNickname || "익명 회원"}</span>
-                  <span className="text-white/40">{formatDate(r.createdAt)}</span>
+                <div className="flex items-center justify-between text-sm text-steel-300">
+                  <span className="font-semibold text-white">{r.userNickname || "익명 회원"}</span>
+                  <span className="font-num text-steel-400">{formatDate(r.createdAt)}</span>
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-200">
+                  <span className="dg-chip bg-plate-yellow text-black">
                     만족도 {r.rating}/5
                   </span>
-                  <span className="rounded-full bg-orange-500/20 px-3 py-1 text-orange-200">
+                  <span className="dg-chip bg-steel-700 text-chalk">
                     {getTrustBadge(r.rating)}
                   </span>
                 </div>
 
-                <div className="mt-4 grid gap-4 text-sm text-white/80">
-                  <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                    <p className="text-xs text-white/50">제품 후기</p>
+                <div className="mt-4 grid gap-4 text-sm text-steel-200">
+                  <div className="dg-well p-4">
+                    <p className="text-xs font-semibold text-steel-400">제품 후기</p>
                     <p className="mt-2 whitespace-pre-wrap">{product}</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                    <p className="text-xs text-white/50">공동구매 경험</p>
+                  <div className="dg-well p-4">
+                    <p className="text-xs font-semibold text-steel-400">공동구매 경험</p>
                     <p className="mt-2 whitespace-pre-wrap">{share}</p>
                   </div>
                 </div>
 
-                {r.proteinName && <p className="mt-4 text-xs text-white/50">모집글: {r.proteinName}</p>}
+                {r.proteinName && <p className="mt-4 text-xs text-steel-400">모집글: {r.proteinName}</p>}
 
                 {canEdit(r) && (
                   <div className="mt-4 flex gap-2 text-xs">
                     <button
-                      className="rounded-full border border-white/20 px-3 py-1 text-white/80 hover:border-white"
+                      className="dg-btn dg-btn-steel min-h-[36px] px-3 text-xs"
                       onClick={() => navigate("/reviews/write", { state: { review: r } })}
                     >
                       수정
                     </button>
                     <button
-                      className="rounded-full border border-red-500 px-3 py-1 text-red-200 hover:bg-red-600/20"
+                      className="dg-btn min-h-[36px] bg-steel-900 px-3 text-xs text-red-300 hover:bg-plate-red hover:text-white"
                       onClick={async () => {
                         if (!confirm("후기를 삭제할까요?")) return;
                         try {

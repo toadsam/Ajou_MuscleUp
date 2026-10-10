@@ -1,5 +1,3 @@
-﻿@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
 @import "./styles/characterEffects.css";
 @import "./styles/lounge.css";
 
@@ -7,31 +5,299 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * 짐 플로어(v2) 디자인 토큰.
+ * 고무 매트 바닥 · 볼트 박힌 철판 · 화이트보드 · 바벨 원판.
+ * 색 계열은 tailwind.config.js 에서 다시 정의했고, 여기는 공통 소재와 부품만 둔다.
+ */
+:root {
+  --dg-rubber: #1a1a1c;
+  --dg-rubber-fleck-a: #303035;
+  --dg-rubber-fleck-b: #26262b;
+  --dg-steel: #26272b;
+  --dg-steel-hi: #3a3d43;
+  --dg-ink: #0e0e10;
+  --dg-chalk: #eeece6;
+  --dg-muted: #a6a8ad;
+  --dg-bolt: #6e7178;
+  --dg-red: #d9302a;
+  --dg-blue: #2f6fd0;
+  --dg-yellow: #f0be2e;
+  --dg-green: #2e9c55;
+  --dg-wood: #b98a5a;
+  --dg-wood-seam: #8f6640;
+  --dg-board: #f2f1ec;
+  --dg-board-frame: #a3a7ad;
+  --dg-board-ink: #1f2a44;
+  --dg-board-blue: #1d4fa8;
+  --dg-board-red: #c42b24;
+  color-scheme: dark;
+}
+
 @layer base {
   html {
-    font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+    font-family: "IBM Plex Sans KR", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     width: 100%;
     overflow-x: hidden;
   }
 
   body {
-    @apply font-body bg-gray-900 text-white antialiased;
+    @apply font-body text-chalk antialiased;
     width: 100%;
     overflow-x: hidden;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    background-color: var(--dg-rubber);
+    background-image:
+      radial-gradient(var(--dg-rubber-fleck-a) 1px, transparent 1.6px),
+      radial-gradient(var(--dg-rubber-fleck-b) 1.2px, transparent 1.8px);
+    background-size: 7px 7px, 13px 13px;
+    background-position: 0 0, 4px 6px;
   }
 
   #root {
     width: 100%;
     overflow-x: hidden;
   }
+
+  h1 {
+    font-family: "Black Han Sans", "IBM Plex Sans KR", sans-serif;
+    font-weight: 400;
+    font-synthesis: none;
+    letter-spacing: 0;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--dg-yellow);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--dg-yellow);
+    color: var(--dg-ink);
+  }
+}
+
+@layer components {
+  /* 고무 매트 바닥 질감 */
+  .dg-rubber {
+    background-color: var(--dg-rubber);
+    background-image:
+      radial-gradient(var(--dg-rubber-fleck-a) 1px, transparent 1.6px),
+      radial-gradient(var(--dg-rubber-fleck-b) 1.2px, transparent 1.8px);
+    background-size: 7px 7px, 13px 13px;
+    background-position: 0 0, 4px 6px;
+  }
+
+  /* 네 모서리에 볼트가 박힌 철판 패널 */
+  .dg-steel {
+    background-color: var(--dg-steel);
+    border: 3px solid var(--dg-ink);
+    border-radius: 6px;
+    box-shadow: 0 6px 0 var(--dg-ink);
+    background-image:
+      radial-gradient(circle at 12px 12px, var(--dg-bolt) 2.6px, var(--dg-ink) 3.2px, transparent 3.6px),
+      radial-gradient(circle at calc(100% - 12px) 12px, var(--dg-bolt) 2.6px, var(--dg-ink) 3.2px, transparent 3.6px),
+      radial-gradient(circle at 12px calc(100% - 12px), var(--dg-bolt) 2.6px, var(--dg-ink) 3.2px, transparent 3.6px),
+      radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), var(--dg-bolt) 2.6px, var(--dg-ink) 3.2px, transparent 3.6px);
+  }
+
+  /* 철판 안쪽의 한 단계 낮은 칸 */
+  .dg-well {
+    background-color: #1e1f22;
+    border: 2px solid var(--dg-ink);
+    border-radius: 4px;
+  }
+
+  /* 알루미늄 테두리 화이트보드 */
+  .dg-whiteboard {
+    background: var(--dg-board);
+    color: var(--dg-board-ink);
+    border: 10px solid var(--dg-board-frame);
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px var(--dg-ink), 0 9px 0 var(--dg-ink);
+  }
+
+  /* 메이플 리프팅 플랫폼 바닥 */
+  .dg-platform {
+    background: repeating-linear-gradient(90deg, var(--dg-wood) 0 118px, var(--dg-wood-seam) 118px 121px);
+    border-top: 3px solid var(--dg-ink);
+  }
+
+  .dg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.4rem;
+    border: 3px solid var(--dg-ink);
+    border-radius: 6px;
+    font-weight: 700;
+    box-shadow: 0 4px 0 var(--dg-ink);
+    transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    cursor: pointer;
+  }
+  .dg-btn:hover {
+    filter: brightness(1.08);
+  }
+  .dg-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 var(--dg-ink);
+  }
+  .dg-btn:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.6) brightness(0.8);
+  }
+  .dg-btn-primary {
+    background: var(--dg-red);
+    color: #fff;
+  }
+  .dg-btn-steel {
+    background: var(--dg-steel-hi);
+    color: var(--dg-chalk);
+  }
+
+  .dg-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 2px 10px;
+    border: 2px solid var(--dg-ink);
+    border-radius: 3px;
+    font-family: "Big Shoulders Display", "IBM Plex Sans KR", sans-serif;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+  }
+
+  /* 예전 클래스 이름 — 화면 코드는 그대로 두고 생김새만 v2 로 */
+  .glass-panel {
+    @apply dg-steel;
+  }
+
+  .btn-gradient {
+    @apply dg-btn dg-btn-primary;
+  }
+
+  .btn-outline {
+    @apply dg-btn dg-btn-steel px-6;
+  }
+}
+
+/* ---------- 인터랙션 ---------- */
+
+/* 처음 나타날 때 아래에서 올라온다. 목록은 style={{ animationDelay }} 로 순서를 준다. */
+.dg-rise {
+  animation: dgRise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* 완료 순간의 짧은 팝 — 원판이 철컥 끼워지는 느낌 */
+.dg-pop {
+  animation: dgPop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+
+/* 호버하면 철판이 살짝 들린다 */
+.dg-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.dg-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 var(--dg-ink);
+}
+.dg-lift:active {
+  transform: translateY(2px);
+  box-shadow: 0 3px 0 var(--dg-ink);
+}
+
+/* 원판이 바벨에 끼워지는 순간 */
+.dg-plate-in {
+  animation: dgPlateIn 0.42s cubic-bezier(0.3, 1.5, 0.5, 1) backwards;
+}
+
+/* 초크 가루 (lib/chalkBurst.ts 가 만든다) */
+.dg-chalk-layer {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+.dg-chalk-layer span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: #f4f2ec;
+  opacity: 0.9;
+  animation: dgChalk 0.6s ease-out forwards;
+}
+
+/* 로딩: 원판이 끼워졌다 빠지기를 반복 */
+.dg-loading-plates {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.dg-loading-plates i {
+  width: 8px;
+  height: 26px;
+  border: 2px solid var(--dg-ink);
+  border-radius: 2px;
+  animation: dgLoadPlate 1.2s ease-in-out infinite;
+}
+.dg-loading-plates i:nth-child(1) { background: var(--dg-red); }
+.dg-loading-plates i:nth-child(2) { background: var(--dg-blue); animation-delay: 0.15s; }
+.dg-loading-plates i:nth-child(3) { background: var(--dg-yellow); animation-delay: 0.3s; }
+.dg-loading-plates i:nth-child(4) { background: var(--dg-green); animation-delay: 0.45s; }
+
+/* 바벨을 한 번 들어 올렸다 내린다 */
+.dg-lift-rep {
+  animation: dgLiftRep 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dgLiftRep {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-34px); }
+  55% { transform: translateY(-34px); }
+  85% { transform: translateY(3px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes dgRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dgPop {
+  0% { transform: scale(0.85); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes dgPlateIn {
+  0% { transform: translateX(var(--from, 40px)) scaleY(0.9); opacity: 0; }
+  70% { transform: translateX(0) scaleY(1.04); opacity: 1; }
+  100% { transform: translateX(0) scaleY(1); }
+}
+
+@keyframes dgChalk {
+  from { transform: translate(-50%, -50%); opacity: 0.9; }
+  to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))); opacity: 0; }
+}
+
+@keyframes dgLoadPlate {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  40% { transform: translateY(-6px); opacity: 1; }
 }
 
 .text-gradient {
-  @apply bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent;
+  color: var(--dg-red);
 }
 
 .text-glow {
-  text-shadow: 0 0 10px rgba(236, 72, 153, 0.7), 0 0 20px rgba(139, 92, 246, 0.6);
+  text-shadow: none;
 }
 
 @keyframes floatUpDown {
@@ -81,29 +347,12 @@
   animation: pulseGlow 12s ease-in-out infinite;
 }
 
-.glass-panel {
-  @apply rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-
-.btn-gradient {
-  @apply relative overflow-hidden rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 font-semibold text-white transition hover:brightness-110;
-}
-
-.btn-gradient::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transform: translateX(-100%);
-  animation: shine 2.6s linear infinite;
-}
-
-.btn-outline {
-  @apply rounded-xl border border-white/30 px-6 py-3 font-semibold text-white transition hover:border-white hover:bg-white/10;
-}
-
-.glow-orb {
-  filter: blur(80px);
-  opacity: 0.55;
-}
-

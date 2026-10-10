@@ -39,39 +39,57 @@ export default function AiShareView() {
 
   if (loading) {
     return (
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-gray-950 via-gray-900 to-black min-h-screen text-white">
-        <div className="max-w-3xl mx-auto">불러오는 중...</div>
+      <section className="min-h-screen px-6 pb-20 pt-32 text-chalk">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 text-steel-300">
+          <span className="dg-loading-plates" aria-label="불러오는 중"><i /><i /><i /><i /></span>
+          불러오는 중...
+        </div>
       </section>
     );
   }
 
   if (error || !data) {
     return (
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-gray-950 via-gray-900 to-black min-h-screen text-white">
-        <div className="max-w-3xl mx-auto text-red-400">{error || "존재하지 않는 공유 링크입니다."}</div>
+      <section className="min-h-screen px-6 pb-20 pt-32 text-chalk">
+        <div className="dg-steel dg-rise mx-auto max-w-3xl border-l-[8px] border-l-plate-red p-5 text-red-200">
+          {error || "존재하지 않는 공유 링크입니다."}
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-gray-950 via-gray-900 to-black min-h-screen text-white">
-      <div className="max-w-3xl mx-auto space-y-4">
-        <p className="text-sm text-gray-400">AI 상담 공유</p>
-        <h1 className="text-2xl font-bold text-white">공유된 Q&A</h1>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
-          <div className="flex items-center justify-between text-xs text-gray-300">
-            <span>{data.type || "CHAT"}</span>
-            <span>{formatDate(data.createdAt)}</span>
-          </div>
-          <p className="text-sm font-semibold text-white">Q. {data.question}</p>
-          <p className="whitespace-pre-wrap text-sm text-gray-100">A. {data.answer}</p>
+    <section className="min-h-screen px-6 pb-20 pt-32 text-chalk">
+      <div className="mx-auto max-w-3xl space-y-5">
+        <div className="dg-rise">
+          <p className="text-sm text-steel-400">AI 상담 공유</p>
+          <h1 className="mt-1 text-3xl text-chalk">공유된 Q&A</h1>
         </div>
-        <div className="flex gap-3 text-sm text-gray-200">
-          <Link to="/ai" className="px-4 py-2 rounded-lg border border-gray-600 hover:bg-gray-800">
+        <div className="dg-steel dg-rise space-y-4 p-6" style={{ animationDelay: "60ms" }}>
+          <div className="flex items-center justify-between gap-3 px-2 text-xs text-steel-300">
+            <span className="dg-chip bg-plate-yellow text-black">{data.type || "CHAT"}</span>
+            <span className="font-num text-sm font-bold">{formatDate(data.createdAt)}</span>
+          </div>
+          <div className="dg-well border-l-[6px] border-l-plate-blue p-4">
+            <p className="text-sm font-semibold text-chalk">
+              <span className="mr-1 font-num text-base font-black text-blue-300">Q.</span>
+              {data.question}
+            </p>
+          </div>
+          <div className="dg-well border-l-[6px] border-l-plate-red p-4">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-steel-200">
+              <span className="mr-1 font-num text-base font-black text-red-300">A.</span>
+              {data.answer}
+            </p>
+          </div>
+        </div>
+        <div className="dg-rise flex flex-wrap gap-3 text-sm" style={{ animationDelay: "120ms" }}>
+          <Link to="/ai" className="dg-btn dg-btn-steel">
             AI 상담으로 이동
           </Link>
           <button
-            className="px-4 py-2 rounded-lg border border-pink-400 text-pink-100 hover:bg-pink-500/10"
+            type="button"
+            className="dg-btn dg-btn-primary"
             onClick={() => {
               const link = `${window.location.origin}/ai/share/${data.shareSlug}`;
               navigator.clipboard.writeText(link).then(

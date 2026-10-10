@@ -7,14 +7,31 @@ import { useAdminToast } from "../../components/admin/useAdminToast";
 import { eventApi } from "../../services/eventApi";
 import type { EventItem, EventPageResponse, EventStatus } from "../../types/event";
 
+// 값(DRAFT 등)은 그대로, 화면 라벨만 사람이 읽는 말로
 const STATUS_OPTIONS: Array<{ value: "" | EventStatus; label: string }> = [
   { value: "", label: "전체" },
-  { value: "DRAFT", label: "DRAFT" },
-  { value: "SCHEDULED", label: "SCHEDULED" },
-  { value: "ACTIVE", label: "ACTIVE" },
-  { value: "ENDED", label: "ENDED" },
-  { value: "HIDDEN", label: "HIDDEN" },
+  { value: "DRAFT", label: "작성 중" },
+  { value: "SCHEDULED", label: "예약" },
+  { value: "ACTIVE", label: "진행 중" },
+  { value: "ENDED", label: "종료" },
+  { value: "HIDDEN", label: "숨김" },
 ];
+
+function ToggleChip({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      aria-label={label}
+      className={`rounded border-2 border-black px-2 py-0.5 text-xs font-bold shadow-[0_2px_0_#0E0E10] transition active:translate-y-0.5 active:shadow-none ${
+        on ? "bg-plate-green text-white" : "bg-steel-700 text-steel-300"
+      }`}
+    >
+      {on ? "켜짐" : "꺼짐"}
+    </button>
+  );
+}
 
 const eventAdminKey = (status: "" | EventStatus, q: string, page: number) => ["admin", "events", status, q, page] as const;
 
@@ -76,22 +93,25 @@ export default function AdminEventsList() {
   );
 
   return (
-    <section className="min-h-screen bg-slate-950 pb-24 pt-28 text-white">
+    <section className="min-h-screen pb-24 pt-28 text-chalk">
       <div className="mx-auto max-w-7xl space-y-6 px-6 lg:px-10">
-        <header className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+        <header className="dg-steel dg-rise relative flex flex-wrap items-end justify-between gap-3 overflow-hidden p-5">
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 border-b-2 border-black bg-plate-red" />
           <div>
-            <p className="text-sm font-semibold text-cyan-300">ADMIN</p>
-            <h1 className="text-3xl font-extrabold">이벤트 관리</h1>
+            <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-plate-yellow">
+              운영 관제실 <span className="font-num text-xs tracking-wide text-steel-500">ADMIN</span>
+            </p>
+            <h1 className="text-3xl">이벤트 관리</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/admin" className="rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10">대시보드</Link>
-            <Link to="/admin/events/new" className="rounded-lg bg-cyan-500 px-4 py-2 font-semibold text-slate-900">새 이벤트 생성</Link>
+            <Link to="/admin" className="dg-btn dg-btn-steel px-4 py-2 text-sm">대시보드</Link>
+            <Link to="/admin/events/new" className="dg-btn dg-btn-primary px-4 py-2 text-sm">새 이벤트 생성</Link>
           </div>
         </header>
 
         <AdminTableShell
           title="이벤트 목록"
-          description="react-query 기반 캐시/재시도/무효화 적용"
+          description="상태·메인배너·핀 고정을 목록에서 바로 바꿀 수 있어요"
           loading={listQuery.isLoading}
           hasData={items.length > 0}
           emptyMessage="검색 결과가 없습니다."
@@ -104,7 +124,8 @@ export default function AdminEventsList() {
                   setStatus(e.target.value as "" | EventStatus);
                   setPage(0);
                 }}
-                className="rounded-lg border border-white/20 bg-slate-900 px-3 py-1.5 text-sm"
+                aria-label="상태 필터"
+                className="rounded-md border-2 border-black bg-steel-900 text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow px-3 py-1.5 text-sm"
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.label} value={option.value}>{option.label}</option>
@@ -113,20 +134,21 @@ export default function AdminEventsList() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                className="rounded-lg border border-white/20 bg-slate-900 px-3 py-1.5 text-sm"
+                className="rounded-md border-2 border-black bg-steel-900 text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow px-3 py-1.5 text-sm"
+                aria-label="제목 검색"
                 placeholder="제목 검색"
               />
-              <button type="button" onClick={() => setPage(0)} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold hover:bg-white/20">
+              <button type="button" onClick={() => setPage(0)} className="dg-btn dg-btn-steel px-3 py-1.5 text-sm">
                 검색
               </button>
             </div>
           }
         >
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <div className="overflow-x-auto rounded-md border-2 border-black bg-steel-900">
             <table className="min-w-full text-sm">
-              <thead className="bg-white/10 text-left">
+              <thead className="border-b-2 border-black bg-steel-950 text-left text-steel-300">
                 <tr>
-                  <th className="p-3">ID</th>
+                  <th className="p-3">번호</th>
                   <th className="p-3">제목</th>
                   <th className="p-3">상태</th>
                   <th className="p-3">기간</th>
@@ -138,30 +160,35 @@ export default function AdminEventsList() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-t border-white/10">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3">{item.title}</td>
+                {items.map((item, idx) => (
+                  <tr
+                    key={item.id}
+                    className="dg-rise border-t border-steel-800 transition-colors hover:bg-steel-800"
+                    style={{ animationDelay: `${idx * 45}ms` }}
+                  >
+                    <td className="p-3 font-num text-base text-steel-400">{item.id}</td>
+                    <td className="p-3 font-semibold">{item.title}</td>
                     <td className="p-3">
                       <select
                         value={item.status}
                         onChange={(e) => patchStatus.mutate({ id: item.id, nextStatus: e.target.value as EventStatus })}
                         disabled={isMutating}
-                        className="rounded bg-slate-900 px-2 py-1 disabled:opacity-60"
+                        aria-label={`${item.title} 상태`}
+                        className="rounded-md border-2 border-black bg-steel-900 text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow px-2 py-1 disabled:opacity-60"
                       >
                         {STATUS_OPTIONS.filter((option) => option.value).map((option) => (
-                          <option key={option.value} value={option.value}>{option.value}</option>
+                          <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </select>
                     </td>
                     <td className="p-3">{new Date(item.startAt).toLocaleDateString("ko-KR")} ~ {new Date(item.endAt).toLocaleDateString("ko-KR")}</td>
-                    <td className="p-3"><button type="button" onClick={() => toggleMain.mutate({ id: item.id, current: item.isMainBanner })} className="rounded bg-white/10 px-2 py-1">{item.isMainBanner ? "ON" : "OFF"}</button></td>
-                    <td className="p-3"><button type="button" onClick={() => togglePin.mutate({ id: item.id, current: item.isPinned })} className="rounded bg-white/10 px-2 py-1">{item.isPinned ? "ON" : "OFF"}</button></td>
-                    <td className="p-3">{item.priority}</td>
+                    <td className="p-3"><ToggleChip on={item.isMainBanner} label={`${item.title} 메인배너`} onClick={() => toggleMain.mutate({ id: item.id, current: item.isMainBanner })} /></td>
+                    <td className="p-3"><ToggleChip on={item.isPinned} label={`${item.title} 핀 고정`} onClick={() => togglePin.mutate({ id: item.id, current: item.isPinned })} /></td>
+                    <td className="p-3 font-num text-base">{item.priority}</td>
                     <td className="p-3">{item.updatedAt ? new Date(item.updatedAt).toLocaleString("ko-KR") : "-"}</td>
                     <td className="p-3">
                       <div className="flex gap-2">
-                        <Link to={`/admin/events/${item.id}/edit`} className="rounded bg-cyan-600 px-2 py-1">수정</Link>
+                        <Link to={`/admin/events/${item.id}/edit`} className="dg-btn dg-btn-steel px-2 py-1 text-xs">수정</Link>
                         <button
                           type="button"
                           onClick={() => {
@@ -171,7 +198,7 @@ export default function AdminEventsList() {
                             if (keyword !== "DELETE") return;
                             removeEvent.mutate(item.id);
                           }}
-                          className="rounded bg-red-600 px-2 py-1"
+                          className="dg-btn dg-btn-primary px-2 py-1 text-xs"
                         >
                           삭제
                         </button>
@@ -185,9 +212,9 @@ export default function AdminEventsList() {
 
           {totalPages > 1 ? (
             <div className="mt-4 flex items-center gap-2">
-              <button type="button" onClick={() => setPage((prev) => Math.max(0, prev - 1))} disabled={page <= 0} className="rounded bg-white/10 px-3 py-1 disabled:opacity-40">이전</button>
-              <span>{page + 1} / {totalPages}</span>
-              <button type="button" onClick={() => setPage((prev) => Math.min(totalPages - 1, prev + 1))} disabled={page + 1 >= totalPages} className="rounded bg-white/10 px-3 py-1 disabled:opacity-40">다음</button>
+              <button type="button" onClick={() => setPage((prev) => Math.max(0, prev - 1))} disabled={page <= 0} className="dg-btn dg-btn-steel px-3 py-1 text-xs">이전</button>
+              <span className="font-num text-sm text-steel-300">{page + 1} / {totalPages}</span>
+              <button type="button" onClick={() => setPage((prev) => Math.min(totalPages - 1, prev + 1))} disabled={page + 1 >= totalPages} className="dg-btn dg-btn-steel px-3 py-1 text-xs">다음</button>
             </div>
           ) : null}
         </AdminTableShell>

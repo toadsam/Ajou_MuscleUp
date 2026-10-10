@@ -1,10 +1,48 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
 import { crewApi } from "../services/crewApi";
 import type { CrewChallenge, CrewDetail, CrewJoinRequest } from "../types/crew";
+import { useCountUp } from "../hooks/useCountUp";
+import { useInView } from "../hooks/useInView";
+
+// 입력칸: 철판 안쪽의 어두운 칸 + 포커스 시 노란 외곽선
+const FIELD =
+  "dg-well px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow";
+
+// 칸으로 나뉜 게이지: 화면에 들어오면 칸이 하나씩 켜진다.
+function SegGauge({ value, cells = 10, on = "bg-plate-green" }: { value: number; cells?: number; on?: string }) {
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const lit = Math.round((Math.max(0, Math.min(100, value)) / 100) * cells);
+  return (
+    <div ref={ref} className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${cells}, minmax(0, 1fr))` }} aria-hidden>
+      {Array.from({ length: cells }, (_, i) => (
+        <span
+          key={i}
+          className={`h-2.5 rounded-[2px] border border-black transition-colors duration-200 ${inView && i < lit ? on : "bg-steel-900"}`}
+          style={{ transitionDelay: `${i * 50}ms` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// 0 에서 값까지 굴려 올린다. 소수점 자리는 원래 값 그대로 보여준다.
+function CountNumber({ value }: { value: number }) {
+  const v = useCountUp(value, { duration: 900 });
+  const digits = Number.isInteger(value) ? 0 : Math.min(2, String(value).split(".")[1]?.length ?? 0);
+  return <>{v.toFixed(digits)}</>;
+}
+
+// 1~3위 메달 원판(노랑 · 회색 · 빨강)
+const RANK_PLATE: Record<number, string> = {
+  1: "bg-plate-yellow text-black",
+  2: "bg-steel-300 text-black",
+  3: "bg-plate-red text-white",
+};
+
 
 const currentMonthKey = () => {
   const now = new Date();
@@ -29,26 +67,27 @@ const challengeStatusText: Record<CrewChallenge["status"], string> = {
 };
 
 const challengeStatusClass: Record<CrewChallenge["status"], string> = {
-  UPCOMING: "bg-sky-500/15 text-sky-300 border-sky-300/40",
-  ONGOING: "bg-emerald-500/15 text-emerald-300 border-emerald-300/40",
-  ENDED: "bg-slate-500/20 text-slate-300 border-slate-300/30",
+  UPCOMING: "bg-plate-blue text-white",
+  ONGOING: "bg-plate-green text-white",
+  ENDED: "bg-steel-700 text-steel-300",
 };
 
 const kingStyleByTitle: Record<string, { icon: string; className: string }> = {
-  "성실왕": { icon: "C", className: "border-cyan-300/50 bg-cyan-500/15 text-cyan-100" },
-  "연승왕": { icon: "S", className: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100" },
-  "도전왕": { icon: "D", className: "border-amber-300/50 bg-amber-500/15 text-amber-100" },
+  "성실왕": { icon: "C", className: "border-l-plate-yellow" },
+  "연승왕": { icon: "S", className: "border-l-plate-green" },
+  "도전왕": { icon: "D", className: "border-l-plate-red" },
 };
 
+// 티어별 아바타 액자 테두리 색 (예전 블러 후광 대신)
 const tierAuraClass: Record<CharacterTier, string> = {
-  BRONZE: "from-amber-800/30 to-orange-500/20",
-  SILVER: "from-slate-300/30 to-gray-500/20",
-  GOLD: "from-yellow-300/35 to-amber-500/20",
-  PLATINUM: "from-teal-300/35 to-cyan-500/20",
-  DIAMOND: "from-indigo-300/35 to-blue-500/20",
-  MASTER: "from-emerald-300/35 to-teal-500/20",
-  GRANDMASTER: "from-fuchsia-300/35 to-purple-500/20",
-  CHALLENGER: "from-orange-300/40 to-red-500/25",
+  BRONZE: "border-orange-700",
+  SILVER: "border-steel-300",
+  GOLD: "border-plate-yellow",
+  PLATINUM: "border-green-300",
+  DIAMOND: "border-plate-blue",
+  MASTER: "border-plate-green",
+  GRANDMASTER: "border-plate-red",
+  CHALLENGER: "border-orange-400",
 };
 
 const tierFromAttendance = (rate: number): CharacterTier => {
@@ -87,12 +126,11 @@ const resolveAvatarConfig = (row: AvatarRow | null | undefined, fallbackRate = 0
 function EnhancedAvatar({ seed, tier, stage, size, gender, isResting, rank, badge }: { seed: string; tier: CharacterTier; stage: number; size: number; gender?: "MALE" | "FEMALE" | null; isResting?: boolean; rank?: number; badge?: string }) {
   return (
     <div className="relative inline-flex items-center justify-center">
-      <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${tierAuraClass[tier]} blur-md`} />
-      {rank && rank <= 3 && <span className="absolute -top-3 z-20 rounded-full border border-yellow-200/70 bg-yellow-300 px-1.5 py-0.5 text-[10px] font-black text-slate-900">{rank === 1 ? "CROWN" : `TOP${rank}`}</span>}
-      <div className="relative z-10 rounded-xl border border-white/15 bg-slate-900/70 p-1">
+      {rank && rank <= 3 && <span className={`font-num absolute -top-3 z-20 rounded-sm border-2 border-black px-1.5 py-0 text-xs font-black ${RANK_PLATE[rank]}`}>{rank === 1 ? "CROWN" : `TOP${rank}`}</span>}
+      <div className={`relative z-10 rounded-md border-[3px] bg-steel-900 p-1 ${tierAuraClass[tier]}`}>
         <AvatarRenderer avatarSeed={seed} tier={tier} stage={stage} gender={gender} isResting={isResting ?? false} size={size} />
       </div>
-      {badge && <span className="absolute -bottom-2 z-20 rounded-full border border-white/30 bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-cyan-100">{badge}</span>}
+      {badge && <span className="absolute -bottom-2 z-20 rounded-sm border-2 border-black bg-steel-700 px-1.5 py-0 text-[11px] font-bold text-chalk">{badge}</span>}
     </div>
   );
 }
@@ -492,8 +530,8 @@ export default function CrewChallenge() {
   const renderRankDelta = (userId: number) => {
     const delta = rankDeltaByUser[userId];
     if (!delta) return null;
-    if (delta > 0) return <span className="ml-1 text-[11px] font-bold text-emerald-300">▲{delta}</span>;
-    return <span className="ml-1 text-[11px] font-bold text-rose-300">▼{Math.abs(delta)}</span>;
+    if (delta > 0) return <span className="dg-pop font-num ml-1 inline-block text-sm font-black text-green-300">▲{delta}</span>;
+    return <span className="dg-pop font-num ml-1 inline-block text-sm font-black text-red-300">▼{Math.abs(delta)}</span>;
   };
 
   const rankMotionClass = (userId: number) => {
@@ -509,79 +547,86 @@ export default function CrewChallenge() {
     return (
       <div className="space-y-4">
         <div className="grid gap-3 lg:grid-cols-[1.1fr_1fr]">
-          <article className="rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-500/15 via-slate-900/80 to-indigo-500/20 p-4 shadow-[0_0_40px_rgba(34,211,238,0.15)]">
-            <p className="text-[11px] tracking-[0.18em] text-cyan-200">BATTLE STATUS</p>
-            <h3 className="mt-1 text-xl font-black text-cyan-100">랭크 전투 현황</h3>
+          <article className="dg-steel dg-rise p-5">
+            <p className="font-num text-sm font-bold text-plate-yellow">Battle Status</p>
+            <h3 className="font-display mt-1 text-xl text-white">랭크 전투 현황</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                <p className="text-[11px] text-gray-400">현재 순위</p>
-                <p className="text-2xl font-black text-amber-200">#{myBoardRow?.rank ?? "-"}</p>
+              <div className="dg-well p-3">
+                <p className="text-xs text-steel-400">현재 순위</p>
+                <p className="font-num text-4xl font-black text-plate-yellow">
+                  #{myBoardRow?.rank != null ? <CountNumber value={myBoardRow.rank} /> : "-"}
+                </p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                <p className="text-[11px] text-gray-400">전투 점수</p>
-                <p className="text-2xl font-black text-fuchsia-200">{myBoardRow?.score ?? 0}</p>
+              <div className="dg-well p-3">
+                <p className="text-xs text-steel-400">전투 점수</p>
+                <p className="font-num text-4xl font-black text-white">
+                  <CountNumber value={myBoardRow?.score ?? 0} />
+                </p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                <p className="text-[11px] text-gray-400">주간 운동</p>
-                <p className="text-2xl font-black text-emerald-200">{myWeeklyWorkout}회</p>
+              <div className="dg-well p-3">
+                <p className="text-xs text-steel-400">주간 운동</p>
+                <p className="font-num text-4xl font-black text-green-300">
+                  <CountNumber value={myWeeklyWorkout} />회
+                </p>
               </div>
             </div>
             <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-xs text-cyan-100">
+              <div className="flex items-center justify-between text-xs font-semibold text-steel-200">
                 <span>출석 게이지</span>
-                <span>{attendanceGauge.toFixed(1)}%</span>
+                <span className="font-num text-base font-black">{attendanceGauge.toFixed(1)}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-400" style={{ width: `${attendanceGauge}%` }} />
-              </div>
-              <div className="flex items-center justify-between text-xs text-emerald-100">
+              <SegGauge value={attendanceGauge} on="bg-plate-blue" />
+              <div className="flex items-center justify-between text-xs font-semibold text-steel-200">
                 <span>주간 연속 페이스</span>
-                <span>{myWeeklyWorkout}/7</span>
+                <span className="font-num text-base font-black">{myWeeklyWorkout}/7</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-lime-300" style={{ width: `${weeklyGauge}%` }} />
-              </div>
+              {/* 주 7일을 7칸으로: 운동한 날만큼 칸이 켜진다 */}
+              <SegGauge value={weeklyGauge} cells={7} on="bg-plate-green" />
             </div>
           </article>
 
-          <article className="rounded-2xl border border-amber-300/35 bg-gradient-to-br from-amber-500/15 via-slate-900/80 to-rose-500/20 p-4 shadow-[0_0_40px_rgba(251,191,36,0.12)]">
-            <p className="text-[11px] tracking-[0.18em] text-amber-100">TODAY QUEST</p>
-            <h3 className="mt-1 text-xl font-black text-amber-100">즉시 수행 미션</h3>
-            <p className="mt-2 rounded-xl border border-amber-200/30 bg-black/30 px-3 py-2 text-sm text-amber-50">{missionLabel}</p>
-            <div className="mt-3 rounded-xl border border-rose-200/30 bg-rose-500/10 p-3">
-              <p className="text-[11px] text-rose-100/80">라이벌 압박도</p>
-              <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-gradient-to-r from-rose-400 to-orange-300" style={{ width: `${chasePressure}%` }} />
+          <article className="dg-steel dg-rise p-5" style={{ animationDelay: "80ms" }}>
+            <p className="font-num text-sm font-bold text-orange-300">Today Quest</p>
+            <h3 className="font-display mt-1 text-xl text-white">즉시 수행 미션</h3>
+            <p className="dg-whiteboard mt-3 px-4 py-2 text-sm font-bold">{missionLabel}</p>
+            <div className="dg-well mt-4 p-3">
+              <p className="text-xs font-semibold text-steel-300">라이벌 압박도</p>
+              <div className="mt-2">
+                <SegGauge value={chasePressure} on="bg-plate-red" />
               </div>
-              <p className="mt-2 text-xs text-rose-100/80">{rivalRow ? `${rivalRow.nickname}까지 ${chaseGap}점` : "현재 최상위권 유지 중"}</p>
+              <p className="mt-2 text-xs text-steel-300">{rivalRow ? `${rivalRow.nickname}까지 ${chaseGap}점` : "현재 최상위권 유지 중"}</p>
             </div>
-            <div className="mt-3 flex items-center justify-between rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-3 py-2">
-              <span className="text-xs text-emerald-100">미션 성공 보상</span>
-              <span className="text-lg font-black text-emerald-200">+{questReward} EXP</span>
+            <div className="mt-3 flex items-center justify-between rounded border-2 border-black bg-plate-green px-3 py-2 text-white shadow-sm">
+              <span className="text-xs font-bold">미션 성공 보상</span>
+              <span className="font-num text-2xl font-black">+<CountNumber value={questReward} /> EXP</span>
             </div>
           </article>
         </div>
 
         <div className="grid gap-3 xl:grid-cols-[1.1fr_1fr]">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h3 className="text-lg font-bold">왕 타이틀</h3>
+          <div className="dg-steel p-5">
+            <h3 className="font-display text-lg">왕 타이틀</h3>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {detail.kingTitles?.map((king) => (
-                <div key={king.title} className={`rounded-xl border p-3 ${kingStyleByTitle[king.title]?.className ?? "border-white/20 bg-white/10 text-white"} animate-pulse`}>
+              {detail.kingTitles?.map((king, idx) => (
+                <div
+                  key={king.title}
+                  className={`dg-well dg-plate-in border-l-[6px] p-3 ${kingStyleByTitle[king.title]?.className ?? "border-l-steel-500"}`}
+                  style={{ animationDelay: `${idx * 90}ms` }}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 text-xs font-bold">{kingStyleByTitle[king.title]?.icon ?? "K"}</span>
-                    <p className="text-xs">{king.title}</p>
+                    <span className="font-num inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-black bg-steel-700 text-xs font-black text-chalk">{kingStyleByTitle[king.title]?.icon ?? "K"}</span>
+                    <p className="text-xs font-bold text-steel-200">{king.title}</p>
                   </div>
                   <p className="mt-2 text-sm font-bold text-white">{king.nickname}</p>
-                  <p className="text-xs opacity-90">{king.metric}</p>
+                  <p className="text-xs text-steel-300">{king.metric}</p>
                 </div>
               ))}
             </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h3 className="text-lg font-bold">빠른 챌린지 현황</h3>
+          <div className="dg-steel p-5">
+            <h3 className="font-display text-lg">빠른 챌린지 현황</h3>
             <div className="mt-3 space-y-2">
-              {detail.challenges.slice(0, 3).map((challenge) => (
+              {detail.challenges.slice(0, 3).map((challenge, idx) => (
                 <button
                   key={challenge.id}
                   type="button"
@@ -589,13 +634,14 @@ export default function CrewChallenge() {
                     switchTab("challenges");
                     setExpandedChallengeId(challenge.id);
                   }}
-                  className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-left transition hover:border-cyan-300/40 hover:bg-cyan-500/10"
+                  className="dg-rise group w-full rounded-md border-2 border-black bg-steel-900 p-3 text-left transition-all duration-150 hover:-translate-y-0.5 hover:bg-steel-800 hover:shadow-sm"
+                  style={{ animationDelay: `${idx * 60}ms` }}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold">{challenge.title}</p>
-                    <span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span>
+                    <span className={`dg-chip text-xs ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate}</p>
+                  <p className="mt-1 text-xs text-steel-400">{challenge.startDate} ~ {challenge.endDate}</p>
                 </button>
               ))}
             </div>
@@ -611,60 +657,80 @@ export default function CrewChallenge() {
     return (
       <div className="space-y-4">
         <div className="grid gap-3 md:grid-cols-3">
-            {top3.map((row) => {
+            {top3.map((row, idx) => {
               const avatar = resolveAvatarConfig(detail.members.find((m) => m.userId === row.userId) ?? null, row.attendanceRate);
               return (
-                <article key={row.userId} className={`rounded-2xl border border-white/15 bg-gradient-to-b ${row.rank === 1 ? "from-amber-400/25" : "from-cyan-400/20"} to-slate-900 p-4`}>
+                <article
+                  key={row.userId}
+                  className={`dg-steel dg-rise dg-lift p-4 ${row.rank === 1 ? "border-t-[8px] border-t-plate-yellow" : ""}`}
+                  style={{ animationDelay: `${idx * 80}ms` }}
+                >
                   <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-amber-300 px-2 py-1 text-xs font-bold text-slate-900">#{row.rank}</span>
-                    <span className="text-xs text-amber-100">{row.score}점</span>
+                    <span
+                      className={`font-num dg-plate-in grid h-10 w-10 place-items-center rounded-full border-[3px] border-black text-lg font-black shadow-sm ${RANK_PLATE[row.rank] ?? "bg-steel-700 text-chalk"}`}
+                      style={{ "--from": "-30px", animationDelay: `${idx * 80 + 120}ms` } as CSSProperties}
+                    >
+                      {row.rank}
+                    </span>
+                    <span className="font-num text-2xl font-black text-plate-yellow">
+                      <CountNumber value={row.score} />
+                      <span className="ml-0.5 text-sm text-steel-400">점</span>
+                    </span>
                   </div>
                   <div className="mt-2 flex justify-center">
                     <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={78} rank={row.rank} />
                   </div>
                   <p className="mt-2 text-center font-bold">{row.nickname}{renderRankDelta(row.userId)}</p>
-                  <p className="text-center text-xs text-gray-300">출석 {row.attendanceRate}% · 주간 {row.recentWorkoutDays}회</p>
+                  <p className="text-center text-xs text-steel-300">출석 {row.attendanceRate}% · 주간 {row.recentWorkoutDays}회</p>
                 </article>
               );
             })}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="dg-steel p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
             <input
               value={boardQuery}
               onChange={(e) => setBoardQuery(e.target.value)}
               placeholder="닉네임 검색"
-              className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+              className={`w-full ${FIELD}`}
             />
-            <span className="rounded-md border border-white/15 bg-black/30 px-2 py-1 text-xs text-gray-300 whitespace-nowrap">
+            <span className="dg-chip whitespace-nowrap bg-steel-700 text-sm text-chalk">
               {filteredBoard.length}명
             </span>
           </div>
           <div className="md:hidden space-y-2 max-h-[56vh] overflow-y-auto pr-1">
-            {filteredBoard.map((row) => {
+            {filteredBoard.map((row, idx) => {
               const animated = animatedRows.includes(row.userId);
               return (
                 <div
                   key={`m-${row.userId}`}
-                  className={`rounded-xl border border-white/10 bg-black/20 p-3 ${animated ? "ring-1 ring-cyan-300/60" : ""} ${rankMotionClass(row.userId)}`}
+                  className={`dg-well dg-rise p-3 ${animated ? "border-plate-yellow" : ""} ${rankMotionClass(row.userId)}`}
+                  style={{ animationDelay: `${Math.min(idx, 12) * 45}ms` }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-white">#{row.rank} {row.nickname}{renderRankDelta(row.userId)}</p>
-                    <p className="text-amber-200 font-bold">{row.score}점</p>
+                    <p className="flex items-center gap-2 font-semibold text-white">
+                      {RANK_PLATE[row.rank] ? (
+                        <span className={`font-num grid h-7 w-7 place-items-center rounded-full border-2 border-black text-sm font-black ${RANK_PLATE[row.rank]}`}>{row.rank}</span>
+                      ) : (
+                        <span className="font-num w-7 text-center text-lg font-black text-steel-500">{row.rank}</span>
+                      )}
+                      {row.nickname}{renderRankDelta(row.userId)}
+                    </p>
+                    <p className="font-num text-xl font-black text-plate-yellow">{row.score}점</p>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                    <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center">
-                      <p className="text-gray-400">주간</p>
-                      <p className="font-semibold text-emerald-200">{row.recentWorkoutDays}회</p>
+                    <div className="rounded border-2 border-black bg-steel-800 px-2 py-1 text-center">
+                      <p className="text-steel-400">주간</p>
+                      <p className="font-num text-base font-black text-green-300">{row.recentWorkoutDays}회</p>
                     </div>
-                    <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center">
-                      <p className="text-gray-400">출석률</p>
-                      <p className="font-semibold">{row.attendanceRate}%</p>
+                    <div className="rounded border-2 border-black bg-steel-800 px-2 py-1 text-center">
+                      <p className="text-steel-400">출석률</p>
+                      <p className="font-num text-base font-black">{row.attendanceRate}%</p>
                     </div>
-                    <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center">
-                      <p className="text-gray-400">최근점수</p>
-                      <p className="font-semibold text-cyan-200">{row.recentScore}</p>
+                    <div className="rounded border-2 border-black bg-steel-800 px-2 py-1 text-center">
+                      <p className="text-steel-400">최근점수</p>
+                      <p className="font-num text-base font-black text-plate-yellow">{row.recentScore}</p>
                     </div>
                   </div>
                 </div>
@@ -672,22 +738,33 @@ export default function CrewChallenge() {
             })}
           </div>
           <div className="hidden md:block">
-            <div className="grid grid-cols-[46px_1fr_58px_64px_62px] rounded-lg bg-white/5 px-3 py-2 text-[11px] text-gray-300 sm:grid-cols-[56px_1fr_90px_96px_80px]">
+            <div className="grid grid-cols-[46px_1fr_58px_64px_62px] rounded border-2 border-black bg-steel-900 px-3 py-2 text-xs font-bold text-steel-300 sm:grid-cols-[56px_1fr_90px_96px_80px]">
               <span>순위</span><span>닉네임</span><span>주간</span><span>출석률</span><span>점수</span>
             </div>
             <div className="mt-1 max-h-80 space-y-1 overflow-y-auto">
-              {filteredBoard.map((row) => {
+              {filteredBoard.map((row, idx) => {
                 const animated = animatedRows.includes(row.userId);
                 return (
-                  <div key={row.userId} className={`grid grid-cols-[46px_1fr_58px_64px_62px] rounded-lg px-3 py-2 text-sm transition-all sm:grid-cols-[56px_1fr_90px_96px_80px] ${row.rank <= 3 ? "bg-amber-500/5" : "bg-black/15"} ${animated ? "ring-1 ring-cyan-300/60" : ""} ${rankMotionClass(row.userId)}`}>
-                    <span className="text-cyan-200">#{row.rank}{renderRankDelta(row.userId)}</span>
+                  <div
+                    key={row.userId}
+                    className={`dg-rise grid grid-cols-[46px_1fr_58px_64px_62px] items-center rounded border-2 px-3 py-2 text-sm transition-colors hover:bg-steel-700 sm:grid-cols-[56px_1fr_90px_96px_80px] ${row.rank <= 3 ? "bg-steel-700/70" : "bg-steel-900"} ${animated ? "border-plate-yellow" : "border-black"} ${rankMotionClass(row.userId)}`}
+                    style={{ animationDelay: `${Math.min(idx, 14) * 40}ms` }}
+                  >
+                    <span className="flex items-center">
+                      {RANK_PLATE[row.rank] ? (
+                        <span className={`font-num grid h-7 w-7 place-items-center rounded-full border-2 border-black text-sm font-black ${RANK_PLATE[row.rank]}`}>{row.rank}</span>
+                      ) : (
+                        <span className="font-num text-lg font-black text-steel-400">{row.rank}</span>
+                      )}
+                      {renderRankDelta(row.userId)}
+                    </span>
                     <div>
                       <p className="font-semibold">{row.nickname}</p>
-                      <p className="text-[11px] text-gray-400">출석 {row.attendanceScore} + 도전 {row.challengeScore} + 최근 {row.recentScore}{row.bonusScore > 0 ? ` + 보너스 ${row.bonusScore}` : ""}</p>
+                      <p className="text-xs text-steel-400">출석 {row.attendanceScore} + 도전 {row.challengeScore} + 최근 {row.recentScore}{row.bonusScore > 0 ? ` + 보너스 ${row.bonusScore}` : ""}</p>
                     </div>
-                    <span className="text-emerald-200">{row.recentWorkoutDays}회</span>
-                    <span>{row.attendanceRate}%</span>
-                    <span className="font-semibold text-amber-200">{row.score}</span>
+                    <span className="font-num font-bold text-green-300">{row.recentWorkoutDays}회</span>
+                    <span className="font-num font-bold">{row.attendanceRate}%</span>
+                    <span className="font-num text-xl font-black text-plate-yellow"><CountNumber value={row.score} /></span>
                   </div>
                 );
               })}
@@ -766,10 +843,10 @@ export default function CrewChallenge() {
     return (
       <div className="space-y-4">
         {activeChallenge && (
-          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-3 md:hidden">
-            <p className="mb-2 text-[11px] font-semibold tracking-wide text-cyan-200">스와이프 챌린지 카드</p>
+          <div className="dg-well p-3 md:hidden">
+            <p className="mb-2 text-xs font-bold text-steel-300">스와이프 챌린지 카드</p>
             <div
-              className="select-none rounded-xl border border-white/15 bg-black/25 p-3 transition-transform duration-200 ease-out"
+              className="select-none rounded-md border-[3px] border-black bg-steel-800 p-3 transition-transform duration-200 ease-out"
               style={{
                 transform: `translateX(${challengeDragX}px) rotate(${challengeDragX / 38}deg) scale(${1 - Math.min(0.05, Math.abs(challengeDragX) / 720)})`,
                 transition: isChallengeDragging
@@ -777,9 +854,7 @@ export default function CrewChallenge() {
                   : isChallengeAnimating
                   ? "transform 340ms cubic-bezier(0.18, 0.8, 0.24, 1.15)"
                   : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
-                boxShadow: isChallengeAnimating
-                  ? "0 0 0 1px rgba(103,232,249,0.35), 0 10px 30px rgba(6,182,212,0.22)"
-                  : "none",
+                boxShadow: isChallengeAnimating ? "0 6px 0 var(--dg-ink)" : "0 3px 0 var(--dg-ink)",
               }}
               onTouchStart={(e) => onChallengeSwipeStart(e.touches[0].clientX)}
               onTouchMove={(e) => onChallengeSwipeMove(e.touches[0].clientX)}
@@ -787,73 +862,128 @@ export default function CrewChallenge() {
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold">{activeChallenge.title}</p>
-                <span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[activeChallenge.status]}`}>
+                <span className={`dg-chip text-xs ${challengeStatusClass[activeChallenge.status]}`}>
                   {challengeStatusText[activeChallenge.status]}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-gray-400">{activeChallenge.startDate} ~ {activeChallenge.endDate}</p>
-              <p className="mt-1 text-xs text-emerald-200">목표 {activeChallenge.targetWorkoutDays}일</p>
+              <p className="mt-1 text-xs text-steel-400">{activeChallenge.startDate} ~ {activeChallenge.endDate}</p>
+              <p className="mt-1 text-xs font-semibold text-green-300">목표 {activeChallenge.targetWorkoutDays}일</p>
             </div>
             <div className="mt-2 flex items-center justify-between">
-              <button type="button" onClick={() => moveChallengeFocus("prev")} className="rounded-lg border border-white/20 px-2 py-1 text-[11px] text-gray-200">이전</button>
-              <p className="text-[11px] text-gray-400">{activeChallengeIndex + 1} / {challenges.length}</p>
-              <button type="button" onClick={() => moveChallengeFocus("next")} className="rounded-lg border border-white/20 px-2 py-1 text-[11px] text-gray-200">다음</button>
+              <button type="button" onClick={() => moveChallengeFocus("prev")} className="dg-btn dg-btn-steel min-h-[30px] px-2.5 text-xs">이전</button>
+              <p className="font-num text-sm font-bold text-steel-300">{activeChallengeIndex + 1} / {challenges.length}</p>
+              <button type="button" onClick={() => moveChallengeFocus("next")} className="dg-btn dg-btn-steel min-h-[30px] px-2.5 text-xs">다음</button>
             </div>
           </div>
         )}
         {detail.leader && manageMode && (
-          <form onSubmit={onCreateChallenge} className="space-y-3 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-4">
-            <h3 className="text-lg font-bold">챌린지 만들기</h3>
-            <input value={challengeTitle} onChange={(e) => setChallengeTitle(e.target.value)} placeholder="챌린지 제목" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-            <textarea value={challengeDescription} onChange={(e) => setChallengeDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+          <form onSubmit={onCreateChallenge} className="dg-steel dg-pop space-y-3 border-t-[8px] border-t-plate-red p-4">
+            <h3 className="font-display text-lg">챌린지 만들기</h3>
+            <input value={challengeTitle} onChange={(e) => setChallengeTitle(e.target.value)} placeholder="챌린지 제목" className={`w-full ${FIELD}`} />
+            <textarea value={challengeDescription} onChange={(e) => setChallengeDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className={`w-full ${FIELD}`} />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <input type="date" value={challengeStartDate} onChange={(e) => setChallengeStartDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-              <input type="date" value={challengeEndDate} onChange={(e) => setChallengeEndDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-              <input type="number" min={1} max={31} value={challengeTargetDays} onChange={(e) => setChallengeTargetDays(Number(e.target.value))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+              <input type="date" value={challengeStartDate} onChange={(e) => setChallengeStartDate(e.target.value)} className={FIELD} />
+              <input type="date" value={challengeEndDate} onChange={(e) => setChallengeEndDate(e.target.value)} className={FIELD} />
+              <input type="number" min={1} max={31} value={challengeTargetDays} onChange={(e) => setChallengeTargetDays(Number(e.target.value))} className={FIELD} />
             </div>
-            <button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">챌린지 생성</button>
+            <button type="submit" className="dg-btn dg-btn-primary min-h-[44px] px-4 text-sm">챌린지 생성</button>
           </form>
         )}
 
         <div className="space-y-3">
-          {detail.challenges.length === 0 && <p className="text-sm text-gray-400">등록된 챌린지가 없습니다.</p>}
-          {detail.challenges.map((challenge) => {
+          {detail.challenges.length === 0 && <p className="text-sm text-steel-400">등록된 챌린지가 없습니다.</p>}
+          {detail.challenges.map((challenge, cIdx) => {
             const topMember = challenge.members[0];
             const isExpanded = expandedChallengeId === challenge.id;
             const isEditing = editingChallengeId === challenge.id;
+            const avgCompletion = challenge.members.length
+              ? challenge.members.reduce((sum, m) => sum + m.completionRate, 0) / challenge.members.length
+              : 0;
             return (
-              <article key={challenge.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <article
+                key={challenge.id}
+                className={`dg-steel dg-rise border-l-[8px] p-4 ${
+                  challenge.status === "ONGOING" ? "border-l-plate-green" : challenge.status === "UPCOMING" ? "border-l-plate-blue" : "border-l-steel-600"
+                }`}
+                style={{ animationDelay: `${Math.min(cIdx, 8) * 60}ms` }}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <button type="button" onClick={() => setExpandedChallengeId(isExpanded ? null : challenge.id)} className="text-left">
                     <div className="flex items-center gap-2">
                       <strong>{challenge.title}</strong>
-                      <span className={`rounded-full border px-2 py-0.5 text-[11px] ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span>
+                      <span className={`dg-chip text-xs ${challengeStatusClass[challenge.status]}`}>{challengeStatusText[challenge.status]}</span>
                     </div>
-                    <p className="mt-1 text-xs text-gray-400">{challenge.startDate} ~ {challenge.endDate} · 목표 {challenge.targetWorkoutDays}일</p>
+                    <p className="mt-1 text-xs text-steel-400">{challenge.startDate} ~ {challenge.endDate} · 목표 {challenge.targetWorkoutDays}일</p>
                   </button>
                   <div className="flex items-center gap-2">
-                    {detail.leader && manageMode && <><button type="button" onClick={() => startEditChallenge(challenge)} className="rounded-lg border border-cyan-300/40 px-2 py-1 text-xs text-cyan-200">수정</button><button type="button" onClick={() => void onDeleteChallenge(challenge.id)} className="rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">삭제</button></>}
-                    <button type="button" onClick={() => setExpandedChallengeId(isExpanded ? null : challenge.id)} className="rounded-lg border border-white/20 px-2 py-1 text-xs text-gray-200">{isExpanded ? "접기" : "펼치기"}</button>
+                    {detail.leader && manageMode && <><button type="button" onClick={() => startEditChallenge(challenge)} className="dg-btn dg-btn-steel min-h-[30px] px-2.5 text-xs">수정</button><button type="button" onClick={() => void onDeleteChallenge(challenge.id)} className="dg-btn min-h-[30px] bg-steel-900 px-2.5 text-xs text-red-300 hover:bg-plate-red hover:text-white">삭제</button></>}
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      onClick={() => setExpandedChallengeId(isExpanded ? null : challenge.id)}
+                      className="dg-btn dg-btn-steel min-h-[30px] px-2.5 text-xs"
+                    >
+                      <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                      {isExpanded ? "접기" : "펼치기"}
+                    </button>
                   </div>
                 </div>
-                {challenge.description && <p className="mt-2 text-sm text-gray-300">{challenge.description}</p>}
-                {topMember && <div className="mt-3 rounded-lg border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">현재 1위: <strong>{topMember.nickname}</strong> · {topMember.completionRate}% ({topMember.workoutDays}/{topMember.targetWorkoutDays})</div>}
+                {challenge.description && <p className="mt-2 text-sm text-steel-300">{challenge.description}</p>}
+                {challenge.members.length > 0 && (
+                  <div className="mt-3">
+                    <div className="mb-1 flex items-center justify-between text-xs font-semibold text-steel-300">
+                      <span>모임 평균 완료율</span>
+                      <span className="font-num text-base font-black text-plate-yellow">{Math.round(avgCompletion)}%</span>
+                    </div>
+                    <SegGauge value={avgCompletion} on="bg-plate-yellow" />
+                  </div>
+                )}
+                {topMember && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded border-2 border-black bg-steel-900 px-3 py-2 text-xs text-steel-200">
+                    <span className="font-num grid h-6 w-6 place-items-center rounded-full border-2 border-black bg-plate-yellow text-xs font-black text-black">1</span>
+                    현재 1위: <strong className="text-white">{topMember.nickname}</strong> · {topMember.completionRate}% ({topMember.workoutDays}/{topMember.targetWorkoutDays})
+                  </div>
+                )}
 
                 {isExpanded && (
-                  <div className="mt-3 space-y-3">
+                  <div className="dg-rise mt-3 space-y-3">
                     {isEditing && detail.leader && manageMode && (
-                      <form onSubmit={submitEditChallenge} className="space-y-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 p-3">
-                        <p className="text-sm font-semibold text-cyan-200">챌린지 수정</p>
-                        <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="챌린지 제목" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                        <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3"><input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" /><input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" /><input type="number" min={1} max={31} value={editTargetDays} onChange={(e) => setEditTargetDays(Number(e.target.value))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" /></div>
-                        <div className="flex gap-2"><button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">저장</button><button type="button" onClick={() => setEditingChallengeId(null)} className="rounded-lg border border-white/25 px-3 py-2 text-sm text-gray-200">취소</button></div>
+                      <form onSubmit={submitEditChallenge} className="dg-pop space-y-2 rounded-md border-2 border-dashed border-plate-yellow bg-steel-900 p-3">
+                        <p className="text-sm font-bold text-plate-yellow">챌린지 수정</p>
+                        <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="챌린지 제목" className={`w-full ${FIELD}`} />
+                        <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={2} placeholder="챌린지 설명" className={`w-full ${FIELD}`} />
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3"><input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} className={FIELD} /><input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)} className={FIELD} /><input type="number" min={1} max={31} value={editTargetDays} onChange={(e) => setEditTargetDays(Number(e.target.value))} className={FIELD} /></div>
+                        <div className="flex gap-2"><button type="submit" className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">저장</button><button type="button" onClick={() => setEditingChallengeId(null)} className="dg-btn dg-btn-steel min-h-[40px] px-4 text-sm">취소</button></div>
                       </form>
                     )}
                     <div className="grid gap-2 md:grid-cols-2">
                       {challenge.members.map((member, index) => {
                         const avatar = resolveAvatarConfig(member as any, member.completionRate);
-                        return <div key={`${challenge.id}-${member.userId}`} className="rounded-lg border border-white/10 bg-black/25 p-3 text-sm"><div className="flex items-center gap-2"><EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={48} rank={index + 1} badge={member.badge} /><div className="flex-1"><div className="flex items-center justify-between"><span>{member.nickname}</span><span className="text-cyan-300">{member.completionRate}%</span></div><p className="mt-1 text-xs text-gray-400">{member.workoutDays}/{member.targetWorkoutDays}</p></div></div></div>;
+                        const cells = member.targetWorkoutDays > 0 && member.targetWorkoutDays <= 14 ? member.targetWorkoutDays : 10;
+                        return (
+                          <div
+                            key={`${challenge.id}-${member.userId}`}
+                            className="dg-well dg-rise p-3 text-sm"
+                            style={{ animationDelay: `${Math.min(index, 10) * 45}ms` }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={48} rank={index + 1} badge={member.badge} />
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-semibold">{member.nickname}</span>
+                                  <span className="font-num text-lg font-black text-plate-yellow">{member.completionRate}%</span>
+                                </div>
+                                {/* 목표 일수만큼 칸: 운동한 날마다 한 칸씩 */}
+                                <div className="mt-1.5">
+                                  <SegGauge value={member.completionRate} cells={cells} on="bg-plate-green" />
+                                </div>
+                                <p className="font-num mt-1 text-sm font-bold text-steel-400">{member.workoutDays}/{member.targetWorkoutDays}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
                       })}
                     </div>
                   </div>
@@ -869,76 +999,100 @@ export default function CrewChallenge() {
   const renderMembers = () => {
     if (!detail) return null;
     const visibleMembers = membersWithBoardMeta.slice(0, memberVisibleCount);
+    const sortTabs: { key: "rank" | "weekly" | "attendance"; label: string }[] = [
+      { key: "rank", label: "순위순" },
+      { key: "weekly", label: "주간 운동순" },
+      { key: "attendance", label: "출석률순" },
+    ];
     return (
       <div className="space-y-3">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+        <div className="dg-well p-3">
           <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
             <input
               value={memberQuery}
               onChange={(e) => setMemberQuery(e.target.value)}
               placeholder="멤버 닉네임 검색"
-              className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
+              className="rounded border-2 border-black bg-steel-800 px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow"
             />
-            <select
-              value={memberSort}
-              onChange={(e) => setMemberSort(e.target.value as "rank" | "weekly" | "attendance")}
-              className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm"
-            >
-              <option value="rank">순위순</option>
-              <option value="weekly">주간 운동순</option>
-              <option value="attendance">출석률순</option>
-            </select>
-            <div className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-gray-200">
+            {/* 정렬: 누르면 눌린 칩으로 바뀐다 (select 와 같은 값을 쓴다) */}
+            <div className="flex gap-1.5" role="group" aria-label="정렬">
+              {sortTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  aria-pressed={memberSort === tab.key}
+                  onClick={() => setMemberSort(tab.key)}
+                  className={`rounded border-2 border-black px-3 py-2 text-xs font-bold transition-all duration-100 ${
+                    memberSort === tab.key
+                      ? "translate-y-[2px] bg-plate-yellow text-black"
+                      : "bg-steel-700 text-steel-200 shadow-sm hover:-translate-y-0.5"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div className="dg-chip justify-center bg-steel-700 text-sm text-chalk">
               {membersWithBoardMeta.length}명
             </div>
           </div>
         </div>
 
         <div className="md:hidden space-y-2">
-          {visibleMembers.map(({ member, board }) => {
+          {visibleMembers.map(({ member, board }, idx) => {
             const avatar = resolveAvatarConfig(member as any, member.attendanceRate);
             const memberRank = board?.rank ?? "-";
             const weeklyWorkout = board?.recentWorkoutDays ?? 0;
             return (
-              <article key={`mobile-${member.userId}`} className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <article
+                key={`mobile-${member.userId}`}
+                className="dg-well dg-rise p-3"
+                style={{ animationDelay: `${Math.min(idx, 12) * 40}ms` }}
+              >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={42} />
                     <div>
                       <p className="text-sm font-semibold">{member.nickname}</p>
-                      <p className="text-[11px] text-gray-400">#{memberRank} · {member.role}</p>
+                      <p className="text-xs text-steel-400"><span className="font-num font-bold">#{memberRank}</span> · {member.role}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] text-gray-400">이번주</p>
-                    <p className="text-sm font-bold text-emerald-200">{weeklyWorkout}회</p>
+                    <p className="text-xs text-steel-400">이번주</p>
+                    <p className="font-num text-lg font-black text-green-300">{weeklyWorkout}회</p>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-gray-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
+                <p className="mt-2 text-xs text-steel-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
               </article>
             );
           })}
         </div>
 
         <div className="hidden md:grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {visibleMembers.map(({ member, board }) => {
+        {visibleMembers.map(({ member, board }, idx) => {
           const avatar = resolveAvatarConfig(member as any, member.attendanceRate);
           const memberRank = board?.rank ?? "-";
           const weeklyWorkout = board?.recentWorkoutDays ?? 0;
           return (
-            <article key={member.userId} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <article
+              key={member.userId}
+              className="dg-lift dg-rise rounded-xl border-[3px] border-black bg-steel-800 p-4 shadow-md"
+              style={{ animationDelay: `${Math.min(idx, 12) * 40}ms` }}
+            >
               <div className="flex items-center gap-3">
                 <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={60} />
                 <div>
                   <p className="font-semibold">{member.nickname}</p>
-                  <p className="text-xs text-gray-400">#{memberRank} · {member.role}</p>
-                  {member.characterLevel != null && <p className="text-[11px] text-cyan-200">Lv.{member.characterLevel}</p>}
+                  <p className="text-xs text-steel-400"><span className="font-num text-sm font-bold">#{memberRank}</span> · {member.role}</p>
+                  {member.characterLevel != null && <p className="font-num text-sm font-bold text-plate-yellow">Lv.{member.characterLevel}</p>}
                 </div>
               </div>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${Math.min(member.attendanceRate, 100)}%` }} /></div>
-              <p className="mt-2 text-xs text-gray-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
-              <p className="mt-1 text-xs text-emerald-200">이번주 운동 {weeklyWorkout}회</p>
-              {detail.leader && manageMode && member.role !== "LEADER" && <button type="button" onClick={() => void onKickMember(member.userId)} className="mt-3 rounded-lg border border-red-400/40 px-2 py-1 text-xs text-red-300">강퇴</button>}
+              <div className="mt-3">
+                <SegGauge value={member.attendanceRate} on="bg-plate-blue" />
+              </div>
+              <p className="mt-2 text-xs text-steel-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
+              <p className="mt-1 text-xs font-semibold text-green-300">이번주 운동 {weeklyWorkout}회</p>
+              {detail.leader && manageMode && member.role !== "LEADER" && <button type="button" onClick={() => void onKickMember(member.userId)} className="dg-btn mt-3 min-h-[30px] bg-steel-900 px-2.5 text-xs text-red-300 hover:bg-plate-red hover:text-white">강퇴</button>}
             </article>
           );
         })}
@@ -947,7 +1101,7 @@ export default function CrewChallenge() {
           <button
             type="button"
             onClick={() => setMemberVisibleCount((prev) => prev + 24)}
-            className="w-full rounded-xl border border-cyan-300/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20"
+            className="dg-btn dg-btn-steel w-full text-sm"
           >
             멤버 더 보기 (+24)
           </button>
@@ -956,111 +1110,140 @@ export default function CrewChallenge() {
     );
   };
 
+  const tabItems: { key: ViewTab; label: string; short: string }[] = [
+    { key: "dashboard", label: "대시보드", short: "대시" },
+    { key: "challenges", label: "챌린지", short: "챌린지" },
+    { key: "leaderboard", label: "리더보드", short: "랭킹" },
+    { key: "members", label: "멤버", short: "멤버" },
+  ];
+  const activeTabIndex = Math.max(0, TAB_ORDER.indexOf(activeTab));
+
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#040714] pb-28 pt-24 text-white">
-      <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:radial-gradient(circle_at_1px_1px,rgba(56,189,248,0.22)_1px,transparent_0)] [background-size:22px_22px]" />
-      <div className="pointer-events-none absolute -left-32 top-16 h-72 w-72 rounded-full bg-cyan-500/25 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-20 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-8 left-1/3 h-64 w-64 rounded-full bg-fuchsia-500/10 blur-3xl" />
+    <section className="relative min-h-screen overflow-hidden pb-28 pt-24 text-white">
       <div className="mx-auto max-w-6xl space-y-4 px-4 sm:px-6 lg:px-10">
-        <div className="crew-hud-glow relative overflow-hidden rounded-2xl border border-cyan-300/25 bg-gradient-to-r from-cyan-900/35 via-slate-900/70 to-emerald-900/25 p-4 shadow-[0_0_50px_rgba(56,189,248,0.12)]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.18),transparent_50%),radial-gradient(circle_at_80%_80%,rgba(20,184,166,0.16),transparent_45%)]" />
-          <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[11px] font-black tracking-[0.14em] text-cyan-100">
+        <div className="dg-steel relative overflow-hidden p-5">
+          <div className="dg-chip absolute right-6 top-5 bg-steel-700 text-sm text-chalk">
             MuscleUp
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs tracking-[0.22em] text-cyan-200">CREW CHALLENGE ARENA</p>
-              <h1 className="text-2xl font-black text-cyan-50 drop-shadow-[0_0_12px_rgba(34,211,238,0.35)]">{detail?.name || "모임 챌린지"}</h1>
-              <p className="text-xs text-cyan-100/85">{nextGoal}</p>
+              <p className="font-num text-sm font-bold text-plate-yellow">Crew Challenge Arena</p>
+              <h1 className="text-2xl text-white sm:text-3xl">{detail?.name || "모임 챌린지"}</h1>
+              <p className="text-xs text-steel-300">{nextGoal}</p>
             </div>
             <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
-              <Link to="/crew" className="rounded-lg border border-white/20 px-3 py-2 text-center text-sm text-gray-200 hover:bg-white/10">모임 허브</Link>
-              <Link to={`/crew/${crewIdNum}/lobby`} className="rounded-lg border border-cyan-300/35 bg-cyan-500/10 px-3 py-2 text-center text-sm text-cyan-100 hover:bg-cyan-500/20">로비</Link>
-              <Link to={`/crew/${crewIdNum}/highlights`} className="rounded-lg border border-amber-300/35 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-100 hover:bg-amber-500/20">하이라이트</Link>
-              <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm col-span-2 sm:col-span-1" />
+              <Link to="/crew" className="dg-btn dg-btn-steel min-h-[40px] px-3 text-sm">모임 허브</Link>
+              <Link to={`/crew/${crewIdNum}/lobby`} className="dg-btn dg-btn-steel min-h-[40px] px-3 text-sm">로비</Link>
+              <Link to={`/crew/${crewIdNum}/highlights`} className="dg-btn dg-btn-steel min-h-[40px] px-3 text-sm">하이라이트</Link>
+              <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className={`${FIELD} col-span-2 sm:col-span-1`} />
             </div>
           </div>
         </div>
 
-        <div className="crew-hud-glow-soft sticky top-20 z-30 rounded-2xl border border-cyan-300/30 bg-slate-900/88 p-3 shadow-[0_0_45px_rgba(34,211,238,0.12)] backdrop-blur">
+        <div className="sticky top-20 z-30 rounded-xl border-[3px] border-black bg-steel-800 p-3 shadow-xl">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="rounded-xl border border-cyan-300/20 bg-gradient-to-br from-cyan-500/10 to-slate-900/80 p-3">
-              <p className="text-[11px] text-gray-400">내 캐릭터</p>
+            <div className="dg-well p-3">
+              <p className="text-xs text-steel-400">내 캐릭터</p>
               <div className="mt-1 flex items-center gap-2">
                 <EnhancedAvatar seed={myAvatar.seed} tier={myAvatar.tier} stage={myAvatar.stage} gender={myAvatar.gender} isResting={myAvatar.isResting} size={38} />
                 <p className="text-sm font-semibold">{myAttendanceRow?.nickname ?? "-"}</p>
               </div>
             </div>
-            <div className="rounded-xl border border-amber-300/20 bg-gradient-to-br from-amber-500/10 to-slate-900/80 p-3">
-              <p className="text-[11px] text-gray-400">현재 순위</p>
-              <p className="text-xl font-black text-amber-200">#{myBoardRow?.rank ?? "-"}</p>
+            <div className="dg-well p-3">
+              <p className="text-xs text-steel-400">현재 순위</p>
+              <p key={myBoardRow?.rank ?? "none"} className="dg-pop font-num text-3xl font-black text-plate-yellow">#{myBoardRow?.rank ?? "-"}</p>
             </div>
-            <div className="rounded-xl border border-violet-300/20 bg-gradient-to-br from-violet-500/10 to-slate-900/80 p-3">
-              <p className="text-[11px] text-gray-400">활성 챌린지</p>
-              <p className="text-xl font-black">{ongoingChallengeCount}</p>
+            <div className="dg-well p-3">
+              <p className="text-xs text-steel-400">활성 챌린지</p>
+              <p className="font-num text-3xl font-black"><CountNumber value={ongoingChallengeCount} /></p>
             </div>
-            <div className="rounded-xl border border-amber-300/35 bg-gradient-to-br from-amber-500/15 to-rose-500/10 p-3">
-              <p className="text-[11px] text-amber-100/80">이번주 스프린트</p>
-              <p className="text-sm font-black text-amber-200">주간 운동 {myWeeklyWorkout}회</p>
-              <p className="mt-1 text-[11px] text-amber-100/80">
+            <div className="dg-well border-l-[6px] border-l-orange-500 p-3">
+              <p className="text-xs text-steel-400">이번주 스프린트</p>
+              <p className="text-sm font-black text-orange-300">주간 운동 {myWeeklyWorkout}회</p>
+              <p className="mt-1 text-xs text-steel-300">
                 {rivalRow ? `다음 목표 ${rivalRow.nickname} · ${chaseGap}점 차이` : missionLabel}
               </p>
             </div>
           </div>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-xl border border-rose-300/35 bg-gradient-to-br from-rose-500/15 to-slate-900/80 p-3">
-              <p className="text-[11px] text-rose-100/80">내 바로 위 라이벌</p>
+            <div className="dg-well border-l-[6px] border-l-plate-red p-3">
+              <p className="flex items-center gap-1.5 text-xs text-steel-400">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-red-300" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 19V5M6 11l6-6 6 6" />
+                </svg>
+                내 바로 위 라이벌
+              </p>
               {rivalRow ? (
                 <>
-                  <p className="mt-1 text-sm font-black text-rose-100">{rivalRow.nickname}</p>
-                  <p className="text-[11px] text-rose-100/80">#{rivalRow.rank} · 주간 {rivalRow.recentWorkoutDays}회 · {chaseGap}점 차이</p>
+                  <p className="mt-1 text-sm font-black text-white">{rivalRow.nickname}</p>
+                  <p className="text-xs text-steel-300">#{rivalRow.rank} · 주간 {rivalRow.recentWorkoutDays}회 · {chaseGap}점 차이</p>
                 </>
               ) : (
-                <p className="mt-1 text-xs text-rose-100/80">현재 1위입니다. 방어 모드 유지!</p>
+                <p className="mt-1 text-xs text-steel-300">현재 1위입니다. 방어 모드 유지!</p>
               )}
             </div>
-            <div className="rounded-xl border border-emerald-300/35 bg-gradient-to-br from-emerald-500/15 to-slate-900/80 p-3">
-              <p className="text-[11px] text-emerald-100/80">내 바로 아래 추격자</p>
+            <div className="dg-well border-l-[6px] border-l-plate-green p-3">
+              <p className="flex items-center gap-1.5 text-xs text-steel-400">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-green-300" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 5v14M6 13l6 6 6-6" />
+                </svg>
+                내 바로 아래 추격자
+              </p>
               {trailingRow ? (
                 <>
-                  <p className="mt-1 text-sm font-black text-emerald-100">{trailingRow.nickname}</p>
-                  <p className="text-[11px] text-emerald-100/80">#{trailingRow.rank} · 주간 {trailingRow.recentWorkoutDays}회 · {defendGap}점 차이</p>
+                  <p className="mt-1 text-sm font-black text-white">{trailingRow.nickname}</p>
+                  <p className="text-xs text-steel-300">#{trailingRow.rank} · 주간 {trailingRow.recentWorkoutDays}회 · {defendGap}점 차이</p>
                 </>
               ) : (
-                <p className="mt-1 text-xs text-emerald-100/80">추격자 없음. 페이스 유지!</p>
+                <p className="mt-1 text-xs text-steel-300">추격자 없음. 페이스 유지!</p>
               )}
             </div>
           </div>
         </div>
 
-        <div className="hidden flex-wrap gap-2 md:flex">
-          {[{ key: "dashboard", label: "대시보드" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "리더보드" }, { key: "members", label: "멤버" }].map((tab) => (
+        {/* 데스크톱 탭: 빨간 밑줄이 선택한 탭으로 미끄러진다 */}
+        <div className="relative hidden grid-cols-4 border-b-2 border-steel-700 md:grid" role="tablist">
+          {tabItems.map((tab) => (
             <button
               key={tab.key}
               type="button"
-              onClick={() => switchTab(tab.key as ViewTab)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                activeTab === tab.key
-                  ? "border border-cyan-200/60 bg-gradient-to-r from-cyan-300 to-blue-300 text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.45)]"
-                  : "border border-white/20 bg-black/25 text-gray-200 hover:border-cyan-300/45 hover:bg-cyan-500/10"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              onClick={() => switchTab(tab.key)}
+              className={`px-4 pb-2.5 pt-1 text-base font-bold transition-colors ${
+                activeTab === tab.key ? "text-white" : "text-steel-400 hover:text-steel-200"
               }`}
             >
               {tab.label}
             </button>
           ))}
+          <span
+            aria-hidden
+            className="absolute -bottom-[2px] left-0 h-1 w-1/4 bg-plate-red transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(${activeTabIndex * 100}%)` }}
+          />
         </div>
 
-        {error && <p className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
-        {!detail && <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-gray-300">불러오는 중...</div>}
+        {error && <p className="dg-pop dg-well border-l-4 border-l-plate-red p-3 text-sm text-red-200">{error}</p>}
+        {!detail && (
+          <div className="dg-steel flex items-center gap-3 p-6 text-steel-300">
+            <span className="dg-loading-plates" aria-label="불러오는 중">
+              <i />
+              <i />
+              <i />
+              <i />
+            </span>
+            불러오는 중...
+          </div>
+        )}
 
         {detail && (
           <>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="dg-steel p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-2">
-                  <input value={detail.name} onChange={(e) => setDetail((prev) => (prev ? { ...prev, name: e.target.value } : prev))} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-xl font-extrabold" />
-                  <textarea value={detail.description ?? ""} onChange={(e) => setDetail((prev) => (prev ? { ...prev, description: e.target.value } : prev))} rows={2} className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-gray-300" />
+                  <input value={detail.name} onChange={(e) => setDetail((prev) => (prev ? { ...prev, name: e.target.value } : prev))} className={`${FIELD} font-display text-xl`} />
+                  <textarea value={detail.description ?? ""} onChange={(e) => setDetail((prev) => (prev ? { ...prev, description: e.target.value } : prev))} rows={2} className={`w-full ${FIELD} text-steel-200`} />
                   {detail.leader && (
                     <select
                       value={detail.joinPolicy ?? "AUTO_APPROVE"}
@@ -1071,50 +1254,73 @@ export default function CrewChallenge() {
                             : prev
                         )
                       }
-                      className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-cyan-100"
+                      className={FIELD}
                     >
                       <option value="AUTO_APPROVE">가입 방식: 즉시 참여</option>
                       <option value="LEADER_APPROVE">가입 방식: 방장 승인 필요</option>
                     </select>
                   )}
-                  <div className="flex items-center gap-2 text-xs text-cyan-300"><span>초대코드: <span className="font-bold">{detail.inviteCode}</span></span><button type="button" onClick={() => void copyInviteLink()} className="rounded-md border border-cyan-300/40 px-2 py-1 text-cyan-200 hover:bg-cyan-500/10">{copiedLink ? "복사됨" : "링크 복사"}</button></div>
+                  <div className="flex items-center gap-2 text-xs text-steel-300">
+                    <span>초대코드: <span className="font-num text-base font-black text-plate-yellow">{detail.inviteCode}</span></span>
+                    <button
+                      type="button"
+                      onClick={() => void copyInviteLink()}
+                      className={`dg-btn dg-chalk-burst min-h-[30px] px-2.5 text-xs ${copiedLink ? "bg-plate-green text-white" : "bg-steel-700 text-chalk"}`}
+                    >
+                      <span key={copiedLink ? "done" : "idle"} className="dg-pop inline-block">{copiedLink ? "복사됨" : "링크 복사"}</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {detail.joined ? <button type="button" onClick={() => void onLeave()} className="rounded-lg border border-red-300/40 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">모임 탈퇴</button> : <button type="button" onClick={() => void onJoin()} className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-bold text-slate-950">모임 참여</button>}
-                  {detail.leader && <><button type="button" onClick={() => setManageMode((prev) => !prev)} className={`rounded-lg border px-3 py-2 text-sm ${manageMode ? "border-cyan-300/50 bg-cyan-500/20 text-cyan-100" : "border-white/25 bg-black/25 text-gray-200"}`}>{manageMode ? "관리 모드 ON" : "관리 모드"}</button>{manageMode && <><button type="button" onClick={() => void onUpdateCrew()} className="rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-200">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">모임 삭제</button></>}</>}
+                <div className="flex flex-wrap items-center gap-2">
+                  {detail.joined ? <button type="button" onClick={() => void onLeave()} className="dg-btn min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 탈퇴</button> : <button type="button" onClick={() => void onJoin()} className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">모임 참여</button>}
+                  {detail.leader && <><button type="button" aria-pressed={manageMode} onClick={() => setManageMode((prev) => !prev)} className={`dg-btn min-h-[40px] px-3 text-sm ${manageMode ? "bg-plate-yellow text-black" : "dg-btn-steel"}`}>{manageMode ? "관리 모드 ON" : "관리 모드"}</button>{manageMode && <><button type="button" onClick={() => void onUpdateCrew()} className="dg-btn dg-btn-steel dg-pop min-h-[40px] px-3 text-sm">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="dg-btn dg-pop min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 삭제</button></>}</>}
                 </div>
               </div>
             </div>
 
             {detail.leader && manageMode && (
-              <div className="rounded-2xl border border-cyan-300/25 bg-cyan-500/10 p-4">
+              <div className="dg-steel dg-pop border-t-[8px] border-t-plate-yellow p-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-cyan-100">가입 신청 관리</h3>
-                  <span className="text-xs text-cyan-200">대기 {joinRequests.length}건</span>
+                  <h3 className="text-sm font-bold text-white">가입 신청 관리</h3>
+                  <span className="dg-chip bg-plate-yellow text-xs text-black">대기 {joinRequests.length}건</span>
                 </div>
-                {joinRequestLoading && <p className="text-xs text-gray-300">불러오는 중...</p>}
+                {joinRequestLoading && (
+                  <p className="flex items-center gap-2 text-xs text-steel-300">
+                    <span className="dg-loading-plates" aria-label="불러오는 중">
+                      <i />
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    불러오는 중...
+                  </p>
+                )}
                 {!joinRequestLoading && joinRequests.length === 0 && (
-                  <p className="text-xs text-gray-300">현재 대기 중인 가입 신청이 없습니다.</p>
+                  <p className="text-xs text-steel-300">현재 대기 중인 가입 신청이 없습니다.</p>
                 )}
                 <div className="space-y-2">
-                  {joinRequests.map((request) => (
-                    <div key={request.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+                  {joinRequests.map((request, idx) => (
+                    <div
+                      key={request.id}
+                      className="dg-well dg-rise flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                      style={{ animationDelay: `${idx * 50}ms` }}
+                    >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold">{request.nickname}</p>
-                        <p className="truncate text-[11px] text-gray-400">{request.email}</p>
+                        <p className="truncate text-xs text-steel-400">{request.email}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => void onApproveJoinRequest(request.id)}
-                          className="rounded-lg border border-emerald-300/40 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200"
+                          className="dg-btn dg-chalk-burst min-h-[30px] bg-plate-green px-3 text-xs text-white"
                         >
                           승인
                         </button>
                         <button
                           type="button"
                           onClick={() => void onRejectJoinRequest(request.id)}
-                          className="rounded-lg border border-rose-300/40 bg-rose-500/10 px-2 py-1 text-xs text-rose-200"
+                          className="dg-btn dg-btn-steel min-h-[30px] px-3 text-xs"
                         >
                           거절
                         </button>
@@ -1163,19 +1369,24 @@ export default function CrewChallenge() {
         className="fixed inset-x-4 bottom-4 z-[70] md:hidden pointer-events-auto"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div className="grid grid-cols-4 gap-2 rounded-2xl border border-cyan-300/25 bg-slate-900/95 p-2 shadow-[0_0_24px_rgba(34,211,238,0.18)] backdrop-blur">
-          {[{ key: "dashboard", label: "대시" }, { key: "challenges", label: "챌린지" }, { key: "leaderboard", label: "랭킹" }, { key: "members", label: "멤버" }].map((tab) => (
+        {/* 모바일 탭: 빨간 받침이 선택한 탭으로 미끄러진다 */}
+        <div className="relative grid grid-cols-4 gap-0 rounded-lg border-[3px] border-black bg-steel-800 p-1.5 shadow-xl">
+          <span
+            aria-hidden
+            className="absolute bottom-1.5 left-1.5 top-1.5 rounded border-2 border-black bg-plate-red transition-transform duration-300 ease-out"
+            style={{ width: "calc((100% - 0.75rem) / 4)", transform: `translateX(${activeTabIndex * 100}%)` }}
+          />
+          {tabItems.map((tab) => (
             <button
               key={tab.key}
               type="button"
-              onClick={() => switchTab(tab.key as ViewTab)}
-              className={`touch-manipulation rounded-xl py-2 text-xs font-semibold ${
-                activeTab === tab.key
-                  ? "bg-gradient-to-r from-cyan-300 to-blue-300 text-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.4)]"
-                  : "text-gray-200"
+              aria-pressed={activeTab === tab.key}
+              onClick={() => switchTab(tab.key)}
+              className={`touch-manipulation relative z-10 rounded py-2 text-xs font-bold transition-colors ${
+                activeTab === tab.key ? "text-white" : "text-steel-300"
               }`}
             >
-              {tab.label}
+              {tab.short}
             </button>
           ))}
         </div>
@@ -1183,14 +1394,10 @@ export default function CrewChallenge() {
       <style>{`
         @keyframes crewTabSlideInRight{from{opacity:.35;transform:translate3d(22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
         @keyframes crewTabSlideInLeft{from{opacity:.35;transform:translate3d(-22px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
-        @keyframes crewRankRise{0%{transform:translateY(0);box-shadow:0 0 0 rgba(16,185,129,0)}35%{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(16,185,129,.5),0 8px 18px rgba(16,185,129,.22)}100%{transform:translateY(0);box-shadow:0 0 0 rgba(16,185,129,0)}}
-        @keyframes crewRankFall{0%{transform:translateY(0);box-shadow:0 0 0 rgba(244,63,94,0)}35%{transform:translateY(2px);box-shadow:0 0 0 1px rgba(244,63,94,.45),0 8px 18px rgba(244,63,94,.18)}100%{transform:translateY(0);box-shadow:0 0 0 rgba(244,63,94,0)}}
-        @keyframes crewHudPulse{0%{box-shadow:0 0 0 rgba(34,211,238,0)}50%{box-shadow:0 0 24px rgba(34,211,238,.18)}100%{box-shadow:0 0 0 rgba(34,211,238,0)}}
-        @keyframes crewHudPulseSoft{0%{box-shadow:0 0 0 rgba(16,185,129,0)}50%{box-shadow:0 0 18px rgba(16,185,129,.14)}100%{box-shadow:0 0 0 rgba(16,185,129,0)}}
+        @keyframes crewRankRise{0%{transform:translateY(0);box-shadow:0 0 0 0 var(--dg-green)}35%{transform:translateY(-3px);box-shadow:0 0 0 3px var(--dg-green)}100%{transform:translateY(0);box-shadow:0 0 0 0 var(--dg-green)}}
+        @keyframes crewRankFall{0%{transform:translateY(0);box-shadow:0 0 0 0 var(--dg-red)}35%{transform:translateY(3px);box-shadow:0 0 0 3px var(--dg-red)}100%{transform:translateY(0);box-shadow:0 0 0 0 var(--dg-red)}}
         .crew-rank-rise{animation:crewRankRise .9s ease-out}
         .crew-rank-fall{animation:crewRankFall .9s ease-out}
-        .crew-hud-glow{animation:crewHudPulse 2.8s ease-in-out infinite}
-        .crew-hud-glow-soft{animation:crewHudPulseSoft 3.4s ease-in-out infinite}
       `}</style>
     </section>
   );

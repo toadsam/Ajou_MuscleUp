@@ -44,11 +44,19 @@ const CrewLobby = lazy(() => import("./pages/CrewLobby"));
 const CrewHighlights = lazy(() => import("./pages/CrewHighlights"));
 const Friends = lazy(() => import("./pages/Friends"));
 const Forbidden = lazy(() => import("./pages/Forbidden"));
+// 개발 서버에서만 여는 픽셀 아바타 갤러리
+const DevAvatars = import.meta.env.DEV ? lazy(() => import("./pages/DevAvatars")) : null;
 
 function RouteLoading() {
   return (
-    <div className="flex min-h-[40vh] items-center justify-center text-sm text-gray-400">
-      Loading...
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-sm text-steel-400" role="status">
+      <span className="dg-loading-plates" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
+      <span>불러오는 중</span>
     </div>
   );
 }
@@ -67,6 +75,7 @@ function App() {
               <Route path="/ai/share/:slug" element={<AiShareView />} />
               <Route path="/attendance/share/:slug" element={<AttendanceShareView />} />
               <Route path="/forbidden" element={<Forbidden />} />
+              {DevAvatars && <Route path="/dev/avatars" element={<DevAvatars />} />}
 
               <Route path="/proteins/:id" element={<ProteinDetail />} />
               <Route

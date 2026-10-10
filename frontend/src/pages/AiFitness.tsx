@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
+import { useCountUp } from "../hooks/useCountUp";
+import { useInView } from "../hooks/useInView";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -11,9 +13,9 @@ const tabs = [
 ];
 
 const liveTiles = [
-  { title: "AI 루틴 분석", tag: "분석", status: "92% 진행", color: "from-emerald-400/20 to-cyan-300/20" },
-  { title: "30분 체형 교정", tag: "코칭", status: "DAY 12", color: "from-pink-400/20 to-purple-400/20" },
-  { title: "목표 심박 유지", tag: "현황", status: "120 bpm", color: "from-blue-400/20 to-indigo-400/20" },
+  { title: "AI 루틴 분석", tag: "분석", status: "92% 진행", color: "border-l-plate-green" },
+  { title: "30분 체형 교정", tag: "코칭", status: "DAY 12", color: "border-l-plate-red" },
+  { title: "목표 심박 유지", tag: "현황", status: "120 bpm", color: "border-l-plate-blue" },
 ];
 
 interface ChatBubble {
@@ -192,7 +194,7 @@ export default function AiFitness() {
   };
 
   const renderAnalysisForm = () => (
-    <form onSubmit={handleAnalysis} className="glass-panel space-y-4 p-6">
+    <form onSubmit={handleAnalysis} className="dg-steel dg-rise space-y-4 p-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <Input label="키(cm)" name="height" value={analysisForm.height} onChange={setAnalysisForm} required />
         <Input label="체중(kg)" name="weight" value={analysisForm.weight} onChange={setAnalysisForm} required />
@@ -200,16 +202,16 @@ export default function AiFitness() {
         <Input label="골격근량(kg)" name="muscleMass" value={analysisForm.muscleMass} onChange={setAnalysisForm} />
       </div>
       <Input label="목표 또는 요청사항" name="goal" value={analysisForm.goal} onChange={setAnalysisForm} textarea />
-      <button className="btn-gradient w-full py-3 text-lg" disabled={isAnalyzing}>
+      <button className="dg-btn dg-btn-primary w-full py-3 text-lg" disabled={isAnalyzing}>
         {isAnalyzing ? "AI가 분석 중..." : "분석 결과 받기"}
       </button>
       {isAnalyzing && <LoadingCard label="AI가 입력 데이터를 분석하고 있어요..." />}
-      {analysisResult && <ResultCard title="AI 분석 리포트" content={analysisResult} />}
+      {analysisResult && <ResultCard key={analysisResult} title="AI 분석 리포트" content={analysisResult} />}
     </form>
   );
 
   const renderPlanForm = () => (
-    <form onSubmit={handlePlan} className="glass-panel space-y-4 p-6">
+    <form onSubmit={handlePlan} className="dg-steel dg-rise space-y-4 p-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <Select label="운동 경험" name="experienceLevel" value={planForm.experienceLevel} options={["입문", "초급", "중급", "상급"]} onChange={setPlanForm} />
         <Input label="주간 가능 횟수" name="availableDays" value={planForm.availableDays} onChange={setPlanForm} />
@@ -218,91 +220,109 @@ export default function AiFitness() {
         <Input label="선호 운동 시간" name="preferredTime" value={planForm.preferredTime} onChange={setPlanForm} />
       </div>
       <Input label="추가 메모" name="notes" value={planForm.notes} onChange={setPlanForm} textarea />
-      <button className="btn-gradient w-full py-3 text-lg" disabled={isPlanning}>
+      <button className="dg-btn dg-btn-primary w-full py-3 text-lg" disabled={isPlanning}>
         {isPlanning ? "AI가 루틴을 설계 중..." : "맞춤 루틴 받기"}
       </button>
       {isPlanning && <LoadingCard label="AI가 목표와 조건에 맞춰 루틴을 설계하고 있어요..." />}
-      {planResult && <ResultCard title="AI 루틴 제안" content={planResult} />}
+      {planResult && <ResultCard key={planResult} title="AI 루틴 제안" content={planResult} />}
     </form>
   );
 
   const renderChat = () => (
-    <div className="space-y-4">
-      <div className="glass-panel flex flex-col gap-4 p-6">
-        <div className="max-h-64 space-y-4 overflow-y-auto pr-1">
-            {chatHistory.length === 0 && <p className="text-sm text-gray-400">AI 상담을 시작해보세요. 기록이 자동으로 저장됩니다.</p>}
+    <div className="space-y-5">
+      <div className="dg-steel dg-rise flex flex-col gap-4 p-6">
+        <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+          {chatHistory.length === 0 && <p className="text-sm text-steel-400">AI 상담을 시작해보세요. 기록이 자동으로 저장됩니다.</p>}
           {chatHistory.map((msg, idx) => (
-            <div key={idx} className={`rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "bg-white/20 text-white" : "bg-black/30 text-gray-100"}`}>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">{msg.role === "user" ? "나" : "AI 코치"}</p>
+            <div
+              key={idx}
+              className={`dg-rise rounded-md border-2 border-black px-4 py-3 text-sm ${
+                msg.role === "user" ? "ml-6 bg-steel-700 text-chalk" : "mr-6 border-l-[6px] border-l-plate-red bg-steel-900 text-steel-100"
+              }`}
+            >
+              <p className={`text-xs font-bold ${msg.role === "user" ? "text-steel-300" : "text-red-300"}`}>{msg.role === "user" ? "나" : "AI 코치"}</p>
               <p className="mt-1 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
             </div>
           ))}
           {isChatting && (
-            <div className="rounded-2xl bg-black/30 px-4 py-3 text-sm text-gray-100">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">AI 코치</p>
-              <p className="mt-1">답변 작성 중...</p>
-              <div className="mt-2 flex items-center gap-1">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:0ms]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:120ms]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-300 [animation-delay:240ms]" />
+            <div className="dg-rise mr-6 rounded-md border-2 border-black border-l-[6px] border-l-plate-red bg-steel-900 px-4 py-3 text-sm text-steel-100">
+              <p className="text-xs font-bold text-red-300">AI 코치</p>
+              <div className="mt-2 flex items-center gap-3">
+                <span className="dg-loading-plates" aria-label="불러오는 중"><i /><i /><i /><i /></span>
+                <p>답변 작성 중...</p>
               </div>
             </div>
           )}
         </div>
         <div className="flex gap-3">
           <input
-            className="flex-1 rounded-2xl bg-black/40 px-4 py-3 text-sm text-white focus:outline-none"
+            className="min-w-0 flex-1 rounded-md border-2 border-black bg-steel-900 px-4 py-3 text-sm text-chalk placeholder:text-steel-500 transition-colors focus:border-plate-yellow focus:outline-none"
             placeholder="AI 상담에게 궁금한 내용을 입력하세요"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={isChatting}
           />
-          <button type="button" onClick={handleChat} className="btn-gradient px-6" disabled={isChatting}>
+          <button type="button" onClick={handleChat} className="dg-btn dg-btn-primary px-6" disabled={isChatting}>
             {isChatting ? "답변 중..." : "상담"}
           </button>
         </div>
       </div>
 
-      <div className="glass-panel space-y-3 p-6">
-        <div className="flex items-center justify-between">
+      <div className="dg-steel dg-rise space-y-4 p-6" style={{ animationDelay: "60ms" }}>
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm text-gray-300">AI 상담 기록</p>
-            <p className="text-lg font-semibold text-white">내 히스토리</p>
+            <p className="text-sm text-steel-400">AI 상담 기록</p>
+            <p className="font-display text-xl text-chalk">내 히스토리</p>
           </div>
           <button
             type="button"
             onClick={fetchHistory}
             disabled={historyLoading || !hasSession}
-            className="text-sm text-pink-200 hover:text-pink-100 disabled:opacity-50"
+            className="dg-btn dg-btn-steel min-h-0 h-10 px-4 text-sm"
           >
+            <RefreshIcon spinning={historyLoading} />
             새로고침
           </button>
         </div>
-        {!hasSession && <p className="text-sm text-gray-400">로그인하면 상담 기록을 불러올 수 있습니다.</p>}
-        {historyLoading && <p className="text-sm text-gray-300">상담 기록을 불러오는 중...</p>}
-        {!historyLoading && savedHistory.length === 0 && hasSession && <p className="text-sm text-gray-400">아직 저장된 상담 기록이 없습니다.</p>}
+        {!hasSession && <p className="text-sm text-steel-400">로그인하면 상담 기록을 불러올 수 있습니다.</p>}
+        {historyLoading && (
+          <div className="flex items-center gap-3 text-sm text-steel-300">
+            <span className="dg-loading-plates" aria-label="불러오는 중"><i /><i /><i /><i /></span>
+            상담 기록을 불러오는 중...
+          </div>
+        )}
+        {!historyLoading && savedHistory.length === 0 && hasSession && <p className="text-sm text-steel-400">아직 저장된 상담 기록이 없습니다.</p>}
         <div className="space-y-3">
           {savedHistory.map((item, idx) => (
-            <div key={item.id ?? idx} className="rounded-xl border border-white/5 bg-white/5 p-4 space-y-2">
-              <div className="flex items-center justify-between text-xs text-gray-300">
-                <span>Q&A</span>
-                <span>{formatDate(item.createdAt)}</span>
+            <div
+              key={item.id ?? idx}
+              className={`dg-well dg-rise space-y-2 border-l-[6px] p-4 transition-transform duration-150 hover:-translate-y-0.5 ${
+                item.shared && item.shareSlug ? "border-l-plate-green" : "border-l-steel-600"
+              }`}
+              style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}
+            >
+              <div className="flex items-center justify-between text-xs text-steel-400">
+                <span className="font-num text-sm font-black tracking-wide">Q&A</span>
+                <span className="font-num text-sm font-bold">{formatDate(item.createdAt)}</span>
               </div>
-              <p className="text-sm font-semibold text-white">Q. {item.question}</p>
-              <p className="whitespace-pre-wrap text-sm text-gray-100">A. {item.answer}</p>
+              <p className="text-sm font-semibold text-chalk">Q. {item.question}</p>
+              <p className="whitespace-pre-wrap text-sm text-steel-200">A. {item.answer}</p>
               {item.id && (
-                <div className="flex items-center gap-2 text-xs text-gray-200">
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
                   {item.shared && item.shareSlug ? (
                     <>
-                      <span className="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200">공유 중</span>
+                      <span className="dg-chip dg-pop bg-plate-green text-black">
+                        <CheckIcon />
+                        공유 중
+                      </span>
                       <button
-                        className="px-3 py-1 rounded-full border border-emerald-400 hover:bg-emerald-500/10"
+                        className="dg-btn dg-btn-steel min-h-0 h-9 px-3 text-xs"
                         onClick={() => copyShareLink(item.shareSlug)}
                       >
                         링크 복사
                       </button>
                       <button
-                        className="px-3 py-1 rounded-full border border-red-400 text-red-200 hover:bg-red-500/10"
+                        className="dg-btn min-h-0 h-9 bg-steel-800 px-3 text-xs text-red-300"
                         onClick={() => unshareHistory(item)}
                       >
                         공유 해제
@@ -310,7 +330,7 @@ export default function AiFitness() {
                     </>
                   ) : (
                     <button
-                      className="px-3 py-1 rounded-full border border-pink-400 text-pink-100 hover:bg-pink-500/10"
+                      className="dg-btn dg-btn-primary min-h-0 h-9 px-3 text-xs"
                       onClick={() => shareHistory(item)}
                     >
                       공유 링크 만들기
@@ -336,78 +356,131 @@ export default function AiFitness() {
     }
   };
 
+  const activeIndex = Math.max(0, tabs.findIndex((t) => t.id === activeTab));
+
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black px-6 pb-20 pt-28 text-white lg:px-10">
-      <div className="glow-orb absolute -left-24 top-8 h-72 w-72 rounded-full bg-pink-500/30 animate-float-slow" />
-      <div className="glow-orb absolute right-0 top-20 h-96 w-80 rounded-full bg-indigo-500/20 pulse-glow" />
+    <section className="relative min-h-screen px-6 pb-20 pt-28 text-chalk lg:px-10">
       <div className="relative mx-auto flex max-w-6xl flex-col gap-12 lg:flex-row">
-        <div className="flex-1 space-y-6">
-          <div className="flex flex-wrap gap-3">
+        <div className="min-w-0 flex-1 space-y-6">
+          <div role="tablist" aria-label="AI 기능" className="dg-well relative grid grid-cols-3 p-1">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-1 left-1 top-1 rounded border-2 border-black bg-plate-red shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.3,1.3,0.5,1)]"
+              style={{ width: "calc((100% - 0.5rem) / 3)", transform: `translateX(${activeIndex * 100}%)` }}
+            />
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  activeTab === tab.id ? "bg-white/80 text-gray-900" : "bg-white/10 text-white hover:bg-white/20"
+                className={`relative z-10 rounded px-3 py-2.5 text-sm font-bold transition-colors ${
+                  activeTab === tab.id ? "text-white" : "text-steel-300 hover:text-chalk"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <p className="text-sm text-gray-300">{tabs.find((t) => t.id === activeTab)?.description}</p>
-          <Link
-            to="/ai/inbody"
-            className="inline-flex items-center rounded-full border border-emerald-300/50 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20"
-          >
+          <p key={activeTab} className="dg-rise text-sm text-steel-300">{tabs.find((t) => t.id === activeTab)?.description}</p>
+          <Link to="/ai/inbody" className="dg-btn dg-btn-steel group min-h-0 h-11 border-l-[8px] border-l-plate-green text-sm">
             인바디 사진/PDF 분석으로 이동
+            <svg viewBox="0 0 24 24" className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
           </Link>
-          {error && <p className="rounded-xl bg-red-500/20 px-4 py-2 text-sm text-red-200">{error}</p>}
-          {renderActiveTab()}
+          {error && <p className="dg-well dg-pop border-l-[6px] border-l-plate-red px-4 py-3 text-sm text-red-200">{error}</p>}
+          <div key={activeTab}>{renderActiveTab()}</div>
         </div>
 
-        <div className="flex-1 space-y-6">
-          <div className="glass-panel p-6">
-            <div className="flex items-center justify-between">
+        <div className="min-w-0 flex-1 space-y-6">
+          <div className="dg-steel dg-rise p-6" style={{ animationDelay: "80ms" }}>
+            <div className="flex items-center justify-between px-1">
               <div>
-                <p className="text-sm text-gray-300">실시간 AI 활용</p>
-                <p className="text-2xl font-semibold">AI Lab</p>
+                <p className="text-sm text-steel-400">실시간 AI 활용</p>
+                <p className="font-num text-3xl font-black tracking-wide">AI Lab</p>
               </div>
-              <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-xs text-emerald-200">LIVE</span>
+              <span className="dg-chip bg-plate-red text-white">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                </span>
+                LIVE
+              </span>
             </div>
-            <div className="mt-6 space-y-4">
-              {liveTiles.map((tile) => (
-                <div key={tile.title} className={`rounded-2xl border border-white/5 bg-gradient-to-r ${tile.color} p-4 backdrop-blur`}>
-                  <div className="flex items-center justify-between text-xs text-gray-200">
-                    <span className="font-semibold uppercase tracking-wide">{tile.tag}</span>
-                    <span>{tile.status}</span>
+            <div className="mt-6 space-y-3">
+              {liveTiles.map((tile, idx) => (
+                <div
+                  key={tile.title}
+                  className={`dg-well dg-plate-in border-l-[8px] p-4 transition-transform duration-150 hover:-translate-y-0.5 ${tile.color}`}
+                  style={{ animationDelay: `${120 + idx * 60}ms`, ["--from" as string]: "48px" }}
+                >
+                  <div className="flex items-center justify-between text-xs text-steel-300">
+                    <span className="font-bold">{tile.tag}</span>
+                    <span className="font-num text-sm font-black text-chalk">{tile.status}</span>
                   </div>
-                  <p className="mt-1 text-lg font-semibold text-white">{tile.title}</p>
+                  <p className="mt-1 text-lg font-semibold text-chalk">{tile.title}</p>
                 </div>
               ))}
             </div>
           </div>
-          <div className="glass-panel space-y-4 p-6">
-            <p className="text-sm text-gray-300">AI 수행 현황</p>
-            <div className="grid gap-4 sm:grid-cols-3">
+          <div className="dg-steel dg-rise space-y-4 p-6" style={{ animationDelay: "140ms" }}>
+            <p className="px-1 text-sm text-steel-400">AI 수행 현황</p>
+            <div className="grid gap-3 sm:grid-cols-3">
               {[
                 { label: "분석 응답", value: "3회" },
                 { label: "상담 응답", value: "1건" },
                 { label: "루틴 생성", value: "1.8s" },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl bg-white/5 p-4 text-center">
-                  <p className="text-2xl font-semibold text-white">{item.value}</p>
-                  <p className="text-xs text-gray-400">{item.label}</p>
-                </div>
+                <StatTile key={item.label} label={item.label} value={item.value} />
               ))}
             </div>
-            <p className="text-xs text-gray-400">AI 성능은 네트워크와 서버 상태에 따라 달라질 수 있습니다.</p>
+            <p className="px-1 text-xs text-steel-400">AI 성능은 네트워크와 서버 상태에 따라 달라질 수 있습니다.</p>
           </div>
         </div>
       </div>
     </section>
   );
 }
+
+// "3회", "1.8s" 같은 값을 숫자 부분만 0 에서 굴려 올린다(표시 전용).
+const StatTile = ({ label, value }: { label: string; value: string }) => {
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const match = value.match(/^(\d+(?:\.\d+)?)(.*)$/);
+  const target = match ? Number(match[1]) : 0;
+  const decimals = match && match[1].includes(".") ? match[1].split(".")[1].length : 0;
+  const counted = useCountUp(target, { duration: 900, start: inView });
+  return (
+    <div ref={ref} className="dg-well p-4 text-center transition-transform duration-150 hover:-translate-y-0.5">
+      <p className="font-num text-3xl font-black text-plate-yellow">
+        {match ? `${counted.toFixed(decimals)}${match[2]}` : value}
+      </p>
+      <p className="text-xs text-steel-400">{label}</p>
+    </div>
+  );
+};
+
+const RefreshIcon = ({ spinning }: { spinning?: boolean }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </svg>
+);
 
 interface InputProps {
   label: string;
@@ -418,13 +491,16 @@ interface InputProps {
   required?: boolean;
 }
 
+const fieldClass =
+  "mt-2 w-full rounded-md border-2 border-black bg-steel-900 px-4 py-3 text-chalk placeholder:text-steel-500 transition-colors focus:border-plate-yellow focus:outline-none";
+
 const Input = ({ label, name, value, onChange, textarea, required }: InputProps) => (
-  <label className="text-sm text-gray-200">
+  <label className="block text-sm font-semibold text-steel-200">
     {label}
     {textarea ? (
       <textarea
         name={name}
-        className="mt-2 w-full rounded-2xl bg-black/30 px-4 py-3 text-white focus:outline-none"
+        className={fieldClass}
         value={value}
         onChange={(e) => onChange((prev: any) => ({ ...prev, [name]: e.target.value }))}
         rows={3}
@@ -434,7 +510,7 @@ const Input = ({ label, name, value, onChange, textarea, required }: InputProps)
       <input
         type="text"
         name={name}
-        className="mt-2 w-full rounded-2xl bg-black/30 px-4 py-3 text-white focus:outline-none"
+        className={fieldClass}
         value={value}
         onChange={(e) => onChange((prev: any) => ({ ...prev, [name]: e.target.value }))}
         required={required}
@@ -452,16 +528,16 @@ interface SelectProps {
 }
 
 const Select = ({ label, name, value, options, onChange }: SelectProps) => (
-  <label className="text-sm text-gray-200">
+  <label className="block text-sm font-semibold text-steel-200">
     {label}
     <select
       name={name}
       value={value}
       onChange={(e) => onChange((prev: any) => ({ ...prev, [name]: e.target.value }))}
-      className="mt-2 w-full rounded-2xl bg-black/30 px-4 py-3 text-white focus:outline-none"
+      className={fieldClass}
     >
       {options.map((option) => (
-        <option key={option} value={option} className="bg-gray-800 text-white">
+        <option key={option} value={option} className="bg-steel-800 text-chalk">
           {option}
         </option>
       ))}
@@ -475,20 +551,21 @@ interface ResultCardProps {
 }
 
 const LoadingCard = ({ label }: { label: string }) => (
-  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-gray-100">
+  <div className="dg-well dg-rise mt-4 flex items-center gap-4 p-4 text-sm text-steel-200">
+    <span className="dg-loading-plates" aria-label="불러오는 중"><i /><i /><i /><i /></span>
     <p>{label}</p>
-    <div className="mt-2 flex items-center gap-1">
-      <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-300 [animation-delay:0ms]" />
-      <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-300 [animation-delay:120ms]" />
-      <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-300 [animation-delay:240ms]" />
-    </div>
   </div>
 );
 
 const ResultCard = ({ title, content }: ResultCardProps) => (
-  <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-5 text-sm text-gray-100">
-    <h3 className="text-lg font-semibold text-white">{title}</h3>
-    <pre className="mt-3 whitespace-pre-wrap leading-relaxed">{content}</pre>
+  <div className="dg-well dg-rise mt-6 border-l-[6px] border-l-plate-yellow p-5 text-sm text-steel-100">
+    <h3 className="flex items-center gap-2 font-display text-xl text-chalk">
+      <span className="dg-pop inline-flex h-6 w-6 items-center justify-center rounded border-2 border-black bg-plate-green text-black">
+        <CheckIcon />
+      </span>
+      {title}
+    </h3>
+    <pre className="mt-3 whitespace-pre-wrap font-sans leading-relaxed">{content}</pre>
   </div>
 );
 
