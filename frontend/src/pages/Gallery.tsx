@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import UploadDropzone from "../components/UploadDropzone";
+import { useCountUp } from "../hooks/useCountUp";
+
+// 라벨별 원판 색 칩
+const LABEL_CHIP: Record<string, string> = {
+  SESSION: "bg-plate-red text-white",
+  CHALLENGE: "bg-plate-yellow text-black",
+  CREW: "bg-plate-blue text-white",
+  SNAP: "bg-steel-700 text-chalk",
+  TRAINING: "bg-plate-red text-white",
+  STORY: "bg-plate-blue text-white",
+  EVENT: "bg-plate-yellow text-black",
+};
 
 type MediaItem = {
   title: string;
@@ -84,40 +96,37 @@ export default function Gallery() {
   );
 
   const heroImage = cards[activeIndex]?.src ?? null;
+  const uploadCount = useCountUp(images.length, { duration: 800 });
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-slate-950 px-6 pb-20 pt-28 text-white lg:px-10">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-amber-500/20 blur-3xl" />
-        <div className="absolute right-0 top-14 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-rose-500/10 blur-3xl" />
-      </div>
-
+    <section className="relative min-h-screen overflow-hidden px-6 pb-20 pt-28 text-white lg:px-10">
       <div className="relative mx-auto max-w-6xl space-y-10">
         <header className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/40 p-6 shadow-[0_20px_70px_-40px_rgba(34,211,238,0.7)] md:p-8">
-            <p className="inline-flex rounded-full border border-cyan-300/40 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">
-              Archive Lab
-            </p>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight md:text-5xl">갤러리 아카이브</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-200 md:text-base">
+          <div className="dg-steel overflow-hidden p-6 md:p-8">
+            <p className="font-num text-sm font-bold text-plate-yellow">Archive Lab</p>
+            <h1 className="mt-2 text-3xl md:text-5xl">갤러리 아카이브</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-steel-300 md:text-base">
               운동 기록과 커뮤니티 장면을 하나의 보드로 구성한 페이지입니다.
               업로드 즉시 아카이브에 반영되고, 대표 컷은 우측 프리뷰에서 바로 확인할 수 있습니다.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-                <p className="text-xs text-slate-300">총 업로드</p>
-                <p className="mt-1 text-2xl font-bold text-cyan-100">{images.length}</p>
+              <div className="dg-well px-4 py-3">
+                <p className="text-xs text-steel-400">총 업로드</p>
+                <p className="font-num mt-1 text-4xl font-black text-plate-yellow">{Math.round(uploadCount)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-                <p className="text-xs text-slate-300">상태</p>
-                <p className="mt-1 text-lg font-semibold text-emerald-200">
+              <div className="dg-well px-4 py-3">
+                <p className="text-xs text-steel-400">상태</p>
+                <p className="mt-1 flex items-center gap-2 text-lg font-semibold text-green-300">
+                  <span
+                    aria-hidden
+                    className={`h-2.5 w-2.5 rounded-full border border-black ${loading ? "animate-pulse bg-plate-yellow" : "bg-plate-green"}`}
+                  />
                   {loading ? "동기화 중" : "준비 완료"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-                <p className="text-xs text-slate-300">대표 컷</p>
-                <p className="mt-1 text-lg font-semibold text-amber-100">
+              <div className="dg-well px-4 py-3">
+                <p className="text-xs text-steel-400">대표 컷</p>
+                <p key={activeIndex} className="dg-pop mt-1 text-lg font-semibold text-yellow-200">
                   {heroImage ? `${activeIndex + 1}번 선택됨` : "미선택"}
                 </p>
               </div>
@@ -125,49 +134,50 @@ export default function Gallery() {
             <div className="mt-5 flex flex-wrap gap-3">
               <a
                 href="mailto:contact@example.com"
-                className="rounded-xl bg-cyan-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
+                className="dg-btn dg-btn-primary px-5 text-sm"
               >
                 촬영 문의
               </a>
               <a
                 href="/programs"
-                className="rounded-xl border border-white/20 px-5 py-2.5 text-sm font-semibold hover:bg-white/10"
+                className="dg-btn dg-btn-steel px-5 text-sm"
               >
                 제작 프로세스 보기
               </a>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-6 shadow-[0_16px_45px_-30px_rgba(251,191,36,0.7)] backdrop-blur">
+          <div className="dg-steel p-6">
             <UploadDropzone onUploaded={() => fetchList()} />
-            <p className="mt-3 text-sm text-slate-300">
+            <p className="mt-3 text-sm text-steel-300">
               업로드 직후 자동 새로고침됩니다. 첫 반영까지 수 초가 걸릴 수 있어요.
             </p>
-            <div className="mt-4 rounded-2xl border border-amber-200/20 bg-amber-400/10 px-4 py-3 text-xs text-amber-50">
+            <div className="dg-well mt-4 border-l-[6px] border-l-plate-yellow px-4 py-3 text-xs text-steel-200">
               권장: JPG/PNG, 긴 변 2000px 이하, 파일명에 session/challenge/team 키워드를 넣으면 자동 라벨링됩니다.
             </div>
           </div>
         </header>
 
         <div className="grid gap-5 md:grid-cols-3">
-          {editorialCuts.map((item) => (
+          {editorialCuts.map((item, idx) => (
             <div
               key={item.title}
-              className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/70 shadow-[0_12px_35px_-25px_rgba(244,114,182,0.85)] backdrop-blur transition hover:-translate-y-1"
+              className="dg-lift dg-rise group overflow-hidden rounded-xl border-[3px] border-black bg-steel-800 shadow-md"
+              style={{ animationDelay: `${idx * 60}ms` }}
             >
-              <div className="relative h-44">
+              <div className="relative h-44 overflow-hidden border-b-[3px] border-black">
                 <img
                   src={`${item.image}?auto=format&fit=crop&w=800&q=80`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
                   alt={item.title}
                 />
-                <span className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/60 px-3 py-1 text-xs text-cyan-100">
+                <span className={`dg-chip absolute left-3 top-3 text-sm ${LABEL_CHIP[item.tag] ?? "bg-steel-700 text-chalk"}`}>
                   {item.tag}
                 </span>
               </div>
               <div className="p-5 space-y-2">
-                <h3 className="text-lg font-semibold text-white">{item.title}</h3>
-                <p className="text-sm text-slate-300">{item.desc}</p>
+                <h3 className="font-num text-2xl font-black text-white">{item.title}</h3>
+                <p className="text-sm text-steel-300">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -176,20 +186,30 @@ export default function Gallery() {
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold tracking-tight">대표 프리뷰</h2>
-              {loading && <p className="text-sm text-slate-400">불러오는 중...</p>}
+              <h2 className="font-display text-2xl">대표 프리뷰</h2>
+              {loading && (
+                <p className="flex items-center gap-2 text-sm text-steel-400">
+                  <span className="dg-loading-plates" aria-label="불러오는 중">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  불러오는 중...
+                </p>
+              )}
             </div>
-            <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/60">
+            <div className="overflow-hidden rounded-xl border-[3px] border-black bg-steel-900 shadow-xl">
               {heroImage ? (
-                <img src={heroImage} className="h-[360px] w-full object-cover" alt="featured media" />
+                <img key={heroImage} src={heroImage} className="dg-pop h-[360px] w-full object-cover" alt="featured media" />
               ) : (
-                <div className="flex h-[360px] items-center justify-center text-sm text-slate-400">
+                <div className="flex h-[360px] items-center justify-center text-sm text-steel-400">
                   아직 대표로 선택할 이미지가 없습니다.
                 </div>
               )}
             </div>
             {error && (
-              <div className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              <div className="dg-well border-l-4 border-l-plate-red px-4 py-3 text-sm text-red-200">
                 {error}
               </div>
             )}
@@ -197,7 +217,7 @@ export default function Gallery() {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold tracking-tight">빠른 선택</h2>
+              <h2 className="font-display text-2xl">빠른 선택</h2>
             </div>
             <div className="grid grid-cols-2 gap-3 self-start sm:grid-cols-3 lg:grid-cols-2">
               {cards.map((item, idx) => (
@@ -205,20 +225,21 @@ export default function Gallery() {
                   key={`${item.src}-${idx}`}
                   type="button"
                   onClick={() => setActiveIndex(idx)}
-                  className={`group relative overflow-hidden rounded-2xl border transition ${
+                  aria-pressed={idx === activeIndex}
+                  className={`group relative overflow-hidden rounded-lg border-[3px] transition duration-150 ${
                     idx === activeIndex
-                      ? "border-cyan-200/70 ring-2 ring-cyan-300/40"
-                      : "border-white/10 hover:border-cyan-200/35"
+                      ? "translate-y-[3px] border-plate-yellow shadow-none"
+                      : "border-black shadow-md hover:-translate-y-0.5 hover:shadow-lg"
                   }`}
                 >
                   <img src={item.src} className="h-28 w-full object-cover" alt={`media-${idx + 1}`} />
-                  <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-cyan-100">
+                  <span className={`dg-chip absolute left-1.5 top-1.5 text-xs ${LABEL_CHIP[item.label]}`}>
                     {item.label}
                   </span>
                 </button>
               ))}
               {cards.length === 0 && !loading && (
-                <div className="col-span-full rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-8 text-center text-sm text-slate-400">
+                <div className="dg-well col-span-full px-4 py-8 text-center text-sm text-steel-400">
                   업로드된 이미지가 아직 없습니다.
                 </div>
               )}
@@ -228,8 +249,8 @@ export default function Gallery() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold tracking-tight">아카이브 보드</h2>
-            <p className="text-sm text-slate-400">클릭하면 대표 프리뷰로 선택됩니다.</p>
+            <h2 className="font-display text-2xl">아카이브 보드</h2>
+            <p className="text-sm text-steel-400">클릭하면 대표 프리뷰로 선택됩니다.</p>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map((item, idx) => (
@@ -237,13 +258,11 @@ export default function Gallery() {
                 key={`${item.src}-board-${idx}`}
                 type="button"
                 onClick={() => setActiveIndex(idx)}
-                className={`group relative overflow-hidden rounded-2xl border bg-slate-900/60 text-left transition hover:-translate-y-1 ${
+                aria-pressed={idx === activeIndex}
+                className={`dg-lift dg-rise group relative overflow-hidden rounded-xl border-[3px] bg-steel-900 text-left shadow-md ${
                   idx % 5 === 0 ? "lg:col-span-2" : ""
-                } ${
-                  idx === activeIndex
-                    ? "border-amber-200/60 shadow-[0_12px_40px_-24px_rgba(251,191,36,0.9)]"
-                    : "border-white/10"
-                }`}
+                } ${idx === activeIndex ? "border-plate-yellow" : "border-black"}`}
+                style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
               >
                 <img
                   src={item.src}
@@ -253,8 +272,8 @@ export default function Gallery() {
                   alt={`archive-${idx + 1}`}
                 />
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-8">
-                  <p className="text-xs font-semibold tracking-[0.16em] text-cyan-100">{item.label}</p>
-                  <p className="text-xs text-slate-200">#{String(idx + 1).padStart(2, "0")}</p>
+                  <span className={`dg-chip text-xs ${LABEL_CHIP[item.label]}`}>{item.label}</span>
+                  <p className="font-num text-base font-black text-chalk">#{String(idx + 1).padStart(2, "0")}</p>
                 </div>
               </button>
             ))}

@@ -84,8 +84,8 @@ export default function UploadDropzone({
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
-      className={`rounded-2xl border-2 border-dashed p-6 text-center transition ${
-        dragOver ? "border-cyan-400 bg-cyan-500/10" : "border-gray-600 bg-gray-800/40"
+      className={`rounded-lg border-[3px] border-dashed p-6 text-center transition ${
+        dragOver ? "-translate-y-0.5 border-plate-yellow bg-steel-700" : "border-steel-600 bg-steel-900"
       } ${className ?? ""}`}
     >
       <input
@@ -110,13 +110,17 @@ export default function UploadDropzone({
         />
       )}
 
-      <div className="text-gray-300">파일을 드래그해서 놓거나 버튼으로 선택하세요.</div>
-      <div className="mt-1 text-sm text-gray-500">모바일 카메라 업로드 지원 · 이미지는 업로드 전 자동 압축됩니다.</div>
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`mx-auto mb-2 transition ${dragOver ? "text-plate-yellow -translate-y-1" : "text-steel-400"}`}>
+        <path d="M12 16V4M7 9l5-5 5 5" />
+        <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+      </svg>
+      <div className="text-steel-300">파일을 드래그해서 놓거나 버튼으로 선택하세요.</div>
+      <div className="mt-1 text-sm text-steel-400">모바일 카메라 업로드 지원 · 이미지는 업로드 전 자동 압축됩니다.</div>
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
-          className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 hover:bg-cyan-500/20"
+          className="dg-btn dg-btn-steel px-3 py-2 text-sm"
           onClick={() => galleryInputRef.current?.click()}
         >
           갤러리에서 선택
@@ -124,7 +128,7 @@ export default function UploadDropzone({
         {supportsCameraCapture && (
           <button
             type="button"
-            className="rounded-lg border border-fuchsia-400/40 bg-fuchsia-500/10 px-3 py-2 text-sm text-fuchsia-100 hover:bg-fuchsia-500/20"
+            className="dg-btn dg-btn-steel px-3 py-2 text-sm"
             onClick={() => cameraInputRef.current?.click()}
           >
             카메라로 촬영
@@ -132,8 +136,18 @@ export default function UploadDropzone({
         )}
       </div>
 
-      {uploading && <div className="mt-2 text-sm text-gray-400">업로드 중...</div>}
-      {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
+      {uploading && (
+        <div className="mt-3 flex items-center justify-center gap-2 text-sm text-steel-400" role="status">
+          <span className="dg-loading-plates" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
+          업로드 중...
+        </div>
+      )}
+      {error && <div className="mt-2 text-sm font-semibold text-red-400" role="alert">{error}</div>}
     </div>
   );
 }

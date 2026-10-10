@@ -42,8 +42,14 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
 
   if (allowed === null) {
     return (
-      <section className="min-h-screen bg-slate-950 px-6 pt-28 text-white lg:px-10">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="min-h-screen px-6 pt-28 text-chalk lg:px-10">
+        <div className="dg-steel mx-auto flex max-w-3xl items-center gap-4 p-6 text-steel-300" role="status">
+          <span className="dg-loading-plates" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
           관리자 권한 확인 중...
         </div>
       </section>

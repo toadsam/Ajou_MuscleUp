@@ -1,13 +1,13 @@
+/* 페이지 크롬은 짐 플로어(v2): 고무 매트 바닥 위에 철판 패널.
+   --bg-a/b/c 는 카드 템플릿 테마 색이라 그대로 두고, 미리보기 받침(.share-preview-stage)에서만 쓴다. */
 .attendance-share-page {
   --bg-a: #1d1234;
   --bg-b: #4a2b68;
   --bg-c: #f58a43;
-  --line: rgba(255, 255, 255, 0.26);
-  --panel: rgba(9, 13, 30, 0.66);
+  --well: #1e1f22;
   min-height: 100vh;
-  color: #fff;
-  background: radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.16), transparent 35%),
-    linear-gradient(130deg, var(--bg-a) 0%, var(--bg-b) 50%, var(--bg-c) 100%);
+  color: var(--dg-chalk);
+  background: transparent;
   position: relative;
   overflow: hidden;
 }
@@ -30,41 +30,6 @@
   --bg-c: #5d84ff;
 }
 
-.share-orb {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(8px);
-  opacity: 0.42;
-  animation: share-float 8s ease-in-out infinite;
-}
-
-.share-orb.one {
-  width: 380px;
-  height: 380px;
-  top: 70px;
-  left: -70px;
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.share-orb.two {
-  width: 320px;
-  height: 320px;
-  right: -80px;
-  top: 190px;
-  background: rgba(18, 255, 245, 0.25);
-  animation-delay: 1.2s;
-}
-
-@keyframes share-float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-16px);
-  }
-}
-
 .share-shell {
   position: relative;
   z-index: 2;
@@ -73,18 +38,74 @@
   padding: 112px 20px 56px;
 }
 
-.share-grid {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1.1fr 0.9fr;
+.share-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  color: var(--dg-muted);
 }
 
+.share-error {
+  padding: 20px 24px;
+  color: #f0605a;
+}
+
+.share-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dg-yellow);
+}
+
+.share-eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 6px;
+  border: 2px solid var(--dg-ink);
+  border-radius: 2px;
+  background: var(--dg-red);
+}
+
+.share-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: start;
+}
+
+/* 바탕은 TSX 의 dg-steel 이 맡는다 */
 .share-panel {
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: var(--panel);
-  backdrop-filter: blur(10px);
-  padding: 20px;
+  padding: 22px;
+  min-width: 0;
+}
+
+/* 미리보기 받침: 카드 템플릿 테마 색을 카드 뒤에 깐다(화면 전용, 캡처에 포함되지 않음) */
+.share-preview-stage {
+  position: relative;
+  border: 3px solid var(--dg-ink);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 6px 0 var(--dg-ink);
+  background: radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.16), transparent 35%),
+    linear-gradient(130deg, var(--bg-a) 0%, var(--bg-b) 50%, var(--bg-c) 100%);
+}
+
+.share-memo.dg-whiteboard {
+  padding: 12px 16px;
+  font-size: 14px;
+  border-width: 8px;
+}
+
+.share-memo-title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--dg-board-ink);
 }
 
 .share-preview {
@@ -176,33 +197,33 @@
   filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.35));
 }
 
+/* 저장/공유 중 덮개 (data-html2canvas-ignore — 캡처에 안 들어간다) */
 .share-loading-overlay {
   position: absolute;
   inset: 0;
   z-index: 7;
   display: grid;
-  place-items: center;
-  gap: 10px;
-  background: rgba(6, 11, 24, 0.66);
-  backdrop-filter: blur(4px);
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  background: rgba(14, 14, 16, 0.78);
   pointer-events: auto;
 }
 
-.share-loading-logo {
-  width: 76px;
-  height: auto;
-  display: block;
-  object-fit: contain;
-  animation: share-spin 1s linear infinite;
-  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
+.share-loading-plates i {
+  width: 12px;
+  height: 40px;
 }
 
 .share-loading-text {
   margin: 0;
+  padding: 4px 12px;
+  border: 2px solid var(--dg-ink);
+  border-radius: 4px;
+  background: var(--dg-steel);
   font-size: 13px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: 0.01em;
+  color: var(--dg-chalk);
 }
 
 .share-sticker {
@@ -498,15 +519,14 @@
 }
 
 .control-title {
-  font-size: 13px;
-  color: #f7f7ff;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--dg-chalk);
   margin-bottom: 8px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .control-row {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .choice-wrap {
@@ -521,21 +541,57 @@
 
 .control-subtitle {
   margin: 0 0 8px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.78);
+  font-family: "Big Shoulders Display", "IBM Plex Sans KR", sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--dg-muted);
 }
 
+/* 눌리는 칩: 선택하면 노란 테두리 + 빨간 띠 */
 .choice-btn {
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  border-radius: 999px;
-  padding: 7px 12px;
+  position: relative;
+  border: 2px solid var(--dg-ink);
+  border-radius: 4px;
+  padding: 6px 12px;
   font-size: 13px;
-  color: #f7f7ff;
-  background: rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+  color: var(--dg-chalk);
+  background: var(--dg-steel-hi);
+  box-shadow: 0 3px 0 var(--dg-ink);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.15s ease, filter 0.15s ease;
+}
+
+.choice-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--dg-ink);
+  filter: brightness(1.08);
+}
+
+.choice-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--dg-ink);
+}
+
+.choice-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.choice-btn.active {
+  border-color: var(--dg-yellow);
+  background: #2f3136;
+  box-shadow: inset 0 -4px 0 var(--dg-red), 0 3px 0 var(--dg-ink);
+  animation: share-chip-snap 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 
 .control-section {
-  margin-top: 8px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 2px solid var(--dg-ink);
+  border-radius: 4px;
+  background: var(--well);
+  animation: dgRise 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
 .choice-btn.section-toggle {
@@ -544,8 +600,27 @@
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  border-radius: 12px;
-  padding: 9px 12px;
+  border-width: 3px;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 4px 0 var(--dg-ink);
+  animation: none;
+}
+
+.choice-btn.section-toggle:hover:not(:disabled) {
+  box-shadow: 0 5px 0 var(--dg-ink);
+}
+
+.choice-btn.section-toggle:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--dg-ink);
+}
+
+.choice-btn.section-toggle.open {
+  border-color: var(--dg-yellow);
+  box-shadow: inset 6px 0 0 var(--dg-red), 0 4px 0 var(--dg-ink);
 }
 
 .choice-btn.section-toggle.compact {
@@ -554,26 +629,25 @@
 }
 
 .choice-btn .chevron {
-  display: inline-block;
-  font-size: 12px;
+  display: inline-flex;
   line-height: 1;
   transform: rotate(0deg);
-  transition: transform 0.16s ease;
+  transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 
 .choice-btn.section-toggle.open .chevron {
   transform: rotate(180deg);
+  color: var(--dg-yellow);
 }
 
 .simple-core-bar {
   position: sticky;
   top: 10px;
   z-index: 5;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  border: 2px solid var(--dg-ink);
+  border-radius: 4px;
   padding: 10px;
-  background: rgba(7, 12, 28, 0.7);
-  backdrop-filter: blur(8px);
+  background: var(--well);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -585,12 +659,12 @@
   z-index: 9;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 14px;
-  background: rgba(7, 12, 28, 0.82);
-  backdrop-filter: blur(10px);
+  gap: 10px;
+  margin-bottom: 14px;
+  border: 3px solid var(--dg-ink);
+  border-radius: 6px;
+  background: var(--well);
+  box-shadow: 0 4px 0 var(--dg-ink);
   padding: 10px;
 }
 
@@ -602,28 +676,31 @@
   grid-column: 1 / -1;
 }
 
-.choice-btn.active {
-  border-color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
-}
-
 .choice-btn:focus-visible,
 .action-btn:focus-visible,
 .comment-editor:focus-visible {
-  outline: 2px solid #fff;
+  outline: 3px solid var(--dg-yellow);
   outline-offset: 2px;
 }
 
 .comment-editor {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 12px;
-  background: rgba(3, 8, 21, 0.58);
-  color: #fff;
+  border: 2px solid var(--dg-ink);
+  border-radius: 4px;
+  background: #16171a;
+  color: var(--dg-chalk);
   padding: 10px 12px;
   min-height: 88px;
   resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.comment-editor::placeholder {
+  color: #7d8087;
+}
+
+.comment-editor:focus {
+  border-color: var(--dg-yellow);
 }
 
 .range-grid {
@@ -635,39 +712,49 @@
   display: grid;
   gap: 4px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  color: var(--dg-muted);
 }
 
 .range-label input[type="range"] {
   width: 100%;
-  accent-color: #8dffd8;
+  accent-color: var(--dg-yellow);
+  cursor: pointer;
+}
+
+.range-label input[type="range"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.share-controls input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--dg-red);
 }
 
 .thumb-preview {
   width: 168px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  border: 3px solid var(--dg-ink);
+  box-shadow: 0 4px 0 var(--dg-ink);
 }
 
 .action-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 2px dashed rgba(166, 168, 173, 0.25);
 }
 
-.action-btn {
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  padding: 10px 14px;
+/* 바탕·눌림은 dg-btn 이 맡는다. 여기서는 크기만. */
+.attendance-share-page .action-btn {
+  min-height: 44px;
+  padding: 0 14px;
   font-size: 14px;
-}
-
-.action-btn.primary {
-  border-color: rgba(101, 255, 217, 0.92);
-  color: #cbffef;
+  text-decoration: none;
 }
 
 .action-btn-loading {
@@ -677,26 +764,19 @@
   gap: 8px;
 }
 
-.action-btn-spinner {
-  width: 16px;
+.dg-loading-plates.action-btn-spinner i {
+  width: 5px;
   height: 16px;
-  display: block;
-  object-fit: contain;
-  animation: share-spin 1s linear infinite;
 }
 
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.attendance-share-page .action-btn:disabled {
+  opacity: 0.6;
 }
 
-@keyframes share-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes share-chip-snap {
+  0% { transform: translateY(3px) scale(0.96); }
+  60% { transform: translateY(-1px) scale(1.04); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 1024px) {
@@ -715,7 +795,10 @@
   }
 
   .share-panel {
-    padding: 12px;
+    padding: 14px;
+  }
+
+  .share-preview-stage {
     border-radius: 18px;
   }
 
@@ -785,20 +868,20 @@
     position: sticky;
     bottom: 8px;
     z-index: 8;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 14px;
-    background: rgba(6, 11, 24, 0.84);
-    backdrop-filter: blur(10px);
+    border: 3px solid var(--dg-ink);
+    border-radius: 6px;
+    background: var(--dg-steel);
+    box-shadow: 0 4px 0 var(--dg-ink);
     padding: 8px;
     margin-top: 10px;
   }
 
-  .action-btn {
+  .attendance-share-page .action-btn {
     flex: 1 1 calc(50% - 6px);
     min-width: 128px;
     text-align: center;
     font-size: 13px;
-    padding: 10px 12px;
+    padding: 0 12px;
   }
 
   .quick-action-dock {
@@ -806,3 +889,82 @@
     padding: 8px;
   }
 }
+
+/* ==========================================================================
+   카드 크기를 카드 폭 기준 비율로 (cqw = 카드 폭의 1%)
+   예전엔 로고 188~224px, 문구 34~38px 처럼 px 고정이라 폰 미리보기(약 310px)에서는
+   로고가 카드의 60%를 덮고, 1080px 로 다시 그리는 저장본에서는 17%로 작아져
+   미리보기와 저장 결과가 전혀 다른 카드가 됐다. 기준 폭 560px 에서 보이던 크기를 비율로 옮겼다.
+   (.share-preview 를 앞에 붙여 위의 px 규칙과 모바일 미디어쿼리보다 우선한다)
+   ========================================================================== */
+
+.share-preview {
+  container-type: inline-size;
+}
+
+.share-preview .share-logo { left: 2.6cqw; top: 2.4cqw; }
+.share-preview .share-logo-image { width: 26cqw; }
+
+.share-preview .share-sticker { right: 3.2cqw; top: 2.2cqw; font-size: 7cqw; }
+
+.share-preview .share-deco-item { font-size: 5.7cqw; }
+.share-preview .deco-character-node { width: 8.6cqw; height: 8.6cqw; border-radius: 1.8cqw; }
+.share-preview .deco-character-fallback { font-size: 3.2cqw; }
+
+.share-preview .share-heading-layer { font-size: 6cqw; padding: 0.6cqw 1.1cqw; }
+.share-preview .share-subheading-text { font-size: 2.5cqw; padding: 0.7cqw 1.4cqw; border-radius: 1.8cqw; }
+
+.share-preview .share-character {
+  right: 2.9cqw;
+  bottom: 2.9cqw;
+  padding: 1.4cqw 1.8cqw;
+  gap: 1.4cqw;
+  border-radius: 2.5cqw;
+}
+.share-preview .share-character-avatar { width: 10cqw; height: 10cqw; border-radius: 1.8cqw; font-size: 3.6cqw; }
+/* 아바타는 size(px) 로 그려지므로 칸에 맞춰 늘린다 */
+.share-preview .share-character-avatar > *,
+.share-preview .share-character-avatar svg,
+.share-preview .deco-character-node > *,
+.share-preview .deco-character-node svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+.share-preview .share-character-meta strong { font-size: 2.2cqw; }
+.share-preview .share-character-meta span { font-size: 2cqw; }
+
+.share-preview .story-safe { left: 2.1cqw; right: 2.1cqw; height: 9.6cqw; border-radius: 2.1cqw; font-size: 2cqw; }
+.share-preview .story-safe.top { top: 10cqw; }
+.share-preview .story-safe.bottom { bottom: 2.9cqw; }
+
+.share-preview .share-content { padding: 2.5cqw; gap: 1.4cqw; }
+.share-preview .share-attendance-label { font-size: 4.3cqw; }
+.share-preview .share-badges { gap: 1.1cqw; margin: 0.7cqw 0; }
+.share-preview .share-badge { padding: 0.7cqw 1.8cqw; font-size: 2cqw; min-height: 5.4cqw; }
+.share-preview .share-quote { padding: 1.8cqw 2.1cqw; font-size: 6cqw; border-radius: 2.9cqw; }
+.share-preview .share-meta { font-size: 4cqw; }
+
+/* 공유 안내 문구 (예전 alert 대신) */
+.share-notice {
+  margin: 0;
+  padding: 8px 12px;
+  border: 2px solid var(--dg-ink);
+  border-left: 6px solid var(--dg-yellow);
+  border-radius: 4px;
+  background: #1e1f22;
+  color: var(--dg-chalk);
+  font-size: 13px;
+  line-height: 1.5;
+  grid-column: 1 / -1;
+}
+
+/* 출석 화면에서 넘어와 카드가 준비되면 공유 버튼을 눈에 띄게 */
+.share-ready-pulse {
+  animation: shareReadyPulse 1.4s ease-in-out 3;
+}
+
+@keyframes shareReadyPulse {
+  0%, 100% { box-shadow: 0 4px 0 var(--dg-ink); }
+  50% { box-shadow: 0 4px 0 var(--dg-ink), 0 0 0 4px var(--dg-yellow); }
+}
+

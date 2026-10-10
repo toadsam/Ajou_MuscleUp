@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { Link } from "react-router-dom";
 import AdminToast from "../components/admin/AdminToast";
@@ -39,6 +39,39 @@ type ScheduledJob = {
   payload: { status?: Application["status"]; hidden?: boolean; reason: string };
 };
 type AdminTab = "overview" | "behavior" | "moderation" | "attendance" | "operations";
+
+const ADMIN_TABS: Array<[AdminTab, string]> = [
+  ["overview", "개요"],
+  ["behavior", "행동 추적"],
+  ["moderation", "검수/콘텐츠"],
+  ["attendance", "출석 기록"],
+  ["operations", "운영 자동화"],
+];
+
+// 상태·권한 원문 값은 그대로 두고 화면에는 읽기 쉬운 이름만 보여 준다.
+const SUPPORT_STATUS_LABEL: Record<string, string> = {
+  OPEN: "새 문의",
+  READ: "읽음",
+  IN_PROGRESS: "처리 중",
+  RESOLVED: "해결 완료",
+};
+const APPLICATION_STATUS_LABEL: Record<Application["status"], string> = {
+  PENDING: "대기",
+  REVIEWING: "검토 중",
+  APPROVED: "승인",
+  REJECTED: "반려",
+};
+const JOB_TYPE_LABEL: Record<ScheduledJob["type"], string> = {
+  application_status: "신청 상태 변경",
+  attendance_hidden: "출석 공유 공개/비공개",
+};
+const roleLabel = (role: string) => {
+  const normalized = role.toUpperCase().replace(/^ROLE_/, "");
+  if (normalized === "ADMIN") return "전체 관리자";
+  if (normalized === "CONTENT_ADMIN") return "콘텐츠 관리자";
+  if (normalized === "SUPPORT_ADMIN") return "고객지원 관리자";
+  return "관리자";
+};
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
@@ -123,6 +156,18 @@ export default function Admin() {
   const [attendanceTo, setAttendanceTo] = useState(() => new Date().toISOString().slice(0, 10));
 
   const { toast, showError, showSuccess, clearToast } = useAdminToast();
+  const tabRefs = useRef<Partial<Record<AdminTab, HTMLButtonElement | null>>>({});
+  const [tabUnderline, setTabUnderline] = useState({ left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const node = tabRefs.current[activeTab];
+      if (node) setTabUnderline({ left: node.offsetLeft, width: node.offsetWidth });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [activeTab]);
 
   const maxAction = useMemo(() => actions.reduce((m, a) => Math.max(m, a.count || 0), 0) || 1, [actions]);
   const maxPage = useMemo(() => pages.reduce((m, p) => Math.max(m, p.count || 0), 0) || 1, [pages]);
@@ -741,59 +786,71 @@ export default function Admin() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="absolute inset-0">
-        <div className="absolute -left-28 top-8 h-72 w-72 rounded-full bg-pink-500/20 blur-3xl" />
-        <div className="absolute right-0 top-20 h-80 w-80 rounded-full bg-cyan-500/20 blur-3xl" />
-      </div>
+    <section className="relative min-h-screen overflow-hidden text-chalk">
 
       <div className="relative mx-auto max-w-7xl space-y-8 px-6 pb-24 pt-28 lg:px-10">
-        <header className="rounded-3xl border border-white/10 bg-gradient-to-r from-white/15 via-white/5 to-white/15 p-6 shadow-2xl backdrop-blur">
+        <header className="dg-steel dg-rise relative overflow-hidden p-6">
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 border-b-2 border-black bg-plate-red" />
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Admin Control Center</p>
-              <h1 className="mt-2 text-3xl font-extrabold md:text-4xl">관리자 대시보드</h1>
-              <p className="mt-1 text-sm text-gray-200">
-                백엔드 상태: <span className="font-semibold text-emerald-300">{status}</span>
+              <p className="flex items-center gap-2 text-sm font-semibold text-plate-yellow">
+                운영 관제실 <span className="font-num text-xs tracking-wide text-steel-500">ADMIN</span>
+              </p>
+              <h1 className="mt-2 text-3xl md:text-4xl">관리자 대시보드</h1>
+              <p className="mt-2 flex items-center gap-2 text-sm text-steel-300">
+                서버 상태
+                <span className="inline-flex items-center gap-1.5 rounded border-2 border-black bg-steel-900 px-2 py-0.5 font-semibold text-chalk">
+                  <span
+                    aria-hidden="true"
+                    className={`h-2.5 w-2.5 rounded-full border border-black ${status === "정상" ? "bg-plate-green" : status.startsWith("오류") ? "bg-plate-red" : "bg-plate-yellow"}`}
+                  />
+                  {status}
+                </span>
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Link to="/admin/events" className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:opacity-90">
+              <Link to="/admin/events" className="dg-btn dg-btn-primary px-4 py-2 text-sm">
                 이벤트 관리
               </Link>
-              <Link to="/admin/history" className="rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-sm font-semibold hover:opacity-90">
+              <Link to="/admin/history" className="dg-btn dg-btn-steel px-4 py-2 text-sm">
                 이력 보기
               </Link>
               <button
                 type="button"
                 onClick={() => void fetchSummary()}
-                className="rounded-full border border-white/20 px-4 py-2 text-sm text-gray-100 hover:bg-white/10"
+                className="dg-btn dg-btn-steel px-4 py-2 text-sm"
               >
                 요약 새로고침
               </button>
             </div>
           </div>
-          {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
+          {error ? <p className="mt-3 text-sm font-semibold text-red-300" role="alert">{error}</p> : null}
         </header>
 
-        <div className="sticky top-16 z-20 overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/85 p-2 backdrop-blur">
-          <div className="flex min-w-max gap-2">
-            {([
-              ["overview", "개요"],
-              ["behavior", "행동 추적"],
-              ["moderation", "검수/콘텐츠"],
-              ["attendance", "출석 기록"],
-              ["operations", "운영 자동화"],
-            ] as Array<[AdminTab, string]>).map(([tab, label]) => (
+        <div className="sticky top-16 z-20 overflow-x-auto rounded-lg border-[3px] border-black bg-steel-800 px-2 pt-1 shadow-md">
+          <div className="relative flex min-w-max gap-1" role="tablist" aria-label="관리 메뉴">
+            {ADMIN_TABS.map(([tab, label]) => (
               <button
                 key={tab}
+                ref={(node) => {
+                  tabRefs.current[tab] = node;
+                }}
                 type="button"
+                role="tab"
+                aria-selected={activeTab === tab}
                 onClick={() => setActiveTab(tab)}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeTab === tab ? "bg-cyan-400 text-slate-950" : "bg-white/10 text-gray-100 hover:bg-white/20"}`}
+                className={`relative px-4 pb-3 pt-2 text-sm font-semibold transition-colors ${
+                  activeTab === tab ? "text-chalk" : "text-steel-400 hover:-translate-y-px hover:text-steel-200"
+                }`}
               >
                 {label}
               </button>
             ))}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-0 h-1 rounded-t-sm bg-plate-red transition-all duration-300 ease-out"
+              style={{ left: tabUnderline.left, width: tabUnderline.width }}
+            />
           </div>
         </div>
 
@@ -803,14 +860,14 @@ export default function Admin() {
           <StatCard title="액션 이벤트" value={actions.length} desc="최근 30일 이벤트 종류" accent="from-pink-500 to-orange-400" />
           <StatCard title="페이지 이벤트" value={pages.length} desc="최근 30일 페이지 종류" accent="from-emerald-400 to-cyan-400" />
           <StatCard title="프로그램 신청" value={applications.length} desc="현재 전체 신청 수" accent="from-blue-500 to-indigo-500" />
-          <StatCard title="권한" value="ROLE_ADMIN" desc="관리자 인증 완료" accent="from-purple-500 to-pink-400" />
+          <StatCard title="권한" value={roleLabel(role)} desc="관리자 인증 완료" accent="from-purple-500 to-pink-400" />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <TopListCard title="액션 TOP" subtitle="/api/admin/analytics/summary" items={actions} max={maxAction} color="from-pink-500 to-orange-400" />
+          <TopListCard title="액션 TOP" subtitle="최근 30일 · 많이 일어난 행동 순" items={actions} max={maxAction} color="from-pink-500 to-orange-400" />
           <TopListCard
             title="페이지 TOP"
-            subtitle="최근 30일"
+            subtitle="최근 30일 · 많이 열린 페이지 순"
             items={pages.map((page) => ({ action: page.page, count: page.count }))}
             max={maxPage}
             color="from-emerald-400 to-cyan-400"
@@ -820,15 +877,23 @@ export default function Admin() {
         <div className="grid gap-6 lg:grid-cols-2">
           <MediaPanel title="알림 센터" description="운영 임계치 기반 경고" loading={false} hasData={true} onRefresh={() => void loadSummaryAndHealth()} emptyMessage="">
             <div className="space-y-2 text-sm">
-              {!healthSummary?.adminPingOk && <div className="rounded-lg border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-rose-100">관리자 API 상태가 불안정합니다.</div>}
-              {applications.filter((a) => a.status === "PENDING").length >= 5 && <div className="rounded-lg border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-amber-100">검토 대기 신청이 5건 이상입니다.</div>}
-              {attendanceShares.filter((it) => it.reportCount >= 5).length > 0 && <div className="rounded-lg border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-amber-100">신고 다수 출석 공유가 존재합니다.</div>}
-              {scheduledJobs.length > 0 && <div className="rounded-lg border border-cyan-300/40 bg-cyan-500/10 px-3 py-2 text-cyan-100">예약 작업 {scheduledJobs.length}건 대기 중</div>}
+              {!healthSummary?.adminPingOk && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-red bg-steel-900 px-3 py-2 text-red-200">관리자 API 상태가 불안정합니다.</div>}
+              {applications.filter((a) => a.status === "PENDING").length >= 5 && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-yellow bg-steel-900 px-3 py-2 text-yellow-200">검토 대기 신청이 5건 이상입니다.</div>}
+              {attendanceShares.filter((it) => it.reportCount >= 5).length > 0 && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-yellow bg-steel-900 px-3 py-2 text-yellow-200">신고 다수 출석 공유가 존재합니다.</div>}
+              {scheduledJobs.length > 0 && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-blue bg-steel-900 px-3 py-2 text-blue-200">예약 작업 {scheduledJobs.length}건 대기 중</div>}
               {healthSummary && (
                 <div className="grid grid-cols-3 gap-2 pt-2 text-xs">
-                  <div className={`rounded-md px-2 py-1 ${healthSummary.publicPingOk ? "bg-emerald-500/20 text-emerald-100" : "bg-rose-500/20 text-rose-100"}`}>/ping</div>
-                  <div className={`rounded-md px-2 py-1 ${healthSummary.adminPingOk ? "bg-emerald-500/20 text-emerald-100" : "bg-rose-500/20 text-rose-100"}`}>/api/admin/ping</div>
-                  <div className={`rounded-md px-2 py-1 ${healthSummary.lobbyMetricsOk ? "bg-emerald-500/20 text-emerald-100" : "bg-rose-500/20 text-rose-100"}`}>/api/metrics/lobby</div>
+                  {([
+                    ["공개 서버", healthSummary.publicPingOk],
+                    ["관리자 API", healthSummary.adminPingOk],
+                    ["로비 지표", healthSummary.lobbyMetricsOk],
+                  ] as Array<[string, boolean]>).map(([label, ok]) => (
+                    <div key={label} className="dg-well flex items-center gap-1.5 px-2 py-1.5 text-chalk">
+                      <span aria-hidden="true" className={`h-2.5 w-2.5 shrink-0 rounded-full border border-black ${ok ? "bg-plate-green" : "bg-plate-red"}`} />
+                      <span className="truncate">{label}</span>
+                      <span className="sr-only">{ok ? "정상" : "오류"}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -836,27 +901,27 @@ export default function Admin() {
 
           <MediaPanel title="예약 작업" description="선택 항목 예약 실행" loading={false} hasData={true} onRefresh={() => void executeDueSchedule()} emptyMessage="">
             <div className="grid gap-2 md:grid-cols-2">
-              <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value as ScheduledJob["type"])} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+              <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value as ScheduledJob["type"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                 <option value="application_status">신청 상태 변경</option>
                 <option value="attendance_hidden">출석 공유 공개/비공개</option>
               </select>
               {scheduleType === "application_status" ? (
-                <select value={scheduleStatus} onChange={(e) => setScheduleStatus(e.target.value as Application["status"])} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
-                  {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                <select value={scheduleStatus} onChange={(e) => setScheduleStatus(e.target.value as Application["status"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
+                  {statuses.map((s) => <option key={s} value={s}>{APPLICATION_STATUS_LABEL[s] ?? s}</option>)}
                 </select>
               ) : (
-                <select value={String(scheduleHidden)} onChange={(e) => setScheduleHidden(e.target.value === "true")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                <select value={String(scheduleHidden)} onChange={(e) => setScheduleHidden(e.target.value === "true")} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                   <option value="true">비공개</option>
                   <option value="false">공개</option>
                 </select>
               )}
-              <input type="datetime-local" value={scheduleDateTime} onChange={(e) => setScheduleDateTime(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
-              <button type="button" onClick={createSchedule} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950">예약 생성</button>
+              <input type="datetime-local" value={scheduleDateTime} onChange={(e) => setScheduleDateTime(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
+              <button type="button" onClick={createSchedule} className="dg-btn dg-btn-primary px-3 py-2 text-sm">예약 생성</button>
             </div>
             <div className="mt-3 space-y-1 text-xs">
               {scheduledJobs.slice(0, 5).map((job) => (
-                <div key={job.id} className="rounded-md border border-white/10 bg-black/20 px-2 py-1">
-                  {new Date(job.executeAt).toLocaleString("ko-KR")} · {job.type} · {job.ids.length}건
+                <div key={job.id} className="dg-well px-2 py-1">
+                  {new Date(job.executeAt).toLocaleString("ko-KR")} · {JOB_TYPE_LABEL[job.type] ?? job.type} · {job.ids.length}건
                 </div>
               ))}
               {scheduledJobs.length > 5 && <p className="text-gray-400">+{scheduledJobs.length - 5}건 더 있음</p>}
@@ -867,20 +932,23 @@ export default function Admin() {
         )}
 
         {(activeTab === "operations" || activeTab === "moderation" || activeTab === "attendance") && undoAction && (
-          <div className="rounded-2xl border border-amber-300/40 bg-amber-500/10 p-4">
+          <div className="dg-rise rounded-lg border-[3px] border-l-[8px] border-black border-l-plate-yellow bg-steel-800 p-4 shadow-md">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-amber-100">최근 작업: {undoAction.label}</p>
-              <button type="button" onClick={() => void undoAction.run()} className="rounded-lg bg-amber-300 px-3 py-1.5 text-sm font-semibold text-slate-900">Undo</button>
+              <p className="text-sm text-steel-200">최근 작업: <span className="font-semibold text-chalk">{undoAction.label}</span></p>
+              <button type="button" onClick={() => void undoAction.run()} className="dg-btn bg-plate-yellow px-3 py-1.5 text-sm text-black">되돌리기</button>
             </div>
           </div>
         )}
 
         {(activeTab === "operations" || activeTab === "moderation" || activeTab === "attendance") && bulkProgress && (
-          <div className="rounded-2xl border border-cyan-300/30 bg-cyan-500/10 p-4">
-            <p className="text-sm font-semibold text-cyan-100">진행 중: {bulkProgress.label}</p>
-            <p className="mt-1 text-xs text-cyan-100">{bulkProgress.done}/{bulkProgress.total} 완료 · 실패 {bulkProgress.failed}</p>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-2 rounded-full bg-cyan-400" style={{ width: `${bulkProgress.total ? (bulkProgress.done / bulkProgress.total) * 100 : 0}%` }} />
+          <div className="dg-rise rounded-lg border-[3px] border-black bg-steel-800 p-4 shadow-md" role="status">
+            <p className="text-sm font-semibold text-chalk">진행 중: {bulkProgress.label}</p>
+            <p className="mt-1 text-xs text-steel-300">
+              <span className="font-num text-sm text-plate-yellow">{bulkProgress.done}/{bulkProgress.total}</span> 완료 · 실패{" "}
+              <span className="font-num text-sm text-red-300">{bulkProgress.failed}</span>
+            </p>
+            <div className="mt-2 h-3 overflow-hidden rounded border-2 border-black bg-steel-950">
+              <div className="h-full bg-plate-yellow transition-[width] duration-300 ease-out" style={{ width: `${bulkProgress.total ? (bulkProgress.done / bulkProgress.total) * 100 : 0}%` }} />
             </div>
           </div>
         )}
@@ -889,14 +957,14 @@ export default function Admin() {
           <div className="grid gap-6 lg:grid-cols-2">
             <MediaPanel title="행동 이벤트 추적" description="유저 행동 로그 검색/필터" loading={loadingEvents} hasData={filteredEvents.length > 0} onRefresh={() => void loadAnalyticsEvents()} emptyMessage="행동 로그가 없습니다.">
               <div className="mb-3 grid gap-2 md:grid-cols-2">
-                <input value={eventQuery} onChange={(e) => setEventQuery(e.target.value)} placeholder="유저/메타데이터 검색" className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
-                <select value={eventActionFilter} onChange={(e) => setEventActionFilter(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                <input value={eventQuery} onChange={(e) => setEventQuery(e.target.value)} placeholder="유저/메타데이터 검색" className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
+                <select value={eventActionFilter} onChange={(e) => setEventActionFilter(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                   <option value="all">모든 액션</option>
                   {[...new Set(analyticsEvents.map((item) => item.action))].slice(0, 120).map((action) => (
                     <option key={action} value={action}>{action}</option>
                   ))}
                 </select>
-                <select value={eventPageFilter} onChange={(e) => setEventPageFilter(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm md:col-span-2">
+                <select value={eventPageFilter} onChange={(e) => setEventPageFilter(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm md:col-span-2">
                   <option value="all">모든 페이지</option>
                   {[...new Set(analyticsEvents.map((item) => item.page))].slice(0, 120).map((pageName) => (
                     <option key={pageName} value={pageName}>{pageName}</option>
@@ -905,7 +973,7 @@ export default function Admin() {
               </div>
               <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
                 {filteredEvents.slice(0, 220).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                  <div key={item.id} className="dg-well transition hover:-translate-y-0.5 hover:shadow-md px-3 py-2">
                     <p className="text-sm font-semibold text-white">{item.action} · {item.page}</p>
                     <p className="text-xs text-gray-300">{item.userNickname || "익명"} {item.userEmail ? `(${item.userEmail})` : ""} · {new Date(item.createdAt).toLocaleString("ko-KR")}</p>
                     {item.metadata ? <p className="mt-1 break-words text-xs text-gray-400">{item.metadata}</p> : null}
@@ -915,10 +983,10 @@ export default function Admin() {
             </MediaPanel>
 
             <MediaPanel title="감사 로그 추적" description="관리자 액션/사유 조회" loading={loadingAuditLogs} hasData={filteredAuditLogs.length > 0} onRefresh={() => void loadAuditLogs()} emptyMessage="감사 로그가 없습니다.">
-              <input value={auditQuery} onChange={(e) => setAuditQuery(e.target.value)} placeholder="액션/리소스/사용자 검색" className="mb-3 w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
+              <input value={auditQuery} onChange={(e) => setAuditQuery(e.target.value)} placeholder="액션/리소스/사용자 검색" className="mb-3 w-full rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
               <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
                 {filteredAuditLogs.slice(0, 220).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                  <div key={item.id} className="dg-well transition hover:-translate-y-0.5 hover:shadow-md px-3 py-2">
                     <p className="text-sm font-semibold text-cyan-100">{item.action}</p>
                     <p className="text-xs text-gray-300">{item.resource} · {item.userNickname || "익명"} · {new Date(item.createdAt).toLocaleString("ko-KR")}</p>
                     {item.summary ? <p className="mt-1 text-xs text-gray-400">{item.summary}</p> : null}
@@ -932,41 +1000,41 @@ export default function Admin() {
         {activeTab === "behavior" && (
           <MediaPanel title="문의/회장에게 한마디" description="챗봇 문의와 회장 메시지 조회" loading={loadingSupportInquiries} hasData={supportInquiries.length > 0} onRefresh={() => void loadSupportInquiries(pageSupportInquiries)} emptyMessage="수집된 문의가 없습니다.">
             <div className="mb-3 grid gap-2 md:grid-cols-5">
-              <input value={supportInquiryQuery} onChange={(e) => setSupportInquiryQuery(e.target.value)} placeholder="이름/이메일/메시지 검색" className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm md:col-span-2" />
-              <select value={supportStatusFilter} onChange={(e) => setSupportStatusFilter(e.target.value as SupportInquiryItem["status"] | "all")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+              <input value={supportInquiryQuery} onChange={(e) => setSupportInquiryQuery(e.target.value)} placeholder="이름/이메일/메시지 검색" className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm md:col-span-2" />
+              <select value={supportStatusFilter} onChange={(e) => setSupportStatusFilter(e.target.value as SupportInquiryItem["status"] | "all")} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                 <option value="all">모든 상태</option>
-                <option value="OPEN">OPEN</option>
-                <option value="READ">READ</option>
-                <option value="IN_PROGRESS">IN_PROGRESS</option>
-                <option value="RESOLVED">RESOLVED</option>
+                <option value="OPEN">{SUPPORT_STATUS_LABEL.OPEN}</option>
+                <option value="READ">{SUPPORT_STATUS_LABEL.READ}</option>
+                <option value="IN_PROGRESS">{SUPPORT_STATUS_LABEL.IN_PROGRESS}</option>
+                <option value="RESOLVED">{SUPPORT_STATUS_LABEL.RESOLVED}</option>
               </select>
-              <label className="flex items-center gap-2 rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                 <input type="checkbox" checked={supportChairmanOnly} onChange={(e) => setSupportChairmanOnly(e.target.checked)} />
                 회장 메시지만
               </label>
-              <button type="button" onClick={() => { setPageSupportInquiries(0); void loadSupportInquiries(0); }} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950">검색</button>
+              <button type="button" onClick={() => { setPageSupportInquiries(0); void loadSupportInquiries(0); }} className="dg-btn dg-btn-primary px-3 py-2 text-sm">검색</button>
             </div>
             <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
               {supportInquiries.map((item) => (
-                <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                <div key={item.id} className="dg-well transition hover:-translate-y-0.5 hover:shadow-md px-3 py-2">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold text-white">{item.name || "익명"} {item.email ? `(${item.email})` : ""}</p>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      item.status === "RESOLVED" ? "bg-emerald-500/25 text-emerald-100" :
-                      item.status === "IN_PROGRESS" ? "bg-cyan-500/25 text-cyan-100" :
-                      item.status === "READ" ? "bg-amber-500/25 text-amber-100" :
-                      "bg-rose-500/25 text-rose-100"
+                    <span className={`shrink-0 rounded border-2 border-black px-2 py-0.5 text-[11px] font-bold ${
+                      item.status === "RESOLVED" ? "bg-plate-green text-white" :
+                      item.status === "IN_PROGRESS" ? "bg-plate-blue text-white" :
+                      item.status === "READ" ? "bg-plate-yellow text-black" :
+                      "bg-plate-red text-white"
                     }`}>
-                      {item.status}
+                      {SUPPORT_STATUS_LABEL[item.status] ?? item.status}
                     </span>
                   </div>
                   <p className="text-xs text-gray-300">{item.page || "-"} · {new Date(item.createdAt).toLocaleString("ko-KR")}</p>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-gray-100">{item.message}</p>
                   {item.adminNote ? <p className="mt-1 whitespace-pre-wrap text-xs text-cyan-100">메모: {item.adminNote}</p> : null}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "READ")} className="rounded-full border border-white/20 px-2 py-1 text-[11px]">읽음</button>
-                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "IN_PROGRESS")} className="rounded-full border border-cyan-300/40 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-100">처리중</button>
-                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "RESOLVED")} className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">해결완료</button>
+                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "READ")} className="dg-btn dg-btn-steel px-2 py-1 text-[11px]">읽음</button>
+                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "IN_PROGRESS")} className="dg-btn bg-plate-blue px-2 py-1 text-[11px] text-white">처리중</button>
+                    <button type="button" onClick={() => void updateSupportInquiryStatus(item, "RESOLVED")} className="dg-btn bg-plate-green px-2 py-1 text-[11px] text-white">해결완료</button>
                     {item.handledAt ? <span className="text-[11px] text-gray-400">처리일: {new Date(item.handledAt).toLocaleString("ko-KR")}</span> : null}
                   </div>
                 </div>
@@ -979,28 +1047,28 @@ export default function Admin() {
         {activeTab === "operations" && (
           <MediaPanel title="자동화 / 시스템 운영" description="예약 작업, 상태 점검, 이력 동기화" loading={false} hasData={true} onRefresh={() => void loadSummaryAndHealth()} emptyMessage="">
             <div className="grid gap-2 md:grid-cols-2">
-              <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value as ScheduledJob["type"])} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+              <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value as ScheduledJob["type"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                 <option value="application_status">신청 상태 변경</option>
                 <option value="attendance_hidden">출석 공유 공개/비공개</option>
               </select>
               {scheduleType === "application_status" ? (
-                <select value={scheduleStatus} onChange={(e) => setScheduleStatus(e.target.value as Application["status"])} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
-                  {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                <select value={scheduleStatus} onChange={(e) => setScheduleStatus(e.target.value as Application["status"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
+                  {statuses.map((s) => <option key={s} value={s}>{APPLICATION_STATUS_LABEL[s] ?? s}</option>)}
                 </select>
               ) : (
-                <select value={String(scheduleHidden)} onChange={(e) => setScheduleHidden(e.target.value === "true")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+                <select value={String(scheduleHidden)} onChange={(e) => setScheduleHidden(e.target.value === "true")} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                   <option value="true">비공개</option>
                   <option value="false">공개</option>
                 </select>
               )}
-              <input type="datetime-local" value={scheduleDateTime} onChange={(e) => setScheduleDateTime(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
-              <button type="button" onClick={createSchedule} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950">예약 생성</button>
-              <button type="button" onClick={() => void executeDueSchedule()} className="rounded-lg border border-white/20 px-3 py-2 text-sm">지금 실행</button>
+              <input type="datetime-local" value={scheduleDateTime} onChange={(e) => setScheduleDateTime(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
+              <button type="button" onClick={createSchedule} className="dg-btn dg-btn-primary px-3 py-2 text-sm">예약 생성</button>
+              <button type="button" onClick={() => void executeDueSchedule()} className="dg-btn dg-btn-steel px-3 py-2 text-sm">지금 실행</button>
             </div>
             <div className="mt-3 space-y-1 text-xs">
               {scheduledJobs.slice(0, 10).map((job) => (
-                <div key={job.id} className="rounded-md border border-white/10 bg-black/20 px-2 py-1">
-                  {new Date(job.executeAt).toLocaleString("ko-KR")} · {job.type} · {job.ids.length}건
+                <div key={job.id} className="dg-well px-2 py-1">
+                  {new Date(job.executeAt).toLocaleString("ko-KR")} · {JOB_TYPE_LABEL[job.type] ?? job.type} · {job.ids.length}건
                 </div>
               ))}
               {scheduledJobs.length === 0 && <p className="text-gray-400">예약 작업이 없습니다.</p>}
@@ -1018,31 +1086,31 @@ export default function Admin() {
           emptyMessage="신청 내역이 없습니다."
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value as Application["status"])} className="rounded-lg border border-white/20 bg-slate-900 px-2 py-1 text-xs">
-              {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+            <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value as Application["status"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-2 py-1 text-xs">
+              {statuses.map((s) => <option key={s} value={s}>{APPLICATION_STATUS_LABEL[s] ?? s}</option>)}
             </select>
-            <button type="button" disabled={!capabilities.canModerateApplications} onClick={() => void bulkUpdateApplicationStatus()} className="rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950 disabled:opacity-40">선택 상태변경 ({selectedApplications.size})</button>
-            <button type="button" onClick={() => exportCsv("applications", applications.map((a) => ({ id: a.id, name: a.name, email: a.email, status: a.status, track: a.track, createdAt: a.createdAt })))} className="rounded-lg border border-white/20 px-3 py-1.5 text-xs">CSV</button>
-            <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1" checked={applications.length > 0 && selectedApplications.size === applications.length} onChange={(e) => setSelectedApplications(e.target.checked ? new Set(applications.map((a) => a.id)) : new Set())} />현재 페이지 전체</label>
+            <button type="button" disabled={!capabilities.canModerateApplications} onClick={() => void bulkUpdateApplicationStatus()} className="dg-btn dg-btn-primary px-3 py-1.5 text-xs">선택 상태변경 ({selectedApplications.size})</button>
+            <button type="button" onClick={() => exportCsv("applications", applications.map((a) => ({ id: a.id, name: a.name, email: a.email, status: a.status, track: a.track, createdAt: a.createdAt })))} className="dg-btn dg-btn-steel px-3 py-1.5 text-xs">CSV</button>
+            <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1 accent-plate-red" checked={applications.length > 0 && selectedApplications.size === applications.length} onChange={(e) => setSelectedApplications(e.target.checked ? new Set(applications.map((a) => a.id)) : new Set())} />현재 페이지 전체</label>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {applications.map((app) => (
-              <div key={app.id} className="rounded-2xl border border-white/10 bg-black/30 p-4 shadow-inner">
+              <div key={app.id} className="dg-well transition hover:-translate-y-0.5 hover:shadow-md p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-white">{app.name}</p>
                     <p className="text-xs text-gray-300">{app.email}</p>
                   </div>
-                  <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1" checked={selectedApplications.has(app.id)} onChange={() => toggleNumberSet(setSelectedApplications, app.id)} />선택</label>
+                  <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1 accent-plate-red" checked={selectedApplications.has(app.id)} onChange={() => toggleNumberSet(setSelectedApplications, app.id)} />선택</label>
                 </div>
                 <p className="mt-2 text-sm text-gray-200">목표: {app.goal}</p>
                 <select
                   value={app.status}
                   onChange={(e) => updateStatus(app.id, e.target.value as Application["status"])}
                   disabled={changingStatusIds.has(app.id)}
-                  className="mt-3 w-full rounded-lg border border-gray-700 bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-60"
+                  className="mt-3 w-full rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm disabled:opacity-60"
                 >
-                  {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {statuses.map((s) => <option key={s} value={s}>{APPLICATION_STATUS_LABEL[s] ?? s}</option>)}
                 </select>
               </div>
             ))}
@@ -1062,22 +1130,22 @@ export default function Admin() {
             emptyMessage="갤러리 파일이 없습니다."
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <button type="button" disabled={!capabilities.canDeleteAssets} onClick={() => void bulkDeleteGallery()} className="rounded-lg bg-red-500/80 px-3 py-1.5 text-xs disabled:opacity-40">선택 삭제 ({selectedGallery.size})</button>
-              <button type="button" onClick={() => exportCsv("gallery", gallery.map((url) => ({ url })))} className="rounded-lg border border-white/20 px-3 py-1.5 text-xs">CSV</button>
-              <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1" checked={gallery.length > 0 && selectedGallery.size === gallery.length} onChange={(e) => setSelectedGallery(e.target.checked ? new Set(gallery) : new Set())} />현재 페이지 전체</label>
+              <button type="button" disabled={!capabilities.canDeleteAssets} onClick={() => void bulkDeleteGallery()} className="dg-btn dg-btn-primary px-3 py-1.5 text-xs">선택 삭제 ({selectedGallery.size})</button>
+              <button type="button" onClick={() => exportCsv("gallery", gallery.map((url) => ({ url })))} className="dg-btn dg-btn-steel px-3 py-1.5 text-xs">CSV</button>
+              <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1 accent-plate-red" checked={gallery.length > 0 && selectedGallery.size === gallery.length} onChange={(e) => setSelectedGallery(e.target.checked ? new Set(gallery) : new Set())} />현재 페이지 전체</label>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {gallery.map((url) => (
-                <div key={url} className="relative overflow-hidden rounded-xl border border-white/10 bg-black/30">
+                <div key={url} className="relative overflow-hidden rounded-lg border-2 border-black bg-steel-900 transition hover:-translate-y-0.5 hover:shadow-md">
                   <img src={url} alt="gallery" className="h-32 w-full object-cover" />
                   <label className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-xs">
-                    <input type="checkbox" className="mr-1" checked={selectedGallery.has(url)} onChange={() => toggleStringSet(setSelectedGallery, url)} />
+                    <input type="checkbox" className="mr-1 accent-plate-red" checked={selectedGallery.has(url)} onChange={() => toggleStringSet(setSelectedGallery, url)} />
                     선택
                   </label>
                   <button
                     type="button"
                     onClick={() => void deleteGalleryItem(url)}
-                    className="absolute right-2 top-2 rounded-full bg-red-500/85 px-3 py-1 text-xs text-white hover:opacity-90"
+                    className="absolute right-2 top-2 dg-btn dg-btn-primary px-3 py-1 text-xs"
                   >
                     삭제
                   </button>
@@ -1096,17 +1164,17 @@ export default function Admin() {
             emptyMessage="표시할 상품이 없습니다."
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <button type="button" disabled={!capabilities.canDeleteAssets} onClick={() => void bulkDeleteProtein()} className="rounded-lg bg-red-500/80 px-3 py-1.5 text-xs disabled:opacity-40">선택 삭제 ({selectedProteins.size})</button>
-              <button type="button" onClick={() => exportCsv("proteins", proteins.map((p) => ({ id: p.id, name: p.name })))} className="rounded-lg border border-white/20 px-3 py-1.5 text-xs">CSV</button>
-              <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1" checked={proteins.length > 0 && selectedProteins.size === proteins.length} onChange={(e) => setSelectedProteins(e.target.checked ? new Set(proteins.map((p) => p.id)) : new Set())} />현재 페이지 전체</label>
+              <button type="button" disabled={!capabilities.canDeleteAssets} onClick={() => void bulkDeleteProtein()} className="dg-btn dg-btn-primary px-3 py-1.5 text-xs">선택 삭제 ({selectedProteins.size})</button>
+              <button type="button" onClick={() => exportCsv("proteins", proteins.map((p) => ({ id: p.id, name: p.name })))} className="dg-btn dg-btn-steel px-3 py-1.5 text-xs">CSV</button>
+              <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1 accent-plate-red" checked={proteins.length > 0 && selectedProteins.size === proteins.length} onChange={(e) => setSelectedProteins(e.target.checked ? new Set(proteins.map((p) => p.id)) : new Set())} />현재 페이지 전체</label>
             </div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
               {proteins.map((protein) => (
-                <div key={protein.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                <div key={protein.id} className="flex items-center justify-between dg-well transition hover:-translate-y-0.5 hover:shadow-md px-3 py-2">
                   <span className="text-sm text-white">{protein.name}</span>
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1" checked={selectedProteins.has(protein.id)} onChange={() => toggleNumberSet(setSelectedProteins, protein.id)} />선택</label>
-                    <button type="button" onClick={() => void deleteProtein(protein.id)} className="rounded-full bg-red-500/85 px-3 py-1 text-xs text-white hover:opacity-90">삭제</button>
+                    <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1 accent-plate-red" checked={selectedProteins.has(protein.id)} onChange={() => toggleNumberSet(setSelectedProteins, protein.id)} />선택</label>
+                    <button type="button" onClick={() => void deleteProtein(protein.id)} className="dg-btn dg-btn-primary px-3 py-1 text-xs">삭제</button>
                   </div>
                 </div>
               ))}
@@ -1123,17 +1191,17 @@ export default function Admin() {
             emptyMessage="표시할 게시글이 없습니다."
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <button type="button" disabled={!capabilities.canDeleteAssets} onClick={() => void bulkDeleteBrag()} className="rounded-lg bg-red-500/80 px-3 py-1.5 text-xs disabled:opacity-40">선택 삭제 ({selectedBrags.size})</button>
-              <button type="button" onClick={() => exportCsv("brags", brags.map((b) => ({ id: b.id, title: b.title })))} className="rounded-lg border border-white/20 px-3 py-1.5 text-xs">CSV</button>
-              <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1" checked={brags.length > 0 && selectedBrags.size === brags.length} onChange={(e) => setSelectedBrags(e.target.checked ? new Set(brags.map((b) => b.id)) : new Set())} />현재 페이지 전체</label>
+              <button type="button" disabled={!capabilities.canDeleteAssets} onClick={() => void bulkDeleteBrag()} className="dg-btn dg-btn-primary px-3 py-1.5 text-xs">선택 삭제 ({selectedBrags.size})</button>
+              <button type="button" onClick={() => exportCsv("brags", brags.map((b) => ({ id: b.id, title: b.title })))} className="dg-btn dg-btn-steel px-3 py-1.5 text-xs">CSV</button>
+              <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1 accent-plate-red" checked={brags.length > 0 && selectedBrags.size === brags.length} onChange={(e) => setSelectedBrags(e.target.checked ? new Set(brags.map((b) => b.id)) : new Set())} />현재 페이지 전체</label>
             </div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
               {brags.map((brag) => (
-                <div key={brag.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                <div key={brag.id} className="flex items-center justify-between dg-well transition hover:-translate-y-0.5 hover:shadow-md px-3 py-2">
                   <span className="truncate pr-2 text-sm text-white">{brag.title || `자랑글 #${brag.id}`}</span>
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1" checked={selectedBrags.has(brag.id)} onChange={() => toggleNumberSet(setSelectedBrags, brag.id)} />선택</label>
-                    <button type="button" onClick={() => void deleteBrag(brag.id)} className="rounded-full bg-red-500/85 px-3 py-1 text-xs text-white hover:opacity-90">삭제</button>
+                    <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1 accent-plate-red" checked={selectedBrags.has(brag.id)} onChange={() => toggleNumberSet(setSelectedBrags, brag.id)} />선택</label>
+                    <button type="button" onClick={() => void deleteBrag(brag.id)} className="dg-btn dg-btn-primary px-3 py-1 text-xs">삭제</button>
                   </div>
                 </div>
               ))}
@@ -1154,26 +1222,26 @@ export default function Admin() {
           emptyMessage="출석 로그가 없습니다."
         >
           <div className="mb-3 grid gap-2 md:grid-cols-3">
-            <input value={attendanceQuery} onChange={(e) => setAttendanceQuery(e.target.value)} placeholder="닉네임/이메일 검색" className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm md:col-span-2" />
-            <button type="button" onClick={applyAttendanceFilters} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950">필터 적용</button>
-            <select value={attendanceDidWorkoutFilter} onChange={(e) => setAttendanceDidWorkoutFilter(e.target.value as "all" | "true" | "false")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+            <input value={attendanceQuery} onChange={(e) => setAttendanceQuery(e.target.value)} placeholder="닉네임/이메일 검색" className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm md:col-span-2" />
+            <button type="button" onClick={applyAttendanceFilters} className="dg-btn dg-btn-primary px-3 py-2 text-sm">필터 적용</button>
+            <select value={attendanceDidWorkoutFilter} onChange={(e) => setAttendanceDidWorkoutFilter(e.target.value as "all" | "true" | "false")} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
               <option value="all">운동여부 전체</option>
               <option value="true">운동함</option>
               <option value="false">운동안함</option>
             </select>
-            <select value={attendanceSharedFilter} onChange={(e) => setAttendanceSharedFilter(e.target.value as "all" | "true" | "false")} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm">
+            <select value={attendanceSharedFilter} onChange={(e) => setAttendanceSharedFilter(e.target.value as "all" | "true" | "false")} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
               <option value="all">공유여부 전체</option>
               <option value="true">공유됨</option>
               <option value="false">미공유</option>
             </select>
             <div className="grid grid-cols-2 gap-2">
-              <input type="date" value={attendanceFrom} onChange={(e) => setAttendanceFrom(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
-              <input type="date" value={attendanceTo} onChange={(e) => setAttendanceTo(e.target.value)} className="rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm" />
+              <input type="date" value={attendanceFrom} onChange={(e) => setAttendanceFrom(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
+              <input type="date" value={attendanceTo} onChange={(e) => setAttendanceTo(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
             {attendanceLogs.map((item) => (
-              <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm">
+              <div key={item.id} className="dg-well transition hover:-translate-y-0.5 hover:shadow-md px-3 py-2 text-sm">
                 <p className="font-semibold text-white">{item.userNickname || "회원"} · {item.date}</p>
                 <p className="text-xs text-gray-300">{item.userEmail || "-"} · {item.didWorkout ? "운동함" : "운동안함"} · {item.shared ? "공유됨" : "미공유"}</p>
                 <p className="text-xs text-gray-400">응원 {item.cheerCount} · 신고 {item.reportCount} · 수정 {item.editCount}</p>
@@ -1192,24 +1260,24 @@ export default function Admin() {
           emptyMessage="출석 공유 항목이 없습니다."
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <button type="button" disabled={!capabilities.canModerateAttendance} onClick={() => void bulkSetAttendanceHidden(true)} className="rounded-lg bg-red-500/80 px-3 py-1.5 text-xs disabled:opacity-40">선택 비공개 ({selectedAttendance.size})</button>
-            <button type="button" disabled={!capabilities.canModerateAttendance} onClick={() => void bulkSetAttendanceHidden(false)} className="rounded-lg bg-emerald-500/80 px-3 py-1.5 text-xs disabled:opacity-40">선택 공개 ({selectedAttendance.size})</button>
-            <button type="button" onClick={() => exportCsv("attendance-shares", attendanceShares.map((it) => ({ id: it.id, date: it.date, author: it.authorNickname, cheerCount: it.cheerCount, reportCount: it.reportCount, hiddenByAdmin: it.hiddenByAdmin })))} className="rounded-lg border border-white/20 px-3 py-1.5 text-xs">CSV</button>
-            <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1" checked={attendanceShares.length > 0 && selectedAttendance.size === attendanceShares.length} onChange={(e) => setSelectedAttendance(e.target.checked ? new Set(attendanceShares.map((it) => it.id)) : new Set())} />현재 페이지 전체</label>
+            <button type="button" disabled={!capabilities.canModerateAttendance} onClick={() => void bulkSetAttendanceHidden(true)} className="dg-btn dg-btn-primary px-3 py-1.5 text-xs">선택 비공개 ({selectedAttendance.size})</button>
+            <button type="button" disabled={!capabilities.canModerateAttendance} onClick={() => void bulkSetAttendanceHidden(false)} className="dg-btn bg-plate-green px-3 py-1.5 text-xs text-white">선택 공개 ({selectedAttendance.size})</button>
+            <button type="button" onClick={() => exportCsv("attendance-shares", attendanceShares.map((it) => ({ id: it.id, date: it.date, author: it.authorNickname, cheerCount: it.cheerCount, reportCount: it.reportCount, hiddenByAdmin: it.hiddenByAdmin })))} className="dg-btn dg-btn-steel px-3 py-1.5 text-xs">CSV</button>
+            <label className="text-xs text-gray-300"><input type="checkbox" className="mr-1 accent-plate-red" checked={attendanceShares.length > 0 && selectedAttendance.size === attendanceShares.length} onChange={(e) => setSelectedAttendance(e.target.checked ? new Set(attendanceShares.map((it) => it.id)) : new Set())} />현재 페이지 전체</label>
           </div>
           <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
             {attendanceShares.map((item) => (
-              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 dg-well transition hover:-translate-y-0.5 hover:shadow-md px-3 py-2">
                 <div className="text-sm text-white">
                   <p>{item.authorNickname || "회원"} · {item.date}</p>
                   <p className="text-xs text-gray-400">응원 {item.cheerCount} · 신고 {item.reportCount}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1" checked={selectedAttendance.has(item.id)} onChange={() => toggleNumberSet(setSelectedAttendance, item.id)} />선택</label>
+                  <label className="text-xs text-gray-200"><input type="checkbox" className="mr-1 accent-plate-red" checked={selectedAttendance.has(item.id)} onChange={() => toggleNumberSet(setSelectedAttendance, item.id)} />선택</label>
                   {item.hiddenByAdmin ? (
-                    <button type="button" onClick={() => setAttendanceHidden(item.id, false)} disabled={processingAttendanceId === item.id} className="rounded-full bg-emerald-500/80 px-3 py-1 text-xs text-white disabled:opacity-60">공개</button>
+                    <button type="button" onClick={() => setAttendanceHidden(item.id, false)} disabled={processingAttendanceId === item.id} className="dg-btn bg-plate-green px-3 py-1 text-xs text-white">공개</button>
                   ) : (
-                    <button type="button" onClick={() => setAttendanceHidden(item.id, true)} disabled={processingAttendanceId === item.id} className="rounded-full bg-red-500/80 px-3 py-1 text-xs text-white disabled:opacity-60">비공개</button>
+                    <button type="button" onClick={() => setAttendanceHidden(item.id, true)} disabled={processingAttendanceId === item.id} className="dg-btn dg-btn-primary px-3 py-1 text-xs">비공개</button>
                   )}
                 </div>
               </div>
@@ -1238,9 +1306,9 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   if (!totalPages || totalPages <= 1) return null;
   return (
     <div className="mt-3 flex items-center gap-2">
-      <button type="button" onClick={() => onChange(Math.max(0, page - 1))} disabled={page <= 0} className="rounded bg-white/10 px-3 py-1 text-xs disabled:opacity-40">이전</button>
-      <span className="text-xs">{page + 1} / {totalPages}</span>
-      <button type="button" onClick={() => onChange(Math.min(totalPages - 1, page + 1))} disabled={page + 1 >= totalPages} className="rounded bg-white/10 px-3 py-1 text-xs disabled:opacity-40">다음</button>
+      <button type="button" onClick={() => onChange(Math.max(0, page - 1))} disabled={page <= 0} className="dg-btn dg-btn-steel px-3 py-1 text-xs">이전</button>
+      <span className="font-num text-sm text-steel-300">{page + 1} / {totalPages}</span>
+      <button type="button" onClick={() => onChange(Math.min(totalPages - 1, page + 1))} disabled={page + 1 >= totalPages} className="dg-btn dg-btn-steel px-3 py-1 text-xs">다음</button>
     </div>
   );
 }

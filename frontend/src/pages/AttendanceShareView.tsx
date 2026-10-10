@@ -336,6 +336,16 @@ function DeukgeunPoseAvatar({
   );
 }
 
+function ChevronDown() {
+  return (
+    <span className="chevron" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </span>
+  );
+}
+
 function loadReactionStore(): ReactionStore {
   try {
     return JSON.parse(localStorage.getItem(REACTION_KEY) || "{}") as ReactionStore;
@@ -408,6 +418,35 @@ function extractBackgroundImageUrls(styleValue: string): string[] {
   return Array.from(matches, (match) => match[2]).filter(Boolean);
 }
 
+// html2canvas 는 CSS filter 를 그리지 않는다. 그래서 사진에 필터를 미리 입힌 이미지를 만들어
+// 캡처용 복제본의 배경으로 바꿔 끼운다. (canvas filter 를 지원하지 않는 브라우저는 원본 그대로)
+async function bakeMediaFilter(url: string, filter: string, maxSide = 2160): Promise<string | null> {
+  try {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("image load failed"));
+      img.src = url;
+    });
+    const ratio = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * ratio));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * ratio));
+    const ctx = canvas.getContext("2d");
+    if (!ctx || !("filter" in ctx)) return null;
+    ctx.filter = filter;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.92);
+  } catch {
+    return null;
+  }
+}
+
+// 저장 배율 → 캡처 배율. 1080 기준이라 1이면 1080px, 2면 2160px. 폰 메모리와 속도를 위해 2배까지만.
+const CAPTURE_SCALE: Record<1 | 2 | 3 | 4, number> = { 1: 1, 2: 1.5, 3: 2, 4: 2 };
+
 function getCaptureSizeByRatio(ratio: ShareCardRatio): { width: number; height: number } {
   if (ratio === "square") return { width: 1080, height: 1080 };
   if (ratio === "story") return { width: 1080, height: 1920 };
@@ -453,7 +492,7 @@ export default function AttendanceShareView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [shareProgress, setShareProgress] = useState<"idle" | "preparing_share" | "sharing" | "preparing_save" | "saving">("idle");
+  const [shareProgress, setShareProgress] = useState<"idle" | "sharing" | "saving">("idle");
   const [mediaReady, setMediaReady] = useState(true);
   const [mediaLoadFailed, setMediaLoadFailed] = useState(false);
   const [captureMediaUrl, setCaptureMediaUrl] = useState<string | null>(null);
@@ -519,6 +558,12 @@ export default function AttendanceShareView() {
   } | null>(null);
   const previewCaptureRef = useRef<HTMLDivElement | null>(null);
   const autoActionTriggeredRef = useRef(false);
+  // 공유용 카드 이미지를 미리 만들어 둔다. 공유 버튼을 누르는 순간 기다림 없이 navigator.share 를
+  // 불러야 브라우저가 "사용자가 방금 누름"으로 인정해 준다 (await 로 렌더링하다 보면 그 인정이 만료된다).
+  const [preparedFile, setPreparedFile] = useState<File | null>(null);
+  const [preparingCard, setPreparingCard] = useState(false);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [arrivedForShare, setArrivedForShare] = useState(false);
 
   const [reactionStore, setReactionStore] = useState<ReactionStore>(() => loadReactionStore());
 
@@ -807,33 +852,25 @@ export default function AttendanceShareView() {
     return `${message}\n${publicShareLink}`;
   };
   const isCaptureBusy = shareProgress !== "idle";
-  const isActionDisabled = isCaptureBusy || !mediaReady;
-  const shareButtonLabel =
-    !mediaReady
-      ? mediaLoadFailed
-        ? "이미지 반영 실패"
-        : "이미지 반영 중..."
-      : shareProgress === "preparing_share"
-        ? "이미지 반영 중..."
-        : shareProgress === "sharing"
-          ? "공유 중..."
-          : "원클릭 공유";
-  const saveButtonLabel =
-    !mediaReady
-      ? mediaLoadFailed
-        ? "이미지 반영 실패"
-        : "이미지 반영 중..."
-      : shareProgress === "preparing_save"
-        ? "이미지 반영 중..."
-        : shareProgress === "saving"
-          ? "저장 중..."
-          : "커스텀 카드 저장";
-  const showLoadingOverlay = !mediaReady || shareProgress === "preparing_share" || shareProgress === "preparing_save";
-  const overlayMessage = mediaLoadFailed
-    ? "이미지 반영에 실패했어요. 잠시 후 다시 시도해 주세요."
-    : shareProgress === "preparing_save"
-      ? "저장용 이미지 반영 중..."
-      : "공유용 이미지 반영 중...";
+  // 사진을 끝내 못 불러와도 사진 없는 카드로 공유할 수 있게 한다 (예전엔 버튼이 영영 잠겼다)
+  const mediaSettled = mediaReady || mediaLoadFailed;
+  const isActionDisabled = isCaptureBusy || !mediaSettled || preparingCard;
+  const shareButtonLabel = !mediaSettled
+    ? "사진 불러오는 중..."
+    : preparingCard
+      ? "카드 준비 중..."
+      : shareProgress === "sharing"
+        ? "공유 중..."
+        : "공유하기";
+  const saveButtonLabel = !mediaSettled
+    ? "사진 불러오는 중..."
+    : preparingCard
+      ? "카드 준비 중..."
+      : shareProgress === "saving"
+        ? "저장 중..."
+        : "카드 저장";
+  const showLoadingOverlay = !mediaSettled;
+  const overlayMessage = "사진을 불러오는 중...";
 
   const savePreset = () => {
     const next: SharePreset = {
@@ -901,22 +938,11 @@ export default function AttendanceShareView() {
     });
   };
 
-  const capturePreviewBlob = async () => {
+  const capturePreviewBlob = async (captureScale = 1) => {
     const captureNode = previewCaptureRef.current;
     if (!captureNode) throw new Error("공유 카드 캡처 대상을 찾을 수 없어요.");
-    captureNode.classList.add("exporting");
     const { width: targetWidth, height: targetHeight } = getCaptureSizeByRatio(ratio);
-    const captureScale = fromAttendance
-      ? effectiveExportScale >= 4
-        ? 3
-        : effectiveExportScale >= 3
-          ? 2.5
-          : 2
-      : effectiveExportScale >= 4
-        ? 2.4
-        : effectiveExportScale >= 3
-          ? 2
-          : 1.6;
+    const bakedMedia = captureMediaUrl ? await bakeMediaFilter(captureMediaUrl, mediaFilter) : null;
     const stage = document.createElement("div");
     stage.setAttribute("data-capture-stage", "attendance-share");
     stage.style.position = "fixed";
@@ -934,6 +960,11 @@ export default function AttendanceShareView() {
     clone.style.width = `${targetWidth}px`;
     clone.style.height = `${targetHeight}px`;
     clone.style.aspectRatio = `${targetWidth} / ${targetHeight}`;
+    const mediaNode = clone.querySelector<HTMLElement>(".share-media-bg");
+    if (mediaNode && bakedMedia) {
+      mediaNode.style.backgroundImage = `url("${bakedMedia}")`;
+      mediaNode.style.filter = "none";
+    }
     stage.appendChild(clone);
     document.body.appendChild(stage);
     try {
@@ -962,91 +993,172 @@ export default function AttendanceShareView() {
         }, "image/png");
       });
     } finally {
-      captureNode.classList.remove("exporting");
       stage.remove();
     }
   };
 
-  const quickShare = async () => {
-    if (!publicShareLink) return;
-    if (!mediaReady) return;
-    if (shareProgress !== "idle") return;
-    try {
-      setShareProgress("preparing_share");
-      setShareProgress("sharing");
-      let blob: Blob;
-      try {
-        blob = await capturePreviewBlob();
-      } catch {
-        blob = await buildShareImageBlob();
-      }
-      const imageFile = new File([blob], `attendance-share-${data?.date ?? "today"}.png`, { type: "image/png" });
-      const nav = navigator as Navigator & { canShare?: (payload?: ShareData) => boolean };
-      const canShareFile = Boolean(imageFile && nav.canShare && nav.canShare({ files: [imageFile] as File[] }));
+  const cardFileName = `attendance-share-${data?.date ?? "today"}.png`;
 
-      if (navigator.share && canShareFile && imageFile) {
-        await navigator.share({
-          title: "출석 자랑",
-          text: customMessage.trim() || "오늘 출석 완료!",
-          files: [imageFile],
-        });
-      } else if (navigator.share) {
-        const text = composeShareText();
-        await navigator.share({ title: "출석 자랑", text, url: publicShareLink });
-      } else {
-        const text = composeShareText();
-        await navigator.clipboard.writeText(text);
-        alert("이 브라우저는 이미지 공유를 지원하지 않아 링크를 복사했어요.");
+  // 카드 모양이 바뀌면 잠깐 기다렸다가(편집 중 매번 그리지 않게) 공유용 이미지를 미리 만든다.
+  const cardSignature = JSON.stringify([
+    data?.shareSlug,
+    captureMediaUrl,
+    theme,
+    ratio,
+    quoteStyle,
+    sticker,
+    showMeta,
+    mediaFit,
+    mediaPositionX,
+    mediaPositionY,
+    photoFilter,
+    character,
+    characterPose,
+    characterExpression,
+    characterSize,
+    myCharacter?.avatarSeed,
+    textFont,
+    textDecor,
+    showTitle,
+    showSubtitle,
+    titlePos,
+    subtitlePos,
+    decorations,
+    customMessage,
+    manualFrame,
+  ]);
+
+  useEffect(() => {
+    if (!data || !mediaSettled || dragState || transitionPlaying) return;
+    let cancelled = false;
+    setPreparedFile(null);
+    setPreparingCard(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        let blob: Blob;
+        try {
+          blob = await capturePreviewBlob(1);
+        } catch {
+          blob = await buildShareImageBlob();
+        }
+        if (!cancelled) setPreparedFile(new File([blob], cardFileName, { type: "image/png" }));
+      } catch {
+        if (!cancelled) setPreparedFile(null);
+      } finally {
+        if (!cancelled) setPreparingCard(false);
       }
-    } catch {
-      alert("자동 공유가 차단되었거나 취소되었습니다. 아래 '원클릭 공유' 버튼을 눌러 주세요.");
-    } finally {
-      setShareProgress("idle");
+    }, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // 렌더 함수들은 매 렌더 새로 만들어지므로 의존성은 카드 모양(cardSignature)으로 대신한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardSignature, mediaSettled, dragState, transitionPlaying]);
+
+  const downloadFile = (file: Blob, name: string) => {
+    const fileUrl = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = fileUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
+  };
+
+  // 공유: 미리 만들어 둔 파일로 곧바로 navigator.share 를 부른다. 이 함수 안에서 공유 전에
+  // await 를 하면 브라우저가 "사용자가 방금 누름" 인정을 거둬 NotAllowedError 가 난다.
+  const quickShare = () => {
+    if (!publicShareLink || isCaptureBusy) return;
+    // 공유 창이 없는 브라우저도 있어서 share 를 선택 항목으로 다시 적는다.
+    // (이 파일의 ShareData 는 출석 공유 데이터 타입이라 Web Share 용 타입을 따로 둔다)
+    type WebShareData = { title?: string; text?: string; url?: string; files?: File[] };
+    const nav = navigator as unknown as {
+      share?: (payload: WebShareData) => Promise<void>;
+      canShare?: (payload?: WebShareData) => boolean;
+    };
+    const share = nav.share?.bind(navigator);
+    const file = preparedFile;
+    const canShareFile = Boolean(file && share && nav.canShare?.({ files: [file] }));
+    const message = customMessage.trim() || "오늘 출석 완료!";
+
+    let sharing: Promise<void> | null = null;
+    if (share && canShareFile && file) {
+      sharing = share({ title: "출석 자랑", text: message, files: [file] });
+    } else if (share) {
+      sharing = share({ title: "출석 자랑", text: composeShareText(), url: publicShareLink });
     }
+
+    if (!sharing) {
+      // 공유 창이 없는 브라우저(대부분의 PC): 카드 저장 + 링크 복사
+      if (file) downloadFile(file, file.name);
+      void navigator.clipboard?.writeText(composeShareText()).catch(() => undefined);
+      setShareNotice(file ? "공유 창을 지원하지 않는 브라우저라 카드를 저장하고 링크를 복사했어요." : "링크를 복사했어요.");
+      return;
+    }
+
+    setShareProgress("sharing");
+    setShareNotice(null);
+    sharing
+      .then(() => setShareNotice("공유했어요!"))
+      .catch((e: unknown) => {
+        const name = e instanceof DOMException ? e.name : "";
+        if (name === "AbortError") return; // 사용자가 공유 창을 닫음 — 알릴 필요 없음
+        if (name === "NotAllowedError") {
+          setShareNotice("브라우저가 공유 창을 막았어요. 공유하기를 한 번 더 눌러 주세요.");
+          return;
+        }
+        if (file) downloadFile(file, file.name);
+        setShareNotice("공유에 실패해서 카드를 대신 저장했어요. 갤러리에서 올려 주세요.");
+      })
+      .finally(() => setShareProgress("idle"));
   };
 
   const saveImage = async () => {
-    if (!data) return;
-    if (!mediaReady) return;
-    if (shareProgress !== "idle") return;
+    if (!data || isCaptureBusy) return;
+    const scale = effectiveExportScale;
+    // 기본 배율이면 미리 만들어 둔 카드를 그대로 저장한다
+    if (preparedFile && CAPTURE_SCALE[scale] <= 1) {
+      downloadFile(preparedFile, `attendance-card-${data.date}.png`);
+      setShareNotice("카드를 저장했어요.");
+      return;
+    }
     try {
-      setShareProgress("preparing_save");
       setShareProgress("saving");
       let blob: Blob;
       try {
-        blob = await capturePreviewBlob();
+        blob = await capturePreviewBlob(CAPTURE_SCALE[scale]);
       } catch {
         blob = await buildShareImageBlob();
       }
-      const fileUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = fileUrl;
-      a.download = `attendance-card-${data.date}-${effectiveExportScale}x.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(fileUrl);
-    } catch (e: any) {
-      alert(e?.message || "이미지 저장에 실패했어요.");
+      downloadFile(blob, `attendance-card-${data.date}-${scale}x.png`);
+      setShareNotice("카드를 저장했어요.");
+    } catch (e: unknown) {
+      setShareNotice(e instanceof Error && e.message ? e.message : "이미지 저장에 실패했어요.");
     } finally {
       setShareProgress("idle");
     }
   };
 
+  // 출석 화면에서 넘어온 경우(?auto=share|save).
+  // 공유는 브라우저 규칙상 사용자가 직접 눌러야 하므로 자동으로 열지 않고, 카드가 준비되면 버튼을 안내한다.
+  // 저장(다운로드)은 사용자 조작 없이도 되므로 준비되는 대로 저장한다.
   useEffect(() => {
     if (!data || autoActionTriggeredRef.current) return;
-    if (!mediaReady) return;
     const auto = searchParams.get("auto");
     if (auto !== "share" && auto !== "save") return;
+    if (auto === "share") {
+      autoActionTriggeredRef.current = true;
+      setArrivedForShare(true);
+      return;
+    }
+    if (!preparedFile) return;
     autoActionTriggeredRef.current = true;
-    window.setTimeout(() => {
-      if (auto === "save") {
-        void saveImage();
-      } else {
-        void quickShare();
-      }
-    }, 120);
-  }, [data, mediaReady, searchParams]);
+    downloadFile(preparedFile, `attendance-card-${data.date}.png`);
+    setShareNotice("카드를 저장했어요.");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, preparedFile, searchParams]);
 
   const hasReacted = (kind: "cheer" | "report") => {
     if (!slug) return false;
@@ -1091,7 +1203,10 @@ export default function AttendanceShareView() {
   if (loading) {
     return (
       <section className="attendance-share-page theme-sunset">
-        <div className="share-shell">불러오는 중...</div>
+        <div className="share-shell share-state">
+          <span className="dg-loading-plates" aria-hidden="true"><i /><i /><i /><i /></span>
+          불러오는 중...
+        </div>
       </section>
     );
   }
@@ -1099,27 +1214,28 @@ export default function AttendanceShareView() {
   if (error || !data) {
     return (
       <section className="attendance-share-page theme-sunset">
-        <div className="share-shell text-red-200">{error || "공유 페이지를 찾을 수 없습니다."}</div>
+        <div className="share-shell share-state">
+          <div className="dg-steel share-error">{error || "공유 페이지를 찾을 수 없습니다."}</div>
+        </div>
       </section>
     );
   }
 
   return (
     <section className={`attendance-share-page theme-${theme}`}>
-      <div className="share-orb one" />
-      <div className="share-orb two" />
-
       <div className="share-shell">
-        <div className="mb-4">
-          <p className="text-xs tracking-[0.25em] uppercase text-white/70">Attendance Brag Studio</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold mt-2">{title}</h1>
-          <p className="text-sm text-white/85 mt-1">
+        <div className="share-head mb-6 dg-rise">
+          <p className="share-eyebrow font-num">Attendance Brag Studio</p>
+          <h1 className="text-3xl md:text-5xl mt-2 text-chalk">{title}</h1>
+          <p className="text-sm text-steel-300 mt-2">
             {data.date} · {data.didWorkout ? "운동 완료" : "휴식 기록"} · 연속 {data.currentStreak ?? 0}일
           </p>
         </div>
 
         <div className="share-grid">
-          <div className="share-panel" aria-label="share preview panel">
+          <div className="share-panel dg-steel dg-rise" aria-label="share preview panel">
+            {/* 화면 미리보기용 받침: 카드 템플릿 테마 색(--bg-a/b/c)을 카드 뒤에 깔아 준다. 캡처 대상(share-preview)은 그대로. */}
+            <div className={`share-preview-stage ratio-${ratio}`}>
             <div ref={previewCaptureRef} className={`share-preview ratio-${ratio}`}>
               {captureMediaUrl && (
                 <div
@@ -1138,7 +1254,7 @@ export default function AttendanceShareView() {
               </div>
               {showLoadingOverlay && (
                 <div className="share-loading-overlay" aria-live="polite" data-html2canvas-ignore="true">
-                  <img src={watermarkLogo} alt="" className="share-loading-logo" />
+                  <span className="dg-loading-plates share-loading-plates" aria-hidden="true"><i /><i /><i /><i /></span>
                   <p className="share-loading-text">{overlayMessage}</p>
                 </div>
               )}
@@ -1274,34 +1390,46 @@ export default function AttendanceShareView() {
                 )}
               </div>
             </div>
+            </div>
 
-            <div className="rounded-2xl border border-white/15 bg-black/20 p-4 mt-4 text-sm">
-              <p className="text-white/80 whitespace-pre-line">{data.memo || "메모 없음"}</p>
+            <div className="share-memo dg-whiteboard mt-5">
+              <p className="share-memo-title font-pen">오늘의 메모</p>
+              <p className="whitespace-pre-line">{data.memo || "메모 없음"}</p>
             </div>
           </div>
 
-          <div className="share-panel" aria-label="customization controls">
+          <div className="share-panel share-controls dg-steel dg-rise" style={{ animationDelay: "80ms" }} aria-label="customization controls">
             <div className="quick-action-dock">
-              <button className="action-btn primary quick-action-btn" onClick={quickShare} disabled={isActionDisabled} aria-label="quick share top">
+              <button className={`action-btn primary quick-action-btn dg-btn dg-btn-primary ${arrivedForShare && preparedFile ? "share-ready-pulse" : ""}`} onClick={quickShare} disabled={isActionDisabled} aria-label="quick share top">
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
-                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
                     <span>{shareButtonLabel}</span>
                   </span>
                 ) : (
                   shareButtonLabel
                 )}
               </button>
-              <button className="action-btn quick-action-btn" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card top">
+              <button className="action-btn quick-action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card top">
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
-                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
                     <span>{saveButtonLabel}</span>
                   </span>
                 ) : (
                   saveButtonLabel
                 )}
               </button>
+              {(shareNotice || arrivedForShare || mediaLoadFailed) && (
+                <p className="share-notice" role="status" aria-live="polite">
+                  {shareNotice ??
+                    (mediaLoadFailed
+                      ? "사진을 불러오지 못해 사진 없이 카드를 만들었어요."
+                      : preparedFile
+                        ? "카드가 준비됐어요. 공유하기를 눌러 주세요."
+                        : "카드를 만들고 있어요. 준비되면 공유하기를 눌러 주세요.")}
+                </p>
+              )}
               <div className="quick-toggle">
                 <p className="control-subtitle">사진 맞춤</p>
                 <div className="choice-wrap">
@@ -1324,7 +1452,7 @@ export default function AttendanceShareView() {
                 aria-expanded={customizeOpen}
               >
                 <span>{customizeOpen ? "꾸미기 옵션 닫기" : "꾸미기 옵션 펼치기"}</span>
-                <span className="chevron" aria-hidden="true">?</span>
+                <ChevronDown />
               </button>
             </div>
 
@@ -1340,10 +1468,10 @@ export default function AttendanceShareView() {
 
             {simpleMode && (
               <div className="control-row simple-core-bar">
-                <button className="action-btn" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card quick">
+                <button className="action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card quick">
                   {isActionDisabled ? (
                     <span className="action-btn-loading">
-                      <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                      <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
                       <span>{saveButtonLabel}</span>
                     </span>
                   ) : (
@@ -1356,7 +1484,7 @@ export default function AttendanceShareView() {
                   aria-expanded={advancedOpen}
                 >
                   <span>{advancedOpen ? "더보기 닫기" : "더보기"}</span>
-                  <span className="chevron" aria-hidden="true">?</span>
+                  <ChevronDown />
                 </button>
               </div>
             )}
@@ -1369,7 +1497,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("preset")}
                 >
                   <span>Preset</span>
-                  <span className="chevron" aria-hidden="true">?</span>
+                  <ChevronDown />
                 </button>
                 {isSectionOpen("preset") && (
                   <div className="control-section">
@@ -1388,7 +1516,7 @@ export default function AttendanceShareView() {
                 aria-expanded={isSectionOpen("themePack")}
               >
                 <span>프레임/테마팩</span>
-                <span className="chevron" aria-hidden="true">?</span>
+                <ChevronDown />
               </button>
               {isSectionOpen("themePack") && (
                 <div className="control-section">
@@ -1415,7 +1543,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("advancedCard")}
                 >
                   <span>고급 카드 설정</span>
-                  <span className="chevron" aria-hidden="true">?</span>
+                  <ChevronDown />
                 </button>
                 {isSectionOpen("advancedCard") && (
                   <div className="control-section">
@@ -1491,7 +1619,7 @@ export default function AttendanceShareView() {
                     </div>
                     <div className="mt-3 flex items-center gap-2">
                       <input id="meta-toggle" type="checkbox" checked={showMeta} onChange={(e) => setShowMeta(e.target.checked)} aria-label="toggle meta" />
-                      <label htmlFor="meta-toggle" className="text-sm text-white/90">응원/공유 메타 표시</label>
+                      <label htmlFor="meta-toggle" className="text-sm text-steel-200">응원/공유 메타 표시</label>
                     </div>
                     {previewThumb && (
                       <div className="mt-3">
@@ -1512,7 +1640,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("text")}
                 >
                   <span>텍스트 꾸미기</span>
-                  <span className="chevron" aria-hidden="true">?</span>
+                  <ChevronDown />
                 </button>
                 {isSectionOpen("text") && (
                   <div className="control-section">
@@ -1557,7 +1685,7 @@ export default function AttendanceShareView() {
                       제목 위치 초기화
                     </button>
                   </div>
-                  <p className="text-xs text-white/65 mt-2">제목/서브텍스트는 카드에서 직접 드래그해서 위치 이동할 수 있어요.</p>
+                  <p className="text-xs text-steel-400 mt-2">제목/서브텍스트는 카드에서 직접 드래그해서 위치 이동할 수 있어요.</p>
                 </div>
                 )}
               </div>
@@ -1570,7 +1698,7 @@ export default function AttendanceShareView() {
                 aria-expanded={isSectionOpen("photo")}
               >
                 <span>사진 세부 설정</span>
-                <span className="chevron" aria-hidden="true">?</span>
+                <ChevronDown />
               </button>
               {isSectionOpen("photo") && (
                 <div className="control-section">
@@ -1599,7 +1727,7 @@ export default function AttendanceShareView() {
                       />
                     </label>
                   </div>
-                  {!firstImage && <p className="text-xs text-white/60 mt-2">사진이 없어서 위치 조절은 비활성화돼요.</p>}
+                  {!firstImage && <p className="text-xs text-steel-400 mt-2">사진이 없어서 위치 조절은 비활성화돼요.</p>}
 
                   <p className="control-subtitle mt-3">사진 편집</p>
                   <div className="range-grid">
@@ -1670,7 +1798,7 @@ export default function AttendanceShareView() {
                 aria-expanded={isSectionOpen("character")}
               >
                 <span>캐릭터</span>
-                <span className="chevron" aria-hidden="true">?</span>
+                <ChevronDown />
               </button>
               {isSectionOpen("character") && (
                 <div className="control-section">
@@ -1698,7 +1826,7 @@ export default function AttendanceShareView() {
                             aria-label={`pose ${pose.label}`}
                             aria-pressed={characterPose === pose.id}
                           >
-                            {pose.emoji} {pose.label}
+                            {pose.label}
                           </button>
                         ))}
                       </div>
@@ -1722,7 +1850,7 @@ export default function AttendanceShareView() {
                             className={`choice-btn ${characterExpression === exp.id ? "active" : ""}`}
                             onClick={() => setCharacterExpression(exp.id)}
                           >
-                            {exp.emoji} {exp.label}
+                            {exp.label}
                           </button>
                         ))}
                       </div>
@@ -1749,7 +1877,7 @@ export default function AttendanceShareView() {
                     </>
                   )}
                   {character === "me" && !myCharacter && (
-                    <p className="text-xs text-white/65 mt-2">
+                    <p className="text-xs text-steel-400 mt-2">
                       {myCharacterLoading ? "내 캐릭터 정보를 불러오는 중..." : "로그인 상태가 아니면 내 캐릭터를 표시할 수 없어요."}
                     </p>
                   )}
@@ -1765,7 +1893,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("deco")}
                 >
                   <span>배경 데코 레이어</span>
-                  <span className="chevron" aria-hidden="true">?</span>
+                  <ChevronDown />
                 </button>
                 {isSectionOpen("deco") && (
                   <div className="control-section">
@@ -1827,7 +1955,7 @@ export default function AttendanceShareView() {
                   aria-expanded={isSectionOpen("message")}
                 >
                   <span>Brag Message</span>
-                  <span className="chevron" aria-hidden="true">?</span>
+                  <ChevronDown />
                 </button>
                 {isSectionOpen("message") && (
                   <div className="control-section">
@@ -1847,27 +1975,27 @@ export default function AttendanceShareView() {
                     ))}
                     <button className="choice-btn" onClick={applyRandomTemplate} aria-label="random recommendation">랜덤 추천</button>
                   </div>
-                  <p className="text-xs text-white/70 mt-2">{customMessage.length}/280</p>
+                  <p className="text-xs text-steel-400 mt-2 font-num">{customMessage.length}/280</p>
                 </div>
                 )}
               </div>
             )}
 
             <div className="action-list">
-              <button className="action-btn primary" onClick={quickShare} disabled={isActionDisabled} aria-label="quick share">
+              <button className={`action-btn primary dg-btn dg-btn-primary ${arrivedForShare && preparedFile ? "share-ready-pulse" : ""}`} onClick={quickShare} disabled={isActionDisabled} aria-label="quick share">
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
-                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
                     <span>{shareButtonLabel}</span>
                   </span>
                 ) : (
                   shareButtonLabel
                 )}
               </button>
-              <button className="action-btn" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card">
+              <button className="action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card">
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
-                    <img src={watermarkLogo} alt="" className="action-btn-spinner" />
+                    <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
                     <span>{saveButtonLabel}</span>
                   </span>
                 ) : (
@@ -1876,12 +2004,12 @@ export default function AttendanceShareView() {
               </button>
               {showSimpleExtra && (
                 <>
-                  <button className="action-btn" onClick={async () => { await navigator.clipboard.writeText(composeShareText()); alert("멘트와 링크를 복사했어요."); }} aria-label="copy message and link">
+                  <button className="action-btn dg-btn dg-btn-steel" onClick={async () => { await navigator.clipboard.writeText(composeShareText()); alert("멘트와 링크를 복사했어요."); }} aria-label="copy message and link">
                     멘트+링크 복사
                   </button>
                   <button
                     disabled={sending || hasReacted("cheer")}
-                    className="action-btn"
+                    className="action-btn dg-btn dg-btn-steel"
                     onClick={() => sendReaction("cheer")}
                     aria-label="send cheer"
                   >
@@ -1889,14 +2017,14 @@ export default function AttendanceShareView() {
                   </button>
                   <button
                     disabled={sending || hasReacted("report")}
-                    className="action-btn"
+                    className="action-btn dg-btn dg-btn-steel"
                     onClick={() => sendReaction("report")}
                     aria-label="report share"
                   >
                     신고하기
                   </button>
-                  <a href={appShareLink} className="action-btn" aria-label="refresh current share page">현재 페이지 링크</a>
-                  <Link to="/" className="action-btn" aria-label="go home">홈으로</Link>
+                  <a href={appShareLink} className="action-btn dg-btn dg-btn-steel" aria-label="refresh current share page">현재 페이지 링크</a>
+                  <Link to="/" className="action-btn dg-btn dg-btn-steel" aria-label="go home">홈으로</Link>
                 </>
               )}
             </div>

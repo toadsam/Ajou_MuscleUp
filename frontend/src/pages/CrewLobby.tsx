@@ -2,6 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { crewApi } from "../services/crewApi";
 import type { CrewDetail } from "../types/crew";
+import { useCountUp } from "../hooks/useCountUp";
+
+function CountNumber({ value }: { value: number | null | undefined }) {
+  const v = useCountUp(value ?? 0, { duration: 800 });
+  if (value == null) return <>-</>;
+  return <>{Math.round(v)}</>;
+}
 
 type FeedType = "rank_up" | "rank_down" | "challenge" | "attendance" | "system";
 type FeedItem = {
@@ -16,12 +23,13 @@ const currentMonthKey = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
 
+// 피드 종류는 왼쪽 원판 색 띠로 구분한다.
 const feedStyle: Record<FeedType, string> = {
-  rank_up: "border-emerald-300/35 bg-emerald-500/10 text-emerald-100",
-  rank_down: "border-rose-300/35 bg-rose-500/10 text-rose-100",
-  challenge: "border-cyan-300/35 bg-cyan-500/10 text-cyan-100",
-  attendance: "border-amber-300/35 bg-amber-500/10 text-amber-100",
-  system: "border-white/20 bg-white/5 text-gray-200",
+  rank_up: "border-l-plate-green",
+  rank_down: "border-l-plate-red",
+  challenge: "border-l-plate-blue",
+  attendance: "border-l-plate-yellow",
+  system: "border-l-steel-500",
 };
 
 const createDeltaFeed = (prev: CrewDetail, next: CrewDetail): FeedItem[] => {
@@ -137,52 +145,63 @@ export default function CrewLobby() {
   }, [detail]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-slate-950 pb-20 pt-24 text-white">
-      <div className="pointer-events-none absolute -left-28 top-10 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-20 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
+    <section className="relative min-h-screen overflow-hidden pb-20 pt-24 text-white">
       <div className="mx-auto max-w-5xl space-y-4 px-4 sm:px-6 lg:px-8">
-        <header className="rounded-3xl border border-white/10 bg-gradient-to-r from-cyan-900/35 via-slate-900/70 to-emerald-900/25 p-5">
+        <header className="dg-steel p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs tracking-[0.2em] text-cyan-200">CREW LOBBY LIVE FEED</p>
-              <h1 className="text-2xl font-black">{detail?.name || "모임 로비"}</h1>
+              <p className="font-num flex items-center gap-2 text-sm font-bold text-plate-yellow">
+                <span className="relative flex h-2.5 w-2.5" aria-hidden>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-plate-red opacity-70" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-black bg-plate-red" />
+                </span>
+                Crew Lobby Live Feed
+              </p>
+              <h1 className="text-2xl sm:text-3xl">{detail?.name || "모임 로비"}</h1>
             </div>
-            <div className="flex items-center gap-2">
-              <Link to={`/crew/${crewIdNum}/challenges`} className="rounded-lg border border-white/20 px-3 py-2 text-sm text-gray-200 hover:bg-white/10">챌린지</Link>
-              <Link to={`/crew/${crewIdNum}/highlights`} className="rounded-lg border border-cyan-300/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100">하이라이트</Link>
-              <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to={`/crew/${crewIdNum}/challenges`} className="dg-btn dg-btn-steel min-h-[40px] px-4 text-sm">챌린지</Link>
+              <Link to={`/crew/${crewIdNum}/highlights`} className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">하이라이트</Link>
+              <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="dg-well px-3 py-2 text-sm text-chalk" />
             </div>
           </div>
         </header>
 
-        {error && <p className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</p>}
+        {error && <p className="dg-well border-l-4 border-l-plate-red p-3 text-sm text-red-200">{error}</p>}
 
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-[11px] text-gray-400">모임 인원</p>
-            <p className="text-2xl font-black text-cyan-100">{summary?.members ?? "-"}</p>
+          <div className="dg-rise rounded-xl border-[3px] border-black bg-steel-800 p-4 shadow-md">
+            <p className="text-xs text-steel-400">모임 인원</p>
+            <p className="font-num text-4xl font-black text-plate-yellow">{summary ? <CountNumber value={summary.members} /> : "-"}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-[11px] text-gray-400">활성 챌린지</p>
-            <p className="text-2xl font-black text-emerald-100">{summary?.activeChallenges ?? "-"}</p>
+          <div className="dg-rise rounded-xl border-[3px] border-black bg-steel-800 p-4 shadow-md" style={{ animationDelay: "60ms" }}>
+            <p className="text-xs text-steel-400">활성 챌린지</p>
+            <p className="font-num text-4xl font-black text-plate-green">{summary ? <CountNumber value={summary.activeChallenges} /> : "-"}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-[11px] text-gray-400">현재 1위</p>
-            <p className="text-lg font-black text-amber-100">{summary?.top?.nickname ?? "-"}</p>
+          <div className="dg-rise rounded-xl border-[3px] border-black bg-steel-800 p-4 shadow-md" style={{ animationDelay: "120ms" }}>
+            <p className="text-xs text-steel-400">현재 1위</p>
+            <p className="mt-1 flex items-center gap-2 text-xl font-black text-white">
+              <span className="font-num grid h-7 w-7 place-items-center rounded-full border-2 border-black bg-plate-yellow text-sm text-black">1</span>
+              {summary?.top?.nickname ?? "-"}
+            </p>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="dg-steel p-5">
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-black">실시간 피드</h2>
-            <span className="text-xs text-gray-400">12초 주기 갱신</span>
+            <span className="text-xs text-steel-400">12초 주기 갱신</span>
           </div>
           <div className="space-y-2">
-            {feed.length === 0 && <p className="text-sm text-gray-400">이벤트를 기다리는 중입니다.</p>}
-            {feed.map((item) => (
-              <article key={item.id} className={`rounded-xl border p-3 text-sm ${feedStyle[item.type]}`}>
+            {feed.length === 0 && <p className="text-sm text-steel-400">이벤트를 기다리는 중입니다.</p>}
+            {feed.map((item, idx) => (
+              <article
+                key={item.id}
+                className={`dg-well dg-rise border-l-[6px] p-3 text-sm text-steel-100 ${feedStyle[item.type]}`}
+                style={{ animationDelay: `${Math.min(idx, 8) * 50}ms` }}
+              >
                 <p>{item.message}</p>
-                <p className="mt-1 text-[11px] opacity-80">{new Date(item.createdAt).toLocaleTimeString()}</p>
+                <p className="font-num mt-1 text-xs text-steel-400">{new Date(item.createdAt).toLocaleTimeString()}</p>
               </article>
             ))}
           </div>

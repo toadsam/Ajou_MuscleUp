@@ -25,6 +25,15 @@ type FormState = {
 };
 
 const STATUS_OPTIONS: EventStatus[] = ["DRAFT", "SCHEDULED", "ACTIVE", "ENDED", "HIDDEN"];
+// 값은 그대로, 화면 라벨만 사람이 읽는 말로
+const STATUS_LABEL: Record<EventStatus, string> = {
+  DRAFT: "작성 중",
+  SCHEDULED: "예약",
+  ACTIVE: "진행 중",
+  ENDED: "종료",
+  HIDDEN: "숨김",
+};
+const FIELD = "rounded-md border-2 border-black bg-steel-900 text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow p-2.5";
 
 const initialForm: FormState = {
   title: "",
@@ -149,49 +158,82 @@ export default function AdminEventForm({ mode }: Props) {
     return url.toLowerCase().includes(libraryQuery.trim().toLowerCase());
   });
 
-  if (loading) return <section className="min-h-screen bg-slate-950 pt-28 px-6 text-white">불러오는 중...</section>;
+  if (loading)
+    return (
+      <section className="flex min-h-screen items-start justify-center gap-3 px-6 pt-32 text-steel-400" role="status">
+        <span className="dg-loading-plates" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+        불러오는 중...
+      </section>
+    );
 
   return (
-    <section className="min-h-screen bg-slate-950 pt-28 pb-24 text-white">
+    <section className="min-h-screen pt-28 pb-24 text-chalk">
       <div className="mx-auto max-w-3xl space-y-6 px-6 lg:px-10">
-        <h1 className="text-3xl font-extrabold">{pageTitle}</h1>
-        {error && <p className="rounded-lg bg-red-500/10 p-3 text-red-300">{error}</p>}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold text-plate-yellow">
+              이벤트 관리 <span className="font-num text-xs tracking-wide text-steel-500">ADMIN</span>
+            </p>
+            <h1 className="text-3xl">{pageTitle}</h1>
+          </div>
+        </div>
+        {error && <p className="rounded-md border-2 border-l-[6px] border-black border-l-plate-red bg-steel-900 p-3 text-red-200" role="alert">{error}</p>}
 
-        <form onSubmit={submit} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-          <input className="w-full rounded bg-slate-900 p-2" placeholder="제목" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-          <input className="w-full rounded bg-slate-900 p-2" placeholder="요약" value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} required />
-          <textarea className="h-48 w-full rounded bg-slate-900 p-2" placeholder="content(HTML)" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required />
+        <form onSubmit={submit} className="dg-steel dg-rise space-y-4 p-5 md:p-6">
+          <input className={`w-full ${FIELD}`} placeholder="제목" aria-label="제목" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+          <input className={`w-full ${FIELD}`} placeholder="요약" aria-label="요약" value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} required />
+          <textarea className={`h-48 w-full ${FIELD}`} placeholder="본문 (HTML)" aria-label="본문" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required />
 
-          <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4">
-            <p className="text-sm font-semibold text-cyan-300">썸네일 이미지</p>
+          <div className="dg-well space-y-3 p-4">
+            <p className="text-sm font-semibold text-plate-yellow">썸네일 이미지</p>
             <UploadDropzone folder="events" accept="image/*" onUploaded={(url) => { setForm((prev) => ({ ...prev, thumbnailUrl: url })); void loadLibrary(); }} />
-            <input className="w-full rounded bg-slate-900 p-2" placeholder="thumbnailUrl" value={form.thumbnailUrl} onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })} required />
-            {form.thumbnailUrl && <img src={form.thumbnailUrl} alt="thumbnail" className="h-40 w-full rounded object-cover" />}
+            <input className={`w-full ${FIELD}`} placeholder="썸네일 이미지 주소" aria-label="썸네일 이미지 주소" value={form.thumbnailUrl} onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })} required />
+            {form.thumbnailUrl && <img src={form.thumbnailUrl} alt="썸네일 미리보기" className="dg-pop h-40 w-full rounded-md border-2 border-black object-cover" />}
           </div>
 
-          <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4">
-            <p className="text-sm font-semibold text-cyan-300">배너 이미지 (선택)</p>
+          <div className="dg-well space-y-3 p-4">
+            <p className="text-sm font-semibold text-plate-yellow">배너 이미지 (선택)</p>
             <UploadDropzone folder="events" accept="image/*" onUploaded={(url) => { setForm((prev) => ({ ...prev, bannerUrl: url })); void loadLibrary(); }} />
-            <input className="w-full rounded bg-slate-900 p-2" placeholder="bannerUrl (optional)" value={form.bannerUrl} onChange={(e) => setForm({ ...form, bannerUrl: e.target.value })} />
-            {form.bannerUrl && <img src={form.bannerUrl} alt="banner" className="h-40 w-full rounded object-cover" />}
+            <input className={`w-full ${FIELD}`} placeholder="배너 이미지 주소 (선택)" aria-label="배너 이미지 주소" value={form.bannerUrl} onChange={(e) => setForm({ ...form, bannerUrl: e.target.value })} />
+            {form.bannerUrl && <img src={form.bannerUrl} alt="배너 미리보기" className="dg-pop h-40 w-full rounded-md border-2 border-black object-cover" />}
           </div>
 
-          <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4">
+          <div className="dg-well space-y-3 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-cyan-300">업로드 파일 찾기</p>
-              <button type="button" onClick={() => void loadLibrary()} className="rounded bg-white/10 px-3 py-1 text-xs">새로고침</button>
+              <p className="text-sm font-semibold text-plate-yellow">업로드 파일 찾기</p>
+              <button type="button" onClick={() => void loadLibrary()} className="dg-btn dg-btn-steel px-3 py-1 text-xs">새로고침</button>
             </div>
-            <input className="w-full rounded bg-slate-900 p-2" placeholder="파일명/경로 검색" value={libraryQuery} onChange={(e) => setLibraryQuery(e.target.value)} />
-            {libraryLoading && <p className="text-sm text-gray-300">파일 목록 로딩 중...</p>}
+            <input className={`w-full ${FIELD}`} placeholder="파일명/경로 검색" aria-label="업로드 파일 검색" value={libraryQuery} onChange={(e) => setLibraryQuery(e.target.value)} />
+            {libraryLoading && (
+              <p className="flex items-center gap-2 text-sm text-steel-300" role="status">
+                <span className="dg-loading-plates" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                파일 목록 로딩 중...
+              </p>
+            )}
             {libraryError && <p className="text-sm text-red-300">{libraryError}</p>}
             {!libraryLoading && filteredLibrary.length === 0 && <p className="text-sm text-gray-400">검색 결과가 없습니다.</p>}
             <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto md:grid-cols-2">
               {filteredLibrary.map((url) => (
-                <div key={url} className="overflow-hidden rounded border border-white/10 p-2">
-                  <img src={url} alt="library" className="h-24 w-full rounded object-cover" />
+                <div
+                  key={url}
+                  className={`overflow-hidden rounded-md border-2 bg-steel-800 p-2 transition hover:-translate-y-0.5 hover:shadow-md ${
+                    form.thumbnailUrl === url || form.bannerUrl === url ? "border-plate-yellow" : "border-black"
+                  }`}
+                >
+                  <img src={url} alt="업로드 이미지" className="h-24 w-full rounded object-cover" />
                   <div className="mt-2 flex gap-2">
-                    <button type="button" onClick={() => setForm((prev) => ({ ...prev, thumbnailUrl: url }))} className="rounded bg-cyan-500 px-2 py-1 text-xs font-semibold text-slate-900">썸네일 선택</button>
-                    <button type="button" onClick={() => setForm((prev) => ({ ...prev, bannerUrl: url }))} className="rounded bg-white/10 px-2 py-1 text-xs">배너 선택</button>
+                    <button type="button" onClick={() => setForm((prev) => ({ ...prev, thumbnailUrl: url }))} className="dg-btn dg-btn-primary px-2 py-1 text-xs">썸네일 선택</button>
+                    <button type="button" onClick={() => setForm((prev) => ({ ...prev, bannerUrl: url }))} className="dg-btn dg-btn-steel px-2 py-1 text-xs">배너 선택</button>
                   </div>
                 </div>
               ))}
@@ -199,31 +241,31 @@ export default function AdminEventForm({ mode }: Props) {
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <input type="datetime-local" className="rounded bg-slate-900 p-2" value={form.startAt} onChange={(e) => setForm({ ...form, startAt: e.target.value })} required />
-            <input type="datetime-local" className="rounded bg-slate-900 p-2" value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.target.value })} required />
+            <input type="datetime-local" aria-label="시작 일시" className={FIELD} value={form.startAt} onChange={(e) => setForm({ ...form, startAt: e.target.value })} required />
+            <input type="datetime-local" aria-label="종료 일시" className={FIELD} value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.target.value })} required />
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <select className="rounded bg-slate-900 p-2" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as EventStatus })}>
-              {STATUS_OPTIONS.map((status) => (<option key={status} value={status}>{status}</option>))}
+            <select aria-label="상태" className={FIELD} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as EventStatus })}>
+              {STATUS_OPTIONS.map((status) => (<option key={status} value={status}>{STATUS_LABEL[status]}</option>))}
             </select>
-            <input type="number" className="rounded bg-slate-900 p-2" value={form.priority} onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })} />
-            <input className="rounded bg-slate-900 p-2" placeholder="tags (comma separated)" value={form.tagsText} onChange={(e) => setForm({ ...form, tagsText: e.target.value })} />
+            <input type="number" aria-label="우선순위" placeholder="우선순위" className={`${FIELD} font-num text-base`} value={form.priority} onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })} />
+            <input className={FIELD} placeholder="태그 (쉼표로 구분)" aria-label="태그" value={form.tagsText} onChange={(e) => setForm({ ...form, tagsText: e.target.value })} />
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <input className="rounded bg-slate-900 p-2" placeholder="ctaText" value={form.ctaText} onChange={(e) => setForm({ ...form, ctaText: e.target.value })} required />
-            <input className="rounded bg-slate-900 p-2" placeholder="ctaLink" value={form.ctaLink} onChange={(e) => setForm({ ...form, ctaLink: e.target.value })} required />
+            <input className={FIELD} placeholder="버튼 문구" aria-label="버튼 문구" value={form.ctaText} onChange={(e) => setForm({ ...form, ctaText: e.target.value })} required />
+            <input className={FIELD} placeholder="버튼 링크" aria-label="버튼 링크" value={form.ctaLink} onChange={(e) => setForm({ ...form, ctaLink: e.target.value })} required />
           </div>
 
           <div className="flex gap-4">
-            <label className="flex items-center gap-2"><input type="checkbox" checked={form.isMainBanner} onChange={(e) => setForm({ ...form, isMainBanner: e.target.checked })} /><span>메인배너 노출</span></label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={form.isPinned} onChange={(e) => setForm({ ...form, isPinned: e.target.checked })} /><span>핀 고정</span></label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-steel-200"><input type="checkbox" className="h-4 w-4 accent-plate-red" checked={form.isMainBanner} onChange={(e) => setForm({ ...form, isMainBanner: e.target.checked })} /><span>메인배너 노출</span></label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-steel-200"><input type="checkbox" className="h-4 w-4 accent-plate-red" checked={form.isPinned} onChange={(e) => setForm({ ...form, isPinned: e.target.checked })} /><span>핀 고정</span></label>
           </div>
 
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="rounded bg-cyan-500 px-4 py-2 font-semibold text-slate-900 disabled:opacity-60">{saving ? "저장 중..." : "저장"}</button>
-            <button type="button" onClick={() => navigate("/admin/events")} className="rounded bg-white/10 px-4 py-2">취소</button>
+            <button type="submit" disabled={saving} className="dg-btn dg-btn-primary px-5 py-2">{saving ? "저장 중..." : "저장"}</button>
+            <button type="button" onClick={() => navigate("/admin/events")} className="dg-btn dg-btn-steel px-4 py-2">취소</button>
           </div>
         </form>
       </div>

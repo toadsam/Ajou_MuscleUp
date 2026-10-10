@@ -160,56 +160,64 @@ export default function Login() {
   }, [googleReady, rememberMe]);
 
   return (
-    <section className="pt-32 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800">
-      <div className="bg-gray-800/70 backdrop-blur-md p-10 rounded-2xl shadow-xl w-full max-w-md text-white space-y-6">
-        <h2 className="text-3xl font-extrabold text-center mb-2">Google 로그인</h2>
-        <p className="text-center text-gray-400 text-sm">Google 계정으로 빠르게 시작하세요.</p>
+    <section className="flex min-h-screen items-center justify-center px-4 pb-16 pt-32">
+      <div className="dg-steel dg-rise relative w-full max-w-md space-y-6 overflow-hidden px-6 pb-8 pt-9 text-chalk sm:px-10">
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-2 border-b-2 border-black bg-plate-red" />
+        <div className="text-center">
+          <p className="font-num text-sm tracking-[0.12em] text-steel-400">SIGN IN</p>
+          <h2 className="mt-1 font-display text-3xl text-chalk">Google 로그인</h2>
+          <p className="mt-2 text-sm text-steel-300">Google 계정으로 빠르게 시작하세요.</p>
+        </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-200 justify-center">
+        <label className="flex cursor-pointer items-center justify-center gap-2 text-sm text-steel-300">
           <input
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 accent-plate-red"
           />
           자동 로그인
         </label>
 
-        <div className="flex justify-center min-h-[42px] items-center">
-          {GOOGLE_CLIENT_ID && !isSafari ? (
-            <div id="googleSignInButton" />
-          ) : (
-            <p className="text-sm text-gray-400">
-              {GOOGLE_CLIENT_ID ? "Safari에서는 안정 모드 로그인을 사용합니다." : "Google Client ID가 설정되지 않았습니다."}
-            </p>
-          )}
-        </div>
-
-        {googleLoadFailed && (
-          <div className="space-y-3">
-            <p className="text-center text-xs text-gray-400">
-              {isSafari
-                ? "Safari 안정 모드로 로그인합니다."
-                : "현재 브라우저 환경에서 Google 버튼을 불러오지 못했습니다."}
-            </p>
-            {isBlockedUserAgent ? (
-              <button
-                type="button"
-                className="w-full bg-white text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-                onClick={openInExternalBrowser}
-              >
-                외부 브라우저에서 로그인 열기
-              </button>
+        {/* 구글 버튼이 철판 위에 혼자 떠 보이지 않도록 밝은 받침 칸에 끼워 둔다 */}
+        <div className="rounded-lg border-[3px] border-black bg-chalk px-3 py-4 shadow-md">
+          <div className="flex min-h-[44px] items-center justify-center">
+            {GOOGLE_CLIENT_ID && !isSafari ? (
+              <div id="googleSignInButton" className="max-w-full overflow-hidden" />
             ) : (
-              <button
-                type="button"
-                className="w-full bg-white text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-                onClick={startGoogleFallbackLogin}
-              >
-                Google 로그인 계속하기
-              </button>
+              <p className="text-center text-sm text-steel-700">
+                {GOOGLE_CLIENT_ID ? "Safari에서는 안정 모드 로그인을 사용합니다." : "Google Client ID가 설정되지 않았습니다."}
+              </p>
             )}
           </div>
-        )}
+
+          {googleLoadFailed && (
+            <div className="mt-3 space-y-3 border-t-2 border-dashed border-steel-300 pt-3">
+              <p className="text-center text-xs text-steel-600">
+                {isSafari
+                  ? "Safari 안정 모드로 로그인합니다."
+                  : "현재 브라우저 환경에서 Google 버튼을 불러오지 못했습니다."}
+              </p>
+              {isBlockedUserAgent ? (
+                <button
+                  type="button"
+                  className="dg-btn w-full bg-white py-3 text-sm text-black"
+                  onClick={openInExternalBrowser}
+                >
+                  외부 브라우저에서 로그인 열기
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="dg-btn w-full bg-white py-3 text-sm text-black"
+                  onClick={startGoogleFallbackLogin}
+                >
+                  Google 로그인 계속하기
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* 회원가입 문구 임시 비활성화 */}
       </div>

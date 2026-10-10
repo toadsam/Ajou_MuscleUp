@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import CharacterCard from "../components/CharacterCard";
 import { Link } from "react-router-dom";
 import type { GrowthParams } from "../components/avatar/types";
@@ -13,6 +13,42 @@ import {
 } from "../utils/avatarCustomization";
 import { resolveEvolutionBranch, resolveSkillUnlocks } from "../utils/evolutionProgress";
 import { saveAppearanceBySeed } from "../utils/avatarAppearanceState";
+import { ChalkPuff } from "../components/avatar/TierUpAnimation";
+import { useCountUp } from "../hooks/useCountUp";
+import { useInView } from "../hooks/useInView";
+
+// 처음 보일 때 0 에서 값까지 굴러 올라가는 숫자(표현 전용)
+function CountNum({ value, suffix = "" }: { value: number | null | undefined; suffix?: string }) {
+  const [ref, inView] = useInView<HTMLSpanElement>();
+  const current = useCountUp(value ?? 0, { duration: 900, start: inView });
+  if (value === null || value === undefined) return <span ref={ref}>-</span>;
+  return (
+    <span ref={ref}>
+      {Math.round(current).toLocaleString("ko-KR")}
+      {suffix}
+    </span>
+  );
+}
+
+// 아코디언 열림 표시 화살표
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
 
 type BragPost = {
   id: number;
@@ -255,8 +291,8 @@ export default function MyPage() {
     return () => window.removeEventListener("resize", updateMobile);
   }, []);
 
-  useEffect(() => {
-    (async () => {
+  // 처음 들어올 때와 "다시 시도" 를 눌렀을 때 같은 순서로 불러온다
+  const loadAll = useCallback(async () => {
       try {
         setLoading(true);
         setError(null);
@@ -326,12 +362,21 @@ export default function MyPage() {
           setForm(emptyForm);
         }
       } catch (e: any) {
-        setError(e?.message || "마이페이지 정보를 불러오지 못했어요.");
+        // 서버가 꺼져 있거나 네트워크가 끊기면 fetch 는 TypeError 를 던진다
+        const offline = e instanceof TypeError || /failed to fetch|network/i.test(String(e?.message ?? ""));
+        setError(
+          offline
+            ? "서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요."
+            : e?.message || "마이페이지 정보를 불러오지 못했어요.",
+        );
       } finally {
         setLoading(false);
       }
-    })();
   }, []);
+
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
 
   useEffect(() => {
     if (!change) return;
@@ -612,13 +657,15 @@ export default function MyPage() {
   );
 
   return (
-    <section className="pt-32 pb-20 px-5 md:px-10 bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen text-white">
+    <section className="pt-32 pb-20 px-5 md:px-10 min-h-screen text-chalk">
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex flex-col gap-2">
-          <p className="text-sm uppercase tracking-[0.3em] text-pink-300">내 기록</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold">마이페이지</h1>
+          <p className="flex items-center gap-2 text-sm font-semibold text-plate-yellow">
+            내 기록 <span className="font-num text-xs tracking-wide text-steel-500">MY PAGE</span>
+          </p>
+          <h1 className="text-3xl md:text-4xl">마이페이지</h1>
           {data && (
-            <p className="text-gray-300">
+            <p className="text-steel-300">
               {data.nickname} ({data.email})
             </p>
           )}
@@ -628,39 +675,65 @@ export default function MyPage() {
           (isMobile ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="h-20 animate-pulse rounded-2xl bg-white/10" />
-                <div className="h-20 animate-pulse rounded-2xl bg-white/10" />
+                <div className="h-20 animate-pulse rounded-lg border-2 border-black bg-steel-800" />
+                <div className="h-20 animate-pulse rounded-lg border-2 border-black bg-steel-800" />
               </div>
-              <div className="h-12 animate-pulse rounded-2xl bg-white/10" />
-              <div className="h-14 animate-pulse rounded-2xl bg-white/10" />
-              <div className="h-14 animate-pulse rounded-2xl bg-white/10" />
+              <div className="h-12 animate-pulse rounded-lg border-2 border-black bg-steel-800" />
+              <div className="h-14 animate-pulse rounded-lg border-2 border-black bg-steel-800" />
+              <div className="h-14 animate-pulse rounded-lg border-2 border-black bg-steel-800" />
             </div>
           ) : (
-            <div className="text-gray-300">불러오는 중...</div>
+            <div className="flex items-center gap-3 text-steel-300" role="status">
+              <span className="dg-loading-plates" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+              불러오는 중...
+            </div>
           ))}
-        {error && <div className="text-red-400">{error}</div>}
+        {error && (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-l-[6px] border-black border-l-plate-red bg-steel-900 px-4 py-3 text-red-200"
+            role="alert"
+          >
+            <span>{error}</span>
+            <button type="button" className="dg-btn dg-btn-steel min-h-[40px] px-4 text-sm" onClick={() => void loadAll()} disabled={loading}>
+              다시 시도
+            </button>
+          </div>
+        )}
 
         {isMobile && !loading && !error && (
           <div className="space-y-4 md:hidden">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">캐릭터 상태</p>
-                <p className="mt-2 text-base font-bold text-white">
-                  {character ? `${character.tier} · Stage ${character.evolutionStage}` : "준비 중"}
+              <div className="dg-steel dg-rise p-4">
+                <p className="text-xs font-semibold text-steel-400">캐릭터 상태</p>
+                <p className="mt-2 font-num text-xl leading-tight text-chalk">
+                  {character ? (
+                    <>
+                      <span className="text-plate-yellow">{character.tier}</span> · 단계 {character.evolutionStage}
+                    </>
+                  ) : (
+                    "준비 중"
+                  )}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">{attendanceRiskLabel}</p>
+                <p className="mt-1 text-xs text-steel-400">{attendanceRiskLabel}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">현재 랭크</p>
-                <p className="mt-2 text-base font-bold text-white">#{rank?.myRank ?? "-"}</p>
-                <p className="mt-1 text-xs text-gray-400">상위 {rank?.myTopPercent ?? "-"}%</p>
+              <div className="dg-steel dg-rise p-4" style={{ animationDelay: "60ms" }}>
+                <p className="text-xs font-semibold text-steel-400">현재 랭크</p>
+                <p className="mt-1 font-num text-3xl leading-none text-chalk">
+                  #<CountNum value={rank?.myRank} />
+                </p>
+                <p className="mt-1 text-xs text-steel-400">상위 {rank?.myTopPercent ?? "-"}%</p>
               </div>
             </div>
 
             {character && (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
-                <p className="px-2 pt-1 text-[11px] uppercase tracking-[0.18em] text-gray-400">내 캐릭터 미리보기</p>
-                <div className="mt-2 overflow-hidden rounded-xl">
+              <div>
+                <p className="px-1 text-xs font-semibold text-steel-400">내 캐릭터 미리보기</p>
+                <div className="mt-2">
                   <CharacterCard
                     character={character}
                     evaluation={evaluation}
@@ -679,38 +752,50 @@ export default function MyPage() {
               </div>
             )}
 
-            <Link to="/attendance" className="block rounded-2xl border border-pink-400/40 bg-pink-500/20 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-pink-100">오늘 해야 할 1개</p>
-              <p className="mt-1 text-base font-bold text-white">출석 체크하러 가기</p>
+            <Link
+              to="/attendance"
+              className="dg-chalk-burst flex items-center justify-between rounded-lg border-[3px] border-black bg-plate-red px-4 py-3 text-white shadow-md transition hover:-translate-y-0.5 active:translate-y-1 active:shadow-none"
+            >
+              <span>
+                <span className="block text-xs font-semibold text-white/80">오늘 해야 할 1개</span>
+                <span className="mt-0.5 block font-display text-lg">출석 체크하러 가기</span>
+              </span>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </Link>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5">
+            <div className="dg-steel overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleMobileSection("stats")}
-                className="flex w-full items-center justify-between px-4 py-3 text-left"
+                aria-expanded={mobileOpenSections.stats}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-steel-700/60"
               >
-                <span className="font-semibold">통계</span>
-                <span className="text-sm text-gray-300">{mobileOpenSections.stats ? "접기" : "펼치기"}</span>
+                <span className="font-display text-base">통계</span>
+                <span className="flex items-center gap-1 text-sm text-steel-400">
+                  {mobileOpenSections.stats ? "접기" : "펼치기"}
+                  <Chevron open={mobileOpenSections.stats} />
+                </span>
               </button>
               {mobileOpenSections.stats && (
-                <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-3">
+                <div className="dg-rise grid grid-cols-2 gap-2 border-t-2 border-black p-3">
                   {statInputs.map((field) => (
-                    <label key={`m-${field.key}`} className="text-xs text-gray-300">
+                    <label key={`m-${field.key}`} className="text-xs font-semibold text-steel-300">
                       <span>{field.label}</span>
                       {field.key === "gender" ? (
                         <div className="mt-1 flex items-center gap-1">
                           <button
                             type="button"
                             onClick={() => setForm((prev) => ({ ...prev, gender: "MALE" }))}
-                            className={`flex-1 rounded-md border px-2 py-1 text-[11px] ${form.gender === "MALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"}`}
+                            className={`flex-1 rounded-md border-2 border-black px-2 py-1 text-[11px] font-bold transition ${form.gender === "MALE" ? "bg-plate-red text-white shadow-[0_2px_0_#0E0E10]" : "bg-steel-700 text-steel-300"}`}
                           >
                             남
                           </button>
                           <button
                             type="button"
                             onClick={() => setForm((prev) => ({ ...prev, gender: "FEMALE" }))}
-                            className={`flex-1 rounded-md border px-2 py-1 text-[11px] ${form.gender === "FEMALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"}`}
+                            className={`flex-1 rounded-md border-2 border-black px-2 py-1 text-[11px] font-bold transition ${form.gender === "FEMALE" ? "bg-plate-red text-white shadow-[0_2px_0_#0E0E10]" : "bg-steel-700 text-steel-300"}`}
                           >
                             여
                           </button>
@@ -729,7 +814,7 @@ export default function MyPage() {
                                 field.key === "mbti" ? e.target.value.toUpperCase() : e.target.value,
                             }))
                           }
-                          className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white"
+                          className="mt-1 w-full rounded-md border-2 border-black bg-steel-900 text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow px-2 py-1.5 text-sm"
                         />
                       )}
                     </label>
@@ -737,7 +822,7 @@ export default function MyPage() {
                   <button
                     onClick={saveStats}
                     disabled={saving}
-                    className="col-span-2 mt-1 rounded-xl bg-pink-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    className="dg-btn dg-btn-primary col-span-2 mt-1 px-4 py-2 text-sm"
                   >
                     {saving ? "저장 중..." : "저장"}
                   </button>
@@ -745,25 +830,29 @@ export default function MyPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5">
+            <div className="dg-steel overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleMobileSection("gear")}
-                className="flex w-full items-center justify-between px-4 py-3 text-left"
+                aria-expanded={mobileOpenSections.gear}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-steel-700/60"
               >
-                <span className="font-semibold">장비</span>
-                <span className="text-sm text-gray-300">{mobileOpenSections.gear ? "접기" : "펼치기"}</span>
+                <span className="font-display text-base">장비</span>
+                <span className="flex items-center gap-1 text-sm text-steel-400">
+                  {mobileOpenSections.gear ? "접기" : "펼치기"}
+                  <Chevron open={mobileOpenSections.gear} />
+                </span>
               </button>
               {mobileOpenSections.gear && (
-                <div className="space-y-3 border-t border-white/10 p-3">
+                <div className="dg-rise space-y-3 border-t-2 border-black p-3">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => void toggleResting()} className="rounded-full border border-white/20 px-3 py-1.5 text-xs">
+                    <button onClick={() => void toggleResting()} aria-pressed={isResting} className={`dg-btn px-3 py-1.5 text-xs ${isResting ? "bg-plate-blue text-white" : "dg-btn-steel"}`}>
                       {isResting ? "휴식중" : "휴식 모드"}
                     </button>
-                    <button onClick={rerollAvatar} disabled={rerolling} className="rounded-full border border-amber-300/60 px-3 py-1.5 text-xs text-amber-100 disabled:opacity-60">
+                    <button onClick={rerollAvatar} disabled={rerolling} className="dg-btn dg-btn-steel px-3 py-1.5 text-xs">
                       {rerolling ? "리롤 중..." : "다시 만들기"}
                     </button>
-                    <button onClick={togglePublic} disabled={publicUpdating} className="rounded-full border border-emerald-400/70 px-3 py-1.5 text-xs">
+                    <button onClick={togglePublic} disabled={publicUpdating} aria-pressed={Boolean(character?.isPublic)} className={`dg-btn px-3 py-1.5 text-xs ${character?.isPublic ? "bg-plate-green text-white" : "dg-btn-steel"}`}>
                       {character?.isPublic ? "공개 중" : "비공개"}
                     </button>
                   </div>
@@ -772,13 +861,13 @@ export default function MyPage() {
                       const unlocked = unlockedParts[part];
                       const image = customization[part];
                       return (
-                        <div key={`m-part-${part}`} className="rounded-xl border border-white/10 bg-black/20 p-2">
-                          <p className="text-[11px] text-white">{CUSTOM_PART_LABEL[part]}</p>
-                          <div className="mt-1 h-16 overflow-hidden rounded-md border border-white/10 bg-black/30">
+                        <div key={`m-part-${part}`} className="dg-well p-2">
+                          <p className="text-[11px] font-semibold text-chalk">{CUSTOM_PART_LABEL[part]}</p>
+                          <div className="mt-1 h-16 overflow-hidden rounded border-2 border-black bg-steel-950">
                             {image ? (
                               <img loading="lazy" decoding="async" src={image} alt={`${part} custom`} className="h-full w-full object-cover" />
                             ) : (
-                              <div className="flex h-full items-center justify-center text-[10px] text-gray-400">{unlocked ? "이미지 없음" : "잠김"}</div>
+                              <div className="flex h-full items-center justify-center text-[10px] text-steel-400">{unlocked ? "이미지 없음" : "잠김"}</div>
                             )}
                           </div>
                         </div>
@@ -789,19 +878,23 @@ export default function MyPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5">
+            <div className="dg-steel overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleMobileSection("logs")}
-                className="flex w-full items-center justify-between px-4 py-3 text-left"
+                aria-expanded={mobileOpenSections.logs}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-steel-700/60"
               >
-                <span className="font-semibold">로그</span>
-                <span className="text-sm text-gray-300">{mobileOpenSections.logs ? "접기" : "펼치기"}</span>
+                <span className="font-display text-base">로그</span>
+                <span className="flex items-center gap-1 text-sm text-steel-400">
+                  {mobileOpenSections.logs ? "접기" : "펼치기"}
+                  <Chevron open={mobileOpenSections.logs} />
+                </span>
               </button>
               {mobileOpenSections.logs && (
-                <div className="space-y-2 border-t border-white/10 p-3">
+                <div className="dg-rise space-y-2 border-t-2 border-black p-3">
                   {data?.recentAiChats?.slice(0, 8).map((item, idx) => (
-                    <div key={`m-ai-${idx}`} className="rounded-xl border border-white/10 bg-black/25 p-2">
+                    <div key={`m-ai-${idx}`} className="dg-well dg-rise p-2" style={{ animationDelay: `${idx * 50}ms` }}>
                       <p className="text-[11px] text-gray-400">{formatDate(item.createdAt)}</p>
                       <p className="text-xs font-semibold text-white">Q. {item.question}</p>
                       <p className="text-xs text-gray-300 line-clamp-3">A. {item.answer}</p>
@@ -812,20 +905,24 @@ export default function MyPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5">
+            <div className="dg-steel overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleMobileSection("feedback")}
-                className="flex w-full items-center justify-between px-4 py-3 text-left"
+                aria-expanded={mobileOpenSections.feedback}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-steel-700/60"
               >
-                <span className="font-semibold">공개 피드백</span>
-                <span className="text-sm text-gray-300">{mobileOpenSections.feedback ? "접기" : "펼치기"}</span>
+                <span className="font-display text-base">공개 피드백</span>
+                <span className="flex items-center gap-1 text-sm text-steel-400">
+                  {mobileOpenSections.feedback ? "접기" : "펼치기"}
+                  <Chevron open={mobileOpenSections.feedback} />
+                </span>
               </button>
               {mobileOpenSections.feedback && (
-                <div className="space-y-2 border-t border-white/10 p-3">
+                <div className="dg-rise space-y-2 border-t-2 border-black p-3">
                   <div className="space-y-2">
                     {(data?.recentComments ?? []).slice(0, 6).map((c) => (
-                      <div key={`m-c-${c.id}`} className="rounded-xl border border-white/10 bg-black/25 p-2">
+                      <div key={`m-c-${c.id}`} className="dg-well p-2">
                         <p className="text-[11px] text-gray-400">{c.authorNickname || "익명"} · {formatDate(c.createdAt)}</p>
                         <p className="text-xs text-gray-200 line-clamp-2">{c.content}</p>
                       </div>
@@ -833,9 +930,9 @@ export default function MyPage() {
                   </div>
                   <div className="space-y-2">
                     {(data?.recentLikes ?? []).slice(0, 6).map((p) => (
-                      <a key={`m-l-${p.id}`} href={`/brag/${p.id}`} className="block rounded-xl border border-white/10 bg-black/25 p-2">
-                        <p className="text-xs font-semibold text-pink-200 line-clamp-1">{p.title}</p>
-                        <p className="text-[11px] text-gray-400">Likes {p.likeCount ?? 0}</p>
+                      <a key={`m-l-${p.id}`} href={`/brag/${p.id}`} className="dg-well block p-2 transition hover:-translate-y-0.5 hover:shadow-md">
+                        <p className="text-xs font-semibold text-red-300 line-clamp-1">{p.title}</p>
+                        <p className="text-[11px] text-steel-400">좋아요 <span className="font-num text-xs text-chalk">{p.likeCount ?? 0}</span></p>
                       </a>
                     ))}
                   </div>
@@ -846,24 +943,25 @@ export default function MyPage() {
         )}
 
         <div className="hidden gap-6 md:grid lg:grid-cols-[1.15fr,1fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5">
+          <div className="dg-steel dg-rise p-6 space-y-5 self-start">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">내 스탯 입력</h2>
+              <h2 className="font-display text-xl">내 스탯 입력</h2>
               {stats?.updatedAt && (
-                <span className="text-xs text-gray-400">최근 저장 {formatDate(stats.updatedAt)}</span>
+                <span className="text-xs text-steel-400">최근 저장 {formatDate(stats.updatedAt)}</span>
               )}
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               {statInputs.map((field) => (
-                <label key={field.key} className="text-sm text-gray-300 space-y-2">
+                <label key={field.key} className="text-sm font-semibold text-steel-300 space-y-2">
                   <span>{field.label}</span>
                   {field.key === "gender" ? (
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => setForm((prev) => ({ ...prev, gender: "MALE" }))}
-                        className={`px-4 py-2 rounded-full text-xs border transition ${
-                          form.gender === "MALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"
+                        aria-pressed={form.gender === "MALE"}
+                        className={`rounded-md border-2 border-black px-5 py-2 text-xs font-bold transition active:translate-y-0.5 ${
+                          form.gender === "MALE" ? "bg-plate-red text-white shadow-[0_3px_0_#0E0E10]" : "bg-steel-700 text-steel-300 hover:bg-steel-600"
                         }`}
                       >
                         남
@@ -871,8 +969,9 @@ export default function MyPage() {
                       <button
                         type="button"
                         onClick={() => setForm((prev) => ({ ...prev, gender: "FEMALE" }))}
-                        className={`px-4 py-2 rounded-full text-xs border transition ${
-                          form.gender === "FEMALE" ? "border-pink-400 bg-pink-500/20" : "border-white/20"
+                        aria-pressed={form.gender === "FEMALE"}
+                        className={`rounded-md border-2 border-black px-5 py-2 text-xs font-bold transition active:translate-y-0.5 ${
+                          form.gender === "FEMALE" ? "bg-plate-red text-white shadow-[0_3px_0_#0E0E10]" : "bg-steel-700 text-steel-300 hover:bg-steel-600"
                         }`}
                       >
                         여
@@ -884,7 +983,7 @@ export default function MyPage() {
                       placeholder={field.placeholder}
                       value={form[field.key as keyof StatsForm] as string}
                       onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value.toUpperCase() }))}
-                      className="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                      className="w-full rounded-md border-2 border-black bg-steel-900 text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow px-4 py-2 text-sm"
                       maxLength={4}
                     />
                   ) : (
@@ -894,18 +993,18 @@ export default function MyPage() {
                       placeholder={field.placeholder}
                       value={form[field.key as keyof StatsForm] as string}
                       onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                      className="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                      className="w-full rounded-md border-2 border-black bg-steel-900 text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow px-4 py-2 text-sm"
                     />
                   )}
                 </label>
               ))}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400">몸무게는 필수 입력입니다.</span>
+              <span className="text-xs text-steel-400">몸무게는 필수 입력입니다.</span>
               <button
                 onClick={saveStats}
                 disabled={saving}
-                className="px-5 py-2 rounded-full bg-pink-500 text-white text-sm font-semibold hover:bg-pink-400 transition disabled:opacity-60"
+                className="dg-btn dg-btn-primary px-6 py-2 text-sm"
               >
                 {saving ? "저장 중..." : "저장"}
               </button>
@@ -915,33 +1014,27 @@ export default function MyPage() {
           {character ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">내 캐릭터</h2>
-                <div className="flex items-center gap-2">
+                <h2 className="font-display text-xl">내 캐릭터</h2>
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
                     onClick={() => void toggleResting()}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold border transition ${
-                      isResting
-                        ? "border-sky-300/80 bg-sky-400/15 text-sky-100"
-                        : "border-white/20 text-gray-200 hover:border-sky-300/50"
-                    }`}
+                    aria-pressed={isResting}
+                    className={`dg-btn px-4 py-2 text-xs ${isResting ? "bg-plate-blue text-white" : "dg-btn-steel"}`}
                   >
                     {isResting ? "휴식중" : "휴식 모드"}
                   </button>
                   <button
                     onClick={rerollAvatar}
                     disabled={rerolling}
-                    className="px-4 py-2 rounded-full text-xs font-semibold border border-amber-300/60 text-amber-100 hover:bg-amber-400/15 transition disabled:opacity-60"
+                    className="dg-btn dg-btn-steel px-4 py-2 text-xs"
                   >
                     {rerolling ? "리롤 중..." : "다시 만들기"}
                   </button>
                   <button
                     onClick={togglePublic}
                     disabled={publicUpdating}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold border transition ${
-                      character.isPublic
-                        ? "border-emerald-400 text-emerald-200"
-                        : "border-white/30 text-gray-200"
-                    }`}
+                    aria-pressed={character.isPublic}
+                    className={`dg-btn px-4 py-2 text-xs ${character.isPublic ? "bg-plate-green text-white" : "dg-btn-steel"}`}
                   >
                     {character.isPublic ? "공개 중" : "비공개"}
                   </button>
@@ -962,80 +1055,104 @@ export default function MyPage() {
                 skillEnabledMap={skillEnabledMap}
                 onToggleSkill={toggleSkillEnabled}
               />
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 grid md:grid-cols-2 gap-3">
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">Tier Info</div>
-                  <div className="text-white font-semibold">
-                    {character.tier} · {tierDescriptions[character.tier] ?? "-"}
+              <div className="dg-steel p-4 text-sm text-steel-300 grid md:grid-cols-2 gap-3">
+                <div className="dg-well px-3 py-2">
+                  <div className="text-xs font-semibold text-steel-400">티어 정보</div>
+                  <div className="text-chalk font-semibold">
+                    <span className="font-num text-base text-plate-yellow">{character.tier}</span> · {tierDescriptions[character.tier] ?? "-"}
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">Evolution Stage</div>
-                  <div className="text-white font-semibold">
-                    Stage {character.evolutionStage} · {stageDescriptions[character.evolutionStage] ?? "성장 중"}
+                <div className="dg-well px-3 py-2">
+                  <div className="text-xs font-semibold text-steel-400">진화 단계</div>
+                  <div className="text-chalk font-semibold">
+                    <span className="font-num text-base">{character.evolutionStage}</span>단계 · {stageDescriptions[character.evolutionStage] ?? "성장 중"}
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">Evolution Branch</div>
-                  <div className="text-white font-semibold">{evolutionBranch ?? "-"}</div>
+                <div className="dg-well px-3 py-2">
+                  <div className="text-xs font-semibold text-steel-400">진화 갈래</div>
+                  <div className="text-chalk font-semibold">{evolutionBranch ?? "-"}</div>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">Skill Unlock</div>
-                  <div className="text-white font-semibold">{activeSkillCount} / {skillUnlocks.length}</div>
+                <div className="dg-well px-3 py-2">
+                  <div className="text-xs font-semibold text-steel-400">스킬 해금</div>
+                  <div className="font-num text-lg leading-tight text-chalk">
+                    {activeSkillCount} <span className="text-steel-500">/ {skillUnlocks.length}</span>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">Condition</div>
-                  <div className={`font-semibold ${attendanceRiskState === "critical" ? "text-rose-300" : attendanceRiskState === "warning" ? "text-amber-300" : isResting ? "text-sky-200" : "text-white"}`}>
+                <div className="dg-well px-3 py-2 md:col-span-2">
+                  <div className="text-xs font-semibold text-steel-400">컨디션</div>
+                  <div className={`flex items-center gap-2 font-semibold ${attendanceRiskState === "critical" ? "text-red-300" : attendanceRiskState === "warning" ? "text-yellow-300" : isResting ? "text-blue-300" : "text-chalk"}`}>
+                    <span
+                      aria-hidden="true"
+                      className={`h-2.5 w-2.5 rounded-full border border-black ${attendanceRiskState === "critical" ? "bg-plate-red" : attendanceRiskState === "warning" ? "bg-plate-yellow" : isResting ? "bg-plate-blue" : "bg-plate-green"}`}
+                    />
                     {attendanceRiskLabel}
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300 flex flex-wrap gap-6">
+              <div className="dg-steel p-4 text-sm text-steel-300 flex flex-wrap items-end gap-6">
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">My Rank</div>
-                  <div className="text-white text-lg font-semibold">{rank?.myRank ?? "-"}</div>
+                  <div className="text-xs font-semibold text-steel-400">내 순위</div>
+                  <div className="font-num text-4xl leading-none text-chalk">
+                    {rank?.myRank !== undefined && rank?.myRank !== null ? <>#<CountNum value={rank.myRank} /></> : "-"}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">Top Percent</div>
-                  <div className="text-white text-lg font-semibold">{rank?.myTopPercent !== undefined && rank?.myTopPercent !== null ? `${rank.myTopPercent}%` : "-"}</div>
+                  <div className="text-xs font-semibold text-steel-400">상위 비율</div>
+                  <div className="font-num text-4xl leading-none text-plate-yellow">{rank?.myTopPercent !== undefined && rank?.myTopPercent !== null ? `${rank.myTopPercent}%` : "-"}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-500">Public Total</div>
-                  <div className="text-white text-lg font-semibold">{rank?.totalPublic ?? 0}</div>
+                  <div className="text-xs font-semibold text-steel-400">공개 캐릭터 수</div>
+                  <div className="font-num text-4xl leading-none text-chalk"><CountNum value={rank?.totalPublic ?? 0} /></div>
                 </div>
                 {!character.isPublic && (
-                  <div className="text-xs text-gray-400">공개 설정 시 랭킹이 계산됩니다.</div>
+                  <div className="text-xs text-steel-400">공개 설정 시 랭킹이 계산됩니다.</div>
                 )}
               </div>
-              <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4 space-y-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-amber-200/90">Attendance Unlock</p>
-                  <h3 className="text-lg font-bold text-amber-50">사진 커스텀 해금</h3>
-                  <p className="text-xs text-amber-100/80">이번 달 운동 출석 {attendanceCount}일 기준으로 파트가 열립니다.</p>
+              <div className="dg-steel relative overflow-hidden p-4 space-y-4">
+                <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 border-b-2 border-black bg-plate-yellow" />
+                <div className="pt-1">
+                  <p className="flex items-center gap-2 text-xs font-semibold text-plate-yellow">
+                    출석 해금 <span className="font-num text-[11px] tracking-wide text-steel-500">UNLOCK</span>
+                  </p>
+                  <h3 className="font-display text-lg text-chalk">사진 커스텀 해금</h3>
+                  <p className="text-xs text-steel-300">
+                    이번 달 운동 출석 <span className="font-num text-sm text-chalk">{attendanceCount}</span>일 기준으로 파트가 열립니다.
+                  </p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
-                  {(["face", "body", "emblem"] as CustomPart[]).map((part) => {
+                  {(["face", "body", "emblem"] as CustomPart[]).map((part, partIdx) => {
                     const unlocked = unlockedParts[part];
                     const image = customization[part];
+                    const need = CUSTOM_UNLOCK_REQUIREMENTS[part];
                     return (
-                      <div key={part} className={`rounded-xl border p-3 ${unlocked ? "border-emerald-300/50 bg-emerald-500/10" : "border-white/15 bg-black/20"}`}>
+                      <div
+                        key={part}
+                        className="dg-well dg-rise relative overflow-hidden p-3 pl-4"
+                        style={{ animationDelay: `${partIdx * 60}ms` }}
+                      >
+                        <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${unlocked ? "bg-plate-green" : "bg-steel-700"}`} />
                         <div className="flex items-center justify-between">
-                          <strong className="text-sm text-white">{CUSTOM_PART_LABEL[part]}</strong>
-                          <span className={`text-[11px] ${unlocked ? "text-emerald-200" : "text-gray-400"}`}>
-                            {unlocked ? "해금" : `${CUSTOM_UNLOCK_REQUIREMENTS[part]}일 필요`}
+                          <strong className="text-sm text-chalk">{CUSTOM_PART_LABEL[part]}</strong>
+                          <span className={`text-[11px] font-semibold ${unlocked ? "text-green-300" : "text-steel-400"}`}>
+                            {unlocked ? "해금" : `${need}일 필요`}
                           </span>
                         </div>
-                        <div className="mt-2 h-20 rounded-lg border border-white/10 bg-black/30 overflow-hidden">
+                        {!unlocked && (
+                          <div className="mt-2 h-2 overflow-hidden rounded-sm border border-black bg-steel-950" aria-hidden="true">
+                            <div className="h-full bg-plate-yellow transition-[width] duration-700" style={{ width: `${Math.min(100, (attendanceCount / Math.max(1, need)) * 100)}%` }} />
+                          </div>
+                        )}
+                        <div className="mt-2 h-20 rounded border-2 border-black bg-steel-950 overflow-hidden">
                           {image ? (
                             <img loading="lazy" decoding="async" src={image} alt={`${part} custom`} className="h-full w-full object-cover" />
                           ) : (
-                            <div className="h-full w-full flex items-center justify-center text-xs text-gray-400">
+                            <div className="h-full w-full flex items-center justify-center text-xs text-steel-400">
                               {unlocked ? "이미지 없음" : "잠김"}
                             </div>
                           )}
                         </div>
                         <div className="mt-2 flex items-center gap-2">
-                          <label className={`flex-1 text-center px-2 py-1.5 rounded-md text-xs font-semibold border ${unlocked ? "border-white/25 text-white hover:bg-white/10 cursor-pointer" : "border-white/10 text-gray-500 cursor-not-allowed"}`}>
+                          <label className={`dg-btn dg-btn-steel flex-1 px-2 py-1.5 text-xs ${unlocked ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
                             업로드
                             <input
                               type="file"
@@ -1050,7 +1167,7 @@ export default function MyPage() {
                           </label>
                           <button
                             type="button"
-                            className="px-2 py-1.5 rounded-md text-xs border border-white/20 text-gray-200 disabled:opacity-40"
+                            className="dg-btn dg-btn-steel px-2 py-1.5 text-xs"
                             disabled={!image}
                             onClick={() => clearCustomImage(part)}
                           >
@@ -1063,24 +1180,37 @@ export default function MyPage() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-gray-300">
+          ) : loading ? (
+            <div className="dg-steel flex items-center gap-3 p-6 text-steel-300" role="status">
+              <span className="dg-loading-plates" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
               캐릭터 정보를 불러오는 중입니다.
+            </div>
+          ) : (
+            <div className="dg-steel flex flex-wrap items-center justify-between gap-3 p-6 text-steel-300" role="status">
+              <span>캐릭터 정보를 불러오지 못했어요.</span>
+              <button type="button" className="dg-btn dg-btn-steel min-h-[40px] px-4 text-sm" onClick={() => void loadAll()}>
+                다시 시도
+              </button>
             </div>
           )}
         </div>
 
         {data && (
           <div className="hidden gap-6 md:grid md:grid-cols-2">
-            <div className="rounded-2xl border border-white/5 bg-gray-800/70 p-5 space-y-3">
+            <div className="dg-steel p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">최근 댓글</h2>
+                <h2 className="font-display text-xl">최근 댓글</h2>
                 <span className="text-sm text-gray-400">최대 20개</span>
               </div>
               {data.recentComments.length === 0 && <p className="text-gray-400 text-sm">댓글 기록이 없습니다.</p>}
               <div className="space-y-3">
-                {data.recentComments.map((c) => (
-                  <div key={c.id} className="rounded-xl bg-gray-900/60 border border-gray-700 p-3">
+                {data.recentComments.map((c, idx) => (
+                  <div key={c.id} className="dg-well dg-rise p-3" style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}>
                     <div className="flex justify-between text-xs text-gray-400">
                       <span>{c.authorNickname || "익명"}</span>
                       <span>{formatDate(c.createdAt)}</span>
@@ -1091,22 +1221,23 @@ export default function MyPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-gray-800/70 p-5 space-y-3">
+            <div className="dg-steel p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">좋아요한 글</h2>
+                <h2 className="font-display text-xl">좋아요한 글</h2>
                 <span className="text-sm text-gray-400">최신순</span>
               </div>
               {data.recentLikes.length === 0 && <p className="text-gray-400 text-sm">좋아요 기록이 없습니다.</p>}
               <div className="space-y-3">
-                {data.recentLikes.map((p) => (
+                {data.recentLikes.map((p, idx) => (
                   <a
                     key={p.id}
                     href={`/brag/${p.id}`}
-                    className="block rounded-xl bg-gray-900/60 border border-gray-700 p-3 hover:border-pink-400/50 transition"
+                    className="dg-well dg-rise block p-3 transition hover:-translate-y-0.5 hover:shadow-md"
+                    style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}
                   >
-                    <div className="flex justify-between items-center">
-                      <p className="font-semibold text-pink-200">{p.title}</p>
-                      <span className="text-sm text-gray-400">Likes {p.likeCount ?? 0}</span>
+                    <div className="flex justify-between items-center gap-3">
+                      <p className="font-semibold text-red-300">{p.title}</p>
+                      <span className="shrink-0 text-sm text-steel-400">좋아요 <span className="font-num text-base text-chalk">{p.likeCount ?? 0}</span></span>
                     </div>
                     <p className="text-sm text-gray-400 mt-1">
                       {p.movement || "-"} {p.weight ? `· ${p.weight}` : ""}
@@ -1116,16 +1247,16 @@ export default function MyPage() {
               </div>
             </div>
 
-            <div className="md:col-span-2 rounded-2xl border border-white/5 bg-gray-800/70 p-5 space-y-3">
+            <div className="md:col-span-2 dg-steel p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">AI 사용 기록</h2>
+                <h2 className="font-display text-xl">AI 사용 기록</h2>
                 <span className="text-sm text-gray-400">최대 20개</span>
               </div>
               {data.recentAiChats.length === 0 && <p className="text-gray-400 text-sm">AI 기록이 없습니다.</p>}
               <div className="grid md:grid-cols-2 gap-3">
                 {data.recentAiChats.map((item, idx) => (
-                  <div key={idx} className="rounded-xl bg-gray-900/60 border border-gray-700 p-3 space-y-1">
-                    <div className="text-xs text-gray-500">{formatDate(item.createdAt)}</div>
+                  <div key={idx} className="dg-well dg-rise p-3 space-y-1" style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}>
+                    <div className="text-xs text-steel-400">{formatDate(item.createdAt)}</div>
                     <p className="text-sm font-semibold text-white">Q. {item.question}</p>
                     <p className="text-sm text-gray-200 whitespace-pre-line">A. {item.answer}</p>
                   </div>
@@ -1138,9 +1269,13 @@ export default function MyPage() {
 
       {toast && (
         <div
-          className={`fixed top-24 right-6 z-50 rounded-full px-4 py-2 text-sm shadow-lg ${
-            toast.type === "success" ? "bg-emerald-400 text-black" : "bg-rose-500 text-white"
+          key={toast.message}
+          role="status"
+          aria-live="polite"
+          className={`dg-plate-in fixed top-24 right-6 z-50 rounded-lg border-[3px] border-black px-4 py-2 text-sm font-semibold shadow-md ${
+            toast.type === "success" ? "bg-plate-green text-white" : "bg-plate-red text-white"
           }`}
+          style={{ "--from": "60px" } as CSSProperties}
         >
           {toast.message}
         </div>
@@ -1148,25 +1283,27 @@ export default function MyPage() {
 
       {banner && (
         <div
-          className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-sm font-bold tracking-[0.3em] shadow-xl ${
+          className={`fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-lg border-[3px] border-black px-6 py-2 font-num text-2xl tracking-wide shadow-xl ${
             banner.kind === "evolution"
-              ? "bg-cyan-400 text-black"
+              ? "bg-plate-blue text-white"
               : banner.kind === "tier"
-              ? "bg-amber-300 text-black"
-              : "bg-pink-500 text-white"
+              ? "bg-plate-yellow text-black"
+              : "bg-plate-red text-white"
           }`}
         >
-          {banner.message}
+          <span className="dg-pop block">{banner.message}</span>
         </div>
       )}
 
       {rerollCinematic && (
-        <div className="reroll-cinematic-overlay" aria-hidden="true">
-          <div className="reroll-cinematic-flash" />
-          <div className="reroll-cinematic-ring ring-1" />
-          <div className="reroll-cinematic-ring ring-2" />
-          <div className="reroll-cinematic-ring ring-3" />
-          <div className="reroll-cinematic-rays" />
+        // 다시 만들기·진화 순간: 화면 가운데서 원판이 철컥 끼워지고 초크 가루가 퍼진다
+        <div className="pointer-events-none fixed inset-0 z-[80]" aria-hidden="true">
+          <div className="absolute left-1/2 top-1/2" style={{ translate: "-50% -50%" }}>
+            <div className="dg-pop flex h-28 w-28 items-center justify-center rounded-full border-[4px] border-black bg-plate-yellow shadow-xl">
+              <div className="h-8 w-8 rounded-full border-[3px] border-black bg-steel-800" />
+            </div>
+          </div>
+          <ChalkPuff count={26} spread={170} />
         </div>
       )}
     </section>

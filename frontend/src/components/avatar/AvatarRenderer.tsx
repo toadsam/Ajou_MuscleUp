@@ -1,15 +1,11 @@
-﻿import { useEffect, useId, useState } from "react";
-import Arms from "./Arms";
-import Effects from "./Effects";
-import Head from "./Head";
-import Legs from "./Legs";
-import Torso from "./Torso";
+import { useEffect, useId, useMemo, useState } from "react";
 import { resolveSeedFeatures } from "./seed";
-import { TIER_PRESETS } from "./tierPreset";
+import { CELL, buildPixelAvatar, type Pose, type PixelAvatarSpec } from "./pixelAvatar";
 import type { AvatarSeed, CharacterTier, GrowthParams } from "./types";
 import { defaultGrowthParams } from "./types";
+import { TIER_PRESETS } from "./tierPreset";
 import type { AvatarCustomization } from "../../utils/avatarCustomization";
-import { amplifyGrowthParams, branchTheme, type EvolutionBranch } from "../../utils/evolutionProgress";
+import { amplifyGrowthParams, type EvolutionBranch } from "../../utils/evolutionProgress";
 import { AVATAR_APPEARANCE_EVENT, loadAppearanceBySeed } from "../../utils/avatarAppearanceState";
 import "./avatar.css";
 
@@ -29,13 +25,32 @@ type Props = {
   activeSkillIds?: string[];
 };
 
+// 피부·머리 색은 MBTI 를 따르고, 민소매 색은 원판 팔레트에서 고른다.
 const mbtiTone = (mbti?: string | null) => {
   const v = (mbti ?? "").toUpperCase();
-  if (v.includes("NT")) return { skin: "#f3c7a9", suit: "#2563eb", hair: "#1e293b", stroke: "#0f172a" };
-  if (v.includes("NF")) return { skin: "#f4c8b4", suit: "#ea580c", hair: "#3f3f46", stroke: "#18181b" };
-  if (v.includes("SJ")) return { skin: "#edc2a5", suit: "#15803d", hair: "#292524", stroke: "#0f172a" };
-  if (v.includes("SP")) return { skin: "#f1c6aa", suit: "#b91c1c", hair: "#1f2937", stroke: "#111827" };
-  return { skin: "#f1c4a5", suit: "#475569", hair: "#1f2937", stroke: "#0f172a" };
+  if (v.includes("NT")) return { skin: "#f3c7a9", tank: "#2F6FD0", hair: "#1e293b" };
+  if (v.includes("NF")) return { skin: "#f4c8b4", tank: "#F0BE2E", hair: "#3f3f46" };
+  if (v.includes("SJ")) return { skin: "#edc2a5", tank: "#2E9C55", hair: "#292524" };
+  if (v.includes("SP")) return { skin: "#f1c6aa", tank: "#D9302A", hair: "#1f2937" };
+  return { skin: "#f1c4a5", tank: "#4A4E57", hair: "#1f2937" };
+};
+
+// 진화 갈래는 원판 색 하나로 — 민소매와 가슴 마크에 쓴다.
+const BRANCH_COLOR: Record<EvolutionBranch, string> = {
+  TITAN: "#D9302A",
+  BLAZE: "#F0BE2E",
+  PHANTOM: "#2F6FD0",
+};
+
+const TIER_STEP: Record<CharacterTier, number> = {
+  BRONZE: 0,
+  SILVER: 1,
+  GOLD: 2,
+  PLATINUM: 3,
+  DIAMOND: 4,
+  MASTER: 5,
+  GRANDMASTER: 6,
+  CHALLENGER: 7,
 };
 
 const mbtiMotionClass = (mbti?: string | null) => {
@@ -44,6 +59,11 @@ const mbtiMotionClass = (mbti?: string | null) => {
   if (v.startsWith("I")) return "avatar-motion-calm";
   return "";
 };
+
+const clamp01 = (n: number) => Math.max(0, Math.min(1, Number.isFinite(n) ? n : 0));
+
+// 진화 단계가 오를수록 자세가 바뀐다: 서기 → 양팔 알통 → 바벨 들기
+const poseForStage = (stage: number): Pose => (stage >= 6 ? "overhead" : stage >= 3 ? "flex" : "stand");
 
 export default function AvatarRenderer({
   avatarSeed,
@@ -94,54 +114,83 @@ export default function AvatarRenderer({
 
   const rawGrowth = growthParams ?? defaultGrowthParams;
   const growth = resolvedBranch ? amplifyGrowthParams(rawGrowth, resolvedBranch, resolvedSkillCount) : rawGrowth;
-  const seedFeatures = resolveSeedFeatures(avatarSeed || "seed");
-  const tone = mbtiTone(mbti);
-  const branch = resolvedBranch ? branchTheme(resolvedBranch) : null;
+  const tierStep = TIER_STEP[tier] ?? 0;
   const tierPreset = TIER_PRESETS[tier];
-  const tierStep = ({
-    BRONZE: 0,
-    SILVER: 1,
-    GOLD: 2,
-    PLATINUM: 3,
-    DIAMOND: 4,
-    MASTER: 5,
-    GRANDMASTER: 6,
-    CHALLENGER: 7,
-  } as const)[tier];
   const motionClass = mbtiMotionClass(mbti);
-  const strokeColor = branch?.accent ?? tone.stroke;
-  const boostedStroke = growth.strokeWidth + tierPreset.strokeBoost * 0.7;
-  const tierPopScale = 1 + tierStep * 0.03 + resolvedSkillCount * 0.01;
-  const dynamicGlow = 8 + tierPreset.glow * 34 + growth.muscularityNormalized * 10 + tierStep * 4 + resolvedSkillCount * 2;
-  const bodyScale = 1 + tierStep * 0.02 + growth.muscularityNormalized * 0.02;
   const svgId = useId().replace(/[:]/g, "");
-  const faceClipId = `face-custom-clip-${svgId}`;
-  const bodyClipId = `body-custom-clip-${svgId}`;
-  const emblemClipId = `emblem-custom-clip-${svgId}`;
-  const facePatternId = `face-custom-pattern-${svgId}`;
-  const bodyPatternId = `body-custom-pattern-${svgId}`;
-  const emblemPatternId = `emblem-custom-pattern-${svgId}`;
-  const hasFace = Boolean(resolvedCustomization?.face);
-  const hasBody = Boolean(resolvedCustomization?.body);
-  const hasEmblem = Boolean(resolvedCustomization?.emblem);
+
+  const skillKey = resolvedSkillIds.join(",");
+  const art = useMemo(() => {
+    const seed = resolveSeedFeatures(avatarSeed || "seed");
+    const tone = mbtiTone(mbti);
+    // 근육 단계: 근육량이 중심, 어깨 성장과 시드 체형이 조금 보탠다
+    const buildScore =
+      clamp01(growth.muscularityNormalized) * 2.4 +
+      clamp01(growth.shoulderGrowth) * 0.6 +
+      (seed.baseBuild >= 4 ? 0.4 : 0) +
+      (tierStep >= 5 ? 0.3 : 0);
+    const build = Math.max(0, Math.min(3, Math.floor(buildScore + 0.3))) as PixelAvatarSpec["build"];
+    const pose = resolvedResting ? "stand" : poseForStage(stage);
+    const skills = new Set(skillKey ? skillKey.split(",") : []);
+
+    return buildPixelAvatar({
+      build,
+      fat: clamp01(growth.fatNormalized) > 0.55 ? 1 : 0,
+      female: resolvedGender === "FEMALE",
+      hairStyle: seed.hairStyle,
+      eyeStyle: seed.eyeStyle % 3,
+      pose,
+      tierStep,
+      plates: pose === "overhead" ? Math.min(3, stage - 5) : 0,
+      resting: resolvedResting,
+      risk: resolvedAttendanceRisk,
+      colors: {
+        skin: tone.skin,
+        hair: tone.hair,
+        tank: resolvedBranch ? BRANCH_COLOR[resolvedBranch] : tone.tank,
+      },
+      emblem: resolvedBranch && skills.has("branch") ? BRANCH_COLOR[resolvedBranch] : null,
+      skills: {
+        aura: skills.has("aura"),
+        wave: skills.has("wave"),
+        burst: skills.has("burst"),
+      },
+    });
+  }, [
+    avatarSeed,
+    mbti,
+    growth.muscularityNormalized,
+    growth.shoulderGrowth,
+    growth.fatNormalized,
+    tierStep,
+    stage,
+    resolvedResting,
+    resolvedGender,
+    resolvedAttendanceRisk,
+    resolvedBranch,
+    skillKey,
+  ]);
+
+  const y = (row: number) => row * CELL;
+  const custom = resolvedCustomization;
+  const region = (r: { x: number; y: number; w: number; h: number }) => ({
+    x: r.x * CELL,
+    y: y(r.y),
+    width: r.w * CELL,
+    height: r.h * CELL,
+  });
 
   return (
     <div
       className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${resolvedGender === "FEMALE" ? "avatar-gender-female" : "avatar-gender-male"} ${resolvedResting ? "avatar-resting" : ""} ${resolvedAttendanceRisk === "warning" ? "avatar-risk-warning" : ""} ${resolvedAttendanceRisk === "critical" ? "avatar-risk-critical" : ""} ${tierPreset.burst ? "avatar-master-burst" : ""}`}
       style={{ width: size, height: size }}
     >
-      {resolvedResting && (
-        <>
-          <div className="avatar-rest-banner">{"\uD734\uC2DD \uC911"}</div>
-          <div className="avatar-rest-cloud cloud-left" aria-hidden="true" />
-          <div className="avatar-rest-cloud cloud-right" aria-hidden="true" />
-        </>
-      )}
+      {resolvedResting && <div className="avatar-rest-banner">{"휴식 중"}</div>}
       {!resolvedResting && resolvedAttendanceRisk === "warning" && (
-        <div className="avatar-risk-banner warning">{"\uACBD\uACE0"}</div>
+        <div className="avatar-risk-banner warning">{"경고"}</div>
       )}
       {!resolvedResting && resolvedAttendanceRisk === "critical" && (
-        <div className="avatar-risk-banner critical">{"\uD0C8\uB77D\uC704\uAE30"}</div>
+        <div className="avatar-risk-banner critical">{"탈락위기"}</div>
       )}
 
       <svg
@@ -150,126 +199,82 @@ export default function AvatarRenderer({
         height={size}
         role="img"
         aria-label="assembled-avatar"
-        style={{ transform: `scale(${tierPopScale})`, transition: "transform 280ms ease-out" }}
+        shapeRendering="crispEdges"
+        // 머리 위로 든 바벨(음수 행)이 잘리지 않게
+        style={{ overflow: "visible" }}
       >
         <defs>
-          <radialGradient id="tierAuraGradient">
-            <stop offset="0%" stopColor={strokeColor} stopOpacity="0.75" />
-            <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
-          </radialGradient>
-          <clipPath id={faceClipId}>
-            <ellipse cx={72} cy={42} rx={14} ry={8.5} />
-          </clipPath>
-          <clipPath id={bodyClipId}>
-            <ellipse cx={72} cy={93} rx={22} ry={31} />
-          </clipPath>
-          <clipPath id={emblemClipId}>
-            <circle cx={72} cy={88} r={8} />
-          </clipPath>
-          {hasFace && (
-            <pattern id={facePatternId} patternUnits="objectBoundingBox" width={1} height={1}>
-              <image href={resolvedCustomization?.face ?? ""} width={60} height={36} preserveAspectRatio="xMidYMid slice" />
-            </pattern>
+          {custom?.face && (
+            <clipPath id={`px-face-${svgId}`}>
+              <rect {...region(art.regions.face)} />
+            </clipPath>
           )}
-          {hasBody && (
-            <pattern id={bodyPatternId} patternUnits="objectBoundingBox" width={1} height={1}>
-              <image href={resolvedCustomization?.body ?? ""} width={92} height={126} preserveAspectRatio="xMidYMid slice" />
-            </pattern>
+          {custom?.body && (
+            <clipPath id={`px-body-${svgId}`}>
+              <rect {...region(art.regions.body)} />
+            </clipPath>
           )}
-          {hasEmblem && (
-            <pattern id={emblemPatternId} patternUnits="objectBoundingBox" width={1} height={1}>
-              <image href={resolvedCustomization?.emblem ?? ""} width={40} height={40} preserveAspectRatio="xMidYMid slice" />
-            </pattern>
+          {custom?.emblem && (
+            <clipPath id={`px-emblem-${svgId}`}>
+              <rect {...region(art.regions.emblem)} />
+            </clipPath>
           )}
         </defs>
 
-        <g
-          style={{
-            filter: `drop-shadow(0 0 ${dynamicGlow}px ${strokeColor}) contrast(${growth.contrastBoost})`,
-            transform: `scale(${bodyScale})`,
-            transformOrigin: "72px 96px",
-          }}
-        >
-          <Legs growthParams={{ ...growth, strokeWidth: boostedStroke }} seedFeatures={seedFeatures} strokeColor={strokeColor} bodyColor={tone.skin} />
-          <Torso
-            growthParams={{ ...growth, strokeWidth: boostedStroke }}
-            seedFeatures={seedFeatures}
-            strokeColor={strokeColor}
-            suitColor={tone.suit}
-            gender={resolvedGender}
+        {/* 바닥 그림자 */}
+        <rect x={4 * CELL} y={y(31)} width={16 * CELL} height={CELL} fill="rgba(0,0,0,0.35)" />
+
+        {art.runs.map((run) => (
+          <rect
+            key={`${run.x}:${run.y}`}
+            x={run.x * CELL}
+            y={y(run.y)}
+            width={run.w * CELL}
+            height={CELL}
+            fill={run.color}
           />
-          <Arms
-            growthParams={{ ...growth, strokeWidth: boostedStroke }}
-            tierBoost={tierPreset.auraIntensity}
-            seedFeatures={seedFeatures}
-            strokeColor={strokeColor}
-            skinColor={tone.skin}
-            gender={resolvedGender}
+        ))}
+
+        {custom?.body && (
+          <image
+            href={custom.body}
+            {...region(art.regions.body)}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#px-body-${svgId})`}
+            opacity={0.45}
           />
-          <Head
-            gender={resolvedGender}
-            mbti={mbti}
-            isResting={resolvedResting}
-            attendanceRisk={resolvedAttendanceRisk}
-            seedFeatures={seedFeatures}
-            strokeColor={strokeColor}
-            skinColor={tone.skin}
-            hairColor={tone.hair}
+        )}
+        {custom?.face && (
+          <image
+            href={custom.face}
+            {...region(art.regions.face)}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#px-face-${svgId})`}
+            opacity={0.65}
           />
-          {resolvedGender === "FEMALE" && (
-            <>
-              <path
-                d="M 51 64 Q 72 51 93 64 L 99 86 Q 94 112 72 118 Q 50 112 45 86 Z"
-                fill="rgba(255,255,255,0.23)"
-                stroke="rgba(255,255,255,0.42)"
-                strokeWidth="1.35"
-              />
-              <path
-                d="M 72 60 C 66 70, 64 79, 64 97"
-                stroke="rgba(255,255,255,0.56)"
-                strokeWidth="1.45"
-                fill="none"
-                strokeLinecap="round"
-              />
-              <path
-                d="M 72 60 C 78 70, 80 79, 80 97"
-                stroke="rgba(255,255,255,0.56)"
-                strokeWidth="1.45"
-                fill="none"
-                strokeLinecap="round"
-              />
-            </>
-          )}
-          {hasBody && (
-            <rect x={48} y={62} width={48} height={62} clipPath={`url(#${bodyClipId})`} fill={`url(#${bodyPatternId})`} opacity={0.45} />
-          )}
-          {hasFace && (
-            <rect x={57} y={32} width={30} height={20} clipPath={`url(#${faceClipId})`} fill={`url(#${facePatternId})`} opacity={0.65} />
-          )}
-          {hasEmblem && (
-            <circle cx={72} cy={88} r={8} clipPath={`url(#${emblemClipId})`} fill={`url(#${emblemPatternId})`} opacity={0.9} />
-          )}
-          <Effects
-            tier={tier}
-            stage={stage}
-            strokeColor={strokeColor}
-            accentColor={strokeColor}
-            archetype={branch?.archetype}
-            evolutionBranch={resolvedBranch ?? undefined}
-            skillLevel={resolvedSkillCount}
-            activeSkillIds={resolvedSkillIds}
+        )}
+        {custom?.emblem && (
+          <image
+            href={custom.emblem}
+            {...region(art.regions.emblem)}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#px-emblem-${svgId})`}
+            opacity={0.9}
           />
-          {resolvedResting && (
-            <>
-              <rect x={56} y={18} width={32} height={10} rx={4} fill="#dbeafe" stroke="#60a5fa" strokeWidth={1.6} opacity={0.96} transform="rotate(-8 72 23)" />
-              <path d="M 57 24 L 87 19" stroke="#93c5fd" strokeWidth={1.3} opacity={0.9} />
-              <path d="M 84 30 Q 94 28 99 38" stroke="#60a5fa" strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.9} />
-              <path d="M 98 39 Q 92 44 98 49" stroke="#38bdf8" strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.82} />
-              <path d="M 72 186 Q 68 189 64 186" stroke="#64748b" strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.85} />
-              <ellipse cx={72} cy={187} rx={28} ry={4} fill="#0f172a" opacity={0.22} />
-            </>
-          )}
-        </g>
+        )}
+
+        {art.effects.map((fx, i) => (
+          <rect
+            key={`fx-${i}`}
+            x={fx.x * CELL}
+            y={y(fx.y)}
+            width={fx.w * CELL}
+            height={fx.h * CELL}
+            fill={fx.color}
+            className={fx.className || undefined}
+            style={fx.delay ? { animationDelay: `${fx.delay}ms` } : undefined}
+          />
+        ))}
       </svg>
     </div>
   );

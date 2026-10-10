@@ -135,45 +135,54 @@ export default function Register() {
     }
   };
 
+  const inputClass =
+    "w-full rounded-md border-2 border-black bg-steel-900 p-3 text-chalk placeholder:text-steel-500 transition focus:outline-none focus-visible:border-plate-yellow read-only:opacity-70";
+
   return (
-    <section className="pt-32 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800">
+    <section className="flex min-h-screen items-center justify-center px-4 pb-16 pt-32">
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-800/70 backdrop-blur-md p-10 rounded-2xl shadow-xl w-full max-w-md text-white"
+        className="dg-steel dg-rise relative w-full max-w-md overflow-hidden px-6 pb-8 pt-10 text-chalk sm:px-10"
       >
-        <h2 className="text-3xl font-extrabold text-center mb-8">회원가입</h2>
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-2 border-b-2 border-black bg-plate-red" />
+        <div className="mb-8 text-center">
+          <p className="font-num text-sm tracking-[0.12em] text-steel-400">JOIN</p>
+          <h2 className="mt-1 font-display text-3xl text-chalk">회원가입</h2>
+        </div>
 
         <div className="mb-6">
-          <label className="block mb-2">이름</label>
+          <label className="mb-2 block text-sm font-semibold text-steel-300">이름</label>
           <input
             type="text" name="name" value={form.name} onChange={handleChange}
-            className="w-full p-3 rounded bg-gray-900 text-white focus:outline-none"
+            className={inputClass}
             autoComplete="name" required
           />
         </div>
 
         <div className="mb-6">
-          <label className="block mb-2">닉네임 (선택)</label>
+          <label className="mb-2 block text-sm font-semibold text-steel-300">
+            닉네임 <span className="font-normal text-steel-500">(선택)</span>
+          </label>
           <input
             type="text" name="nickname" value={form.nickname} onChange={handleChange}
-            className="w-full p-3 rounded bg-gray-900 text-white focus:outline-none"
+            className={inputClass}
             autoComplete="nickname" maxLength={30}
           />
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2">이메일</label>
+          <label className="mb-2 block text-sm font-semibold text-steel-300">이메일</label>
           <div className="flex gap-2">
             <input
               type="email" name="email" value={form.email} onChange={handleChange}
-              className="flex-1 p-3 rounded bg-gray-900 text-white focus:outline-none"
+              className={`${inputClass} min-w-0 flex-1`}
               autoComplete="email" required
               readOnly={emailVerified} // 인증 완료 후 오입력 방지(원하면 제거)
             />
             <button
               type="button" onClick={sendCode}
               disabled={emailSending || !emailOk}
-              className="px-3 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60"
+              className="dg-btn dg-btn-steel shrink-0 px-3 text-sm"
             >
               {emailSending ? "전송중..." : "인증코드 전송"}
             </button>
@@ -181,13 +190,13 @@ export default function Register() {
         </div>
 
         <div className="mb-6">
-          <label className="block mb-2">이메일 인증코드</label>
+          <label className="mb-2 block text-sm font-semibold text-steel-300">이메일 인증코드</label>
           <div className="flex gap-2">
             <input
               type="text"
               value={emailCode}
               onChange={(e)=>setEmailCode(e.target.value)}
-              className="flex-1 p-3 rounded bg-gray-900 text-white focus:outline-none"
+              className={`${inputClass} min-w-0 flex-1 font-num text-lg tracking-[0.3em]`}
               placeholder="6자리 코드"
               inputMode="numeric" pattern="\d{6}" maxLength={6}
               autoComplete="one-time-code"
@@ -195,45 +204,58 @@ export default function Register() {
             <button
               type="button" onClick={verifyCode}
               disabled={verifying || !codeOk}
-              className="px-3 rounded bg-green-600 hover:bg-green-500 disabled:opacity-60"
+              className={`dg-btn shrink-0 px-4 text-sm ${emailVerified ? "bg-plate-green text-white" : "dg-btn-steel"}`}
             >
               {verifying ? "확인중..." : "확인"}
             </button>
           </div>
-          {emailVerified && <p className="text-green-400 text-sm mt-2">인증 완료</p>}
+          {emailVerified && (
+            <p className="dg-pop mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-green-400">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-black bg-plate-green text-white" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12l5 5L19 7" />
+                </svg>
+              </span>
+              인증 완료
+            </p>
+          )}
         </div>
 
         <div className="mb-6">
-          <label className="block mb-2">비밀번호</label>
+          <label className="mb-2 block text-sm font-semibold text-steel-300">비밀번호</label>
           <input
             type="password" name="password" value={form.password} onChange={handleChange}
-            className="w-full p-3 rounded bg-gray-900 text-white focus:outline-none"
+            className={inputClass}
             autoComplete="new-password" required minLength={8}
           />
         </div>
 
-        <div className="mb-2">
-          <label className="block mb-2">비밀번호 확인</label>
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-semibold text-steel-300">비밀번호 확인</label>
           <input
             type="password" name="confirm" value={form.confirm} onChange={handleChange}
-            className="w-full p-3 rounded bg-gray-900 text-white focus:outline-none"
+            className={inputClass}
             autoComplete="new-password" required minLength={8}
           />
         </div>
 
-        {err && <p className="text-red-400 text-sm mb-4 whitespace-pre-line">{err}</p>}
+        {err && (
+          <p className="mb-4 whitespace-pre-line rounded-md border-2 border-black bg-red-950 px-3 py-2 text-sm text-red-300" role="alert">
+            {err}
+          </p>
+        )}
 
         <button
           type="submit"
           disabled={submitting || !emailVerified}
-          className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-60"
+          className="dg-btn dg-btn-primary w-full py-3"
         >
           {submitting ? "가입 중..." : "회원가입"}
         </button>
 
-        <p className="text-center text-gray-400 mt-6">
+        <p className="mt-6 text-center text-steel-400">
           이미 계정이 있으신가요?{" "}
-          <a href="/login" className="text-pink-400 hover:underline">로그인</a>
+          <a href="/login" className="font-semibold text-red-400 underline-offset-4 hover:underline">로그인</a>
         </p>
       </form>
     </section>

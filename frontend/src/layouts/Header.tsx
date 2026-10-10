@@ -189,8 +189,6 @@ export default function Header() {
     []
   );
 
-  const textColor = isScrolled || isMenuOpen ? "text-gray-800" : "text-white";
-
   const isActiveGroup = (group: NavGroup) =>
     group.links.some((link) => {
       if (link.to === "/") {
@@ -201,7 +199,7 @@ export default function Header() {
 
   const renderDropdown = (group: NavGroup) => (
     <div
-      className="absolute left-1/2 top-full z-40 mt-3 min-w-[260px] -translate-x-1/2 rounded-2xl border border-white/10 bg-slate-900/95 p-4 text-base text-white shadow-2xl backdrop-blur-lg"
+      className="absolute left-1/2 top-full z-40 mt-2 min-w-[240px] -translate-x-1/2 rounded-lg border-[3px] border-black bg-steel-800 p-2 text-base text-chalk shadow-xl"
       onMouseEnter={() => {
         if (hideTimer.current) clearTimeout(hideTimer.current);
         setOpenDropdown(group.label);
@@ -215,7 +213,9 @@ export default function Header() {
         <Link
           key={to}
           to={to}
-          className="block whitespace-nowrap rounded-xl px-3 py-2 text-base font-semibold text-white/90 transition hover:bg-white/10"
+          className={`block whitespace-nowrap rounded px-3 py-2.5 text-[15px] font-semibold transition hover:bg-steel-700 ${
+            location.pathname.startsWith(to) ? "bg-steel-700 text-white" : "text-steel-200"
+          }`}
           onClick={() => setOpenDropdown(null)}
         >
           {label}
@@ -224,7 +224,7 @@ export default function Header() {
       {isAdmin && group.label === "커뮤니티" && (
         <Link
           to="/admin"
-          className="mt-1 block rounded-xl px-3 py-2 font-semibold text-pink-300 hover:bg-white/10"
+          className="mt-1 block rounded border-t-2 border-black px-3 py-2.5 text-[15px] font-semibold text-plate-yellow hover:bg-steel-700"
           onClick={() => setOpenDropdown(null)}
         >
           관리자
@@ -233,24 +233,26 @@ export default function Header() {
     </div>
   );
 
+  const actionButton =
+    "dg-btn min-h-[42px] px-4 text-sm";
+
   return (
     <header
-      className={`fixed left-0 top-0 z-50 w-full transition-colors duration-300 ${
-        isScrolled || isMenuOpen ? "bg-white/90 shadow-md backdrop-blur" : "bg-transparent"
+      className={`fixed left-0 top-0 z-50 w-full border-b-[3px] border-black bg-[#222327] text-chalk transition-shadow ${
+        isScrolled || isMenuOpen ? "shadow-lg" : ""
       }`}
     >
-      <div className="relative mx-auto flex w-full max-w-6xl items-center px-4 py-3 sm:px-6 lg:gap-8 lg:px-10">
+      <div className="relative mx-auto flex w-full max-w-6xl items-center px-4 py-2.5 sm:px-6 lg:gap-8 lg:px-10">
         <div className="flex w-[104px] items-center lg:w-auto lg:flex-none lg:gap-4">
           <button
-            className={`flex flex-col gap-1.5 rounded-md border px-3 py-2 text-sm font-semibold transition lg:hidden ${
-              isScrolled || isMenuOpen ? "border-gray-200 text-gray-800" : "border-white/60 text-white"
-            }`}
+            className="flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-md border-[3px] border-black bg-steel-700 text-chalk shadow-md lg:hidden"
             onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label="메뉴 열기"
+            aria-label={isMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+            aria-expanded={isMenuOpen}
           >
-            <span className="h-0.5 w-6 bg-current" />
-            <span className="h-0.5 w-6 bg-current" />
-            <span className="h-0.5 w-6 bg-current" />
+            <span className="h-0.5 w-5 bg-current" />
+            <span className="h-0.5 w-5 bg-current" />
+            <span className="h-0.5 w-5 bg-current" />
           </button>
         </div>
 
@@ -258,53 +260,53 @@ export default function Header() {
           to="/"
           className="absolute left-1/2 flex -translate-x-1/2 items-center lg:static lg:ml-0 lg:translate-x-0"
         >
-          <Logo isScrolled={isScrolled || isMenuOpen} />
+          <Logo />
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-3 lg:flex">
-          {navGroups.map((group) => (
-            <div
-              key={group.label}
-              className="relative"
-              onMouseEnter={() => {
-                if (hideTimer.current) clearTimeout(hideTimer.current);
-                setOpenDropdown(group.label);
-              }}
-              onMouseLeave={() => {
-                if (hideTimer.current) clearTimeout(hideTimer.current);
-                hideTimer.current = setTimeout(() => setOpenDropdown(null), 120);
-              }}
-            >
-              <button
-                className={`rounded-full px-5 py-2.5 text-base font-semibold transition ${
-                  openDropdown === group.label || isActiveGroup(group)
-                    ? "bg-white/90 text-gray-800 shadow-lg"
-                    : textColor === "text-white"
-                      ? "text-white hover:bg-white/10 hover:shadow-[0_10px_30px_-15px_rgba(255,255,255,0.8)]"
-                      : "text-gray-800 hover:bg-gray-100 hover:shadow"
-                }`}
+        <nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="주 메뉴">
+          {navGroups.map((group) => {
+            const active = isActiveGroup(group);
+            const open = openDropdown === group.label;
+            return (
+              <div
+                key={group.label}
+                className="relative"
+                onMouseEnter={() => {
+                  if (hideTimer.current) clearTimeout(hideTimer.current);
+                  setOpenDropdown(group.label);
+                }}
+                onMouseLeave={() => {
+                  if (hideTimer.current) clearTimeout(hideTimer.current);
+                  hideTimer.current = setTimeout(() => setOpenDropdown(null), 120);
+                }}
               >
-                {group.label}
-              </button>
-              {openDropdown === group.label && renderDropdown(group)}
-            </div>
-          ))}
+                <button
+                  className={`flex min-h-[44px] items-center border-b-4 px-3.5 text-[15px] font-semibold transition ${
+                    active
+                      ? "border-plate-red text-white"
+                      : open
+                        ? "border-steel-600 text-white"
+                        : "border-transparent text-steel-300 hover:border-steel-600 hover:text-white"
+                  }`}
+                  aria-expanded={open}
+                  onClick={() => setOpenDropdown(open ? null : group.label)}
+                >
+                  {group.label}
+                </button>
+                {open && renderDropdown(group)}
+              </div>
+            );
+          })}
 
           {user ? (
-            <div className="flex items-center gap-3">
-              <span className={`text-sm font-semibold ${textColor}`}>{user.nickname}님</span>
-              <button
-                onClick={handleLogout}
-                className="rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-              >
+            <div className="ml-3 flex items-center gap-3">
+              <span className="text-sm font-semibold text-steel-300">{user.nickname}님</span>
+              <button onClick={handleLogout} className={`${actionButton} dg-btn-steel`}>
                 로그아웃
               </button>
             </div>
           ) : (
-            <Link
-              to="/login"
-              className="rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-            >
+            <Link to="/login" className={`${actionButton} dg-btn-primary ml-3`}>
               로그인
             </Link>
           )}
@@ -312,17 +314,11 @@ export default function Header() {
 
         <div className="ml-auto flex w-[104px] items-center justify-end lg:hidden lg:w-auto">
           {user ? (
-            <button
-              onClick={handleLogout}
-              className="rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-            >
+            <button onClick={handleLogout} className={`${actionButton} dg-btn-steel`}>
               로그아웃
             </button>
           ) : (
-            <Link
-              to="/login"
-              className="rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-            >
+            <Link to="/login" className={`${actionButton} dg-btn-primary`}>
               로그인
             </Link>
           )}
@@ -330,27 +326,30 @@ export default function Header() {
       </div>
 
       {isMenuOpen && (
-        <div className="bg-white px-6 py-4 text-gray-800 shadow-lg lg:hidden max-h-[calc(100dvh-76px)] overflow-y-auto overscroll-y-contain pb-24">
+        <div className="max-h-[calc(100dvh-70px)] overflow-y-auto overscroll-y-contain border-t-[3px] border-black bg-steel-800 px-5 py-3 pb-24 text-chalk lg:hidden">
           {navGroups.map((group) => (
-            <div key={group.label} className="py-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">{group.label}</p>
-              <div className="mt-2 space-y-2">
-                {group.links.map(({ to, label }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`block rounded-xl px-3 py-2 text-sm font-semibold hover:bg-gray-100 ${
-                      location.pathname.startsWith(to) ? "bg-gray-100" : ""
-                    }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {label}
-                  </Link>
-                ))}
+            <div key={group.label} className="border-b-2 border-black/60 py-3 last:border-b-0">
+              <p className="font-num text-sm tracking-wide text-steel-400">{group.label}</p>
+              <div className="mt-2 space-y-1">
+                {group.links.map(({ to, label }) => {
+                  const active = location.pathname.startsWith(to);
+                  return (
+                    <Link
+                      key={to}
+                      to={to}
+                      className={`flex min-h-[44px] items-center rounded border-l-4 px-3 text-[15px] font-semibold ${
+                        active ? "border-plate-red bg-steel-700 text-white" : "border-transparent text-steel-200 hover:bg-steel-700"
+                      }`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
                 {isAdmin && group.label === "커뮤니티" && (
                   <Link
                     to="/admin"
-                    className="block rounded-xl px-3 py-2 text-sm font-semibold text-pink-600 hover:bg-gray-100"
+                    className="flex min-h-[44px] items-center rounded border-l-4 border-transparent px-3 text-[15px] font-semibold text-plate-yellow hover:bg-steel-700"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     관리자

@@ -44,3 +44,6 @@ Thumbs.db
 .ua/
 uploads/
 ~$*
+
+# Claude Code 개인 설정 (프로젝트 공용 설정은 .claude/settings.json)
+.claude/settings.local.json

@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/require-fix-log.sh\"",
+            "timeout": 30,
+            "statusMessage": "수정 기록(docs/fix-log.md) 확인 중"
+          }
+        ]
+      }
+    ]
+  }
+}

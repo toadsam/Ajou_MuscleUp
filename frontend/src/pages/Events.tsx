@@ -90,47 +90,70 @@ export default function Events() {
   }, []);
 
   return (
-    <section className="min-h-screen bg-slate-950 pt-28 pb-24 text-white">
+    <section className="min-h-screen pt-28 pb-24 text-white">
       <div className="mx-auto max-w-6xl px-6 lg:px-10 space-y-10">
         <header>
-          <p className="text-cyan-300 text-sm font-semibold">EVENT</p>
-          <h1 className="text-4xl font-extrabold">🎉 이벤트</h1>
-          <p className="mt-2 text-gray-300">진행중/예정/종료 이벤트를 확인해보세요.</p>
+          <p className="font-num text-sm font-bold text-plate-yellow">Event</p>
+          <h1 className="text-4xl">이벤트</h1>
+          <p className="mt-2 text-steel-300">진행중/예정/종료 이벤트를 확인해보세요.</p>
         </header>
 
         {SECTIONS.map((status) => {
           const section = state[status];
           return (
             <div key={status} className="space-y-4">
-              <h2 className="text-2xl font-bold">{toLabel(status)}</h2>
+              <h2 className="flex items-center gap-3 text-2xl font-black">
+                <span
+                  aria-hidden
+                  className={`h-6 w-2.5 rounded-sm border-2 border-black ${
+                    status === "ACTIVE" ? "bg-plate-red" : status === "SCHEDULED" ? "bg-plate-blue" : "bg-steel-500"
+                  }`}
+                />
+                {toLabel(status)}
+              </h2>
 
-              {section.loading && <p className="text-gray-300">로딩 중...</p>}
+              {section.loading && (
+                <p className="flex items-center gap-3 text-steel-300">
+                  <span className="dg-loading-plates" aria-label="불러오는 중">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  로딩 중...
+                </p>
+              )}
               {!section.loading && section.error && (
-                <p className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-red-300">{section.error}</p>
+                <p className="dg-well border-l-4 border-l-plate-red p-3 text-red-200">{section.error}</p>
               )}
               {!section.loading && !section.error && section.items.length === 0 && (
-                <p className="rounded-xl border border-white/10 bg-white/5 p-4 text-gray-400">등록된 이벤트가 없습니다.</p>
+                <p className="dg-well p-4 text-steel-400">등록된 이벤트가 없습니다.</p>
               )}
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {section.items.map((event) => (
+                {section.items.map((event, idx) => (
                   <article
                     key={event.id}
-                    className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 to-slate-800 shadow-xl"
+                    className="dg-steel dg-lift dg-rise overflow-hidden"
+                    style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}
                   >
-                    <img src={event.thumbnailUrl} alt={event.title} className="h-44 w-full object-cover" />
+                    <img src={event.thumbnailUrl} alt={event.title} className="h-44 w-full border-b-[3px] border-black object-cover" />
                     <div className="space-y-3 p-4">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="line-clamp-1 text-lg font-bold">{event.title}</h3>
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">
+                        <span
+                          className={`dg-chip flex-none text-sm ${
+                            status === "ACTIVE" ? "bg-plate-yellow text-black" : "bg-steel-700 text-chalk"
+                          }`}
+                        >
                           {status === "ACTIVE" ? getDday(event.endAt) : toLabel(event.status)}
                         </span>
                       </div>
-                      <p className="line-clamp-2 text-sm text-gray-300">{event.summary}</p>
-                      <p className="text-xs text-gray-400">{formatPeriod(event.startAt, event.endAt)}</p>
+                      <p className="line-clamp-2 text-sm text-steel-300">{event.summary}</p>
+                      <p className="font-num text-sm font-semibold text-steel-400">{formatPeriod(event.startAt, event.endAt)}</p>
                       <Link
                         to={`/events/${event.id}`}
-                        className="inline-flex rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                        className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm"
                       >
                         자세히 보기
                       </Link>
@@ -145,18 +168,18 @@ export default function Events() {
                     type="button"
                     onClick={() => void loadSection(status, section.page - 1)}
                     disabled={section.page <= 0 || section.loading}
-                    className="rounded-lg bg-white/10 px-3 py-1 text-sm disabled:opacity-40"
+                    className="dg-btn dg-btn-steel min-h-[36px] px-3 text-sm"
                   >
                     이전
                   </button>
-                  <span className="text-sm text-gray-300">
+                  <span className="font-num text-base font-bold text-steel-300">
                     {section.page + 1} / {section.totalPages}
                   </span>
                   <button
                     type="button"
                     onClick={() => void loadSection(status, section.page + 1)}
                     disabled={section.page + 1 >= section.totalPages || section.loading}
-                    className="rounded-lg bg-white/10 px-3 py-1 text-sm disabled:opacity-40"
+                    className="dg-btn dg-btn-steel min-h-[36px] px-3 text-sm"
                   >
                     다음
                   </button>
