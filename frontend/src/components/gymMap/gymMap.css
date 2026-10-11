@@ -1,0 +1,345 @@
+/* 헬스장 지도(홈 첫 화면) — 짐 플로어 v2 색과 부품을 그대로 쓴다. 그림은 engine.ts 의 캔버스 */
+
+.gm-app {
+  width: 100%;
+  max-width: 400px;
+  border: 3px solid var(--dg-ink);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--dg-steel);
+  box-shadow: 0 6px 0 var(--dg-ink);
+  color: var(--dg-chalk);
+}
+
+/* ---------- HUD ---------- */
+
+.gm-hud {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 3px solid var(--dg-ink);
+}
+
+.gm-lv {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 3px 9px 4px;
+  border-radius: 4px;
+  background: var(--dg-yellow);
+  color: var(--dg-ink);
+  font-family: "Big Shoulders Display", "IBM Plex Sans KR", sans-serif;
+  font-weight: 900;
+  box-shadow: 0 3px 0 #8a6a12;
+}
+.gm-lv small { font-size: 12px; }
+.gm-lv b { font-size: 24px; line-height: 1; }
+
+.gm-week-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--dg-muted);
+}
+.gm-week-top b { font-size: 14px; color: var(--dg-chalk); }
+
+.gm-week-bar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.gm-week-bar i {
+  height: 10px;
+  border: 1px solid var(--dg-ink);
+  border-radius: 2px;
+  background: #141416;
+}
+.gm-week-bar i.on {
+  background: var(--dg-red);
+  box-shadow: inset 0 -3px 0 #0004;
+}
+
+.gm-streak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  line-height: 1;
+}
+.gm-streak b { font-size: 26px; color: var(--dg-red); }
+.gm-streak small { margin-top: 2px; font-size: 10px; color: var(--dg-muted); }
+
+/* ---------- 지도 ---------- */
+
+.gm-map {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  touch-action: manipulation;
+  outline: none;
+}
+.gm-map:focus-visible { box-shadow: inset 0 0 0 3px var(--dg-yellow); }
+.gm-map canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+.gm-shake { animation: gmShake 0.35s; }
+
+.gm-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.gm-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 1px solid #46484f;
+  border-radius: 3px;
+  background: #111214;
+  color: var(--dg-chalk);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 #000;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.gm-label span { color: var(--dg-yellow); font-weight: 500; }
+.gm-label:hover { border-color: var(--dg-yellow); }
+.gm-label.on { background: var(--dg-yellow); color: var(--dg-ink); border-color: #000; }
+.gm-label.on span { color: var(--dg-ink); }
+
+.gm-me {
+  position: absolute;
+  left: 46%;
+  top: 92%;
+  transform: translate(-50%, -100%);
+  padding: 2px 4px;
+  border-radius: 2px;
+  background: var(--dg-yellow);
+  color: var(--dg-ink);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gm-float {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  color: var(--dg-yellow);
+  font-family: "Big Shoulders Display", "IBM Plex Sans KR", sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-shadow: 0 2px 0 #000, 1px 0 0 #000, -1px 0 0 #000;
+  animation: gmFloat 1.1s forwards;
+}
+
+.gm-hint {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border-radius: 3px;
+  background: var(--dg-yellow);
+  color: var(--dg-ink);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 #000;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.gm-hint.gone { opacity: 0; }
+
+.gm-toast {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 7px 11px;
+  border: 1px solid #46484f;
+  border-radius: 3px;
+  background: var(--dg-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 3px 0 #000;
+}
+
+/* ---------- 아래 창 ---------- */
+
+.gm-sheet {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  max-height: 74%;
+  overflow: auto;
+  padding: 12px 14px 14px;
+  border: 3px solid var(--dg-ink);
+  border-radius: 6px;
+  background: var(--dg-steel);
+  box-shadow: 0 4px 0 var(--dg-ink);
+  transform: translateY(calc(100% + 24px));
+  visibility: hidden;
+  transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.26s;
+}
+.gm-sheet.open {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s;
+}
+.gm-sheet h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  line-height: 1.2;
+}
+.gm-sheet p {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #d6d4cd;
+}
+.gm-eyebrow {
+  margin: 0 0 4px !important;
+  font-size: 11px !important;
+  font-weight: 700;
+  color: var(--dg-yellow) !important;
+}
+.gm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.gm-actions > :first-child { flex: 1; }
+
+.gm-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 4px 0 10px;
+}
+.gm-figures div {
+  padding: 6px 8px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: #1c1d20;
+}
+.gm-figures span { display: block; font-size: 11px; color: var(--dg-muted); }
+.gm-figures b { font-size: 22px; font-weight: 900; }
+
+.gm-mirror {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.gm-mirror-glass {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 128px;
+  overflow: hidden;
+  border: 3px solid #6b6e76;
+  border-radius: 4px;
+  background: #8fa9ba;
+}
+.gm-mirror-meta { display: grid; gap: 4px; justify-items: start; }
+.gm-mirror-meta b { font-size: 22px; font-weight: 900; }
+
+.gm-board {
+  margin: 0;
+  padding: 8px 12px;
+  list-style: none;
+  border: 3px solid var(--dg-board-frame);
+  border-radius: 3px;
+  background: var(--dg-board);
+  color: var(--dg-board-ink);
+  font-family: "Nanum Pen Script", "IBM Plex Sans KR", cursive;
+  font-size: 21px;
+  line-height: 1.3;
+}
+.gm-board a { color: var(--dg-board-ink); text-decoration: none; }
+.gm-board li:nth-child(1) a { color: var(--dg-board-red); }
+.gm-board li:nth-child(3) a { color: var(--dg-board-blue); }
+.gm-board a:hover { text-decoration: underline; }
+.gm-board p { margin: 0 !important; color: var(--dg-board-ink) !important; font-size: 21px !important; }
+
+.gm-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.gm-links a {
+  padding: 8px 10px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: #1c1d20;
+  color: var(--dg-chalk);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.gm-links a:hover { border-color: var(--dg-yellow); }
+
+/* ---------- 바로 가기 ---------- */
+
+.gm-dock-cap {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px 0;
+  border-top: 3px solid var(--dg-ink);
+  font-size: 11px;
+  color: var(--dg-muted);
+}
+.gm-dock {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px 10px 12px;
+}
+.gm-dock-btn {
+  padding: 10px 4px;
+  border: 1px solid #000;
+  border-radius: 4px;
+  background: var(--dg-steel-hi);
+  color: var(--dg-chalk);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 #000;
+  cursor: pointer;
+}
+.gm-dock-btn.primary { background: var(--dg-red); }
+.gm-dock-btn.done { background: var(--dg-green); color: var(--dg-ink); }
+.gm-dock-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+
+@keyframes gmShake {
+  0%, 100% { transform: none; }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(3px, -2px); }
+  60% { transform: translate(-2px, -1px); }
+  80% { transform: translate(2px, 1px); }
+}
+@keyframes gmFloat {
+  0% { opacity: 0; margin-top: 6px; }
+  15% { opacity: 1; }
+  100% { opacity: 0; margin-top: -34px; }
+}

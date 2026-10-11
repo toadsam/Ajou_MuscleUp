@@ -1,9 +1,8 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
-import Barbell from "../components/gym/Barbell";
-import { barbellWeight } from "../components/gym/plates";
 import CountUp from "../components/gym/CountUp";
+import GymMap from "../components/gymMap/GymMap";
 import type { GrowthParams } from "../components/avatar/types";
 import "../styles/homeLobby.css";
 import { logEvent } from "../utils/analytics";
@@ -417,10 +416,9 @@ export default function Home() {
               <span className="hero-line">오늘의 땀으로</span>
               <span className="hero-line accent">성장 폭발</span>
             </h1>
-            {isMobile && renderCharacterPreviewCard("hero-character-mobile")}
-            <p>
+            <p className="hero-desc">
               출석 체크가 오늘의 첫 퀘스트가 되고, 캐릭터가 나의 성장을 보여주는 곳.
-              운동한 날마다 바벨에 원판이 한 장씩 올라갑니다.
+              헬스장을 걸어 다니며 기구 앞에 서 보세요. 운동한 날마다 파워랙 바벨에 원판이 한 장씩 꽂힙니다.
             </p>
             <div className="hero-actions">
               <Link to="/attendance" className="dg-btn dg-btn-primary">
@@ -443,33 +441,36 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-stage dg-rubber">
-            <div className="hero-stage-head">
-              <span>이번 주 바벨</span>
-              <strong className="font-num">
-                <CountUp value={barbellWeight(weekStats.workoutDays)} decimals={barbellWeight(weekStats.workoutDays) % 1 ? 2 : 0} />
-                <small> KG</small>
-              </strong>
-            </div>
-            <div className="hero-stage-bar">
-              <Barbell
-                liftable
-                height={isMobile ? 104 : 150}
-                loaded={weekStats.workoutDays}
-                label={`이번 주 운동 ${weekStats.workoutDays}일, 원판 ${weekStats.workoutDays}장`}
-              />
-            </div>
-            <div className="hero-stage-floor" aria-hidden="true">
-              <span />
-              <span className="dg-platform" />
-              <span />
-            </div>
-            <p className="hero-stage-note">
-              {user
-                ? `이번 주 ${weekStats.workoutDays}일 운동 · 하루에 원판 한 장`
-                : "로그인하고 출석하면 원판이 올라갑니다"}
-              <span className="hero-stage-hint"> · 바벨을 눌러 들어 보세요</span>
-            </p>
+          <div className="hero-map dg-rubber">
+            <GymMap
+              loggedIn={Boolean(user)}
+              level={character?.level}
+              tier={character?.tier}
+              title={character?.title}
+              avatar={
+                character ? (
+                  <AvatarRenderer
+                    avatarSeed={character.avatarSeed}
+                    growthParams={character.growthParams}
+                    tier={character.tier}
+                    stage={character.evolutionStage}
+                    gender={character.gender}
+                    mbti={mbti}
+                    isResting={character.isResting ?? false}
+                    size={96}
+                  />
+                ) : undefined
+              }
+              mbti={mbti}
+              weekDays={weekStats.workoutDays}
+              streak={summary?.currentStreak ?? 0}
+              monthCount={summary?.monthWorkoutCount}
+              checkedToday={isAttendanceDone}
+              todayLabel={todayLabel}
+              loungeCount={loungeCount}
+              events={activeEvents}
+              celebrate={showReaction}
+            />
           </div>
         </header>
 
