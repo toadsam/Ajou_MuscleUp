@@ -30,6 +30,10 @@ export type TicketClaims = {
   rest: boolean;
   gp: Record<string, unknown> | null;
   fr: number[];
+  /** lounge room: "square" | "gym:{id}" (older tickets: missing = square) */
+  room?: string;
+  /** room display name ("광장" or the gym name) */
+  rname?: string;
   iat: number;
   exp: number;
 };

@@ -4,12 +4,16 @@ import { authMode, IS_PRODUCTION, verifyTicket, type TicketClaims } from "./auth
 import { SocketRateLimiter, type LimitCategory } from "./rateLimit.js";
 import {
   addPlayer,
+  countPlayers,
   getMapSize,
   getPlayer,
-  getRoomName,
   listPlayers,
+  normalizeRoomKey,
   removePlayer,
-  takeMoves,
+  sameRoom,
+  socketRoomOf,
+  SQUARE_ROOM,
+  takeMovesByRoom,
   updatePlayerPosition,
 } from "./rooms.js";
 import {
@@ -35,7 +39,6 @@ const VOICE_RANGE = 260;
 const MOVES_BROADCAST_MS = 100;
 const VOICE_LISTENERS_ROOM = "voice-listeners";
 
-const roomName = getRoomName();
 const mapSize = getMapSize();
 
 if (IS_PRODUCTION && !process.env.ORIGIN) {
@@ -59,9 +62,12 @@ const httpServer = createServer((req, res) => {
   }
 
   if (req.url?.startsWith("/status")) {
+    // ?room=square | gym:{id} → 그 방 인원. 없으면 전체 인원(예전 응답과 같은 모양)
+    const requested = new URL(req.url, "http://localhost").searchParams.get("room");
+    const roomKey = requested ? normalizeRoomKey(requested) : undefined;
     const payload = {
-      room: roomName,
-      activePlayers: listPlayers().length,
+      room: roomKey ?? "all",
+      activePlayers: countPlayers(roomKey),
     };
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(payload));
@@ -169,16 +175,16 @@ const extrasFromPayload = (payload: any): ClientExtras => {
 };
 
 // ── broadcasting ────────────────────────────────────────────────────────────
-/** full list: only on join / leave / profile change */
-const broadcastPlayers = () => {
-  io.to(roomName).emit("lounge:players", { players: listPlayers() });
+/** full list of one room: only on join / leave / profile change */
+const broadcastPlayers = (roomKey: string) => {
+  io.to(socketRoomOf(roomKey)).emit("lounge:players", { players: listPlayers(roomKey) });
 };
 
-/** positions: only players that moved, at most every MOVES_BROADCAST_MS */
+/** positions: only players that moved, at most every MOVES_BROADCAST_MS, each room separately */
 setInterval(() => {
-  const moves = takeMoves();
-  if (moves.length === 0) return;
-  io.to(roomName).emit("lounge:moves", { moves });
+  for (const [roomKey, moves] of takeMovesByRoom()) {
+    io.to(socketRoomOf(roomKey)).emit("lounge:moves", { moves });
+  }
 }, MOVES_BROADCAST_MS);
 
 // ── authentication (handshake) ──────────────────────────────────────────────
@@ -231,13 +237,19 @@ io.on("connection", (socket) => {
     });
   };
 
+  /** lounge room from the verified ticket (backend checked membership). Dev guests are always in the square. */
+  const roomKey = identity ? normalizeRoomKey(identity.room) : SQUARE_ROOM;
+  const roomName = socketRoomOf(roomKey);
+  const roomLabel = identity ? cleanText(identity.rname, 40) ?? "광장" : "광장";
+
   const joined = () => socket.rooms.has(roomName) && Boolean(getPlayer(socket.id));
 
-  /** party/voice targets must be players currently in the lounge */
+  /** party/voice targets must be players currently in the same lounge room */
   const targetSocketId = (payload: any) => {
     if (!payload || typeof payload.toSocketId !== "string") return null;
     const toSocketId = payload.toSocketId.trim();
     if (!toSocketId || toSocketId === socket.id || !getPlayer(toSocketId)) return null;
+    if (!sameRoom(socket.id, toSocketId)) return null;
     return toSocketId;
   };
 
@@ -266,11 +278,11 @@ io.on("connection", (socket) => {
     const profile = identity
       ? profileFromTicket(identity)
       : profileFromGuestPayload(socket.id, payload);
-    const player = addPlayer(socket.id, profile, extrasFromPayload(payload));
+    const player = addPlayer(socket.id, roomKey, profile, extrasFromPayload(payload));
     socket.join(roomName);
-    console.log(`[lounge] join ${player.id} level=${player.level} tier=${player.tier}`);
-    broadcastPlayers();
-    socket.emit("lounge:welcome", { mapSize });
+    console.log(`[lounge] join ${player.id} room=${roomKey} level=${player.level} tier=${player.tier}`);
+    broadcastPlayers(roomKey);
+    socket.emit("lounge:welcome", { mapSize, room: roomKey, roomName: roomLabel });
   });
 
   on("player:move", "move", (payload) => {
@@ -351,7 +363,7 @@ io.on("connection", (socket) => {
     for (const listenerId of listeners) {
       if (listenerId === socket.id) continue;
       const other = getPlayer(listenerId);
-      if (!other) continue;
+      if (!other || !sameRoom(socket.id, listenerId)) continue;
       if (Math.hypot(other.x - me.x, other.y - me.y) > VOICE_RANGE) continue;
       io.to(listenerId).emit("voice:chunk", message);
     }
@@ -413,7 +425,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    if (removePlayer(socket.id)) broadcastPlayers();
+    const leftRoom = removePlayer(socket.id);
+    if (leftRoom) broadcastPlayers(leftRoom);
   });
 });
 

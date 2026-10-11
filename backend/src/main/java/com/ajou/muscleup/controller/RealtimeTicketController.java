@@ -1,10 +1,15 @@
 package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.character.CharacterProfileResponse;
+import com.ajou.muscleup.entity.GymFeature;
+import com.ajou.muscleup.entity.GymStatus;
 import com.ajou.muscleup.entity.User;
+import com.ajou.muscleup.entity.WorkoutCrew;
 import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.service.CharacterService;
 import com.ajou.muscleup.service.FriendService;
+import com.ajou.muscleup.service.GymScope;
+import com.ajou.muscleup.util.RoleUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,6 +47,10 @@ import org.springframework.web.server.ResponseStatusException;
  * 실시간 서버에도 같은 값을 넣어야 한다. prod 프로필에서 비어 있으면 503 을 돌려준다.
  * 그 밖의 프로필(local/test)에서 비어 있으면 개발용 고정값을 쓰고 경고를 남긴다
  * (realtime/src/auth.ts 의 개발용 값과 같아야 한다).
+ *
+ * 라운지 방(0단계 PR 7): 본문 { "room": "square" | "gym:{slug}" }. 없으면 광장.
+ * 모임 방은 그 모임 멤버(앱 운영자 포함)만, 모임이 운영 중이고 라운지 기능이 켜져 있을 때만.
+ * 입장권에는 "room": "square" | "gym:{id}" 와 방 이름 "rname" 이 들어가고, 실시간 서버는 이 값으로만 방을 나눈다.
  */
 @Slf4j
 @RestController
@@ -54,13 +64,18 @@ public class RealtimeTicketController {
     private final CharacterService characterService;
     private final FriendService friendService;
     private final ObjectMapper objectMapper;
+    private final GymScope gymScope;
     private final byte[] secret;
+
+    /** 들어갈 라운지 방. 비우면 광장 */
+    public record TicketRequest(String room) {}
 
     public RealtimeTicketController(
             UserRepository userRepository,
             CharacterService characterService,
             FriendService friendService,
             ObjectMapper objectMapper,
+            GymScope gymScope,
             Environment environment,
             @Value("${realtime.ticket.secret:}") String configuredSecret
     ) {
@@ -68,6 +83,7 @@ public class RealtimeTicketController {
         this.characterService = characterService;
         this.friendService = friendService;
         this.objectMapper = objectMapper;
+        this.gymScope = gymScope;
 
         String value = configuredSecret == null ? "" : configuredSecret.trim();
         boolean prod = environment.acceptsProfiles(Profiles.of("prod"));
@@ -83,7 +99,8 @@ public class RealtimeTicketController {
     }
 
     @PostMapping("/ticket")
-    public ResponseEntity<Map<String, Object>> issue(@AuthenticationPrincipal String email) {
+    public ResponseEntity<Map<String, Object>> issue(@AuthenticationPrincipal String email,
+                                                     @RequestBody(required = false) TicketRequest request) {
         if (email == null || email.isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요해요.");
         }
@@ -92,6 +109,7 @@ public class RealtimeTicketController {
         }
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요해요."));
+        WorkoutCrew roomGym = resolveRoomGym(request == null ? null : request.room(), user);
         CharacterProfileResponse character = characterService.getOrCreateProfile(email);
         List<Long> friendIds = friendService.findFriendIds(user.getId());
         if (friendIds.size() > MAX_FRIEND_IDS) {
@@ -118,6 +136,8 @@ public class RealtimeTicketController {
         claims.put("rest", character.isResting());
         claims.put("gp", character.getGrowthParams());
         claims.put("fr", friendIds);
+        claims.put("room", roomGym == null ? "square" : "gym:" + roomGym.getId());
+        claims.put("rname", roomGym == null ? "광장" : truncate(roomGym.getName(), 40));
         claims.put("iat", now);
         claims.put("exp", exp);
 
@@ -132,7 +152,35 @@ public class RealtimeTicketController {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("ticket", ticket);
         response.put("expiresAt", exp * 1000);
+        response.put("room", claims.get("room"));
+        response.put("roomName", claims.get("rname"));
         return ResponseEntity.ok(response);
+    }
+
+    /** "gym:{slug}" → 들어갈 수 있는 모임. 광장이면 null */
+    private WorkoutCrew resolveRoomGym(String room, User user) {
+        if (room == null || room.isBlank() || "square".equals(room.trim())) return null;
+        String value = room.trim();
+        if (!value.startsWith("gym:")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "알 수 없는 라운지 방이에요.");
+        }
+        WorkoutCrew gym = gymScope.gymOrThrow(value.substring(4));
+        boolean admin = RoleUtils.isAdmin(user);
+        if (!admin && !gymScope.isMember(gym, user)) {
+            if (!gymScope.canSee(gym, user)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "모임을 찾을 수 없어요.");
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "그 모임 멤버만 모임 라운지에 들어갈 수 있어요.");
+        }
+        if (gym.statusOrDefault() != GymStatus.ACTIVE || !gym.getFeatures().contains(GymFeature.LOUNGE)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 모임은 라운지를 쓰지 않아요.");
+        }
+        return gym;
+    }
+
+    private static String truncate(String value, int max) {
+        if (value == null) return "";
+        return value.length() <= max ? value : value.substring(0, max);
     }
 
     /** 라운지에서 다른 사람에게 보이는 id. 이메일·DB id 를 거꾸로 알아낼 수 없게 HMAC 으로 만든다. */
