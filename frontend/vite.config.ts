@@ -48,8 +48,29 @@ export default defineConfig(({ mode, command }) => {
         ]
       },
       workbox: {
-        navigateFallback: '/index.html',
+        // 첫 화면(HTML)은 저장본이 아니라 항상 서버에서 먼저 받는다(오프라인일 때만 저장본).
+        // 예전에는 navigateFallback 으로 저장해 둔 index.html 을 먼저 내줘서, 배포 직후 두세 번 들어와야 새 화면이 떴고
+        // 그 사이 예전 화면이 이미 지워진 파일을 찾다 깨졌다(docs/fix-log.md 2026-10-11 "배포 직후 예전 화면").
+        navigateFallback: null,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              networkTimeoutSeconds: 4,
+              // 서버에 못 닿으면(오프라인) 미리 받아 둔 index.html(precache, 주소 뒤에 버전 표시가 붙어 있어 ignoreSearch)을 보여 준다
+              // (이 함수는 서비스 워커 안에서 돈다. tsconfig.node 에는 DOM 타입이 없어 globalThis 로 꺼낸다)
+              plugins: [
+                {
+                  handlerDidError: async () =>
+                    (globalThis as unknown as { caches: { match: (url: string, opts: { ignoreSearch: boolean }) => Promise<Response | undefined> } })
+                      .caches.match('/index.html', { ignoreSearch: true }),
+                },
+              ],
+            },
+          },
           {
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'StaleWhileRevalidate',

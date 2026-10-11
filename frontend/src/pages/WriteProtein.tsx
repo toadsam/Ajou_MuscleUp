@@ -100,7 +100,14 @@ export default function WriteProtein() {
     };
   }, []);
 
-  const activeGyms = useMemo(() => myGyms.filter((g) => g.status === "ACTIVE"), [myGyms]);
+  // 동아리(CLUB)를 맨 앞에 — 기본으로 골라지는 모임이 소모임이 아니라 동아리가 되게
+  const activeGyms = useMemo(
+    () =>
+      myGyms
+        .filter((g) => g.status === "ACTIVE")
+        .sort((a, b) => (a.type === "CLUB" ? 0 : 1) - (b.type === "CLUB" ? 0 : 1)),
+    [myGyms],
+  );
   // 고를 모임이 없으면 전체 모집만. 고른 모임이 없으면 첫 모임
   const effectiveVisibility: Visibility = activeGyms.length === 0 ? "PUBLIC" : visibility;
   const selectedGym = activeGyms.find((g) => g.slug === gymSlug) ?? activeGyms[0];

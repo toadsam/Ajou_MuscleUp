@@ -63,13 +63,13 @@
 - [ ] 홈 지도 코치 대사 "7일 더" → 주간 목표 기준(제 실수)
 
 **기술 (S)**
-- [ ] React 오류 화면(ErrorBoundary) + 배포 뒤 옛 파일 못 찾을 때 한 번 자동 새로고침(`vite:preloadError`), `vercel.json` 에서 `/assets/` 는 index.html 로 돌리지 않기
+- [ ] React 오류 화면(ErrorBoundary) — 아직. (완료: 배포 뒤 옛 파일 못 찾을 때 한 번 자동 새로고침(`vite:preloadError`), `vercel.json` 에서 `/assets/` 는 index.html 로 돌리지 않기, 첫 화면 NetworkFirst)
 - [ ] PWA `registerType: 'prompt'` — 지금은 글 쓰는 중에도 강제 새로고침, "새 버전" 안내는 죽은 코드
 - [ ] `viewport-fit=cover`(하단 여백 코드 8곳이 0으로 계산), iOS `apple-touch-icon` · `apple-mobile-web-app-*`
 - [ ] 휴대폰 입력칸 16px(45곳이 작아 iOS 확대)
 - [ ] 인바디 화면 857KB → PDF·캡처 라이브러리를 버튼 누를 때 불러오기, html2canvas 도 동적
 - [ ] PWA 미리 받기 2.36MB → 관리자·인바디·이미지 제외
-- [ ] `vercel.json` 캐시 헤더(`/assets` 1년 immutable, `index.html`·`sw.js` no-cache)
+- [x] `vercel.json` 캐시 헤더(`/assets` 1년 immutable, `index.html`·`sw.js` no-cache)
 - [ ] robots.txt · sitemap.xml · 네이버/구글 소유 확인 태그
 - [ ] 흐린 글자 대비(steel-500/600 → 더 밝게)
 - [ ] manifest 아이콘 any/maskable 분리, 512 아이콘 압축, `lang: ko`, `shortcuts`(출석·라운지)
