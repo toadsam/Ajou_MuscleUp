@@ -24,7 +24,11 @@ merge 뒤에도 musclehub.co.kr 은 예전 화면 그대로였다. 백엔드·�
 
 **확인한 방법**
 - `node_modules/.tmp` 를 지우고 `npx tsc -b --force` 0 오류, `vite build` 통과.
-- **아직 못 한 것**: Vercel 재배포 결과(push 후 확인).
+- `main` push(`ee17b9f`) 후 Vercel 배포 성공, musclehub.co.kr 이 새 화면(`index-BWppK04T.js`, 지도 · NPC 3명)으로 바뀐 것 확인. 예전에 방문한 브라우저는 서비스 워커가 새 파일을 받은 뒤 한 번 더 새로고침해야 바뀐다.
+- **운영 점검에서 새로 찾은 것(설정 문제, 코드 아님)**:
+  - 프론트의 실시간 서버 주소 `VITE_REALTIME_URL` 이 `https://api.musclehub.co.kr` 인데 이 도메인은 DNS 에 없다(구글 DNS 도 Non-existent domain). 실제 실시간 서버는 Railway `adaptable-motivation-production-3c65.up.railway.app`. → 라운지 · 친구 실시간이 운영에서 붙지 않는다(이번 배포 전부터였을 가능성이 크다).
+  - 운영 실시간 서버에 `REALTIME_TICKET_SECRET` 이 없어 모든 연결을 `realtime_unavailable` 로 거절한다(직접 접속해 확인).
+  - 해결은 사용자가 대시보드에서: Railway 백엔드 · 실시간 서버에 같은 `REALTIME_TICKET_SECRET`, 실시간 서버에 `ORIGIN`, Vercel `VITE_REALTIME_URL` 을 실제 주소로(또는 `api.musclehub.co.kr` DNS 를 실시간 서버로 연결) → Vercel 재배포.
 
 ---
 
