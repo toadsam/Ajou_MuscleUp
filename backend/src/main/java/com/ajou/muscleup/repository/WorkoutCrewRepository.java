@@ -11,6 +11,12 @@ public interface WorkoutCrewRepository extends JpaRepository<WorkoutCrew, Long> 
 
     boolean existsByInviteCode(String inviteCode);
 
+    Optional<WorkoutCrew> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
+
+    List<WorkoutCrew> findAllByStatusOrderByCreatedAtAsc(com.ajou.muscleup.entity.GymStatus status);
+
     // 모임 목록용: 모임장(owner)을 함께 읽어 모임마다 owner 를 따로 조회하지 않는다.
     @Query("select c from WorkoutCrew c join fetch c.owner")
     List<WorkoutCrew> findAllWithOwner();

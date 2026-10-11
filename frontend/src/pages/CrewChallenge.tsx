@@ -5,6 +5,7 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
 import { crewApi } from "../services/crewApi";
 import type { CrewChallenge, CrewDetail, CrewJoinRequest } from "../types/crew";
+import { CREW_ROLE_LABEL } from "../types/crew";
 import { toast } from "../lib/toast";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
@@ -1056,7 +1057,7 @@ export default function CrewChallenge() {
                     <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={42} />
                     <div>
                       <p className="text-sm font-semibold">{member.nickname}</p>
-                      <p className="text-xs text-steel-400"><span className="font-num font-bold">#{memberRank}</span> · {member.role}</p>
+                      <p className="text-xs text-steel-400"><span className="font-num font-bold">#{memberRank}</span> · {CREW_ROLE_LABEL[member.role] ?? member.role}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -1085,7 +1086,7 @@ export default function CrewChallenge() {
                 <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={60} />
                 <div>
                   <p className="font-semibold">{member.nickname}</p>
-                  <p className="text-xs text-steel-400"><span className="font-num text-sm font-bold">#{memberRank}</span> · {member.role}</p>
+                  <p className="text-xs text-steel-400"><span className="font-num text-sm font-bold">#{memberRank}</span> · {CREW_ROLE_LABEL[member.role] ?? member.role}</p>
                   {member.characterLevel != null && <p className="font-num text-sm font-bold text-plate-yellow">Lv.{member.characterLevel}</p>}
                 </div>
               </div>
@@ -1094,7 +1095,7 @@ export default function CrewChallenge() {
               </div>
               <p className="mt-2 text-xs text-steel-400">출석률 {member.attendanceRate}% · {member.workoutDays}/{member.targetDays}</p>
               <p className="mt-1 text-xs font-semibold text-green-300">이번주 운동 {weeklyWorkout}회</p>
-              {detail.leader && manageMode && member.role !== "LEADER" && <button type="button" onClick={() => void onKickMember(member.userId)} className="dg-btn mt-3 min-h-[30px] bg-steel-900 px-2.5 text-xs text-red-300 hover:bg-plate-red hover:text-white">강퇴</button>}
+              {detail.leader && manageMode && member.role !== "OWNER" && (member.role !== "STAFF" || detail.myRole === "OWNER") && <button type="button" onClick={() => void onKickMember(member.userId)} className="dg-btn mt-3 min-h-[30px] bg-steel-900 px-2.5 text-xs text-red-300 hover:bg-plate-red hover:text-white">강퇴</button>}
             </article>
           );
         })}
@@ -1283,7 +1284,7 @@ export default function CrewChallenge() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {detail.joined ? <button type="button" onClick={() => void onLeave()} className="dg-btn min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 탈퇴</button> : <button type="button" onClick={() => void onJoin()} className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">모임 참여</button>}
-                  {detail.leader && <><button type="button" aria-pressed={manageMode} onClick={() => setManageMode((prev) => !prev)} className={`dg-btn min-h-[40px] px-3 text-sm ${manageMode ? "bg-plate-yellow text-black" : "dg-btn-steel"}`}>{manageMode ? "관리 모드 켜짐" : "관리 모드"}</button>{manageMode && <><button type="button" onClick={() => void onUpdateCrew()} className="dg-btn dg-btn-steel dg-pop min-h-[40px] px-3 text-sm">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="dg-btn dg-pop min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 삭제</button></>}</>}
+                  {detail.leader && <><button type="button" aria-pressed={manageMode} onClick={() => setManageMode((prev) => !prev)} className={`dg-btn min-h-[40px] px-3 text-sm ${manageMode ? "bg-plate-yellow text-black" : "dg-btn-steel"}`}>{manageMode ? "관리 모드 켜짐" : "관리 모드"}</button>{manageMode && detail.myRole === "OWNER" && <><button type="button" onClick={() => void onUpdateCrew()} className="dg-btn dg-btn-steel dg-pop min-h-[40px] px-3 text-sm">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="dg-btn dg-pop min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 삭제</button></>}</>}
                 </div>
               </div>
             </div>

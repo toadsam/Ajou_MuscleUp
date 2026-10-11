@@ -8,6 +8,76 @@
 
 ---
 
+## 2026-10-11 · 동아리 하나만 담을 수 있는 구조 → 짐(Gym) 구조 · 짐별 운영진
+
+**불편**
+앱이 아주대 동아리 하나만 전제로 만들어져, 다른 동아리 · 모임 · 헬스장이 쓸 수 없었다. 모임 관리도 모임장 한 명만 가능해 운영진을 둘 수 없었다.
+
+**원인(근거)**
+- 모임(`WorkoutCrew`)에 종류 · 공개 범위 · 상태가 없고, 권한은 `ensureLeader` 가 주인 id 만 비교(`CrewServiceImpl.java:660-664`).
+- 멤버 역할은 LEADER · MEMBER 뿐, 화면에 코드 값이 그대로 보였다(`CrewChallenge.tsx:1059,1088`).
+
+**고친 방법**
+- `WorkoutCrew` 를 짐으로 확장(종류 · 주소 · 공개 범위 · 상태 · 부모 · 학교 · 기능), 역할 OWNER · STAFF · MEMBER + 직함.
+- 권한을 `GymPermissionService` 한 곳으로, 짐 API `/api/gyms`(+ 운영자 승인 `/api/admin/gyms`).
+- 데이터 이전 V2: 역할 제약 풀기 · LEADER → OWNER · 아주대 짐 생성 · 전원 멤버 · 기존 모임을 소모임으로.
+- 코드 단위 기록: [fixes/2026-10-11-gyms.md](fixes/2026-10-11-gyms.md)
+
+**확인한 방법**
+- 백엔드 테스트 17개(권한 경계 포함), 임시 Postgres 에 옛 상태를 넣고 이전 → 결과 SQL 확인 · 2차 적용 0, 로컬 MySQL 이전 · API 응답, 프론트 verify 통과.
+
+**아직 못 한 것**
+- 운영 배포는 데이터 변경이 있어 Railway 스냅샷 후 진행해야 함.
+- 로그인 화면 확인, 모임장 넘기기, 새 가입자 짐 선택(PR 6).
+
+---
+
+## 2026-10-11 · DB 데이터를 안전하게 옮길 방법이 없음 (Flyway 도입)
+
+**불편**
+짐 구조로 바꾸려면 운영 DB 의 기존 데이터를 옮겨야 하는데(아주대 짐 만들기 등), 지금은 Hibernate 가 테이블만 맞출 뿐 데이터 이전을 한 번만 · 기록 남기며 할 방법이 없었다.
+
+**원인(근거)**
+- 모든 프로필 `ddl-auto=update`, Flyway · Liquibase 없음(`build.gradle`).
+
+**고친 방법**
+- Flyway 를 **Hibernate 다음에** 도는 데이터 이전 전용으로 도입(`config/DataMigrationRunner`, Boot 기본 Flyway 는 제외). 구조는 당분간 Hibernate.
+- SQL 위치 `db/migration/common` · `db/migration/{mysql|postgresql}`, 기존 DB 는 버전 0 기준선.
+- 코드 단위 기록: [fixes/2026-10-11-flyway-data-migrations.md](fixes/2026-10-11-flyway-data-migrations.md)
+
+**확인한 방법**
+- 백엔드 테스트 통과(MySQL), 임시 Postgres 에서 1차 기준선 + V1 · 2차 적용 0.
+
+**아직 못 한 것**
+- 운영 Postgres 배포는 아직(첫 배포 때 기록 테이블만 생김).
+- 운영 `ddl-auto=validate` 전환은 나중.
+
+---
+
+## 2026-10-11 · 회원 실명 명단이 누구나 받을 수 있는 JS 파일에 들어 있음
+
+**불편**
+`/members` 는 로그인해야 열리지만, 동아리 회원 실명 명단이 사이트 JS 파일에 그대로 들어 있어 로그인하지 않은 사람도 파일을 열어 볼 수 있었다(공개 저장소 소스에도 있음).
+
+**원인(근거)**
+- `frontend/src/pages/Members.tsx:3` 의 고정 배열. 화면 보호(ProtectedRoute)는 데이터를 숨기지 못한다.
+
+**고친 방법**
+- 명단을 DB(`club_roster_members`)로 옮기고 `GET /api/club/roster`(로그인 회원) · `PUT /api/admin/club/roster`(관리자) 추가.
+- 화면은 서버에서 받아 그리고, 관리자에게만 "명단 고치기"(한 줄에 한 명).
+- 설계 조사에서 문제로 적은 "모임 상세 노출"은 이미 고쳐져 있음을 확인(코드 변경 없음, 설계 문서 정정).
+- 코드 단위 기록: [fixes/2026-10-11-roster-privacy.md](fixes/2026-10-11-roster-privacy.md)
+
+**확인한 방법**
+- 백엔드 테스트 12개 통과(권한 3 · 정리 규칙 2 포함), 로그인 없이 두 API → 401, 빌드 결과에서 이름 검색 0건, 로그아웃 `/members` → `/login`.
+
+**아직 못 한 것**
+- 로그인 회원 화면 · 관리자 편집 화면은 로그인이 필요해 못 봄.
+- 배포 직후 운영 명단은 비어 있음 → 관리자가 붙여 넣어야 함.
+- 공개 저장소 예전 커밋의 명단은 남아 있음(기록 다시 쓰기 또는 비공개 전환 — 사용자 결정).
+
+---
+
 ## 2026-10-11 · 로그인 없이 지도 체험 + S 계열 MBTI 캐릭터 색
 
 **불편**

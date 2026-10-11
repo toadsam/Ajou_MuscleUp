@@ -41,6 +41,10 @@ dependencies {
     // DB: ??�??�나 ?�택(?�는 ?�로?�로 분리)
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'org.postgresql:postgresql'
+    // DB data migrations (run after Hibernate schema update; see DataMigrationRunner)
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-mysql'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
     // runtimeOnly 'com.h2database:h2'         // 로컬 빠른 ?�스?�용
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

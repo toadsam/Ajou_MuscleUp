@@ -13,6 +13,11 @@
 
 - [2026-10-11-guest-map-trial.md](2026-10-11-guest-map-trial.md) — 로그인 없이 지도 체험(캐릭터 만들기 · 출석 체험 · 가입 뒤 이어받기), S 계열 MBTI 색 버그
 
+- [2026-10-11-roster-privacy.md](2026-10-11-roster-privacy.md) — 0단계 PR 1: 회원 실명 명단을 서버로(관리자 편집), 모임 상세 노출 재확인
+- [2026-10-11-flyway-data-migrations.md](2026-10-11-flyway-data-migrations.md) — 0단계 PR 2: Flyway 를 Hibernate 다음에 도는 데이터 이전 전용으로 도입
+
+- [2026-10-11-gyms.md](2026-10-11-gyms.md) — 0단계 PR 3: 짐 구조 · 짐별 운영진(GymPermissionService) · /api/gyms · 아주대 이전(V2)
+
 ## 항목 양식
 
 ```markdown
