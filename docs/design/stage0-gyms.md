@@ -19,8 +19,8 @@
 | 화면 | 멤버 · 운영진 명단이 **프론트 코드에 실명으로 박혀 있음**(`frontend/src/pages/Members.tsx:3`, `Executives.tsx:12`), "아주대 · 동아리" 문구 15곳 이상 | 짐마다 달라야 함. 실명은 JS 파일로 누구에게나 내려감 |
 
 **지금 바로 고칠 보안 문제(0단계 첫 PR 에 포함)**
-1. 모임 상세 `GET /api/crew/groups/{id}` 가 멤버인지 확인하지 않아 아무 로그인 사용자나 남의 모임 멤버 목록 · 출석을 볼 수 있다(`CrewServiceImpl.java:112-116`).
-2. 동아리 회원 실명 명단이 프론트 번들에 들어 있다(`Members.tsx:3`). 라우트는 로그인 필요여도 JS 파일은 공개.
+1. ~~모임 상세가 멤버 확인을 안 함~~ → **정정: 이미 막혀 있음**(`CrewServiceImpl.java:329-360` `memberDetailVisible`, 2026-10-11 점검 때 수정). 조사 오류.
+2. 동아리 회원 실명 명단이 프론트 번들에 들어 있다(`Members.tsx:3`). 라우트는 로그인 필요여도 JS 파일은 공개. → PR 1 에서 서버로 옮김([../fixes/2026-10-11-roster-privacy.md](../fixes/2026-10-11-roster-privacy.md))
 
 ---
 

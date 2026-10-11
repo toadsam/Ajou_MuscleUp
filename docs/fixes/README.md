@@ -13,6 +13,8 @@
 
 - [2026-10-11-guest-map-trial.md](2026-10-11-guest-map-trial.md) — 로그인 없이 지도 체험(캐릭터 만들기 · 출석 체험 · 가입 뒤 이어받기), S 계열 MBTI 색 버그
 
+- [2026-10-11-roster-privacy.md](2026-10-11-roster-privacy.md) — 0단계 PR 1: 회원 실명 명단을 서버로(관리자 편집), 모임 상세 노출 재확인
+
 ## 항목 양식
 
 ```markdown
