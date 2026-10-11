@@ -17,4 +17,9 @@ public class ProteinCreateUpdateRequest {
     private String category;
     private String receiptUrl;
     @Size(max = 20) private String distributionMethod;
+    // 모집 범위: 어느 짐에서(gymSlug) · 우리 모임만(GYM) / 전체 모집(PUBLIC). 둘 다 없으면 기본 짐의 GYM
+    @Size(max = 40) private String gymSlug;
+    private com.ajou.muscleup.entity.GroupBuyVisibility visibility;
+    @Size(max = 40) private String region;
+    @Min(2) @Max(500) private Integer maxParticipants;
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCountUp } from "../hooks/useCountUp";
 import { toast } from "../lib/toast";
-import { friendlyError, httpError } from "../lib/httpError";
+import { HttpError, friendlyError, httpError } from "../lib/httpError";
 import { deadlineLabel, distributionOf, findMetaLine, isClosed, remainingLabel } from "../utils/proteinMeta";
 
 function CountNumber({ value, digits = 0 }: { value: number; digits?: number }) {
@@ -28,6 +28,14 @@ type Protein = {
   daysLeft?: number | null;
   closed?: boolean;
   distributionMethod?: string | null;
+  gymSlug?: string | null; // 연 모임(없으면 null)
+  gymName?: string | null;
+  visibility?: "GYM" | "PUBLIC" | null; // GYM 우리 모임만 · PUBLIC 전체 모집
+  region?: string | null;
+  maxParticipants?: number | null;
+  // 전체 모집에서 여는 사람 신뢰 표시(가입 후 지난 날 · 누적 운동 일수). 모르면 null
+  ownerMemberDays?: number | null;
+  ownerWorkoutDays?: number | null;
 };
 
 type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -111,6 +119,8 @@ export default function ProteinDetail() {
   const [data, setData] = useState<Protein | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  // 404: 없는 글이거나 그 모임 멤버가 아니라 볼 수 없는 글(서버가 구분하지 않는다)
+  const [notVisible, setNotVisible] = useState(false);
   const [summary, setSummary] = useState<Summary>({ pendingCount: 0, approvedCount: 0 });
   const [myApplication, setMyApplication] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -140,6 +150,7 @@ export default function ProteinDetail() {
         const json: Protein = await res.json();
         setData(json);
       } catch (e) {
+        if (e instanceof HttpError && e.status === 404) setNotVisible(true);
         setErr(friendlyError(e, "모집글을 불러오지 못했어요."));
       } finally {
         setLoading(false);
@@ -236,6 +247,20 @@ export default function ProteinDetail() {
     );
   }
 
+  if (notVisible) {
+    return (
+      <section className="pt-28 px-6 lg:px-12 min-h-screen text-white">
+        <div className="dg-steel dg-rise max-w-3xl mx-auto space-y-4 p-8">
+          <h1 className="font-display text-2xl">볼 수 없는 공동구매예요.</h1>
+          <p className="text-steel-300">그 모임 멤버만 볼 수 있어요. 글이 지워졌을 수도 있어요.</p>
+          <Link to="/protein" className="dg-btn dg-btn-primary px-5">
+            공동구매 목록으로
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   if (err || !data) {
     return (
       <section className="pt-28 px-6 lg:px-12 min-h-screen text-white">
@@ -275,6 +300,11 @@ export default function ProteinDetail() {
   const brand = findMetaLine(data.description, "브랜드");
   const canSeeReceipt = isOwner || isAdmin || myApplication?.status === "APPROVED";
   const deadlineText = deadlineLabel(data);
+  // 값이 없는 쪽은 빼고 보여 준다
+  const trustParts = [
+    typeof data.ownerMemberDays === "number" ? `가입 ${data.ownerMemberDays}일` : null,
+    typeof data.ownerWorkoutDays === "number" ? `운동 ${data.ownerWorkoutDays}일` : null,
+  ].filter((part): part is string => part !== null);
 
   return (
     <section className="pt-24 pb-16 px-6 lg:px-12 min-h-screen text-white">
@@ -282,7 +312,20 @@ export default function ProteinDetail() {
         <div className="flex flex-wrap items-center gap-3">
           <span className="dg-chip bg-plate-green text-sm text-white">{region}</span>
           <span className="dg-chip bg-plate-yellow text-sm text-black">{gym}</span>
-          <span className="text-xs text-steel-400">지역 또는 헬스장 기반 공동구매 모집글</span>
+          {data.visibility === "PUBLIC" ? (
+            <span className="dg-chip bg-plate-yellow text-sm text-black">전체 모집</span>
+          ) : data.visibility === "GYM" ? (
+            <span className="dg-chip max-w-full bg-plate-blue text-sm text-white">
+              <span className="flex-none">우리 모임</span>
+              {data.gymName && <span className="min-w-0 max-w-[12rem] truncate font-sans font-bold">· {data.gymName}</span>}
+            </span>
+          ) : null}
+          {data.region && <span className="max-w-[14rem] truncate text-sm text-steel-300">{data.region}</span>}
+          {typeof data.maxParticipants === "number" && (
+            <span className="text-sm font-semibold text-steel-200">
+              최대 <span className="font-num font-black">{data.maxParticipants}</span>명
+            </span>
+          )}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
@@ -473,8 +516,19 @@ export default function ProteinDetail() {
                     />
                   </div>
                 )}
-                <p className="text-xs text-steel-400 mt-2">대기 인원 {pending}명</p>
+                <p className="text-xs text-steel-400 mt-2">
+                  대기 인원 {pending}명
+                  {typeof data.maxParticipants === "number" && ` · 최대 ${data.maxParticipants}명`}
+                </p>
               </div>
+              {data.visibility === "PUBLIC" && (
+                // 전체 모집은 모르는 사람과의 거래라, 여는 사람의 기록을 먼저 보여 준다
+                <div className="dg-well border-l-[6px] border-l-plate-yellow p-4 text-sm text-steel-200">
+                  <p className="text-xs font-bold text-steel-400">여는 사람 기록</p>
+                  {trustParts.length > 0 && <p className="mt-1 font-semibold text-white">{trustParts.join(" · ")}</p>}
+                  <p className="mt-2 text-xs text-steel-300">앱은 결제를 중개하지 않아요. 송금 전에 여는 사람의 기록을 확인하세요.</p>
+                </div>
+              )}
               {(isOwner || isAdmin) ? (
                 <div className="dg-well p-4 text-xs text-steel-300">
                   {isOwner ? "작성자 계정입니다." : "관리자 계정입니다."}

@@ -12,7 +12,15 @@ public interface ProteinService {
     Protein update(Long id, ProteinCreateUpdateRequest req);
     void delete(Long id);
     Protein get(Long id);
-    Page<Protein> list(String q, Pageable pageable);
+    /**
+     * 공동구매 목록. scope: "all"(내가 볼 수 있는 전부) · "gym"(내 짐들, gymSlug 가 있으면 그 짐만) · "public"(전체 모집).
+     * 못 보는 글은 빠진다(GroupBuyAccess).
+     */
+    Page<Protein> list(User viewer, String scope, String gymSlug, String q, Pageable pageable);
+    /** 못 보는 글이면 404 */
+    void requireView(Protein p, User viewer);
+    /** 상세의 여는 사람 신뢰 표시: [가입 후 지난 날, 누적 운동 일수] */
+    long[] ownerTrust(Protein p);
     double averageRating(Long proteinId);
     long reviewCount(Long proteinId);
     /** 여러 모집글의 [평균 평점, 후기 수]를 쿼리 한 번으로. 후기가 없는 글은 map 에 없다 */

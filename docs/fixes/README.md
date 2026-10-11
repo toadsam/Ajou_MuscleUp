@@ -18,6 +18,8 @@
 
 - [2026-10-11-gyms.md](2026-10-11-gyms.md) — 0단계 PR 3: 짐 구조 · 짐별 운영진(GymPermissionService) · /api/gyms · 아주대 이전(V2)
 
+- [2026-10-11-group-buy-scope.md](2026-10-11-group-buy-scope.md) — 0단계 PR 4: 공동구매 우리 모임 / 전체 모집(GroupBuyAccess) · 짐 안 랭킹
+
 ## 항목 양식
 
 ```markdown

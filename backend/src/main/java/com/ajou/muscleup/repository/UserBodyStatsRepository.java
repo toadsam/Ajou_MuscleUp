@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 public interface UserBodyStatsRepository extends JpaRepository<UserBodyStats, Long> {
     Optional<UserBodyStats> findByUser(User user);
 
+    java.util.List<UserBodyStats> findAllByUserIn(java.util.Collection<User> users);
+
     @Query("""
             select coalesce(sum(
               coalesce(s.benchKg, 0) + coalesce(s.squatKg, 0) + coalesce(s.deadliftKg, 0)

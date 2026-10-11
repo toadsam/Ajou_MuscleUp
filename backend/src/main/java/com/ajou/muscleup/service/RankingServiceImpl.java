@@ -8,6 +8,14 @@ import com.ajou.muscleup.entity.UserBodyStats;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.UserBodyStatsRepository;
 import com.ajou.muscleup.repository.UserRepository;
+import com.ajou.muscleup.repository.WorkoutCrewMemberRepository;
+import com.ajou.muscleup.repository.WorkoutCrewRepository;
+import com.ajou.muscleup.entity.WorkoutCrew;
+import com.ajou.muscleup.entity.WorkoutCrewMember;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +31,74 @@ public class RankingServiceImpl implements RankingService {
     private final CharacterProfileRepository profileRepository;
     private final UserRepository userRepository;
     private final UserBodyStatsRepository statsRepository;
+    private final WorkoutCrewRepository gymRepository;
+    private final WorkoutCrewMemberRepository memberRepository;
+    private final GymPermissionService permissions;
+
+    @Override
+    @Transactional(readOnly = true)
+    public CharacterRankingListResponse getCharacterRankings(String email, String type, int limit, String gymSlug) {
+        if (gymSlug == null || gymSlug.isBlank()) return getCharacterRankings(email, type, limit);
+        boolean threeLift = "THREE_LIFT".equalsIgnoreCase(type);
+        if (!threeLift && !"LEVEL".equalsIgnoreCase(type)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ranking type");
+        }
+        User me = email == null ? null : userRepository.findByEmail(email).orElse(null);
+        if (me == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요해요.");
+        WorkoutCrew gym = gymRepository.findBySlug(gymSlug.trim().toLowerCase(Locale.ROOT))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "모임을 찾을 수 없어요."));
+        permissions.require(me, gym, GymPermissionService.GymAction.VIEW_MEMBERS);
+
+        // 짐 멤버(수백 명 이내 전제)의 공개 캐릭터를 모아 메모리에서 정렬한다. 순서 규칙은 전체 순위와 같다(값 → 최근 갱신).
+        List<User> users = memberRepository.findAllByCrewOrderByCreatedAtAsc(gym).stream().map(WorkoutCrewMember::getUser).toList();
+        Map<Long, Double> totals = new HashMap<>();
+        if (threeLift) {
+            for (UserBodyStats s : statsRepository.findAllByUserIn(users)) totals.put(s.getUser().getId(), threeLiftOf(s));
+        }
+        Comparator<CharacterProfile> byUpdated = Comparator.comparing(CharacterProfile::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()));
+        Comparator<CharacterProfile> order = threeLift
+                ? Comparator.comparing((CharacterProfile p) -> totals.getOrDefault(p.getUser().getId(), 0.0), Comparator.reverseOrder()).thenComparing(byUpdated)
+                : Comparator.comparing(CharacterProfile::getLevel, Comparator.reverseOrder()).thenComparing(byUpdated);
+        List<CharacterProfile> ranked = profileRepository.findAllByUserIn(users).stream()
+                .filter(CharacterProfile::isPublic)
+                .filter(p -> !threeLift || totals.containsKey(p.getUser().getId()))
+                .sorted(order)
+                .toList();
+
+        Integer myRank = null;
+        for (int i = 0; i < ranked.size(); i++) {
+            if (ranked.get(i).getUser().getId().equals(me.getId())) { myRank = i + 1; break; }
+        }
+        Double myTopPercent = myRank == null || ranked.isEmpty() ? null : Math.round((myRank * 1000.0 / ranked.size())) / 10.0;
+        int safeLimit = Math.max(1, Math.min(limit, 100));
+        List<CharacterRankingResponse> items = ranked.stream().limit(safeLimit)
+                .map(p -> CharacterRankingResponse.builder()
+                        .nickname(p.getUser().getNickname())
+                        .level(p.getLevel())
+                        .tier(p.getTier())
+                        .evolutionStage(p.getEvolutionStage())
+                        .title(p.getTitle())
+                        .avatarSeed(p.getAvatarSeed())
+                        .gender(p.getGender())
+                        .isResting(p.isResting())
+                        .threeLiftTotal(threeLift ? totals.get(p.getUser().getId()) : null)
+                        .selfReported(true)
+                        .updatedAt(p.getUpdatedAt())
+                        .build())
+                .toList();
+        return CharacterRankingListResponse.builder()
+                .items(items)
+                .totalPublic((long) ranked.size())
+                .myRank(myRank)
+                .myTopPercent(myTopPercent)
+                .build();
+    }
+
+    private static double threeLiftOf(UserBodyStats s) {
+        return (s.getBenchKg() == null ? 0.0 : s.getBenchKg())
+                + (s.getSquatKg() == null ? 0.0 : s.getSquatKg())
+                + (s.getDeadliftKg() == null ? 0.0 : s.getDeadliftKg());
+    }
 
     @Override
     @Transactional(readOnly = true)

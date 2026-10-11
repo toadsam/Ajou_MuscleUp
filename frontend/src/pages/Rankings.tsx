@@ -22,7 +22,27 @@ type RankingResponse = {
   myTopPercent: number | null;
 };
 
+// GET /api/gyms/mine 에서 쓰는 값만
+type MyGym = {
+  slug: string;
+  name: string;
+  status?: string;
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+// 범위 버튼용 내 모임(운영 중인 곳만). 실패하거나 로그인 전이면 빈 목록 → "전체"만 보인다
+async function fetchMyActiveGyms(): Promise<MyGym[]> {
+  try {
+    const url = API_BASE ? `${API_BASE}/api/gyms/mine` : "/api/gyms/mine";
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) return [];
+    const list = (await res.json()) as MyGym[];
+    return Array.isArray(list) ? list.filter((g) => g.status === "ACTIVE") : [];
+  } catch {
+    return [];
+  }
+}
 
 async function api<T>(path: string): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
@@ -79,24 +99,44 @@ export default function Rankings() {
   const [totalPublic, setTotalPublic] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [gyms, setGyms] = useState<MyGym[]>([]);
+  // null = 전체, 아니면 그 모임 슬러그
+  const [gymSlug, setGymSlug] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    fetchMyActiveGyms().then((list) => {
+      if (!cancelled) setGyms(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    // 범위 · 종류를 빨리 바꿀 때 늦게 온 이전 응답이 덮어쓰지 않게
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await api<RankingResponse>(`/api/rankings/characters?type=${type}&limit=50`);
+        const gymParam = gymSlug ? `&gym=${encodeURIComponent(gymSlug)}` : "";
+        const res = await api<RankingResponse>(`/api/rankings/characters?type=${type}&limit=50${gymParam}`);
+        if (cancelled) return;
         setData(res.items);
         setMyRank(res.myRank ?? null);
         setMyTopPercent(res.myTopPercent ?? null);
         setTotalPublic(res.totalPublic ?? 0);
       } catch (e: unknown) {
-        setError(friendlyError(e, "랭킹을 불러오지 못했어요."));
+        if (!cancelled) setError(friendlyError(e, "랭킹을 불러오지 못했어요."));
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [type]);
+    return () => {
+      cancelled = true;
+    };
+  }, [type, gymSlug]);
 
   const tabIndex = TABS.findIndex((t) => t.key === type);
 
@@ -129,6 +169,31 @@ export default function Rankings() {
           />
         </div>
 
+        {gyms.length > 0 && (
+          // 범위: 전체 / 내 모임별. 모임 이름이 길면 자른다
+          <div className="flex flex-wrap gap-2" role="group" aria-label="랭킹 범위">
+            {[{ slug: null as string | null, name: "전체" }, ...gyms].map((g) => {
+              const on = gymSlug === g.slug;
+              return (
+                <button
+                  key={g.slug ?? "all"}
+                  type="button"
+                  aria-pressed={on}
+                  title={g.name}
+                  onClick={() => setGymSlug(g.slug)}
+                  className={`min-h-[40px] max-w-[12rem] truncate rounded-md border-[3px] border-black px-4 py-1.5 text-sm font-bold transition-all duration-100 ${
+                    on
+                      ? "translate-y-[3px] bg-plate-blue text-white shadow-none"
+                      : "bg-steel-700 text-steel-200 shadow hover:-translate-y-0.5 hover:shadow-md"
+                  }`}
+                >
+                  {g.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="dg-steel p-5 text-sm text-steel-300 grid grid-cols-3 gap-3">
           <div className="dg-well px-4 py-3">
             <div className="text-xs font-bold text-steel-400">
@@ -143,9 +208,10 @@ export default function Rankings() {
             <div className="font-num text-3xl font-black text-white">{myTopPercent !== null ? `${myTopPercent}%` : "-"}</div>
           </div>
           <div className="dg-well px-4 py-3">
-            <div className="text-xs font-bold text-steel-400">공개 캐릭터</div>
+            <div className="text-xs font-bold text-steel-400">{gymSlug ? "이 모임 공개 캐릭터" : "공개 캐릭터"}</div>
             <div className="font-num text-3xl font-black text-white">
               <CountNumber value={totalPublic} />
+              <span className="ml-1 font-sans text-sm font-bold text-steel-400">명</span>
             </div>
           </div>
         </div>
@@ -166,7 +232,7 @@ export default function Rankings() {
           <p className="text-xs text-steel-400">3대 중량은 각자 본인이 입력한 기록이에요. 측정·검증된 값이 아니에요.</p>
         )}
 
-        <div className="space-y-3" key={type}>
+        <div className="space-y-3" key={`${type}-${gymSlug ?? "all"}`}>
           {data.map((item, idx) => {
             const rank = idx + 1;
             const top = rank <= 3;
@@ -208,7 +274,7 @@ export default function Rankings() {
               </div>
             );
           })}
-          {data.length === 0 && !loading && <div className="dg-well p-6 text-center text-steel-400">아직 공개된 캐릭터가 없어요.</div>}
+          {data.length === 0 && !loading && <div className="dg-well p-6 text-center text-steel-400">{gymSlug ? "이 모임엔 아직 공개된 캐릭터가 없어요." : "아직 공개된 캐릭터가 없어요."}</div>}
         </div>
       </div>
     </section>
