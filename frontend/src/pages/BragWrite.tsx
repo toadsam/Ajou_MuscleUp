@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import UploadDropzone from "../components/UploadDropzone";
 import { logEvent } from "../utils/analytics";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
@@ -124,14 +126,11 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
+    toast("로그인이 필요해요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw await httpError(res, "로그인이 필요해요.");
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
-  }
+  if (!res.ok) throw await httpError(res, "자랑글을 등록하지 못했어요.");
   return res.json();
 }
 
@@ -277,10 +276,10 @@ export default function BragWrite() {
       setErr(null);
       await api("/api/brags", { method: "POST", body: JSON.stringify(payload) });
       localStorage.removeItem(DRAFT_KEY);
-      alert("자랑글이 등록되었습니다.");
+      toast("자랑글을 등록했어요.", "success");
       window.location.href = "/brag";
-    } catch (e: any) {
-      setErr(e?.message || "등록에 실패했습니다.");
+    } catch (e) {
+      setErr(friendlyError(e, "자랑글을 등록하지 못했어요."));
     } finally {
       setSubmitting(false);
     }
@@ -352,7 +351,7 @@ export default function BragWrite() {
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="dg-steel grid gap-5 p-6 lg:grid-cols-[1.05fr,0.95fr]">
           <div className="space-y-3">
-            <p className="font-num text-sm font-bold text-orange-300">Brag Studio</p>
+            <p className="font-num text-sm font-bold text-plate-yellow">BRAG STUDIO</p>
             <h1 className="text-3xl md:text-5xl">초보도 쉽게 올리는 자랑글</h1>
             <p className="max-w-2xl text-sm leading-relaxed text-steel-300">
               템플릿을 고르고 사진과 핵심 기록만 넣으면 자랑글이 바로 완성됩니다.
@@ -612,7 +611,7 @@ export default function BragWrite() {
                             {isVid ? (
                               <video src={url} className="h-44 w-full object-cover" controls />
                             ) : (
-                              <img loading="lazy" decoding="async" src={url} alt="media" className="h-44 w-full object-cover" />
+                              <img loading="lazy" decoding="async" src={url} alt="첨부한 사진" className="h-44 w-full object-cover" />
                             )}
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs">
@@ -651,8 +650,8 @@ export default function BragWrite() {
           <aside className="space-y-6">
             <div className="sticky top-28 space-y-6">
               <div className="dg-steel p-6">
-                <div className="text-sm font-bold text-orange-300">자동 캡션</div>
-                <p className="dg-well mt-3 border-l-[6px] border-l-orange-500 px-4 py-4 text-sm leading-relaxed text-chalk">
+                <div className="text-sm font-bold text-plate-yellow">자동 캡션</div>
+                <p className="dg-well mt-3 border-l-[6px] border-l-plate-yellow px-4 py-4 text-sm leading-relaxed text-chalk">
                   {autoCaption}
                 </p>
                 <p className="mt-3 text-xs text-steel-400">초보가 문구를 고민하지 않도록 공유용 한 줄을 자동 제안합니다.</p>
@@ -665,7 +664,7 @@ export default function BragWrite() {
                 <div className="mt-5 overflow-hidden rounded-xl border-[3px] border-black bg-steel-800 shadow-md">
                   <div className="dg-rubber flex h-44 items-end border-b-[3px] border-black p-5">
                     <div>
-                      <div key={templateKey} className="dg-pop text-sm font-bold text-orange-300">{selectedTemplate.label}</div>
+                      <div key={templateKey} className="dg-pop text-sm font-bold text-plate-yellow">{selectedTemplate.label}</div>
                       <div className="mt-2 text-xl font-bold text-white">{form.title.trim() || selectedTemplate.titleHint}</div>
                     </div>
                   </div>
@@ -675,7 +674,7 @@ export default function BragWrite() {
                       {form.weight && <span className="dg-chip bg-plate-yellow text-black">{form.weight}</span>}
                       {form.duration && <span className="dg-chip bg-steel-700">{form.duration}</span>}
                       {tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="dg-chip bg-steel-700 text-orange-300">#{tag}</span>
+                        <span key={tag} className="dg-chip bg-steel-700 text-plate-yellow">#{tag}</span>
                       ))}
                     </div>
                     <p className="text-sm leading-relaxed text-steel-300">
@@ -684,7 +683,7 @@ export default function BragWrite() {
                     <div className="grid grid-cols-2 gap-2">
                       {mediaItems.slice(0, 2).map((item) => (
                         <div key={`preview-${item.url}`} className="overflow-hidden rounded border-2 border-black bg-steel-900">
-                          <img loading="lazy" decoding="async" src={withBase(item.url)} alt="preview" className="h-24 w-full object-cover" />
+                          <img loading="lazy" decoding="async" src={withBase(item.url)} alt="미리보기 사진" className="h-24 w-full object-cover" />
                         </div>
                       ))}
                     </div>

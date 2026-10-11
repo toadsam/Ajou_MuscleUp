@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UploadDropzone from "../components/UploadDropzone";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
+import { DISTRIBUTION_METHODS } from "../utils/proteinMeta";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 // 글쓰기 입력칸: 철판 안쪽의 어두운 칸 + 포커스 시 노란 외곽선
@@ -16,14 +19,11 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     credentials: "include",
   });
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
+    toast("로그인이 필요해요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw await httpError(res, "로그인이 필요해요.");
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status} ${res.statusText} ${text}`);
-  }
+  if (!res.ok) throw await httpError(res, "공동구매 모집글을 등록하지 못했어요.");
   return res.json();
 }
 
@@ -32,14 +32,16 @@ type CreateProteinPayload = {
   price: number;
   days: number;
   goal: number;
-  imageUrl?: string;
+  imageUrl?: string; // 대표 이미지(목록에 공개)
+  receiptUrl?: string; // 영수증(작성자 · 관리자 · 승인된 참여자만)
+  distributionMethod?: string;
   description?: string;
   category?: string;
 };
 
 type Protein = CreateProteinPayload & { id: number; avgRating?: number | null };
 
-type DistributionType = "직접 만남" | "헬스장 보관함";
+type DistributionType = (typeof DISTRIBUTION_METHODS)[number] | "";
 
 export default function WriteProtein() {
   const navigate = useNavigate();
@@ -49,12 +51,13 @@ export default function WriteProtein() {
     days: "",
     goal: "",
     image: "",
+    receipt: "",
     region: "",
     gym: "",
     brand: "",
     totalCapacity: "",
     perCapacity: "",
-    distributionType: "직접 만남" as DistributionType,
+    distributionType: "" as DistributionType,
     distributionLocation: "",
     detailNote: "",
   });
@@ -74,7 +77,6 @@ export default function WriteProtein() {
       form.brand.trim() ? `브랜드: ${form.brand.trim()}` : null,
       form.totalCapacity.trim() ? `총 용량: ${form.totalCapacity.trim()}` : null,
       form.perCapacity.trim() ? `1인 분배: ${form.perCapacity.trim()}` : null,
-      form.distributionType ? `분배 방식: ${form.distributionType}` : null,
       form.distributionLocation.trim() ? `분배 위치: ${form.distributionLocation.trim()}` : null,
       form.detailNote.trim() ? `추가 설명: ${form.detailNote.trim()}` : null,
     ].filter(Boolean);
@@ -108,6 +110,8 @@ export default function WriteProtein() {
       days,
       goal,
       imageUrl: form.image.trim() || undefined,
+      receiptUrl: form.receipt.trim() || undefined,
+      distributionMethod: form.distributionType || undefined,
       description: buildDescription(),
       category,
     };
@@ -119,10 +123,10 @@ export default function WriteProtein() {
         body: JSON.stringify(payload),
       });
 
-      alert("나눔 모집글이 등록되었습니다.");
+      toast("공동구매 모집글을 등록했어요.", "success");
       navigate(`/proteins/${created.id}`);
-    } catch (e: any) {
-      setErr(e?.message ?? "등록에 실패했습니다.");
+    } catch (e) {
+      setErr(friendlyError(e, "공동구매 모집글을 등록하지 못했어요."));
     } finally {
       setSubmitting(false);
     }
@@ -131,9 +135,9 @@ export default function WriteProtein() {
   return (
     <section className="pt-28 pb-16 px-6 lg:px-12 min-h-screen text-white">
       <div className="dg-steel dg-rise max-w-3xl mx-auto p-8">
-        <h2 className="font-display text-3xl mb-6 text-center">나눔형 공동구매 모집글 등록</h2>
+        <h2 className="font-display text-3xl mb-6 text-center">공동구매 모집글 등록</h2>
         <p className="text-sm text-steel-300 text-center mb-8">
-          결제는 외부에서 이루어집니다. 지역/헬스장 기준의 나눔 모집글만 작성해 주세요.
+          결제는 외부에서 이루어집니다. 지역/헬스장 기준의 공동구매 모집글만 작성해 주세요.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -175,8 +179,9 @@ export default function WriteProtein() {
               />
             </div>
             <div>
-              <label className="block mb-2 text-sm font-semibold text-steel-200">모집 기간(일)</label>
+              <label htmlFor="protein-days" className="block mb-2 text-sm font-semibold text-steel-200">모집 기간(일)</label>
               <input
+                id="protein-days"
                 type="number"
                 name="days"
                 value={form.days}
@@ -184,7 +189,12 @@ export default function WriteProtein() {
                 className={FIELD}
                 required
                 min={1}
+                max={365}
+                aria-describedby="protein-days-hint"
               />
+              <p id="protein-days-hint" className="mt-1 text-xs text-steel-400">
+                오늘부터 센 날짜가 지나면 자동으로 마감돼요.
+              </p>
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-steel-200">목표 인원</label>
@@ -252,15 +262,19 @@ export default function WriteProtein() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block mb-2 text-sm font-semibold text-steel-200">분배 방식</label>
-              <div className="flex gap-3">
-                {["직접 만남", "헬스장 보관함"].map((type) => (
+              <p className="block mb-2 text-sm font-semibold text-steel-200">
+                분배 방식 <span className="text-xs font-normal text-steel-400">(선택, 다시 누르면 해제)</span>
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {DISTRIBUTION_METHODS.map((type) => (
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, distributionType: type as DistributionType }))}
+                    onClick={() =>
+                      setForm((prev) => ({ ...prev, distributionType: prev.distributionType === type ? "" : type }))
+                    }
                     aria-pressed={form.distributionType === type}
-                    className={`flex-1 rounded-md border-[3px] border-black px-4 py-2 text-sm font-bold transition-all duration-100 ${
+                    className={`rounded-md border-[3px] border-black px-3 py-2 text-sm font-bold transition-all duration-100 ${
                       form.distributionType === type
                         ? "translate-y-[3px] bg-plate-yellow text-black shadow-none"
                         : "bg-steel-700 text-steel-200 shadow hover:-translate-y-0.5 hover:shadow-md"
@@ -296,29 +310,62 @@ export default function WriteProtein() {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-sm font-semibold text-steel-200">영수증/실구매 인증 이미지</label>
+            <label htmlFor="protein-image" className="block text-sm font-semibold text-steel-200">
+              대표 이미지 <span className="text-xs font-normal text-steel-400">(선택, 목록에 보여요)</span>
+            </label>
+            <p className="text-xs text-steel-400">제품 사진처럼 누구에게 보여도 괜찮은 사진을 올려 주세요.</p>
             <UploadDropzone
               accept="image/*"
               multiple={false}
+              folder="protein"
               onUploaded={(url) => setForm((prev) => ({ ...prev, image: url }))}
             />
             <input
+              id="protein-image"
               type="text"
               name="image"
               value={form.image}
               onChange={handleChange}
               className={FIELD}
-              placeholder="https://example.com/receipt.jpg"
+              placeholder="또는 이미지 주소를 붙여 넣기"
             />
             {form.image && (
               <div className="dg-well dg-pop p-3">
                 <p className="text-sm text-steel-300 mb-2">미리보기</p>
-                <img src={form.image} alt="preview" className="w-full h-48 object-cover rounded border-2 border-black" />
+                <img src={form.image} alt="대표 이미지 미리보기" className="w-full h-48 object-cover rounded border-2 border-black" />
               </div>
             )}
           </div>
 
-          {!canSubmit && <p className="text-xs font-semibold text-orange-300">지역 또는 헬스장 중 하나는 필수입니다.</p>}
+          <div className="space-y-3">
+            <label htmlFor="protein-receipt" className="block text-sm font-semibold text-steel-200">
+              영수증/실구매 인증 <span className="text-xs font-normal text-steel-400">(선택)</span>
+            </label>
+            <p className="text-xs text-steel-400">작성자, 운영진, 승인된 참여자에게만 보여요. 목록에는 나오지 않아요.</p>
+            <UploadDropzone
+              accept="image/*"
+              multiple={false}
+              folder="protein"
+              onUploaded={(url) => setForm((prev) => ({ ...prev, receipt: url }))}
+            />
+            <input
+              id="protein-receipt"
+              type="text"
+              name="receipt"
+              value={form.receipt}
+              onChange={handleChange}
+              className={FIELD}
+              placeholder="또는 이미지 주소를 붙여 넣기"
+            />
+            {form.receipt && (
+              <div className="dg-well dg-pop p-3">
+                <p className="text-sm text-steel-300 mb-2">미리보기</p>
+                <img src={form.receipt} alt="영수증 미리보기" className="w-full h-48 object-cover rounded border-2 border-black" />
+              </div>
+            )}
+          </div>
+
+          {!canSubmit && <p className="text-xs font-semibold text-plate-yellow">지역 또는 헬스장 중 하나는 필수입니다.</p>}
           {err && <p className="dg-pop dg-well border-l-4 border-l-plate-red p-3 text-sm text-red-200">{err}</p>}
 
           <button
@@ -326,7 +373,7 @@ export default function WriteProtein() {
             disabled={submitting || !canSubmit}
             className="dg-btn dg-btn-primary w-full"
           >
-            {submitting ? "등록 중..." : "나눔 모집글 등록"}
+            {submitting ? "등록 중..." : "공동구매 모집글 등록"}
           </button>
         </form>
       </div>

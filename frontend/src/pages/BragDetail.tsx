@@ -3,6 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import html2canvas from "html2canvas";
 import UploadDropzone from "../components/UploadDropzone";
 import { logEvent } from "../utils/analytics";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
+import { authorKey, getHiddenAuthors, toggleHiddenAuthor } from "../utils/bragHidden";
 
 type BragPost = {
   id: number;
@@ -13,6 +16,7 @@ type BragPost = {
   mediaUrls: string[];
   authorNickname?: string | null;
   authorEmail?: string | null;
+  authorId?: number | null;
   createdAt?: string | null;
 };
 
@@ -39,11 +43,6 @@ type ParsedMeta = {
   afterUrls: string[];
 };
 
-type LocalReactions = {
-  inspire?: boolean;
-  helpful?: boolean;
-};
-
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
 const isVideo = (url: string) => /\.(mp4|mov|webm|avi|mkv)(\?|$)/i.test(url.split("?")[0]);
@@ -66,14 +65,11 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
+    toast("로그인이 필요해요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw await httpError(res, "로그인이 필요해요.");
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
-  }
+  if (!res.ok) throw await httpError(res, "요청을 처리하지 못했어요.");
   const text = await res.text();
   if (!text) return null as T;
   return JSON.parse(text) as T;
@@ -133,29 +129,8 @@ const parseMeta = (raw: string): { cleanContent: string; meta: ParsedMeta; metaB
   return { cleanContent, meta, metaBlock: match[0] };
 };
 
-const getLocalReactions = () => {
-  try {
-    return JSON.parse(localStorage.getItem("brag_reactions") || "{}") as Record<number, LocalReactions>;
-  } catch {
-    return {};
-  }
-};
-
-const setLocalReactions = (data: Record<number, LocalReactions>) => {
-  localStorage.setItem("brag_reactions", JSON.stringify(data));
-};
-
-const getBlockedAuthors = () => {
-  try {
-    return JSON.parse(localStorage.getItem("brag_blocked_authors") || "[]") as string[];
-  } catch {
-    return [];
-  }
-};
-
-const setBlockedAuthors = (list: string[]) => {
-  localStorage.setItem("brag_blocked_authors", JSON.stringify(list));
-};
+// 댓글 빠른 삽입 문구. 예전 이모지 5개가 인코딩 손상으로 "??" 가 되어 있던 자리(커밋 2de4f34).
+const QUICK_PHRASES = ["멋져요", "응원해요", "자극받고 가요", "꾸준함 최고", "다음 기록도 기대돼요"];
 
 const renderMentions = (text: string) => {
   const parts = text.split(/(@[\w가-힣]+)/g);
@@ -191,8 +166,8 @@ export default function BragDetail() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState("");
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
-  const [localReactions, setLocalReactionsState] = useState<Record<number, LocalReactions>>(getLocalReactions());
-  const [blockedAuthors, setBlockedAuthorsState] = useState<string[]>(getBlockedAuthors());
+  // "이 기기에서 숨김": 서버에 저장되지 않는 개인 설정(목록 화면도 같은 값을 읽는다)
+  const [hiddenAuthors, setHiddenAuthorsState] = useState<string[]>(() => getHiddenAuthors());
   const shareCardRef = useRef<HTMLDivElement | null>(null);
 
   const userRaw = localStorage.getItem("user");
@@ -222,8 +197,8 @@ export default function BragDetail() {
       setComments(c);
       const l = await api<LikeRes>(`/api/brags/${postId}/like`);
       setLike(l);
-    } catch (e: any) {
-      setError(e?.message || "게시글을 불러오지 못했습니다.");
+    } catch (e) {
+      setError(friendlyError(e, "게시글을 불러오지 못했어요."));
     } finally {
       setLoading(false);
     }
@@ -253,8 +228,8 @@ export default function BragDetail() {
       });
       setComments((prev) => [...prev, created]);
       setCommentText("");
-    } catch (e: any) {
-      alert(e?.message || "댓글을 등록하지 못했습니다.");
+    } catch (e) {
+      toast(friendlyError(e, "댓글을 등록하지 못했어요."), "error");
     }
   };
 
@@ -262,8 +237,8 @@ export default function BragDetail() {
     try {
       const res = await api<LikeRes>(`/api/brags/${postId}/like`, { method: "POST" });
       setLike(res);
-    } catch (e: any) {
-      alert(e?.message || "응원 처리에 실패했습니다.");
+    } catch (e) {
+      toast(friendlyError(e, "응원을 반영하지 못했어요."), "error");
     }
   };
 
@@ -275,19 +250,18 @@ export default function BragDetail() {
     setEditPostForm((prev) => ({ ...prev, mediaUrls: prev.mediaUrls.filter((u) => u !== url) }));
   };
 
-  const toggleLocalReaction = (key: keyof LocalReactions) => {
-    const next = { ...localReactions, [postId]: { ...localReactions[postId], [key]: !localReactions[postId]?.[key] } };
-    setLocalReactionsState(next);
-    setLocalReactions(next);
-  };
+  const postAuthorKey = post ? authorKey(post) : null;
 
-  const toggleBlock = (email?: string | null) => {
-    if (!email) return;
-    const next = blockedAuthors.includes(email)
-      ? blockedAuthors.filter((value) => value !== email)
-      : [...blockedAuthors, email];
-    setBlockedAuthorsState(next);
-    setBlockedAuthors(next);
+  const toggleHidden = () => {
+    if (!postAuthorKey) return;
+    const next = toggleHiddenAuthor(postAuthorKey);
+    setHiddenAuthorsState(next);
+    toast(
+      next.includes(postAuthorKey)
+        ? "이 기기에서 이 작성자의 글을 숨겼어요. 다른 사람에게는 그대로 보여요."
+        : "숨김을 풀었어요.",
+      "success"
+    );
   };
 
   const submitReport = async () => {
@@ -302,11 +276,11 @@ export default function BragDetail() {
           page: `/brag/${postId}`,
         }),
       });
-      alert("신고가 접수되었습니다.");
+      toast("신고를 접수했어요. 운영진이 확인할게요.", "success");
       setReportOpen(false);
       setReportText("");
-    } catch (e: any) {
-      alert(e?.message || "신고 접수에 실패했습니다.");
+    } catch (e) {
+      toast(friendlyError(e, "신고를 접수하지 못했어요."), "error");
     }
   };
 
@@ -353,8 +327,6 @@ export default function BragDetail() {
     }
   };
 
-  const local = localReactions[postId] || {};
-
   if (loading) {
     return (
       <section className="pt-32 p-10 min-h-screen text-white">
@@ -380,16 +352,16 @@ export default function BragDetail() {
     );
   }
 
-  if (post.authorEmail && blockedAuthors.includes(post.authorEmail)) {
+  if (postAuthorKey && hiddenAuthors.includes(postAuthorKey)) {
     return (
       <section className="pt-32 p-10 min-h-screen text-white">
         <div className="dg-steel max-w-3xl mx-auto p-8 text-center space-y-4">
-          <p className="text-steel-300">차단한 작성자의 게시글입니다.</p>
+          <p className="text-steel-300">이 기기에서 숨긴 작성자의 글이에요.</p>
           <button
             className="dg-btn dg-btn-steel mx-auto flex"
-            onClick={() => toggleBlock(post.authorEmail)}
+            onClick={toggleHidden}
           >
-            차단 해제
+            숨김 해제
           </button>
           <Link to="/brag" className="text-sm text-steel-300 underline">
             목록으로
@@ -440,30 +412,15 @@ export default function BragDetail() {
               </span>
               응원 <span key={like.likeCount} className="dg-pop font-num inline-block text-sm font-black">{like.likeCount}</span>
             </button>
-            <button
-              onClick={() => toggleLocalReaction("inspire")}
-              aria-pressed={!!local.inspire}
-              className={`dg-btn dg-chalk-burst min-h-[34px] px-3 text-xs ${
-                local.inspire ? "dg-pop bg-plate-green text-white" : "bg-steel-700 text-steel-200"
-              }`}
-            >
-              자극됨
-            </button>
-            <button
-              onClick={() => toggleLocalReaction("helpful")}
-              aria-pressed={!!local.helpful}
-              className={`dg-btn dg-chalk-burst min-h-[34px] px-3 text-xs ${
-                local.helpful ? "dg-pop bg-plate-blue text-white" : "bg-steel-700 text-steel-200"
-              }`}
-            >
-              도움됨
-            </button>
-            <button
-              onClick={() => toggleBlock(post.authorEmail)}
-              className="dg-btn min-h-[34px] bg-steel-900 px-3 text-xs text-steel-400"
-            >
-              차단
-            </button>
+            {postAuthorKey && !isOwner && (
+              <button
+                onClick={toggleHidden}
+                className="dg-btn min-h-[34px] bg-steel-900 px-3 text-xs text-steel-400"
+                title="이 작성자의 글을 이 기기에서만 숨겨요. 서버나 다른 사람에게는 영향이 없어요."
+              >
+                이 기기에서 숨기기
+              </button>
+            )}
             <button
               onClick={() => setReportOpen(true)}
               className="dg-btn min-h-[34px] bg-steel-900 px-3 text-xs text-red-300"
@@ -481,7 +438,7 @@ export default function BragDetail() {
 
         <header className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-orange-300 font-semibold">
+            <p className="text-sm text-plate-yellow font-semibold">
               {post.authorNickname || "익명 회원"} · {formatDate(post.createdAt)}
             </p>
             {(isOwner || isAdmin) && (
@@ -497,10 +454,10 @@ export default function BragDetail() {
                     if (!confirm("이 게시글을 삭제할까요?")) return;
                     try {
                       await api(`/api/brags/${postId}`, { method: "DELETE" });
-                      alert("삭제했습니다.");
+                      toast("게시글을 삭제했어요.", "success");
                       window.location.href = "/brag";
-                    } catch (e: any) {
-                      alert(e?.message || "삭제에 실패했습니다.");
+                    } catch (e) {
+                      toast(friendlyError(e, "게시글을 삭제하지 못했어요."), "error");
                     }
                   }}
                   className="dg-btn min-h-[34px] bg-steel-900 px-3 text-xs text-red-300 hover:bg-plate-red hover:text-white"
@@ -592,11 +549,11 @@ export default function BragDetail() {
                         method: "PUT",
                         body: JSON.stringify(payload),
                       });
-                      alert("수정했습니다.");
+                      toast("게시글을 수정했어요.", "success");
                       setEditingPost(false);
                       fetchData();
-                    } catch (e: any) {
-                      alert(e?.message || "수정에 실패했습니다.");
+                    } catch (e) {
+                      toast(friendlyError(e, "게시글을 수정하지 못했어요."), "error");
                     }
                   }}
                 >
@@ -612,7 +569,7 @@ export default function BragDetail() {
                   <span className="dg-chip bg-plate-green text-white">{meta.region}</span>
                 )}
                 {meta.gym && (
-                  <span className="dg-chip bg-orange-500 text-black">{meta.gym}</span>
+                  <span className="dg-chip bg-plate-yellow text-black">{meta.gym}</span>
                 )}
                 {post.mediaUrls?.length ? (
                   <span className="dg-chip bg-plate-yellow text-black">인증</span>
@@ -635,7 +592,7 @@ export default function BragDetail() {
         >
           <div className="grid gap-4 p-6 md:grid-cols-[1fr,0.9fr]">
             <div className="space-y-4">
-              <div className="font-num text-sm font-bold text-orange-300">Workout Brag</div>
+              <div className="font-num text-sm font-bold text-plate-yellow">WORKOUT BRAG</div>
               <h2 className="font-display text-2xl text-white">{post.title}</h2>
               <p className="text-sm text-steel-300">{cleanContent.slice(0, 140) || "오늘의 운동 기록을 공유합니다."}</p>
               <div className="flex flex-wrap gap-2 text-xs text-chalk">
@@ -715,7 +672,7 @@ export default function BragDetail() {
                     {isVideo(url) ? (
                       <video src={url} className="w-full h-60 object-cover" muted />
                     ) : (
-                      <img loading="lazy" decoding="async" src={url} alt="before" className="w-full h-60 object-cover" />
+                      <img loading="lazy" decoding="async" src={url} alt="운동 전(Before) 사진" className="w-full h-60 object-cover" />
                     )}
                   </button>
                 );
@@ -739,7 +696,7 @@ export default function BragDetail() {
                     {isVideo(url) ? (
                       <video src={url} className="w-full h-60 object-cover" muted />
                     ) : (
-                      <img loading="lazy" decoding="async" src={url} alt="after" className="w-full h-60 object-cover" />
+                      <img loading="lazy" decoding="async" src={url} alt="운동 후(After) 사진" className="w-full h-60 object-cover" />
                     )}
                   </button>
                 );
@@ -761,7 +718,7 @@ export default function BragDetail() {
                   {isVideo(url) ? (
                     <video src={url} className="w-full h-64 object-cover" muted />
                   ) : (
-                    <img loading="lazy" decoding="async" src={url} alt="media" className="w-full h-64 object-cover" />
+                    <img loading="lazy" decoding="async" src={url} alt={`${post.title} 첨부 사진`} className="w-full h-64 object-cover" />
                   )}
                 </button>
               );
@@ -773,14 +730,14 @@ export default function BragDetail() {
           <div className="flex items-center justify-between">
             <h2 className="font-display text-xl">댓글 <span key={comments.length} className="dg-pop font-num inline-block text-plate-yellow">{comments.length}</span></h2>
             <div className="flex gap-2 text-xs">
-              {["??", "??", "??", "??", "?"].map((emoji) => (
+              {QUICK_PHRASES.map((phrase) => (
                 <button
-                  key={emoji}
+                  key={phrase}
                   type="button"
-                  onClick={() => setCommentText((prev) => `${prev}${emoji}`)}
+                  onClick={() => setCommentText((prev) => (prev.trim() ? `${prev} ${phrase}` : phrase))}
                   className="dg-btn dg-btn-steel min-h-[30px] px-2.5 text-xs"
                 >
-                  {emoji}
+                  {phrase}
                 </button>
               ))}
             </div>
@@ -815,7 +772,7 @@ export default function BragDetail() {
                     <div className="flex items-center gap-2">
                       <span className="text-steel-500">{formatDate(c.createdAt)}</span>
                       <button
-                        className="text-xs font-semibold text-orange-300 hover:text-orange-200"
+                        className="text-xs font-semibold text-plate-yellow hover:text-white"
                         onClick={() => setCommentText((prev) => `${prev ? `${prev}\n` : ""}@${c.authorNickname || "회원"} `)}
                       >
                         답글
@@ -838,8 +795,8 @@ export default function BragDetail() {
                               try {
                                 await api(`/api/brags/comments/${c.id}`, { method: "DELETE" });
                                 setComments((prev) => prev.filter((cc) => cc.id !== c.id));
-                              } catch (e: any) {
-                                alert(e?.message || "삭제에 실패했습니다.");
+                              } catch (e) {
+                                toast(friendlyError(e, "댓글을 삭제하지 못했어요."), "error");
                               }
                             }}
                           >
@@ -873,8 +830,8 @@ export default function BragDetail() {
                               });
                               setComments((prev) => prev.map((cc) => (cc.id === c.id ? updated : cc)));
                               setEditingCommentId(null);
-                            } catch (e: any) {
-                              alert(e?.message || "수정에 실패했습니다.");
+                            } catch (e) {
+                              toast(friendlyError(e, "댓글을 수정하지 못했어요."), "error");
                             }
                           }}
                         >
@@ -902,7 +859,7 @@ export default function BragDetail() {
             {isVideo(lightbox) ? (
               <video src={lightbox} controls autoPlay className="max-h-[90vh] max-w-[90vw]" />
             ) : (
-              <img src={lightbox} className="dg-pop max-h-[90vh] max-w-[90vw] rounded-md border-[3px] border-black" alt="lightbox" />
+              <img src={lightbox} className="dg-pop max-h-[90vh] max-w-[90vw] rounded-md border-[3px] border-black" alt="크게 본 사진" />
             )}
             <button
               className="dg-btn dg-btn-steel absolute -top-3 -right-3 min-h-[36px] px-3 text-sm"

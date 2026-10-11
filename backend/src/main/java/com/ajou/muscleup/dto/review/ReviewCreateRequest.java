@@ -11,5 +11,6 @@ public class ReviewCreateRequest {
     @Max(5)
     private int rating;
 
+    @Size(max = 1000) // DB 컬럼 길이(Review.content length=1000)
     private String content;
 }
