@@ -10,6 +10,8 @@ import {
   ZONE_IDS,
   createGymMap,
   toneForMbti,
+  NPC_ROLES,
+  type NpcId,
   type GymMapController,
   type ZoneId,
 } from "./engine";
@@ -46,6 +48,16 @@ const KEYS: Record<string, [number, number]> = {
   w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
 };
 
+const NPC_IDS = Object.keys(NPC_ROLES) as NpcId[];
+const COACH_TIPS = [
+  "스쿼트는 무릎이 발끝 방향을 따라가게!",
+  "세트 사이 휴식은 1~2분이면 충분해요.",
+  "물 자주 마셔요. 근육의 70%가 물이에요.",
+  "무게보다 자세 먼저. 거울 보면서 해 봐요.",
+];
+const STAFF_LINES = ["바닥 닦는 중이에요. 미끄러우니 조심!", "덤벨은 쓰고 나서 제자리에 부탁해요.", "오늘도 매트 반짝반짝!"];
+const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
+
 const pct = (x: number, y: number) => ({ left: `${(x / MAP_W) * 100}%`, top: `${(y / MAP_H) * 100}%` });
 
 type Sheet = { title: string; body: ReactNode; to: string; cta: string };
@@ -63,6 +75,46 @@ export default function GymMap(props: Props) {
   const [floatKey, setFloatKey] = useState(0);
   const [shake, setShake] = useState(false);
   const toastRef = useRef<number | undefined>(undefined);
+  const npcTagRefs = useRef<Partial<Record<NpcId, HTMLDivElement | null>>>({});
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const [talk, setTalk] = useState<{ id: NpcId; text: string; key: number } | null>(null);
+  const talkTimer = useRef<number | undefined>(undefined);
+  const talkingId = useRef<NpcId | null>(null);
+  // 직원 대사는 내 실제 기록으로 만든다(지어낸 숫자 없음)
+  const facts = useRef({ loggedIn, weekDays, streak, checkedToday });
+  useEffect(() => {
+    facts.current = { loggedIn, weekDays, streak, checkedToday };
+  }, [loggedIn, weekDays, streak, checkedToday]);
+  const lineFor = (id: NpcId): string => {
+    const f = facts.current;
+    if (id === "owner") {
+      if (!f.loggedIn) return "어서 와요! 로그인하고 출석부터 해 볼까요?";
+      return f.checkedToday ? `연속 ${f.streak}일째네요. 내일도 봐요!` : "오늘 출석 아직이죠? 체크기는 입구 옆이에요.";
+    }
+    if (id === "coach") {
+      if (f.loggedIn && Math.random() < 0.5) {
+        return f.weekDays >= 7 ? "이번 주 원판 꽉 찼어요. 대단해요!" : `이번 주 ${7 - f.weekDays}일 더 하면 바벨이 꽉 차요.`;
+      }
+      return pick(COACH_TIPS);
+    }
+    return pick(STAFF_LINES);
+  };
+  const say = (id: NpcId, text: string) => {
+    talkingId.current = id;
+    setTalk({ id, text, key: Date.now() });
+    window.clearTimeout(talkTimer.current);
+    talkTimer.current = window.setTimeout(() => {
+      talkingId.current = null;
+      setTalk(null);
+    }, 3400);
+  };
+  const sayRef = useRef(say);
+  const lineRef = useRef(lineFor);
+  useEffect(() => {
+    sayRef.current = say;
+    lineRef.current = lineFor;
+  });
+
   const latestStreak = useRef(streak);
   useEffect(() => {
     latestStreak.current = streak;
@@ -99,6 +151,24 @@ export default function GymMap(props: Props) {
           el.style.left = `${(x / MAP_W) * 100}%`;
           el.style.top = `${(y / MAP_H) * 100}%`;
         },
+        onNpcs: (pos) => {
+          for (const id of NPC_IDS) {
+            const el = npcTagRefs.current[id];
+            const p = pos[id];
+            if (!el || !p) continue;
+            el.style.left = `${(p[0] / MAP_W) * 100}%`;
+            el.style.top = `${(p[1] / MAP_H) * 100}%`;
+            if (talkingId.current === id && bubbleRef.current) {
+              bubbleRef.current.style.left = el.style.left;
+              bubbleRef.current.style.top = `${((p[1] - 10) / MAP_H) * 100}%`;
+            }
+          }
+        },
+        onNpcTalk: (id) => {
+          setTouched(true);
+          sayRef.current(id, lineRef.current(id));
+          void logEvent("home", "map_npc", { npc: id });
+        },
         onPlateLanded: () => {
           setShake(false);
           window.requestAnimationFrame(() => setShake(true));
@@ -131,6 +201,20 @@ export default function GymMap(props: Props) {
     setTouched(true);
     mapRef.current.celebrate();
   }, [celebrate]);
+
+  // 가끔 직원이 혼잣말(창이 열려 있거나 누가 말하는 중이면 쉬고, 동작 줄이기 설정이면 끔)
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      if (document.hidden || talkingId.current) return;
+      const who = pick<NpcId>(["coach", "staff", "coach"]);
+      sayRef.current(who, lineRef.current(who));
+    }, 15000);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(talkTimer.current);
+    };
+  }, []);
 
   const onPointerDown = (e: PointerEvent<HTMLCanvasElement>) => {
     const b = e.currentTarget.getBoundingClientRect();
@@ -265,10 +349,10 @@ export default function GymMap(props: Props) {
         };
       case "crew":
         return {
-          title: "운동모임",
-          body: <p>크루를 만들거나 들어가서 같이 출석률을 채워요. 크루 챌린지와 하이라이트도 여기 있어요.</p>,
+          title: "운동 모임",
+          body: <p>모임을 만들거나 들어가서 같이 출석률을 채워요. 모임 챌린지와 하이라이트도 여기 있어요.</p>,
           to: "/crew",
-          cta: "운동모임 보기",
+          cta: "운동 모임 보기",
         };
       case "community":
         return {
@@ -345,6 +429,22 @@ export default function GymMap(props: Props) {
             );
           })}
           <div ref={meRef} className="gm-me">나</div>
+          {NPC_IDS.map((id) => (
+            <div
+              key={id}
+              ref={(el) => {
+                npcTagRefs.current[id] = el;
+              }}
+              className="gm-npc"
+            >
+              {NPC_ROLES[id]}
+            </div>
+          ))}
+          {talk && (
+            <div key={talk.key} ref={bubbleRef} className="gm-bubble" role="status">
+              <b>{NPC_ROLES[talk.id]}</b> {talk.text}
+            </div>
+          )}
           {floatKey > 0 && (
             <div key={floatKey} className="gm-float" style={pct(ZONES.checkin.anchor[0] * TILE + 8, ZONES.checkin.anchor[1] * TILE - 10)}>
               +1 원판

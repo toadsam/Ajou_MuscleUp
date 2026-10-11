@@ -5,9 +5,9 @@
 
 ```text
 frontend/  React 19 + Vite + Tailwind 3 (TypeScript)
-backend/   Spring Boot 3.5 (Java 17), MySQL
+backend/   Spring Boot 3.5 (Java 17) — 로컬 MySQL, 운영 Postgres(ddl-auto=update)
 realtime/  Socket.IO 라운지 서버
-docs/      fix-log.md(수정 기록) · screenshots · 설계 문서
+docs/      fix-log.md(수정 요약) · fixes/(코드 단위 세부 기록) · screenshots · 설계 문서
 scripts/   verify.sh(검증)
 ```
 
@@ -24,6 +24,7 @@ scripts/   verify.sh(검증)
    - 빌드 통과
 4. **화면으로 확인한다.** 바뀐 화면을 데스크톱 + 모바일(375px)에서 직접 띄워 본다.
 5. **기록한다.** `docs/fix-log.md` 맨 위에 항목 추가: 불편 → 원인 → 고친 방법 → 확인한 방법 / 아직 못 한 것.
+   - 여러 파일을 고치는 큰 작업은 `docs/fixes/` 에 코드 단위 세부 기록(diff 포함)을 따로 남기고 fix-log 에서 링크한다.
    - Stop 훅(`.claude/hooks/require-fix-log.sh`)이 코드가 기록보다 새것이면 작업 종료를 막는다.
 6. **확인 못 한 건 숨기지 않는다.** 로그인 필요·실기기 필요 등으로 못 본 부분은 기록과 답변에 명시한다.
 
@@ -74,6 +75,17 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 ---
 
 ## 4. 알려진 함정
+
+- **백엔드 테스트도 `local` 프로필로 돌린다**: `cmd //c "set SPRING_PROFILES_ACTIVE=local&& backend\gradlew.bat -p backend test"`.
+  그냥 돌리면 이 PC 의 `mysql` 프로필 때문에 `contextLoads` 가 DataSource 오류로 실패한다.
+- **로그인 유지(리프레시) 토큰은 httpOnly 쿠키로만** 오간다. 프론트에서 `refreshToken` 을 저장 · 전송하지 않는다.
+- **실시간 서버는 입장권으로만 들어간다**: 백엔드 `POST /api/realtime/ticket` → 실시간 서버가 서명 확인.
+  두 서버에 같은 `REALTIME_TICKET_SECRET`(32자 이상)이 필요하다. 로컬은 개발용 값으로 자동 동작.
+  클라이언트가 보낸 닉네임 · 레벨 · 이메일은 믿지 않는다. 브로드캐스트에 이메일을 싣지 않는다.
+- **배포 빌드는 `VITE_API_BASE` · `VITE_REALTIME_URL` 이 없으면 멈춘다**(`vite.config.ts`). 급할 땐 `SKIP_API_ENV_CHECK=1`.
+- **"오늘"은 한국 시간(KST)**: 백엔드는 `TimeConfig` 의 `Clock` 을 쓴다. `LocalDate.now()` 를 새로 쓰지 않는다.
+- **오류 문구와 알림**: `alert()` 대신 `lib/toast.ts`, 오류는 `lib/httpError.ts`(`httpError`/`friendlyError`)로 한국어 문장만 보여 준다.
+- **이름**: 운동 모임 · 공동구매 · 응원 으로 통일(코드 식별자는 그대로 둬도 됨).
 
 - **html2canvas 는 CSS `filter`, `backdrop-filter` 를 그리지 않는다.** 출석 카드 캡처는 사진에
   필터를 미리 입힌 이미지로 바꿔 끼운다(`bakeMediaFilter`). 새 효과를 넣을 땐 저장본에 나오는지 확인.

@@ -37,7 +37,7 @@ export const ZONES: Record<ZoneId, ZoneSpec> = {
   mirror: { name: "거울", page: "캐릭터", trig: { c: 9, r: 3, w: 6, h: 2 }, anchor: [11, 3], label: [12, 0.55], box: [144, 5, 96, 44] },
   board: { name: "화이트보드", page: "이벤트", trig: { c: 1, r: 11, w: 4, h: 2 }, anchor: [2, 11], label: [3, 8], box: [14, 134, 68, 44] },
   lounge: { name: "라운지", page: "라운지", trig: { c: 9, r: 10, w: 5, h: 3 }, anchor: [11, 11], label: [12, 8], box: [142, 136, 100, 90] },
-  crew: { name: "러닝머신", page: "운동모임", trig: { c: 9, r: 18, w: 6, h: 2 }, anchor: [11, 18], label: [12, 15.5], box: [142, 254, 100, 36] },
+  crew: { name: "러닝머신", page: "운동 모임", trig: { c: 9, r: 18, w: 6, h: 2 }, anchor: [11, 18], label: [12, 15.5], box: [142, 254, 100, 36] },
   community: { name: "게시판", page: "커뮤니티", trig: { c: 1, r: 18, w: 4, h: 2 }, anchor: [2, 18], label: [3, 15.2], box: [14, 248, 68, 42] },
 };
 export const ZONE_IDS = Object.keys(ZONES) as ZoneId[];
@@ -88,6 +88,29 @@ const GUESTS: Pal[] = [
   { h: "#16161A", s: "#D9A577", k: C.ink, r: C.yellow, b: "#2C2D31", w: C.chalk },
   { h: "#7A4A2A", s: "#EDBD95", k: C.ink, r: C.green, b: "#3B3D44", w: C.chalk },
 ];
+/* ---------- 헬스장 직원 NPC ----------
+   실제 회원과 헷갈리지 않게: 모두 같은 노란 조끼 유니폼, 이름표는 역할(코치 · 관장님 · 직원)만.
+   닉네임 · 레벨은 없다. 실제 접속자는 라운지 벤치에 앉는 사람(인원 수 = 실시간 라운지 인원)뿐이다. */
+export type NpcId = "coach" | "owner" | "staff";
+export const NPC_ROLES: Record<NpcId, string> = { coach: "코치", owner: "관장님", staff: "직원" };
+const VEST = "#F0BE2E";
+const NPC_PAL: Record<NpcId, Pal> = {
+  coach: { h: "#1B1B1F", s: "#D9A577", k: C.ink, r: VEST, b: "#1C1D20", w: C.chalk },
+  owner: { h: "#8C8F96", s: "#E7B48C", k: C.ink, r: VEST, b: "#1C1D20", w: C.chalk },
+  staff: { h: "#5A3A22", s: "#F0C7A0", k: C.ink, r: VEST, b: "#1C1D20", w: C.chalk },
+};
+type NpcPlan =
+  | { kind: "wander"; area: Rect; pause: [number, number] }
+  | { kind: "route"; points: [number, number][]; pause: [number, number] };
+const NPC_PLANS: Record<NpcId, { start: [number, number]; speed: number; plan: NpcPlan }> = {
+  // 코치: 플랫폼과 가운데 바닥을 돌아다닌다
+  coach: { start: [5, 6], speed: 2.4, plan: { kind: "wander", area: { c: 1, r: 4, w: 8, h: 11 }, pause: [1.5, 4] } },
+  // 관장님: 카운터 옆에 서 있다가 가끔 둘러본다
+  owner: { start: [6, 22], speed: 1.8, plan: { kind: "route", points: [[6, 22], [7, 19], [6, 22], [3, 20]], pause: [4, 8] } },
+  // 직원: 아래쪽 바닥을 걸레질하며 돈다
+  staff: { start: [5, 15], speed: 1.4, plan: { kind: "route", points: [[5, 15], [8, 15], [8, 20], [5, 20]], pause: [0.6, 1.4] } },
+};
+
 const SEATS: [number, number][] = [[166, 141], [198, 141], [212, 205]];
 /** 바벨 원판 높이(픽셀) — PLATE_ORDER 순서 */
 const PLATE_H = [14, 14, 12, 10, 7, 6, 5];
@@ -405,6 +428,10 @@ export type MapCallbacks = {
   onPlayer: (x: number, y: number) => void;
   /** 원판이 바벨에 꽂히는 순간 */
   onPlateLanded: () => void;
+  /** 매 프레임 직원 NPC 머리 위치(픽셀) — 이름표 · 말풍선 위치용 */
+  onNpcs?: (pos: Record<NpcId, [number, number]>) => void;
+  /** 직원 NPC 를 눌렀을 때 */
+  onNpcTalk?: (id: NpcId) => void;
 };
 export type GymMapController = {
   setState: (next: Partial<MapState>) => void;
@@ -440,6 +467,12 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   let shownPlates = state.plates;
   const player: Walker = { x: START[0], y: START[1], path: [], speed: WALK_SPEED, anim: 0, moving: false, back: true };
   let overUntil = 0;
+  type Npc = { id: NpcId; w: Walker; wait: number; route: number; talkUntil: number };
+  const npcs: Npc[] = (Object.keys(NPC_PLANS) as NpcId[]).map((id) => {
+    const p = NPC_PLANS[id];
+    return { id, w: { x: p.start[0], y: p.start[1], path: [], speed: p.speed, anim: 0, moving: false, back: false }, wait: 1 + Math.random() * 2, route: 0, talkUntil: 0 };
+  });
+  const npcPos = {} as Record<NpcId, [number, number]>;
   let zone: ZoneId | null = null;
   let flights: Flight[] = [];
   let particles: Particle[] = [];
@@ -507,6 +540,67 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     return false;
   };
 
+  const nextNpcTarget = (n: Npc) => {
+    const plan = NPC_PLANS[n.id].plan;
+    const from: [number, number] = [Math.round(n.w.x), Math.round(n.w.y)];
+    if (plan.kind === "route") {
+      n.route = (n.route + 1) % plan.points.length;
+      const [c, r] = plan.points[n.route];
+      n.w.path = findPath(from[0], from[1], c, r) ?? [];
+      return;
+    }
+    for (let i = 0; i < 20; i++) {
+      const c = plan.area.c + Math.floor(Math.random() * plan.area.w);
+      const r = plan.area.r + Math.floor(Math.random() * plan.area.h);
+      if (!walkable(c, r)) continue;
+      const path = findPath(from[0], from[1], c, r);
+      if (path?.length) {
+        n.w.path = path;
+        return;
+      }
+    }
+  };
+
+  const updateNpcs = (dt: number, now: number) => {
+    for (const n of npcs) {
+      // 말하는 중이거나 내 캐릭터가 바로 옆이면 멈춰서 쳐다본다
+      const near = Math.hypot(n.w.x - player.x, n.w.y - player.y) < 1.3;
+      if (now < n.talkUntil || near) {
+        n.w.moving = false;
+        n.w.back = player.y < n.w.y - 0.3;
+        continue;
+      }
+      if (n.w.path.length) {
+        if (stepWalker(n.w, dt)) {
+          const [lo, hi] = NPC_PLANS[n.id].plan.pause;
+          n.wait = lo + Math.random() * (hi - lo);
+        }
+      } else if ((n.wait -= dt) <= 0) {
+        nextNpcTarget(n);
+        n.wait = 1;
+      }
+    }
+  };
+
+  const drawNpc = (n: Npc) => {
+    const px = Math.round(n.w.x * TILE + 3);
+    const py = Math.round(n.w.y * TILE) - 1;
+    const frame = n.w.moving ? 1 + (Math.floor(n.w.anim * 7) % 2) : 0;
+    g.globalAlpha = 0.35;
+    fill(g, px, py + 15, 10, 2, "#000");
+    g.globalAlpha = 1;
+    drawChar(g, px, py, NPC_PAL[n.id], { frame, back: n.w.back });
+    if (n.id === "staff") {
+      // 걸레: 자루 + 걸레 머리(걸을 때 좌우로 흔들림)
+      const sway = n.w.moving ? (frame === 1 ? -1 : 1) : 0;
+      fill(g, px + 11, py + 6, 1, 10, "#8A6A45");
+      fill(g, px + 9 + sway, py + 15, 5, 2, C.ink);
+      fill(g, px + 10 + sway, py + 15, 3, 1, "#D9D7CF");
+    }
+    if (n.id === "coach") fill(g, px + 4, py + 8, 2, 1, C.red); // 호루라기
+    npcPos[n.id] = [px + 5, py - 3];
+  };
+
   const drawDynamic = (now: number) => {
     // 바벨 + 이번 주 원판
     fill(g, 12, 40, 104, 2, "#9A9DA5");
@@ -556,6 +650,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     last = now;
 
     const arrived = stepWalker(player, dt);
+    updateNpcs(dt, now);
     const here = zoneAt(Math.round(player.x), Math.round(player.y));
     if (player.moving && zone && here !== zone) setZone(null);
     if (arrived && here) setZone(here);
@@ -575,6 +670,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       const [sx, sy] = SEATS[i];
       actors.push({ y: sy + 16, draw: () => drawChar(g, sx, sy, GUESTS[i], { sit: true }) });
     }
+    for (const n of npcs) actors.push({ y: n.w.y * TILE + 15, draw: () => drawNpc(n) });
     actors.push({
       y: py + 16.5,
       draw: () => {
@@ -616,6 +712,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     });
 
     cb.onPlayer(px + 5, py - (over ? 11 : 3));
+    cb.onNpcs?.(npcPos);
     raf = requestAnimationFrame(frame);
   };
 
@@ -634,6 +731,24 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     tapAt(fx, fy) {
       let c = Math.floor((fx * MAP_W) / TILE);
       let r = Math.floor((fy * MAP_H) / TILE);
+      // 직원 NPC 를 눌렀으면: 그 사람 옆으로 걸어가고, 그 자리에서 말한다
+      const tx = fx * MAP_W;
+      const ty = fy * MAP_H;
+      const who = npcs.find((n) => {
+        const nx = n.w.x * TILE + 3;
+        const ny = n.w.y * TILE - 1;
+        return tx >= nx - 3 && tx <= nx + 13 && ty >= ny - 3 && ty <= ny + 18;
+      });
+      if (who) {
+        who.talkUntil = performance.now() + 3500;
+        who.w.moving = false;
+        cb.onNpcTalk?.(who.id);
+        const nc = Math.round(who.w.x);
+        const nr = Math.round(who.w.y);
+        const spot = [[nc, nr + 1], [nc - 1, nr], [nc + 1, nr], [nc, nr - 1]].find(([a, b]) => walkable(a, b));
+        if (spot) goTile(spot[0], spot[1]);
+        return;
+      }
       const hit = OBJ.find((o) => o.zone && inRect(o, c, r));
       if (hit?.zone) return goZone(hit.zone);
       if (r < 2 && c >= 9 && c <= 14) return goZone("mirror");

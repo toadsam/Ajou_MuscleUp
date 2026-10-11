@@ -8,6 +8,81 @@
 
 ---
 
+## 2026-10-11 · 지도가 내 캐릭터 말고는 멈춰 있어 헬스장이 비어 보인다 → 직원 NPC
+
+**불편**
+홈 지도에서 움직이는 건 내 캐릭터뿐이라 "살아 있는 헬스장" 느낌이 약했다. 사용자가 "지속적으로 움직이는 AI 를 넣고 싶다"고 했다.
+
+**원인(설계 판단)**
+처음 지도를 옮길 때 시안의 가짜 회원(이름 · 레벨 · 말풍선)을 뺐다. 실제 라운지 인원과 섞이면 "사람 많네"로 오해하게 되기 때문. 그래서 회원이 아니라 **헬스장 직원**으로 넣었다.
+
+**고친 방법**
+- [gymMap/engine.ts](../frontend/src/components/gymMap/engine.ts): `NPC_PLANS` · `updateNpcs` · `drawNpc`.
+  - 코치: 플랫폼과 가운데 바닥을 무작위로 돌아다님(1.5~4초 쉼, 호루라기).
+  - 관장님: 카운터 옆 → 출석 체크기 앞 → 게시판 앞을 천천히 순회(4~8초 쉼).
+  - 직원: 아래쪽 바닥을 사각형으로 돌며 걸레질(걸레가 걸음에 맞춰 흔들림).
+  - 모두 같은 노란 조끼 유니폼. 내 캐릭터가 1.3칸 안에 오거나 말하는 중이면 멈춰서 쳐다본다.
+  - NPC 를 누르면 내 캐릭터가 그 옆 칸으로 걸어가고 NPC 가 말한다(`onNpcTalk`). 회원처럼 길을 막지는 않는다.
+- [gymMap/GymMap.tsx](../frontend/src/components/gymMap/GymMap.tsx): 역할 이름표(노란 테두리, 닉네임·레벨 없음), 화이트보드색 말풍선 3.4초.
+  - 대사는 내 **실제 기록**으로: 관장님 = 오늘 출석 여부 · 연속 일수, 코치 = 이번 주 남은 날(7 − 운동한 날) 또는 운동 팁, 직원 = 안내 문구. 지어낸 숫자 없음.
+  - 15초마다 코치나 직원이 혼잣말(탭이 숨겨졌거나 누가 말하는 중이면 쉼, 동작 줄이기 설정이면 끔).
+- `gymMap.css`: `.gm-npc`, `.gm-bubble`.
+
+**확인한 방법**
+- 타입 검사 0, 린트 증가 없음.
+- 미리보기(로그인 전)에서 세 명의 이름표가 지도 위에 뜨는 것, 코치를 누르면 "코치 세트 사이 휴식은 1~2분이면 충분해요." 말풍선이 생기는 것을 확인.
+- **아직 못 한 것**: 미리보기 창이 가려져 애니메이션이 멈춘 상태라 실제로 걸어 다니는 모습은 화면으로 못 봤다. 로그인 상태 대사(연속 일수 · 남은 날), 휴대폰 터치.
+
+---
+
+## 2026-10-11 · 앱 전체 점검 후 일괄 수정 — 보안 · 막힘 · 가짜 숫자 · 문구 · 성능
+
+**불편**
+사용자가 "앱 전체에서 바꿔야 할 것을 다 말해 달라"고 했고, 점검 결과(보안 11 · 버그/막힘 13 · 구조 7 · 가짜 숫자/문구 6 · 문구/디자인 6 · 성능 7)를 모두 고치기로 했다.
+
+**원인**
+화면 확인(로그인 상태 크롬) + 코드 점검(프론트 40건, 백엔드·실시간 30건). 항목별 근거(`파일:줄`)는 세부 기록에 있다.
+
+**고친 방법**
+- 영역별 세부 기록(어떤 코드를 어떻게 바꿨는지): [docs/fixes/](fixes/README.md)
+- 공용 부품 추가: `frontend/src/lib/toast.ts`(alert 대신 토스트), `frontend/src/lib/httpError.ts`("HTTP 500"·서버 원문·영어 오류 → 한국어 문장).
+- `hooks/useCountUp.ts`: 탭이 숨겨져 있으면 requestAnimationFrame 이 멈춰 숫자가 0 에 머물렀다(운동 모임 화면 위쪽 "내 모임 0 · 전체 0"의 원인, 백엔드 점검에서 확인). 숨겨진 탭이면 바로 목표 값, 그 밖에도 `duration+150ms` 뒤 목표 값으로 맞추는 안전장치.
+- 영역 사이 마무리(메인 세션):
+  - 리프레시 토큰이 httpOnly 쿠키로만 오가게 바뀌어, `Login.tsx`(`storeSession`), `ProtectedRoute.tsx`, `Header.tsx` 에 남아 있던 `refreshToken` 저장·복사 줄을 지웠다.
+  - `JwtUtil.java`: 코드는 `jwt.access-expiration-ms` 를, 설정 파일은 `jwt.access.expiration-ms` 를 써서 설정값이 무시되고 코드 기본값이 쓰였다 → 두 이름 모두 읽게(`${jwt.access.expiration-ms:${jwt.access-expiration-ms:900000}}`, refresh 도 같음). 운영 값은 기본값과 같아 동작 변화 없음, 로컬은 리프레시 14일로 바뀜.
+  - `Home.tsx`: 실시간 서버 주소를 `lib/realtime.ts` 의 `REALTIME_URL` 로 통일, 배포에 없으면 라운지 인원 조회를 건너뜀. "운동모임" → "운동 모임".
+- 이름 통일(제품 결정): 운동 모임 · 공동구매 · 응원. 홈 지도(`gymMap/GymMap.tsx`, `engine.ts`)의 "운동모임/크루" 문구를 "운동 모임/모임"으로.
+- 사용자 결정: 안 쓰는 파일 삭제 허용, 멤버 명단은 로그인한 사람만, 갤러리 "촬영 문의" 버튼 제거.
+
+**확인한 방법**
+- 영역 여섯 개 모두 완료. 각 기록에 항목별 diff 와 확인 결과가 있다:
+  [backend-security](fixes/2026-10-11-backend-security.md) · [backend-data](fixes/2026-10-11-backend-data.md) · [realtime-lounge](fixes/2026-10-11-realtime-lounge.md) · [frontend-shell](fixes/2026-10-11-frontend-shell.md) · [frontend-pages](fixes/2026-10-11-frontend-pages.md) · [frontend-community](fixes/2026-10-11-frontend-community.md)
+- `bash scripts/verify.sh`: 타입 0 오류, 바뀐 파일 린트 증가 없음, 빌드 통과.
+- 백엔드 `test`(local 프로필) 7개 통과(새 `RefreshTokenServiceTest` 5개 포함). 실시간 서버 `tsc` · `build` 통과.
+- 새 코드로 서버 재시작 후 직접 호출: 입장권 발급 로그인 없이 401, `/actuator/health` 401, 허용 안 된 출처 CORS 403, 로비 지표 200.
+- 로그인 상태(사용자 크롬):
+  - 출석 화면에서 "오늘의 운동 체크"가 맨 위.
+  - 베타 안내 "닫기" 뒤 다른 화면에서 다시 안 뜸.
+  - 운동 모임 위쪽 숫자가 목록과 일치(내 모임 2 · 전체 2 · 참여 3).
+  - 캐릭터 응답에 경험치(`exp 20 / 다음 레벨까지 80 · 진행 0.2`).
+  - 라운지가 입장권으로 접속(실시간 서버 로그 `join p09cb… level=88 tier=MASTER` — 이메일 대신 공개 id, 레벨은 서버가 보증), 게임 화면이 맨 위, 캐릭터 머리 위 "다시 시작해요".
+- **아직 못 한 것**:
+  - Google 로그인 직후부터 15분 넘게 지나서 자동 갱신(쿠키 회전)되는지.
+  - 두 계정으로 친구 검색 · 1:1 채팅.
+  - 관리자 화면.
+  - 카카오톡 인앱 브라우저 안내(실기기).
+  - 공동구매 영수증 권한.
+  - 휴대폰 실기기.
+- **사용자가 직접 할 일**:
+  - Gmail 앱 비밀번호 재발급.
+  - DB 비밀번호 · 운영 `JWT_SECRET` 교체(예전 값이 git 기록에 있음).
+  - 배포 환경변수: 백엔드+실시간 `REALTIME_TICKET_SECRET`(같은 값, 32자 이상), 실시간 `NODE_ENV=production` · `ORIGIN`, 프론트 `VITE_API_BASE` · `VITE_REALTIME_URL`(없으면 배포 빌드가 멈춤), `CORS_ALLOWED_ORIGINS` 는 정확한 주소만.
+  - 운영 서버 시간대 확인(UTC 였다면 저장 시각이 9시간 어긋남).
+  - 예전 공동구매 영수증 파일(공개 갤러리 폴더) 처리.
+  - git 기록 정리는 따로 결정.
+
+---
+
 ## 2026-10-11 · 메인 화면이 "카드 쌓인 웹페이지"라 게임 느낌이 겉모습에서 멈춘다 → 헬스장 지도
 
 **불편**
@@ -208,15 +283,15 @@
 
 | 문제 | 위치 | 비고 |
 |---|---|---|
-| 출석 달력 요일 머리글이 하루씩 밀림(날짜는 일요일부터, 머리글은 월요일부터) | `Attendance.tsx` | 머리글 배열 한 줄 |
-| 이모지가 `??` 로 저장돼 깨짐(포즈·표정·스티커·장식·댓글 빠른 삽입) | `AttendanceShareView.tsx`, `BragDetail.tsx` | 커밋 `2de4f34` 때 인코딩 손상 추정 |
+| 이모지 `??` 손상(커밋 `2de4f34`)이 남아 있을 수 있음 — 출석 카드 · 자랑방은 고침 | `utils/attendanceShareCard.ts` | 확인 필요 |
 | 출석 카드 워터마크가 예전 브랜드(핑크·보라) | `assets/images/워터마크.png` | "출석 도장" 디자인으로 교체 예정 |
 | 카드 렌더러가 두 벌(DOM 캡처 + 캔버스 대체) | `AttendanceShareView.tsx`, `utils/attendanceShareCard.ts` | 하나로 합치는 것을 권장 |
 | 공유 카드 캐릭터 칩의 `backdrop-filter` 가 저장본에 안 나옴 | `attendanceShare.css` | html2canvas 미지원 |
-| 쓰지 않는 예전 아바타 부품 5개 | `components/avatar/` | 삭제 여부 결정 필요 |
 | 에이전트가 파일마다 복사한 부품(칸 게이지 3벌, 카운트업 7벌, 입력칸 상수) | 여러 페이지 | 공용 부품으로 정리 |
-| `quickShare`·`saveInstaImage` 의 `return` 뒤 실행되지 않는 코드 | `Attendance.tsx` | 정리 |
 | README 스크린샷 6장이 예전 디자인 | `docs/screenshots/` | 다시 촬영 |
+| 관리자 "일괄 처리 대기열"이 브라우저에서만 실행됨(서버 예약 아님) | `Admin.tsx` | 서버 스케줄러 필요 |
+| 운영 DB 스키마를 `ddl-auto=update` 로 자동 변경 | `application-prod.properties` | Flyway 도입 계획: docs/fixes/2026-10-11-backend-data.md |
+| 50개 넘는 공동구매 · 후기 목록의 페이지 넘김 | `Protein.tsx`, `Reviews.tsx` | 서버는 50개로 제한됨 |
 | 홈 지도로 바뀌며 안 쓰게 된 "이번 주 바벨" 스타일(`.hero-stage*`), 모바일 히어로 캐릭터 카드 스타일 | `styles/homeLobby.css` | 지워도 되는지 확인 후 정리 |
 
 ---

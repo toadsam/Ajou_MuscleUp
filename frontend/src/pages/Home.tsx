@@ -7,6 +7,7 @@ import type { GrowthParams } from "../components/avatar/types";
 import "../styles/homeLobby.css";
 import { logEvent } from "../utils/analytics";
 import { eventApi } from "../services/eventApi";
+import { REALTIME_URL } from "../lib/realtime";
 import type { EventItem } from "../types/event";
 
 type AttendanceLog = {
@@ -58,7 +59,6 @@ type LobbyMetrics = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
-const REALTIME_URL = import.meta.env.VITE_REALTIME_URL ?? "http://localhost:4001";
 
 const ACTIONS = [
   {
@@ -220,6 +220,10 @@ export default function Home() {
   }, [monthKey, user]);
 
   const loadLoungeStatus = useCallback(async () => {
+    if (!REALTIME_URL) {
+      setLoungeCount(null); // 배포에 실시간 서버 주소가 없으면 인원 수를 숨긴다
+      return;
+    }
     try {
       const res = await fetch(`${REALTIME_URL}/status`, { credentials: "omit" });
       if (!res.ok) throw new Error("status failed");
@@ -425,7 +429,7 @@ export default function Home() {
                 오늘 출석 시작
               </Link>
               <Link to="/crew" className="dg-btn dg-btn-steel">
-                운동모임 가기
+                운동 모임 가기
               </Link>
             </div>
             <div className={`hero-stats ${isMobile && !showMobileOverview ? "mobile-collapsed" : ""}`}>
@@ -682,7 +686,7 @@ export default function Home() {
             출석하기
           </Link>
           <Link to="/crew" className="dg-btn dg-btn-steel">
-            운동모임
+            운동 모임
           </Link>
         </div>
       )}

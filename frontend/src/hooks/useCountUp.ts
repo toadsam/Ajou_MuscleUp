@@ -10,7 +10,8 @@ export function useCountUp(target: number | null | undefined, { duration = 900, 
 
   useEffect(() => {
     if (target === null || target === undefined || Number.isNaN(target) || !start) return;
-    if (prefersReducedMotion()) {
+    // 탭이 숨겨져 있으면 requestAnimationFrame 이 돌지 않아 0 에 머문다 → 바로 목표 값으로
+    if (prefersReducedMotion() || document.hidden) {
       fromRef.current = target;
       setValue(target);
       return;
@@ -18,6 +19,11 @@ export function useCountUp(target: number | null | undefined, { duration = 900, 
     const from = fromRef.current;
     const begin = performance.now();
     let frame = 0;
+    // 애니메이션이 중간에 멈춰도(탭 전환 등) 결국 목표 값이 보이게 하는 안전장치
+    const settle = window.setTimeout(() => {
+      fromRef.current = target;
+      setValue(target);
+    }, duration + 150);
     const tick = (now: number) => {
       const t = Math.min(1, (now - begin) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
@@ -30,7 +36,10 @@ export function useCountUp(target: number | null | undefined, { duration = 900, 
       }
     };
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+    };
   }, [target, duration, start]);
 
   return value;
