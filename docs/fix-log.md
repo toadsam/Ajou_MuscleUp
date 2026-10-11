@@ -8,6 +8,28 @@
 
 ---
 
+## 2026-10-11 · PR #11 미리보기 빌드 실패(TS2304 Response) — 로컬은 통과
+
+**불편**
+Vercel 빌드가 `vite.config.ts(68,124): error TS2304: Cannot find name 'Response'` 로 멈췄다. 로컬 `tsc -b --force` 와 `verify.sh` 는 통과했다(`console` TS2584 때도 같은 일).
+
+**원인(근거)**
+- 이 PC 의 상위 폴더 `C:/Users/jk636/node_modules/@types/node` 를 TypeScript 가 자동으로 끌어왔다(`tsc --explainFiles` 에 `../../…/node_modules/@types/node` · `@types/prop-types`). 그래서 `Response` · `console` 같은 Node 전역 타입이 로컬에만 있었다.
+- 프로젝트에는 `@types/node` 가 없어 Vercel 에선 없음 → 실패.
+
+**고친 방법**
+- `frontend/package.json`: `@types/node` ^22 를 devDependencies 에 추가(Vite 템플릿과 같은 방식) — 로컬 · Vercel 이 같은 타입.
+- `tsconfig.node.json` `"types": ["node"]`, `tsconfig.app.json` `"types": []` — 상위 폴더 `@types` 자동 포함 차단.
+- `vite.config.ts`: 서비스 워커용 함수 반환 타입에 `Response` 이름을 쓰지 않음.
+
+**확인한 방법**
+- `tsc --explainFiles` 에서 상위 폴더 파일 0개(node · app), `tsc -b --force` 0 오류, `verify.sh` 통과.
+
+**아직 못 한 것**
+- Vercel 미리보기 빌드 재실행 결과 확인.
+
+---
+
 ## 2026-10-11 · 배포 직후 예전 화면이 뜨고 "서버에 연결하지 못했어요"
 
 **불편**
