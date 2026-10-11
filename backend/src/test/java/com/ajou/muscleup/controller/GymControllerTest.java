@@ -126,4 +126,19 @@ class GymControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.name == '테스트 동아리')]").isEmpty());
     }
+
+    @Test
+    void pendingGymJoinsOnlyByInviteLink() throws Exception {
+        // 승인 대기 짐: 번호로 가입 403, 주소만으로는 404, 초대 코드가 맞으면 보이고 코드로 가입 가능
+        String res = mvc.perform(post("/api/gyms").with(as(owner.getEmail(), "ROLE_USER")).contentType(MediaType.APPLICATION_JSON).content(CREATE))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String id = com.jayway.jsonpath.JsonPath.read(res, "$.id").toString();
+        String code = com.jayway.jsonpath.JsonPath.read(res, "$.inviteCode");
+        mvc.perform(post("/api/crew/groups/" + id + "/join").with(as(outsider.getEmail(), "ROLE_USER"))).andExpect(status().isForbidden());
+        mvc.perform(get("/api/gyms/test-run-crew").with(as(outsider.getEmail(), "ROLE_USER"))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/gyms/test-run-crew?code=WRONGCODE")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/gyms/test-run-crew?code=" + code)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PENDING")).andExpect(jsonPath("$.inviteCode").doesNotExist());
+        mvc.perform(post("/api/crew/groups/join-by-code/" + code).with(as(outsider.getEmail(), "ROLE_USER"))).andExpect(status().isOk());
+    }
 }

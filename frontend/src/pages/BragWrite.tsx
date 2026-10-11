@@ -515,7 +515,7 @@ export default function BragWrite() {
                     value={form.gym}
                     onChange={(e) => setForm({ ...form, gym: e.target.value })}
                     className={FIELD}
-                    placeholder="예: AJOU GYM"
+                    placeholder="예: 학교 체육관"
                   />
                 </div>
                 <div className="space-y-2">

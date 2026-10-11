@@ -90,7 +90,7 @@ export default function Events() {
     <section className="min-h-screen pt-28 pb-24 text-white">
       <div className="mx-auto max-w-6xl px-6 lg:px-10 space-y-10">
         <header>
-          <p className="text-sm font-bold text-plate-yellow">동아리 소식</p>
+          <p className="text-sm font-bold text-plate-yellow">소식</p>
           <h1 className="text-4xl">이벤트</h1>
           <p className="mt-2 text-steel-300">진행 중·예정·종료된 이벤트를 확인해 보세요.</p>
         </header>

@@ -378,7 +378,7 @@ export default function WriteProtein() {
                 value={form.gym}
                 onChange={handleChange}
                 className={FIELD}
-                placeholder="예: 아주대 헬스장"
+                placeholder="예: 학교 체육관"
               />
             </div>
           </div>

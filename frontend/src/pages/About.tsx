@@ -101,12 +101,12 @@ export default function About() {
         {/* 첫 화면 */}
         <header className="grid items-center gap-10 lg:grid-cols-[1.2fr,0.8fr]">
           <div className="dg-rise space-y-6">
-            <p className="font-num text-base font-bold text-plate-red">Ajou MuscleUp</p>
+            <p className="font-display text-base text-plate-red">득근득근</p>
             <h1 className="break-keep text-4xl leading-tight md:text-5xl lg:text-6xl">
               출석하면 <span className="text-plate-yellow">캐릭터가 자라고</span>, 라운지에서 함께 운동해요.
             </h1>
             <p className="break-keep text-lg leading-relaxed text-steel-300">
-              득근득근은 아주대 헬스 동아리의 커뮤니티예요. 운동한 날을 출석으로 남기면 내 캐릭터가 성장하고,
+              득근득근은 아주대 헬스 동아리에서 시작한 운동 커뮤니티예요. 이제 어느 동아리 · 운동 모임이든 함께할 수 있어요. 운동한 날을 출석으로 남기면 내 캐릭터가 성장하고,
               라운지와 운동 모임에서 다른 회원과 이어져요.
             </p>
             <div className="flex flex-wrap gap-3">

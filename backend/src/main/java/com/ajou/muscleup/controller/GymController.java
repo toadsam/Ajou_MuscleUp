@@ -41,8 +41,13 @@ public class GymController {
     }
 
     @GetMapping("/{slug}")
-    public GymSummaryResponse get(@AuthenticationPrincipal String email, @PathVariable String slug) {
-        return gymService.get(email, slug);
+    public GymSummaryResponse get(
+            @AuthenticationPrincipal String email,
+            @PathVariable String slug,
+            // 초대 링크로 들어온 경우: 비공개 · 승인 대기 짐도 보이게
+            @RequestParam(required = false) String code
+    ) {
+        return gymService.get(email, slug, code);
     }
 
     /** ?role=STAFF 면 모임장 · 운영진만(누구나), 아니면 전체 멤버(멤버만) */
@@ -50,9 +55,10 @@ public class GymController {
     public List<GymMemberResponse> members(
             @AuthenticationPrincipal String email,
             @PathVariable String slug,
-            @RequestParam(required = false) String role
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String code
     ) {
-        return gymService.members(email, slug, "STAFF".equalsIgnoreCase(role));
+        return gymService.members(email, slug, "STAFF".equalsIgnoreCase(role), code);
     }
 
     @PostMapping

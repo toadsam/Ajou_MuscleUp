@@ -37,7 +37,7 @@ const SUGGESTED_QUESTIONS = [
   "로그인은 어디서 해요?",
   "회원가입은 어디서 해요?",
   "홈 화면으로 바로 가고 싶어요",
-  "득근득근 회장에게 하고 싶은 말 보내고 싶어요",
+  "득근득근 운영진에게 하고 싶은 말 보내고 싶어요",
 ];
 
 const LINK_REGEX = /\[([^\]]+)\]\((\/[^)]+)\)/g;
@@ -253,12 +253,12 @@ export default function SupportWidget() {
           userId: user?.id ?? null,
         }),
       });
-      if (!res.ok) throw await httpError(res, "회장님께 메시지를 보내지 못했어요.");
+      if (!res.ok) throw await httpError(res, "운영진에게 메시지를 보내지 못했어요.");
       await res.json() as SupportInquiryResponse;
       setChairmanMessage("");
-      appendSystemMessage("회장님께 한마디를 전달했어요. 운영진이 확인 후 반영하겠습니다.");
+      appendSystemMessage("운영진에게 한마디를 전달했어요. 확인 후 반영할게요.");
     } catch (err) {
-      appendSystemMessage(friendlyError(err, "회장님께 메시지를 보내지 못했어요. 잠시 후 다시 시도해 주세요."));
+      appendSystemMessage(friendlyError(err, "운영진에게 메시지를 보내지 못했어요. 잠시 후 다시 시도해 주세요."));
     } finally {
       setChairmanSending(false);
     }
@@ -325,12 +325,12 @@ export default function SupportWidget() {
             </div>
 
             <div className="dg-well mt-3 p-2.5">
-              <p className="text-xs font-semibold text-plate-yellow">득근득근 회장에게 하고 싶은 말</p>
+              <p className="text-xs font-semibold text-plate-yellow">득근득근 운영진에게 하고 싶은 말</p>
               <textarea
                 value={chairmanMessage}
                 onChange={(e) => setChairmanMessage(e.target.value)}
                 placeholder="건의, 칭찬, 불편사항을 편하게 적어주세요."
-                aria-label="득근득근 회장에게 하고 싶은 말"
+                aria-label="득근득근 운영진에게 하고 싶은 말"
                 className="mt-2 h-16 w-full resize-none rounded-md border-2 border-black bg-steel-900 px-2 py-1.5 text-xs text-chalk placeholder:text-steel-500 focus:outline-none focus-visible:border-plate-yellow"
                 disabled={chairmanSending}
               />
@@ -340,7 +340,7 @@ export default function SupportWidget() {
                 disabled={chairmanSending || !chairmanMessage.trim()}
                 className="dg-btn dg-btn-primary mt-2 w-full px-3 py-1.5 text-xs"
               >
-                {chairmanSending ? "전송 중..." : "회장님께 전달하기"}
+                {chairmanSending ? "전송 중..." : "운영진에게 전달하기"}
               </button>
             </div>
           </div>

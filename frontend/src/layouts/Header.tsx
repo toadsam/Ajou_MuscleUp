@@ -157,6 +157,7 @@ export default function Header() {
         label: "커뮤니티",
         links: [
           { to: "/brag", label: "자랑방" },
+          { to: "/gyms", label: "모임 찾기" },
           { to: "/crew", label: "운동 모임" },
           { to: "/friends", label: "친구/채팅" },
           { to: "/protein", label: "단백질 공동구매" },
