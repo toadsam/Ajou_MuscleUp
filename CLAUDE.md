@@ -83,6 +83,8 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 - **실시간 서버는 입장권으로만 들어간다**: 백엔드 `POST /api/realtime/ticket` → 실시간 서버가 서명 확인.
   두 서버에 같은 `REALTIME_TICKET_SECRET`(32자 이상)이 필요하다. 로컬은 개발용 값으로 자동 동작.
   클라이언트가 보낸 닉네임 · 레벨 · 이메일은 믿지 않는다. 브로드캐스트에 이메일을 싣지 않는다.
+  라운지 방(광장 `square` · 모임 `gym:{id}`)도 입장권의 `room` 으로만 정한다(백엔드가 멤버 확인). 방을 나누는 코드를 바꾸면
+  `realtime/bench/room-isolation.mjs`(`npm run check:rooms`, 개발 모드 서버)로 섞이지 않는지 본다.
 - **로컬 타입 검사가 통과해도 Vercel 에서 실패할 수 있었다**: 이 PC 상위 폴더(`C:/Users/jk636/node_modules/@types`)를 TypeScript 가 끌어왔다. 지금은 `@types/node` 를 프로젝트에 넣고 tsconfig `"types"` 를 고정했다. 새 전역 타입이 필요하면 tsconfig `types` 에 명시한다.
 - **배포 빌드는 `VITE_API_BASE` · `VITE_REALTIME_URL` 이 없으면 멈춘다**(`vite.config.ts`). 급할 땐 `SKIP_API_ENV_CHECK=1`.
 - **DB 데이터 이전은 `backend/src/main/resources/db/migration`**(Flyway, Hibernate 다음에 실행 — `config/DataMigrationRunner`). 새 칸은 엔티티로, 채우기 · 옮기기는 SQL 로. 배포한 SQL 파일은 고치지 않는다(규칙: 그 폴더 README).

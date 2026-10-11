@@ -13,20 +13,41 @@ const RAW_URL = (import.meta.env.VITE_REALTIME_URL ?? "").trim();
 
 export const REALTIME_URL: string | null = RAW_URL || (import.meta.env.DEV ? "http://localhost:4001" : null);
 
-export async function fetchRealtimeTicket(): Promise<string> {
+/** 라운지 방: 광장(square) 또는 모임 방(gym:{slug}). 모임 방은 서버가 멤버인지 확인하고 입장권에 넣는다 */
+export type LoungeRoom = "square" | `gym:${string}`;
+
+export async function fetchRealtimeTicket(room: LoungeRoom = "square"): Promise<string> {
   const url = API_BASE ? `${API_BASE}/api/realtime/ticket` : "/api/realtime/ticket";
-  const res = await fetch(url, { method: "POST", credentials: "include" });
+  const res = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ room }),
+  });
   if (!res.ok) throw await httpError(res, "실시간 연결을 준비하지 못했어요.");
   const data = (await res.json()) as { ticket?: unknown };
   if (typeof data.ticket !== "string") throw new Error("실시간 연결을 준비하지 못했어요.");
   return data.ticket;
 }
 
-/** io(url, { auth: realtimeAuth }) — 연결·재연결 때마다 새 입장권을 붙인다 */
+/** io(url, { auth: realtimeAuth }) — 연결·재연결 때마다 새 입장권을 붙인다(광장) */
 export function realtimeAuth(cb: (data: object) => void) {
   fetchRealtimeTicket()
     .then((ticket) => cb({ ticket }))
     .catch(() => cb({})); // 입장권 없이 붙으면 서버가 거절한다(개발 모드에서만 손님 입장)
+}
+
+/**
+ * 라운지용: 고른 방의 입장권. 모임 방 입장권을 못 받으면(멤버에서 빠짐 · 라운지 꺼짐) 광장으로 들어간다.
+ * 실제로 들어간 방은 서버의 lounge:welcome { room, roomName } 으로 화면에 보여 준다.
+ */
+export function realtimeAuthFor(room: LoungeRoom) {
+  return (cb: (data: object) => void) => {
+    fetchRealtimeTicket(room)
+      .catch(() => (room === "square" ? Promise.reject() : fetchRealtimeTicket("square")))
+      .then((ticket) => cb({ ticket }))
+      .catch(() => cb({}));
+  };
 }
 
 /** 서버가 연결을 거절한 이유를 화면용 한국어로 */

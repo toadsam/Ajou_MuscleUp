@@ -1,7 +1,8 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { friendlyError, httpError } from "../lib/httpError";
-import { REALTIME_URL, realtimeAuth, realtimeConnectError } from "../lib/realtime";
+import { REALTIME_URL, realtimeAuthFor, realtimeConnectError, type LoungeRoom } from "../lib/realtime";
+import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 import { toast } from "../lib/toast";
 import PlayerAvatar from "../components/PlayerAvatar";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
@@ -263,6 +264,14 @@ export default function Lounge() {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 라운지 방: 헤더에서 고른 모임이 라운지를 쓰면 그 모임 방(기본), 아니면 광장. 방을 바꾸면 새 입장권으로 다시 붙는다
+  const [currentGymSlug] = useCurrentGym();
+  const { gyms: myGyms } = useMyGyms();
+  const loungeGym =
+    myGyms.find((g) => g.slug === currentGymSlug && g.status === "ACTIVE" && g.features.includes("LOUNGE")) ?? null;
+  const [preferSquare, setPreferSquare] = useState(false);
+  const loungeRoom: LoungeRoom = loungeGym && !preferSquare ? `gym:${loungeGym.slug}` : "square";
+  const [joinedRoom, setJoinedRoom] = useState<{ key: string; name: string } | null>(null);
   const [character, setCharacter] = useState<CharacterResponse | null>(null);
   const [user, setUser] = useState<LocalUser | null>(null);
   const [players, setPlayers] = useState<PlayerState[]>([]);
@@ -556,7 +565,7 @@ export default function Lounge() {
     // 입장권(auth)에 담긴 이름·레벨·티어·아바타를 서버가 쓴다. 아래 join 의 같은 값은 개발용 손님 입장에서만 쓰인다.
     const socket = io(REALTIME_URL, {
       transports: ["websocket"],
-      auth: realtimeAuth,
+      auth: realtimeAuthFor(loungeRoom),
     });
     socketRef.current = socket;
 
@@ -591,6 +600,8 @@ export default function Lounge() {
     });
 
     socket.on("lounge:welcome", (payload) => {
+      const roomKey = typeof payload?.room === "string" ? payload.room : "square";
+      setJoinedRoom({ key: roomKey, name: typeof payload?.roomName === "string" ? payload.roomName : "광장" });
       if (payload?.mapSize?.width && payload?.mapSize?.height) {
         setMapSize({
           width: Number(payload.mapSize.width),
@@ -848,7 +859,7 @@ export default function Lounge() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [user, character, mbti, recentAttendanceCount, activeEventSummary]);
+  }, [user, character, mbti, recentAttendanceCount, activeEventSummary, loungeRoom]);
 
   useEffect(() => {
     const handleKey = (down: boolean) => (event: KeyboardEvent) => {
@@ -2118,6 +2129,32 @@ export default function Lounge() {
             <h1 className="text-2xl md:text-3xl">
               2D 운동 라운지
             </h1>
+            {loungeGym && (
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="라운지 방 고르기">
+                <button
+                  type="button"
+                  onClick={() => setPreferSquare(true)}
+                  aria-pressed={loungeRoom === "square"}
+                  className={`dg-btn min-h-[40px] px-3 text-sm ${loungeRoom === "square" ? "dg-btn-primary" : "dg-btn-steel"}`}
+                >
+                  광장
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreferSquare(false)}
+                  aria-pressed={loungeRoom !== "square"}
+                  className={`dg-btn min-h-[40px] max-w-[14rem] truncate px-3 text-sm ${loungeRoom !== "square" ? "dg-btn-primary" : "dg-btn-steel"}`}
+                >
+                  {loungeGym.name}
+                </button>
+              </div>
+            )}
+            {joinedRoom && (
+              <p className="text-sm text-steel-300">
+                지금 있는 방 · <b className="text-chalk">{joinedRoom.name}</b>
+                {joinedRoom.key === "square" ? " (누구나)" : " (모임 멤버만)"}
+              </p>
+            )}
             <p className="hidden text-gray-300 sm:block">
               실시간으로 이동하고 대화할 수 있는 소셜 피트니스 공간입니다.
             </p>

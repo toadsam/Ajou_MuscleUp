@@ -8,7 +8,7 @@ import "../styles/homeLobby.css";
 import { logEvent } from "../utils/analytics";
 import { eventApi } from "../services/eventApi";
 import { REALTIME_URL } from "../lib/realtime";
-import { useCurrentGym } from "../lib/currentGym";
+import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 import type { EventItem } from "../types/event";
 
 type AttendanceLog = {
@@ -220,13 +220,21 @@ export default function Home() {
     }
   }, [monthKey, user]);
 
+  // 라운지 인원도 헤더에서 고른 모임 방 기준(라운지를 쓰는 내 모임이면 그 방, 아니면 광장)
+  const [roomGymSlug] = useCurrentGym();
+  const { gyms: myGymsForRoom } = useMyGyms();
+  const roomGym = myGymsForRoom.find(
+    (g) => g.slug === roomGymSlug && g.status === "ACTIVE" && g.features.includes("LOUNGE"),
+  );
+  const loungeRoomKey = roomGym ? `gym:${roomGym.id}` : "square";
+
   const loadLoungeStatus = useCallback(async () => {
     if (!REALTIME_URL) {
       setLoungeCount(null); // 배포에 실시간 서버 주소가 없으면 인원 수를 숨긴다
       return;
     }
     try {
-      const res = await fetch(`${REALTIME_URL}/status`, { credentials: "omit" });
+      const res = await fetch(`${REALTIME_URL}/status?room=${encodeURIComponent(loungeRoomKey)}`, { credentials: "omit" });
       if (!res.ok) throw new Error("status failed");
       const payload = await res.json();
       const count = Number(payload?.activePlayers);
@@ -238,7 +246,7 @@ export default function Home() {
     } catch {
       setLoungeCount(null);
     }
-  }, []);
+  }, [loungeRoomKey]);
 
   const loadLobbyMetrics = useCallback(async () => {
     try {
