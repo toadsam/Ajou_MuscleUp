@@ -135,6 +135,21 @@ function showPwaUpdateToast(onConfirm: () => void) {
   document.body.appendChild(toast);
 }
 
+// 배포가 바뀌어 열려 있던 화면이 찾는 조각 파일(lazy 페이지)이 서버에서 사라졌을 때: 한 번만 새로고침해 새 화면을 받는다.
+// 10초 안에 또 실패하면 다시 새로고침하지 않는다(무한 새로고침 방지 — 그때는 오류 화면이 보인다).
+window.addEventListener("vite:preloadError", (event) => {
+  const key = "preload_error_reload_at";
+  try {
+    const last = Number(sessionStorage.getItem(key) || 0);
+    if (Date.now() - last < 10_000) return;
+    sessionStorage.setItem(key, String(Date.now()));
+  } catch {
+    // 저장소를 못 쓰면 한 번만 시도하고 끝(아래 reload 후에는 같은 상황이 반복되지 않는다)
+  }
+  event.preventDefault();
+  window.location.reload();
+});
+
 void disableServiceWorkerForSafari();
 void disableServiceWorkerInDev();
 

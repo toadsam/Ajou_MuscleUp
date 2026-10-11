@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    /* 상위 폴더 node_modules/@types 를 자동으로 끌어오지 않는다(이 PC 에만 있어 Vercel 과 결과가 달라졌다) */
+    "types": ["node"],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "ES2023",
     "lib": ["ES2023"],

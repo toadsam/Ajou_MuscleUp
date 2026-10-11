@@ -8,6 +8,57 @@
 
 ---
 
+## 2026-10-11 · PR #11 미리보기 빌드 실패(TS2304 Response) — 로컬은 통과
+
+**불편**
+Vercel 빌드가 `vite.config.ts(68,124): error TS2304: Cannot find name 'Response'` 로 멈췄다. 로컬 `tsc -b --force` 와 `verify.sh` 는 통과했다(`console` TS2584 때도 같은 일).
+
+**원인(근거)**
+- 이 PC 의 상위 폴더 `C:/Users/jk636/node_modules/@types/node` 를 TypeScript 가 자동으로 끌어왔다(`tsc --explainFiles` 에 `../../…/node_modules/@types/node` · `@types/prop-types`). 그래서 `Response` · `console` 같은 Node 전역 타입이 로컬에만 있었다.
+- 프로젝트에는 `@types/node` 가 없어 Vercel 에선 없음 → 실패.
+
+**고친 방법**
+- `frontend/package.json`: `@types/node` ^22 를 devDependencies 에 추가(Vite 템플릿과 같은 방식) — 로컬 · Vercel 이 같은 타입.
+- `tsconfig.node.json` `"types": ["node"]`, `tsconfig.app.json` `"types": []` — 상위 폴더 `@types` 자동 포함 차단.
+- `vite.config.ts`: 서비스 워커용 함수 반환 타입에 `Response` 이름을 쓰지 않음.
+
+**확인한 방법**
+- `tsc --explainFiles` 에서 상위 폴더 파일 0개(node · app), `tsc -b --force` 0 오류, `verify.sh` 통과.
+
+**아직 못 한 것**
+- Vercel 미리보기 빌드 재실행 결과 확인.
+
+---
+
+## 2026-10-11 · 배포 직후 예전 화면이 뜨고 "서버에 연결하지 못했어요"
+
+**불편**
+PR #10 배포 뒤 공동구매 화면을 열면 예전 화면(`index-BWppK04T.js`)이 뜨고 "서버에 연결하지 못했어요" 가 보였다. 새로고침 · 다시 열기를 거쳐 **세 번째 접속**에야 새 화면(`index-D2PRLEcG.js`)으로 바뀌었다(사용자 Chrome 에서 측정).
+
+**원인(근거)**
+- `vite.config.ts` 의 `navigateFallback: '/index.html'` — 서비스 워커가 첫 화면 HTML 을 **저장본에서 먼저** 내줬다. 새 서비스 워커가 설치 · 교체된 뒤에야 새 HTML 이 나와 두세 번 걸렸다(측정 시 저장소에는 이미 새 `index.html` 이 들어와 있었는데 화면은 예전 것).
+- `vercel.json` 이 모든 주소를 `index.html` 로 돌려, 예전 화면이 이미 지워진 조각 파일(`/assets/*.js`)을 찾으면 404 대신 HTML 이 와서 화면 일부가 깨질 수 있었다.
+- 지워진 조각 파일을 만났을 때 다시 받는 처리(`vite:preloadError`)가 없었다.
+
+**고친 방법**
+- `frontend/vite.config.ts`: `navigateFallback: null` + 화면 이동 요청은 `NetworkFirst`(4초) — 항상 서버에서 먼저 받고, 못 닿으면(오프라인) 미리 받아 둔 `index.html` 을 보여 준다(`handlerDidError`). `cleanupOutdatedCaches: true`.
+- `frontend/src/main.tsx`: `vite:preloadError` 때 한 번만 새로고침(10초 안 반복 방지).
+- `frontend/vercel.json`: `/assets/` · 아이콘 · 서비스 워커 파일은 `index.html` 로 돌리지 않음(없으면 404), `/assets/*` 1년 immutable, `sw.js` · `index.html` · manifest 는 no-cache.
+- (같이) 공동구매 작성 폼의 기본 모임을 동아리(CLUB)로(`WriteProtein.tsx`) — 먼저 만들어진 소모임이 골라지던 것.
+- `.claude/launch.json` 에 빌드본 미리보기 `frontend-built`(4173) 추가.
+
+**확인한 방법**
+- 빌드본을 사용자 Chrome 에서 `localhost:4173` 으로 열어 서비스 워커 · 저장소(precache)가 있는 상태를 만든 뒤, 코드를 바꿔 다시 빌드(= 새 배포) → **한 번 접속에 새 화면**(`D7DooEJ_` → `CEYMAuFH`), 저장소는 그대로.
+- 만들어진 `sw.js` 에 NetworkFirst 화면 규칙 · 오프라인 대체가 들어간 것 확인. `verify.sh` 통과.
+- 주의: 앱 안 미리보기 브라우저는 새로고침마다 Cache Storage 를 비운다(시험 값까지 사라짐) → 서비스 워커 시험은 Chrome 에서 해야 한다(CLAUDE.md 함정에 추가).
+
+**아직 못 한 것**
+- 오프라인 대체 화면(네트워크 끊김)은 직접 끊어 보지 못했다. `vite:preloadError` 새로고침도 실제 배포 전환에서 확인 필요.
+- 이번 배포 직후 한 번은 여전히 예전 서비스 워커 규칙으로 동작한다(새 규칙이 설치된 뒤부터 적용).
+- (후속) 시험 중 `main.tsx` 작업 사본의 줄바꿈이 LF 로 바뀐 것을 CRLF · BOM 으로 되돌렸다(저장소 내용 변화 없음).
+
+---
+
 ## 2026-10-11 · 공동구매를 우리 모임 안에서도, 전체로도 모집하고 싶음 · 모임 안 랭킹
 
 **불편**

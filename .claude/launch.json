@@ -4,20 +4,52 @@
     {
       "name": "frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173
     },
     {
       "name": "backend",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "set SPRING_PROFILES_ACTIVE=local&& backend\\gradlew.bat -p backend bootRun --console=plain"],
+      "runtimeArgs": [
+        "/c",
+        "set SPRING_PROFILES_ACTIVE=local&& backend\\gradlew.bat -p backend bootRun --console=plain"
+      ],
       "port": 8080
     },
     {
       "name": "realtime",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "realtime", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "realtime",
+        "run",
+        "dev"
+      ],
       "port": 4001
+    },
+    {
+      "name": "frontend-built",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }

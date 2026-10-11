@@ -82,10 +82,12 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 - **실시간 서버는 입장권으로만 들어간다**: 백엔드 `POST /api/realtime/ticket` → 실시간 서버가 서명 확인.
   두 서버에 같은 `REALTIME_TICKET_SECRET`(32자 이상)이 필요하다. 로컬은 개발용 값으로 자동 동작.
   클라이언트가 보낸 닉네임 · 레벨 · 이메일은 믿지 않는다. 브로드캐스트에 이메일을 싣지 않는다.
+- **로컬 타입 검사가 통과해도 Vercel 에서 실패할 수 있었다**: 이 PC 상위 폴더(`C:/Users/jk636/node_modules/@types`)를 TypeScript 가 끌어왔다. 지금은 `@types/node` 를 프로젝트에 넣고 tsconfig `"types"` 를 고정했다. 새 전역 타입이 필요하면 tsconfig `types` 에 명시한다.
 - **배포 빌드는 `VITE_API_BASE` · `VITE_REALTIME_URL` 이 없으면 멈춘다**(`vite.config.ts`). 급할 땐 `SKIP_API_ENV_CHECK=1`.
 - **DB 데이터 이전은 `backend/src/main/resources/db/migration`**(Flyway, Hibernate 다음에 실행 — `config/DataMigrationRunner`). 새 칸은 엔티티로, 채우기 · 옮기기는 SQL 로. 배포한 SQL 파일은 고치지 않는다(규칙: 그 폴더 README).
 - **enum 칸에 새 값을 넣을 땐 DB 제약부터**: Hibernate 가 Postgres 에는 `CHECK (role IN (...))`, MySQL 에는 `enum(...)` 타입으로 만들어 둔다. 새 값만 코드에 넣으면 저장할 때 실패한다 → 같은 PR 에 제약을 푸는 이전 SQL(예: `V2__gyms_and_ajou_club.sql` 1번)을 넣는다.
 - **"짐(Gym)" = `WorkoutCrew`**: 동아리 · 운동 모임 · 헬스장 · PT 가 같은 테이블(`type`). 권한은 `GymPermissionService` 한 곳에서(역할 OWNER · STAFF · MEMBER). 운동 모임 화면(`/api/crew`)은 CREW 만, 짐 API 는 `/api/gyms`.
+- **서비스 워커(PWA) 시험은 Chrome 에서**: 앱 안 미리보기 브라우저는 새로고침마다 Cache Storage 를 비워 결과가 거짓으로 좋게 나온다. 빌드본은 `frontend-built`(4173)로 띄우고 Chrome 에서 `localhost:4173` 으로 본다. 화면 HTML 은 NetworkFirst(`vite.config.ts`) — `navigateFallback` 을 되살리지 않는다.
 - **"오늘"은 한국 시간(KST)**: 백엔드는 `TimeConfig` 의 `Clock` 을 쓴다. `LocalDate.now()` 를 새로 쓰지 않는다.
 - **오류 문구와 알림**: `alert()` 대신 `lib/toast.ts`, 오류는 `lib/httpError.ts`(`httpError`/`friendlyError`)로 한국어 문장만 보여 준다.
 - **이름**: 운동 모임 · 공동구매 · 응원 으로 통일(코드 식별자는 그대로 둬도 됨).
