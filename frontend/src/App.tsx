@@ -1,5 +1,5 @@
 ﻿import { Suspense, lazy } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import AdminRoute from "./components/AdminRoute";
 import BetaNoticeModal from "./components/BetaNoticeModal";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -16,7 +16,6 @@ const Gallery = lazy(() => import("./pages/Gallery"));
 const About = lazy(() => import("./pages/About"));
 const AiFitness = lazy(() => import("./pages/AiFitness"));
 const Login = lazy(() => import("./pages/Login"));
-const Register = lazy(() => import("./pages/Register"));
 const WriteReview = lazy(() => import("./pages/WriteReview"));
 const WriteProtein = lazy(() => import("./pages/WriteProtein"));
 const ProteinDetail = lazy(() => import("./pages/ProteinDetail"));
@@ -44,6 +43,7 @@ const CrewLobby = lazy(() => import("./pages/CrewLobby"));
 const CrewHighlights = lazy(() => import("./pages/CrewHighlights"));
 const Friends = lazy(() => import("./pages/Friends"));
 const Forbidden = lazy(() => import("./pages/Forbidden"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 // 개발 서버에서만 여는 픽셀 아바타 갤러리
 const DevAvatars = import.meta.env.DEV ? lazy(() => import("./pages/DevAvatars")) : null;
 
@@ -71,7 +71,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              {/* 가입은 Google 로그인으로 한 번에 된다. 예전 /register 링크는 로그인 화면으로 보내고 안내를 띄운다 */}
+              <Route path="/register" element={<Navigate to="/login?from=register" replace />} />
               <Route path="/ai/share/:slug" element={<AiShareView />} />
               <Route path="/attendance/share/:slug" element={<AttendanceShareView />} />
               <Route path="/forbidden" element={<Forbidden />} />
@@ -86,7 +87,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/members" element={<Members />} />
+              {/* 멤버 실명 명단은 로그인한 회원에게만 보인다 */}
+              <Route
+                path="/members"
+                element={
+                  <ProtectedRoute>
+                    <Members />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/executives" element={<Executives />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/about" element={<About />} />
               <Route path="/events" element={<Events />} />
@@ -155,14 +165,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Reviews />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/executives"
-                element={
-                  <ProtectedRoute>
-                    <Executives />
                   </ProtectedRoute>
                 }
               />
@@ -278,6 +280,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </main>

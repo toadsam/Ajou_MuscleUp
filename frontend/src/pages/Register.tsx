@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "../lib/toast";
+
+// 지금은 라우트에 연결돼 있지 않다(App.tsx 의 /register 는 /login 으로 보낸다).
+// 가입은 Google 로그인으로 한 번에 된다. 이메일 가입을 다시 열 때 쓰려고 남겨 둔 화면.
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 const REGISTER_PATH = import.meta.env.VITE_REGISTER_PATH ?? "/api/users/register";
@@ -67,7 +71,7 @@ export default function Register() {
         body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
       });
       if (!res.ok) throw new Error(await parseErr(res, "인증코드 전송에 실패했습니다."));
-      alert("인증코드를 이메일로 보냈습니다. 10분 내에 입력하세요.");
+      toast("인증코드를 이메일로 보냈어요. 10분 안에 입력해 주세요.", "success");
     } catch (e: any) {
       setErr(e?.message ?? "인증코드 전송 실패");
     } finally {
@@ -92,7 +96,7 @@ export default function Register() {
       });
       if (!res.ok) throw new Error(await parseErr(res, "인증 실패"));
       setEmailVerified(true);
-      alert("이메일 인증 완료!");
+      toast("이메일 인증을 마쳤어요.", "success");
     } catch (e: any) {
       setEmailVerified(false);
       setErr(e?.message ?? "인증 실패");
@@ -126,7 +130,7 @@ export default function Register() {
 
       if (!res.ok) throw new Error(await parseErr(res, `HTTP ${res.status}`));
 
-      alert("회원가입이 완료되었습니다!");
+      toast("가입을 마쳤어요. 로그인해 주세요.", "success");
       navigate("/login");
     } catch (e: any) {
       setErr(e?.message ?? "회원가입에 실패했습니다.");

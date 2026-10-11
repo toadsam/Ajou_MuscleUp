@@ -1,4 +1,7 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { friendlyError, httpError } from "../lib/httpError";
+import { clearSupportChat, dropLegacySupportChat, supportChatKey } from "../lib/supportChatStorage";
 
 type Msg = { id: string; role: "user" | "system"; text: string; at: number };
 
@@ -23,7 +26,7 @@ const SUGGESTED_QUESTIONS = [
   "친구랑 1:1 채팅은 어디로 들어가요?",
   "인바디 분석은 어디에서 해요?",
   "AI 플래너로 운동 루틴 짜는 방법 알려줘",
-  "크루(모임) 만들려면 어디로 가야 해요?",
+  "운동 모임은 어디서 만들어요?",
   "랭킹은 어디에서 볼 수 있나요?",
   "자랑방 글은 어디서 써요?",
   "출석 공유 이미지 저장은 어디서 하나요?",
@@ -39,6 +42,21 @@ const SUGGESTED_QUESTIONS = [
 
 const LINK_REGEX = /\[([^\]]+)\]\((\/[^)]+)\)/g;
 
+// 화면 아래에 붙는 고정 바를 찾을 후보. 예전처럼 `body *` 전체에 getComputedStyle 을 돌리지 않고
+// Tailwind `.fixed` 요소와 알려진 하단 바 클래스, `data-bottom-dock` 을 단 요소만 본다.
+const DOCK_SELECTOR = ".fixed, .mobile-fixed-actions, .mobile-save-bar, .programs-mobile-action-dock, [data-bottom-dock]";
+
+function loadMsgs(key: string | null): Msg[] {
+  if (!key) return [];
+  try {
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(parsed) ? (parsed as Msg[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function SupportWidget() {
   const [open, setOpen] = useState(false);
   const [fabBottom, setFabBottom] = useState(24);
@@ -46,15 +64,47 @@ export default function SupportWidget() {
   const [sending, setSending] = useState(false);
   const [chairmanMessage, setChairmanMessage] = useState("");
   const [chairmanSending, setChairmanSending] = useState(false);
-  const [msgs, setMsgs] = useState<Msg[]>(() => {
-    const raw = localStorage.getItem("support_msgs");
-    return raw ? (JSON.parse(raw) as Msg[]) : [];
-  });
+  // 대화 기록은 로그인한 계정별로 저장한다(lib/supportChatStorage.ts)
+  const [chatKey, setChatKey] = useState<string | null>(() => supportChatKey());
+  const [msgs, setMsgs] = useState<Msg[]>(() => loadMsgs(supportChatKey()));
   const paneRef = useRef<HTMLDivElement>(null);
+  const chatKeyRef = useRef(chatKey);
+
+  // 계정이 바뀌었는지 다시 본다: 다른 탭에서 로그인/로그아웃(storage), 창으로 돌아옴(focus), 문의창 열 때
+  const syncChatKey = useCallback(() => {
+    const next = supportChatKey();
+    if (!next) clearSupportChat(); // 로그아웃 상태면 이전 계정의 기록을 남기지 않는다
+    if (chatKeyRef.current === next) return;
+    chatKeyRef.current = next;
+    setChatKey(next);
+    setMsgs(loadMsgs(next));
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem("support_msgs", JSON.stringify(msgs));
-  }, [msgs]);
+    dropLegacySupportChat();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "user" || event.key === null) syncChatKey();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncChatKey);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncChatKey);
+    };
+  }, [syncChatKey]);
+
+  useEffect(() => {
+    if (open) syncChatKey();
+  }, [open, syncChatKey]);
+
+  useEffect(() => {
+    if (!chatKey) return;
+    try {
+      localStorage.setItem(chatKey, JSON.stringify(msgs.slice(-60)));
+    } catch {
+      /* 저장소가 꽉 찼거나 막혀 있으면 이번 탭에서만 유지 */
+    }
+  }, [chatKey, msgs]);
 
   useEffect(() => {
     if (open && paneRef.current) {
@@ -66,7 +116,7 @@ export default function SupportWidget() {
     const detectBottomDockHeight = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const fixedNodes = Array.from(document.querySelectorAll<HTMLElement>("body *")).filter((el) => {
+      const fixedNodes = Array.from(document.querySelectorAll<HTMLElement>(DOCK_SELECTOR)).filter((el) => {
         if (el.dataset.supportWidget === "true") return false;
         const style = window.getComputedStyle(el);
         if (style.position !== "fixed") return false;
@@ -76,13 +126,6 @@ export default function SupportWidget() {
         if (rect.top < vh * 0.55) return false;
         return rect.bottom >= vh - 28;
       });
-
-      // 홈의 모바일 하단 고정바는 이름으로도 직접 찾는다(높이 약 80px).
-      const homeDock = document.querySelector<HTMLElement>(".mobile-fixed-actions");
-      if (homeDock && window.getComputedStyle(homeDock).display !== "none") {
-        const rect = homeDock.getBoundingClientRect();
-        if (rect.height > 0 && rect.bottom >= vh - 28) fixedNodes.push(homeDock);
-      }
 
       if (!fixedNodes.length) return 0;
       return Math.max(
@@ -104,21 +147,32 @@ export default function SupportWidget() {
       setFabBottom(nextBottom);
     };
 
+    // DOM 이 바뀔 때마다 바로 재지 않고 한 프레임에 한 번만 잰다(라운지처럼 자주 바뀌는 화면 대비)
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        updateFabOffset();
+      });
+    };
+
     updateFabOffset();
-    window.addEventListener("resize", updateFabOffset);
-    window.addEventListener("scroll", updateFabOffset, { passive: true });
-    const observer = new MutationObserver(updateFabOffset);
-    observer.observe(document.body, {
+    window.addEventListener("resize", schedule);
+    // 하단 바가 붙거나 떨어지는 것(요소 추가/삭제, class 토글)만 지켜본다. style 변화(애니메이션)는 보지 않는다.
+    const observer = new MutationObserver(schedule);
+    const root = document.getElementById("root") ?? document.body;
+    observer.observe(root, {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ["class", "style"],
+      attributeFilter: ["class"],
     });
 
     return () => {
-      window.removeEventListener("resize", updateFabOffset);
-      window.removeEventListener("scroll", updateFabOffset);
+      window.removeEventListener("resize", schedule);
       observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
     };
   }, []);
 
@@ -159,14 +213,14 @@ export default function SupportWidget() {
       });
 
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        throw await httpError(res, "안내 응답을 받지 못했어요.");
       }
 
       const data = (await res.json()) as SupportChatResponse;
       const answer = data.answer?.trim() || `${BOT_NAME}: 질문을 정확히 이해하지 못했어요. 다른 표현으로 다시 물어봐 주세요.`;
       appendSystemMessage(answer);
-    } catch (err: any) {
-      appendSystemMessage(`${BOT_NAME}: 안내 응답에 잠깐 문제가 생겼어요. (${err?.message ?? "오류"})\n잠시 후 다시 시도해 주세요.`);
+    } catch (err) {
+      appendSystemMessage(`${BOT_NAME}: ${friendlyError(err, "안내 응답에 잠깐 문제가 생겼어요. 잠시 후 다시 시도해 주세요.")}`);
     } finally {
       setSending(false);
     }
@@ -199,12 +253,12 @@ export default function SupportWidget() {
           userId: user?.id ?? null,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw await httpError(res, "회장님께 메시지를 보내지 못했어요.");
       await res.json() as SupportInquiryResponse;
       setChairmanMessage("");
       appendSystemMessage("회장님께 한마디를 전달했어요. 운영진이 확인 후 반영하겠습니다.");
-    } catch (err: any) {
-      appendSystemMessage(`회장님 메시지 전송에 실패했어요. (${err?.message ?? "오류"})`);
+    } catch (err) {
+      appendSystemMessage(friendlyError(err, "회장님께 메시지를 보내지 못했어요. 잠시 후 다시 시도해 주세요."));
     } finally {
       setChairmanSending(false);
     }
@@ -351,13 +405,13 @@ function SystemMessageText({ text }: { text: string }) {
       {links.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {links.map((link) => (
-            <a
+            <Link
               key={`${link.label}-${link.href}`}
-              href={link.href}
+              to={link.href}
               className="inline-flex items-center gap-1 rounded-md border-2 border-black bg-plate-blue px-2 py-1 text-xs font-semibold text-white shadow-[0_2px_0_#0E0E10] transition hover:-translate-y-px active:translate-y-0.5 active:shadow-none"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
       )}

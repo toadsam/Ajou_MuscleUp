@@ -18,8 +18,13 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
     let cancelled = false;
 
     const verify = async () => {
-      const userRaw = localStorage.getItem("user");
-      const localUser = userRaw ? (JSON.parse(userRaw) as AuthUser) : null;
+      let localUser: AuthUser | null = null;
+      try {
+        const userRaw = localStorage.getItem("user");
+        localUser = userRaw ? (JSON.parse(userRaw) as AuthUser) : null;
+      } catch {
+        localUser = null; // 깨진 값이면 권한 없음으로 본다(화면이 하얗게 멈추지 않게)
+      }
       if (!isAdminRole(localUser?.role)) {
         if (!cancelled) setAllowed(false);
         return;

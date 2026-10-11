@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 type AuthState = "checking" | "ok" | "unauthorized";
 
@@ -11,30 +11,25 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export default function ProtectedRoute({ children }: Props) {
   const [authState, setAuthState] = useState<AuthState>("checking");
+  const location = useLocation();
 
   useEffect(() => {
     let mounted = true;
     const existingRaw = localStorage.getItem("user");
     let hasLocalSession = false;
     let existingAccessToken: string | null = null;
-    let existingRefreshToken: string | null = null;
     if (existingRaw) {
       try {
-        const existing = JSON.parse(existingRaw) as { accessToken?: string; refreshToken?: string; email?: string };
+        const existing = JSON.parse(existingRaw) as { accessToken?: string; email?: string };
         if (typeof existing?.accessToken === "string" && existing.accessToken.length > 0) {
           existingAccessToken = existing.accessToken;
         }
-        if (typeof existing?.refreshToken === "string" && existing.refreshToken.length > 0) {
-          existingRefreshToken = existing.refreshToken;
-        }
         hasLocalSession =
           existingAccessToken !== null ||
-          existingRefreshToken !== null ||
           (typeof existing?.email === "string" && existing.email.length > 0);
       } catch {
         hasLocalSession = false;
         existingAccessToken = null;
-        existingRefreshToken = null;
       }
     }
 
@@ -51,7 +46,6 @@ export default function ProtectedRoute({ children }: Props) {
             "user",
             JSON.stringify({
               accessToken: existingAccessToken,
-              refreshToken: existingRefreshToken,
               email: user?.email,
               nickname: user?.nickname,
               role: user?.role,
@@ -105,7 +99,9 @@ export default function ProtectedRoute({ children }: Props) {
   }
 
   if (authState === "unauthorized") {
-    return <Navigate to="/login" replace />;
+    // 로그인 뒤 원래 보려던 화면으로 돌아오도록 지금 주소를 넘긴다(Login.tsx 의 resolveReturnPath)
+    const from = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to="/login" replace state={{ from }} />;
   }
 
   return <>{children}</>;

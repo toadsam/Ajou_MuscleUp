@@ -1,13 +1,13 @@
 ﻿import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Logo from "./Logo";
+import { clearSupportChat } from "../lib/supportChatStorage";
 
 interface UserState {
   email: string;
   nickname: string;
   role: string;
   accessToken?: string;
-  refreshToken?: string;
 }
 
 interface NavLinkItem {
@@ -87,7 +87,6 @@ export default function Header() {
           nickname: me?.nickname ?? localUser?.nickname ?? "회원",
           role: me?.role ?? "",
           accessToken: localUser?.accessToken,
-          refreshToken: localUser?.refreshToken,
         };
         localStorage.setItem("user", JSON.stringify(nextUser));
         setUser(nextUser);
@@ -129,7 +128,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/logout`, {
+      await fetch(`${API_BASE}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
@@ -137,6 +136,7 @@ export default function Header() {
       // ignore
     } finally {
       localStorage.removeItem("user");
+      clearSupportChat(); // 같은 기기에서 다음 사람이 이전 계정의 문의 기록을 보지 않게
       setUser(null);
       window.location.href = "/";
     }
@@ -144,16 +144,24 @@ export default function Header() {
 
   const navGroups = useMemo<NavGroup[]>(
     () => [
+      // 핵심 루프(출석 → 캐릭터 → 라운지)를 맨 앞에 둔다. 글쓰기 같은 행동 버튼은 각 화면 안에 있다.
+      {
+        label: "오늘 운동",
+        links: [
+          { to: "/attendance", label: "출석 체크" },
+          { to: "/lounge", label: "라운지" },
+          { to: "/rankings", label: "랭킹" },
+        ],
+      },
       {
         label: "커뮤니티",
         links: [
           { to: "/brag", label: "자랑방" },
-          { to: "/brag/write", label: "자랑 글쓰기" },
+          { to: "/crew", label: "운동 모임" },
+          { to: "/friends", label: "친구/채팅" },
           { to: "/protein", label: "단백질 공동구매" },
           { to: "/reviews", label: "단백질 리뷰" },
           { to: "/programs", label: "반 추천/신청" },
-          { to: "/crew", label: "운동 모임" },
-          { to: "/friends", label: "친구/채팅" },
         ],
       },
       {
@@ -164,15 +172,12 @@ export default function Header() {
         ],
       },
       {
-        label: "미디어",
+        label: "소식",
         links: [
+          { to: "/events", label: "이벤트" },
           { to: "/gallery", label: "갤러리" },
-          { to: "/about", label: "소개" },
+          { to: "/about", label: "득근득근 소개" },
         ],
-      },
-      {
-        label: "이벤트",
-        links: [{ to: "/events", label: "이벤트" }],
       },
       {
         label: "AI",
