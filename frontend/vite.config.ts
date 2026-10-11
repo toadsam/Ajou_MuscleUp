@@ -18,7 +18,8 @@ function checkProductionEnv(mode: string, command: string) {
     '  - 로컬: frontend/.env.production 에 넣으세요.\n' +
     '  - 같은 주소로 API 를 돌려 주는 배포라면 SKIP_API_ENV_CHECK=1 로 이 검사를 끌 수 있습니다.'
   if (env.SKIP_API_ENV_CHECK === '1') {
-    console.warn(message)
+    // tsconfig.node.json 은 lib 에 DOM 이 없어 console 타입이 없다(Vercel 의 tsc -b 에서 TS2584). globalThis 로 꺼내 쓴다.
+    ;(globalThis as { console?: { warn: (msg: string) => void } }).console?.warn(message)
     return
   }
   throw new Error(message)
