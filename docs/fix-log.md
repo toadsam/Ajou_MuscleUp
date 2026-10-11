@@ -8,6 +8,28 @@
 
 ---
 
+## 2026-10-11 · DB 데이터를 안전하게 옮길 방법이 없음 (Flyway 도입)
+
+**불편**
+짐 구조로 바꾸려면 운영 DB 의 기존 데이터를 옮겨야 하는데(아주대 짐 만들기 등), 지금은 Hibernate 가 테이블만 맞출 뿐 데이터 이전을 한 번만 · 기록 남기며 할 방법이 없었다.
+
+**원인(근거)**
+- 모든 프로필 `ddl-auto=update`, Flyway · Liquibase 없음(`build.gradle`).
+
+**고친 방법**
+- Flyway 를 **Hibernate 다음에** 도는 데이터 이전 전용으로 도입(`config/DataMigrationRunner`, Boot 기본 Flyway 는 제외). 구조는 당분간 Hibernate.
+- SQL 위치 `db/migration/common` · `db/migration/{mysql|postgresql}`, 기존 DB 는 버전 0 기준선.
+- 코드 단위 기록: [fixes/2026-10-11-flyway-data-migrations.md](fixes/2026-10-11-flyway-data-migrations.md)
+
+**확인한 방법**
+- 백엔드 테스트 통과(MySQL), 임시 Postgres 에서 1차 기준선 + V1 · 2차 적용 0.
+
+**아직 못 한 것**
+- 운영 Postgres 배포는 아직(첫 배포 때 기록 테이블만 생김).
+- 운영 `ddl-auto=validate` 전환은 나중.
+
+---
+
 ## 2026-10-11 · 회원 실명 명단이 누구나 받을 수 있는 JS 파일에 들어 있음
 
 **불편**

@@ -83,6 +83,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
   두 서버에 같은 `REALTIME_TICKET_SECRET`(32자 이상)이 필요하다. 로컬은 개발용 값으로 자동 동작.
   클라이언트가 보낸 닉네임 · 레벨 · 이메일은 믿지 않는다. 브로드캐스트에 이메일을 싣지 않는다.
 - **배포 빌드는 `VITE_API_BASE` · `VITE_REALTIME_URL` 이 없으면 멈춘다**(`vite.config.ts`). 급할 땐 `SKIP_API_ENV_CHECK=1`.
+- **DB 데이터 이전은 `backend/src/main/resources/db/migration`**(Flyway, Hibernate 다음에 실행 — `config/DataMigrationRunner`). 새 칸은 엔티티로, 채우기 · 옮기기는 SQL 로. 배포한 SQL 파일은 고치지 않는다(규칙: 그 폴더 README).
 - **"오늘"은 한국 시간(KST)**: 백엔드는 `TimeConfig` 의 `Clock` 을 쓴다. `LocalDate.now()` 를 새로 쓰지 않는다.
 - **오류 문구와 알림**: `alert()` 대신 `lib/toast.ts`, 오류는 `lib/httpError.ts`(`httpError`/`friendlyError`)로 한국어 문장만 보여 준다.
 - **이름**: 운동 모임 · 공동구매 · 응원 으로 통일(코드 식별자는 그대로 둬도 됨).

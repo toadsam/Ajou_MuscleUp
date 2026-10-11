@@ -4,13 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.util.TimeZone;
 
-@SpringBootApplication(scanBasePackages = "com.ajou.muscleup")
+// Flyway 는 Boot 기본(JPA 보다 먼저) 대신 config/DataMigrationRunner 가 Hibernate 다음에 돌린다
+@SpringBootApplication(scanBasePackages = "com.ajou.muscleup", exclude = FlywayAutoConfiguration.class)
 public class BackendApplication {
 
     public static void main(String[] args) {

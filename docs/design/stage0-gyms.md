@@ -112,14 +112,21 @@
 4. 기존 소식 · 이벤트 · 공동구매 · 프로그램 신청 → `gym_id`=아주대 짐. 기존 공동구매는 `visibility=GYM`(지금처럼 동아리 안에서만 보임).
 5. 확인 SQL(옮기기 전후 행 수 · 멤버 수 · 랭킹 1~10위 동일)을 같이 남긴다.
 
-## 5. 결정 5 — Flyway 먼저
+## 5. 결정 5 — Flyway: 지금은 "데이터 이전 전용", 구조는 당분간 Hibernate (PR 2 에서 바꿈)
 
-- 운영 DB(Postgres)는 지금 Hibernate 가 만든 스키마. 순서:
-  1. 사용자가 운영 DB 스키마만 내보내기(`pg_dump --schema-only`, 데이터 · 비밀번호 없음) → `V1__baseline.sql`
-  2. Flyway `baseline-on-migrate=true`, `baseline-version=1` → 운영은 V1 을 건너뛰고 기록만
-  3. `ddl-auto=update` → **`validate`**(운영) — 이후 구조 변경은 전부 `V2__…sql` 파일로
-  4. 로컬 MySQL 과 운영 Postgres 문법 차이 → 마이그레이션 SQL 은 공통 문법만 쓰거나 `db/migration/{mysql,postgresql}` 분리(Flyway `{vendor}` 자리표시자)
-- 운영 DB 백업(사용자가 Railway 에서 스냅샷) 후 배포. **되돌리기 어려운 작업이라 배포 직전에 다시 확인받는다.**
+처음 계획(운영 스키마를 내보내 기준선 → `validate`)은 운영 DB 접근이 필요하고, Hibernate 가 만든 실제 운영 타입
+(예: `PostgresSchemaRepairRunner` 가 바꾼 text 칸)과 엔티티가 어긋나면 `validate` 에서 서버가 안 뜰 위험이 있다. 그래서 두 단계로 나눈다.
+
+**지금(PR 2, 적용됨)**
+- Spring Boot 기본 Flyway(JPA 보다 먼저 실행)는 끄고(`FlywayAutoConfiguration` 제외), `config/DataMigrationRunner` 가
+  **Hibernate(ddl-auto=update)가 테이블을 맞춘 뒤** Flyway 를 돌린다. 웹 서버가 열리기 전에 끝나고, 실패하면 서버가 뜨지 않는다.
+- 새 칸 · 테이블 → 엔티티(Hibernate). 그 칸을 채우는 데이터 이전 · Hibernate 가 못 하는 변경(이름 바꾸기 · 제약) → `db/migration` SQL.
+- 위치: `db/migration/common` + `db/migration/{mysql|postgresql}`(DB 종류를 연결 정보로 판별). 기존 DB 는 버전 0 으로 기준선 처리.
+- 확인: 로컬 MySQL(테스트 DB) · 임시 Postgres 16/17 에서 첫 실행 = 기준선 + V1, 두 번째 실행 = 적용 0, 기존 테이블 그대로.
+
+**나중(1단계 뒤)**
+- 운영 스키마를 내보내(사용자, `pg_dump --schema-only`) 엔티티와 비교 → 어긋난 곳 정리 → 운영 `ddl-auto=validate`, 구조 변경도 Flyway 로.
+- 운영 DB 백업(사용자가 Railway 에서 스냅샷) 후 배포. **데이터를 바꾸는 이전(V2~)이 들어가는 배포 직전에는 다시 확인받는다.**
 
 ## 6. API (새로 · 바뀌는 것)
 
@@ -154,7 +161,7 @@ POST   /api/realtime/ticket { room: "square" | "gym:{id}" }
 | # | 내용 | 운영 DB 영향 | 사용자 할 일 |
 |---|---|---|---|
 | 1 | **보안 급한 것**: 모임 상세 멤버 확인, 실명 명단 번들에서 제거(API 로 이동 전까지 운영진만 보기) | 없음 | – |
-| 2 | **Flyway 도입**(V1 기준선, `validate`) | 기록 테이블만 생김 | 스키마 내보내기 · DB 스냅샷 |
+| 2 | **Flyway 도입**(데이터 이전 전용, Hibernate 다음 실행) | `flyway_schema_history` 테이블만 생김 | – (스냅샷 권장) |
 | 3 | 짐 칸 · 역할 · `GymPermissionService` · `/api/gyms` + 아주대 이전 마이그레이션 | **구조 변경 + 데이터 이전** | 배포 전 확인 · 운영진 지정 |
 | 4 | 소식 · 이벤트 · 공동구매 · 자랑방 `gym_id`, 랭킹 범위 | 칸 추가 | – |
 | 5 | `social_accounts` + Google 연결 이전 + 카카오 로그인 | 테이블 추가 | 카카오 디벨로퍼스 앱 등록 · 키 |
