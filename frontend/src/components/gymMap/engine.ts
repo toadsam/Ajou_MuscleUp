@@ -10,6 +10,7 @@
 //   tone        내 캐릭터 색(MBTI 계열 → AvatarRenderer 와 같은 규칙).
 
 import { PLATE_ORDER } from "../gym/plates";
+import { temperament } from "../avatar/mbti";
 
 export const TILE = 16;
 export const COLS = 16;
@@ -74,10 +75,10 @@ export type Tone = { skin: string; tank: string; hair: string };
 /** AvatarRenderer 의 MBTI 색 규칙과 같다 */
 export function toneForMbti(mbti?: string | null): Tone {
   const v = (mbti ?? "").toUpperCase();
-  if (v.includes("NT")) return { skin: "#f3c7a9", tank: "#2F6FD0", hair: "#1e293b" };
-  if (v.includes("NF")) return { skin: "#f4c8b4", tank: "#F0BE2E", hair: "#3f3f46" };
-  if (v.includes("SJ")) return { skin: "#edc2a5", tank: "#2E9C55", hair: "#292524" };
-  if (v.includes("SP")) return { skin: "#f1c6aa", tank: "#D9302A", hair: "#1f2937" };
+  if (temperament(v) === "NT") return { skin: "#f3c7a9", tank: "#2F6FD0", hair: "#1e293b" };
+  if (temperament(v) === "NF") return { skin: "#f4c8b4", tank: "#F0BE2E", hair: "#3f3f46" };
+  if (temperament(v) === "SJ") return { skin: "#edc2a5", tank: "#2E9C55", hair: "#292524" };
+  if (temperament(v) === "SP") return { skin: "#f1c6aa", tank: "#D9302A", hair: "#1f2937" };
   return { skin: "#E8B98F", tank: "#D9302A", hair: "#2B2420" };
 }
 

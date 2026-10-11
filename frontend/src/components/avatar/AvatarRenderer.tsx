@@ -7,6 +7,7 @@ import { TIER_PRESETS } from "./tierPreset";
 import type { AvatarCustomization } from "../../utils/avatarCustomization";
 import { amplifyGrowthParams, type EvolutionBranch } from "../../utils/evolutionProgress";
 import { AVATAR_APPEARANCE_EVENT, loadAppearanceBySeed } from "../../utils/avatarAppearanceState";
+import { temperament } from "./mbti";
 import "./avatar.css";
 
 type Props = {
@@ -28,10 +29,10 @@ type Props = {
 // 피부·머리 색은 MBTI 를 따르고, 민소매 색은 원판 팔레트에서 고른다.
 const mbtiTone = (mbti?: string | null) => {
   const v = (mbti ?? "").toUpperCase();
-  if (v.includes("NT")) return { skin: "#f3c7a9", tank: "#2F6FD0", hair: "#1e293b" };
-  if (v.includes("NF")) return { skin: "#f4c8b4", tank: "#F0BE2E", hair: "#3f3f46" };
-  if (v.includes("SJ")) return { skin: "#edc2a5", tank: "#2E9C55", hair: "#292524" };
-  if (v.includes("SP")) return { skin: "#f1c6aa", tank: "#D9302A", hair: "#1f2937" };
+  if (temperament(v) === "NT") return { skin: "#f3c7a9", tank: "#2F6FD0", hair: "#1e293b" };
+  if (temperament(v) === "NF") return { skin: "#f4c8b4", tank: "#F0BE2E", hair: "#3f3f46" };
+  if (temperament(v) === "SJ") return { skin: "#edc2a5", tank: "#2E9C55", hair: "#292524" };
+  if (temperament(v) === "SP") return { skin: "#f1c6aa", tank: "#D9302A", hair: "#1f2937" };
   return { skin: "#f1c4a5", tank: "#4A4E57", hair: "#1f2937" };
 };
 

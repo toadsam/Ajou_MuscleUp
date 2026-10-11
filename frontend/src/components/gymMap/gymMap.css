@@ -304,6 +304,68 @@
 .gm-mirror-meta { display: grid; gap: 4px; justify-items: start; }
 .gm-mirror-meta b { font-size: 22px; font-weight: 900; }
 
+/* 로그인 전 체험: 캐릭터 만들기 · 출석 체험 */
+.gm-guest { max-height: 92%; }
+.gm-guest h2 { margin-bottom: 10px; }
+.gm-guest .gm-actions > :first-child { flex: 2; }
+.gm-guest .gm-actions > :last-child { flex: 1; }
+.gm-guest-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.gm-guest-preview { width: 96px; height: 120px; }
+.gm-guest-pick {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.gm-seg-label {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dg-muted);
+}
+.gm-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.gm-seg button {
+  min-height: 30px;
+  border: 2px solid var(--dg-ink);
+  border-radius: 4px;
+  background: #3a3c42;
+  color: #c9c7c0;
+  font-family: "Big Shoulders Display", "Big Shoulders", sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.gm-seg button[aria-pressed="true"] {
+  background: var(--dg-red);
+  color: var(--dg-chalk);
+  box-shadow: 0 2px 0 var(--dg-ink);
+}
+.gm-seg button:focus-visible { outline: 2px solid var(--dg-yellow); outline-offset: 1px; }
+.gm-guest-note {
+  margin: 10px 0 0 !important;
+  font-size: 11.5px !important;
+  color: var(--dg-muted) !important;
+}
+.gm-trial { width: 100%; margin: 2px 0 4px; }
+.gm-textbtn {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--dg-yellow);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .gm-board {
   margin: 0;
   padding: 8px 12px;

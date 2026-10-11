@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { barbellWeight } from "../gym/plates";
 import { logEvent } from "../../utils/analytics";
+import AvatarRenderer from "../avatar/AvatarRenderer";
+import { loadGuestCharacter, saveGuestCharacter, type GuestCharacter } from "./guestCharacter";
 import {
   MAP_H,
   MAP_W,
@@ -60,10 +62,29 @@ const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
 const pct = (x: number, y: number) => ({ left: `${(x / MAP_W) * 100}%`, top: `${(y / MAP_H) * 100}%` });
 
-type Sheet = { title: string; body: ReactNode; to: string; cta: string };
+type Sheet = { title: string; body: ReactNode; to: string; cta: string; quiet?: boolean };
+
+// 체험 캐릭터 만들기: MBTI 는 네 쌍 중 하나씩 고른다(모르면 처음 값 그대로)
+const MBTI_PAIRS: [string, string][] = [["E", "I"], ["N", "S"], ["T", "F"], ["J", "P"]];
+const randomMbti = () => MBTI_PAIRS.map((p) => p[Math.floor(Math.random() * 2)]).join("");
+const SIGNUP_CTA = "Google로 시작하기";
+
+function GuestAvatar({ guest, size }: { guest: GuestCharacter; size: number }) {
+  return <AvatarRenderer avatarSeed="guest" tier="BRONZE" stage={1} gender={guest.gender} mbti={guest.mbti} size={size} />;
+}
 
 export default function GymMap(props: Props) {
-  const { loggedIn, weekDays, streak, checkedToday, loungeCount, mbti, celebrate } = props;
+  const { loggedIn, streak, loungeCount, celebrate } = props;
+  // 로그인 전 체험: 임시 캐릭터를 만들고, 체크기에서 원판 꽂기를 한 번 해 볼 수 있다(기록은 안 남음)
+  const [guest, setGuest] = useState<GuestCharacter | null>(() => loadGuestCharacter());
+  const [draft, setDraft] = useState<GuestCharacter>(() => guest ?? { gender: "MALE", mbti: randomMbti() });
+  const [builderOpen, setBuilderOpen] = useState(() => !guest);
+  const [trialDone, setTrialDone] = useState(false);
+  const isGuest = !loggedIn;
+  const building = isGuest && builderOpen;
+  const weekDays = isGuest ? (trialDone ? 1 : 0) : props.weekDays;
+  const checkedToday = isGuest ? trialDone : props.checkedToday;
+  const mbti = isGuest ? (building ? draft.mbti : guest?.mbti) : props.mbti;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const meRef = useRef<HTMLDivElement>(null);
@@ -81,17 +102,23 @@ export default function GymMap(props: Props) {
   const talkTimer = useRef<number | undefined>(undefined);
   const talkingId = useRef<NpcId | null>(null);
   // 직원 대사는 내 실제 기록으로 만든다(지어낸 숫자 없음)
-  const facts = useRef({ loggedIn, weekDays, streak, checkedToday });
+  const facts = useRef({ loggedIn, weekDays, streak, checkedToday, hasGuest: Boolean(guest) });
   useEffect(() => {
-    facts.current = { loggedIn, weekDays, streak, checkedToday };
-  }, [loggedIn, weekDays, streak, checkedToday]);
+    facts.current = { loggedIn, weekDays, streak, checkedToday, hasGuest: Boolean(guest) };
+  }, [loggedIn, weekDays, streak, checkedToday, guest]);
   const lineFor = (id: NpcId): string => {
     const f = facts.current;
     if (id === "owner") {
-      if (!f.loggedIn) return "어서 와요! 로그인하고 출석부터 해 볼까요?";
+      if (!f.loggedIn) {
+        if (!f.hasGuest) return "어서 와요! 캐릭터부터 만들어 볼까요?";
+        return f.checkedToday ? "어때요? 가입하면 매일 이렇게 쌓여요." : "입구 옆 체크기에서 출석 체험 해 봐요!";
+      }
       return f.checkedToday ? `연속 ${f.streak}일째네요. 내일도 봐요!` : "오늘 출석 아직이죠? 체크기는 입구 옆이에요.";
     }
     if (id === "coach") {
+      if (!f.loggedIn && f.hasGuest && Math.random() < 0.5) {
+        return pick(["출석할 때마다 캐릭터가 자라요. 가입하면 그대로 이어져요.", "거울 앞에 가면 내 캐릭터를 크게 볼 수 있어요."]);
+      }
       if (f.loggedIn && Math.random() < 0.5) {
         return f.weekDays >= 7 ? "이번 주 원판 꽉 찼어요. 대단해요!" : `이번 주 ${7 - f.weekDays}일 더 하면 바벨이 꽉 차요.`;
       }
@@ -178,6 +205,12 @@ export default function GymMap(props: Props) {
           } catch {
             /* 진동 미지원 */
           }
+          if (!facts.current.loggedIn) {
+            // 체험: 원판이 꽂힌 걸 본 직후에 가입 안내를 다시 띄운다
+            showToast("체험 출석 완료 · +1 원판");
+            window.setTimeout(() => setZone("checkin"), 700);
+            return;
+          }
           showToast(`출석 완료 · 연속 ${latestStreak.current}일`);
         },
       },
@@ -239,17 +272,66 @@ export default function GymMap(props: Props) {
     mapRef.current?.goZone(z, fast);
   };
 
+  const createGuest = () => {
+    saveGuestCharacter(draft);
+    setGuest(draft);
+    setBuilderOpen(false);
+    setTouched(true);
+    void logEvent("home", "guest_create", { mbti: draft.mbti, gender: draft.gender });
+    sayRef.current("owner", "반가워요! 체크기에서 출석 체험 해 봐요.");
+    // 만들자마자 체크기로 걸어가 "출석 체험" 창을 연다
+    mapRef.current?.goZone("checkin", false);
+  };
+
+  const skipBuilder = () => {
+    setBuilderOpen(false);
+    void logEvent("home", "guest_skip", {});
+  };
+
+  const tryCheckin = useCallback(() => {
+    if (trialDone) return;
+    setTrialDone(true);
+    mapRef.current?.clearZone();
+    setZone(null);
+    // 엔진에 먼저 1장을 넣고 연출 → 원판이 날아가 꽂힌다(React 상태 반영을 기다리지 않음)
+    mapRef.current?.setState({ plates: 1, checked: true });
+    mapRef.current?.celebrate();
+    void logEvent("home", "guest_trial_checkin", {});
+  }, [trialDone]);
+
+  const signupClick = (from: string) => void logEvent("home", "guest_signup_click", { from });
+
   const kg = barbellWeight(weekDays);
   const sheet = useMemo<Sheet | null>(() => {
     if (!zone) return null;
     switch (zone) {
       case "checkin":
+        if (!loggedIn && trialDone)
+          return {
+            title: "이렇게 원판이 쌓여요",
+            body: (
+              <p>
+                가입하면 오늘부터 진짜로 기록돼요. 운동한 날마다 바벨에 원판이 꽂히고, 캐릭터가 자라요.
+                {guest && " 지금 만든 캐릭터 그대로 시작해요."}
+              </p>
+            ),
+            to: "/login",
+            cta: SIGNUP_CTA,
+          };
         if (!loggedIn)
           return {
-            title: "로그인하고 출석하기",
-            body: <p>운동 사진을 올리면 출석이 기록되고, 파워랙 바벨에 원판이 하나 꽂혀요.</p>,
+            title: "출석 체험 해 보기",
+            body: (
+              <>
+                <p>실제로는 운동 사진을 올리면 출석이 돼요. 지금은 연습으로 원판 한 장만 꽂아 봐요(기록은 안 남아요).</p>
+                <button type="button" className="dg-btn dg-btn-primary gm-trial" onClick={tryCheckin}>
+                  원판 꽂아 보기
+                </button>
+              </>
+            ),
             to: "/login",
-            cta: "로그인",
+            cta: SIGNUP_CTA,
+            quiet: true,
           };
         return checkedToday
           ? {
@@ -299,6 +381,32 @@ export default function GymMap(props: Props) {
           cta: loggedIn ? "내 기록 보기" : "로그인",
         };
       case "mirror":
+        if (!loggedIn && guest)
+          return {
+            title: "체험 중인 내 캐릭터",
+            body: (
+              <div className="gm-mirror">
+                <div className="gm-mirror-glass">
+                  <GuestAvatar guest={guest} size={96} />
+                </div>
+                <div className="gm-mirror-meta">
+                  <span className="dg-chip">BRONZE</span>
+                  <b className="font-num">LV 1</b>
+                  <p>출석할수록 레벨과 티어가 올라가고 모습이 바뀌어요.</p>
+                  <button type="button" className="gm-textbtn" onClick={() => {
+                      mapRef.current?.clearZone();
+                      setZone(null);
+                      setDraft(guest);
+                      setBuilderOpen(true);
+                    }}>
+                    다시 만들기
+                  </button>
+                </div>
+              </div>
+            ),
+            to: "/login",
+            cta: SIGNUP_CTA,
+          };
         return props.avatar
           ? {
               title: props.title || "이름 없는 리프터",
@@ -369,9 +477,9 @@ export default function GymMap(props: Props) {
           cta: "자랑방 가기",
         };
     }
-  }, [zone, loggedIn, checkedToday, kg, streak, weekDays, loungeCount, props.todayLabel, props.monthCount, props.avatar, props.title, props.tier, props.level, props.events]);
+  }, [zone, loggedIn, guest, trialDone, tryCheckin, checkedToday, kg, streak, weekDays, loungeCount, props.todayLabel, props.monthCount, props.avatar, props.title, props.tier, props.level, props.events]);
 
-  const shown = sheet;
+  const shown = building ? null : sheet;
   const close = () => {
     mapRef.current?.clearZone();
     setZone(null);
@@ -382,7 +490,7 @@ export default function GymMap(props: Props) {
       <div className="gm-hud">
         <div className="gm-lv" aria-label="레벨">
           <small>LV</small>
-          <b>{loggedIn && props.level ? props.level : "–"}</b>
+          <b>{loggedIn && props.level ? props.level : isGuest && guest ? 1 : "–"}</b>
         </div>
         <div className="gm-week">
           <div className="gm-week-top">
@@ -451,10 +559,10 @@ export default function GymMap(props: Props) {
             </div>
           )}
         </div>
-        <div className={`gm-hint ${touched ? "gone" : ""}`}>바닥을 눌러 걸어보세요</div>
+        <div className={`gm-hint ${touched || building ? "gone" : ""}`}>바닥을 눌러 걸어보세요</div>
         {toast && <div className="gm-toast">{toast}</div>}
 
-        <section className={`gm-sheet ${sheet ? "open" : ""}`} aria-live="polite" aria-hidden={!sheet}>
+        <section className={`gm-sheet ${shown ? "open" : ""}`} aria-live="polite" aria-hidden={!shown}>
           {shown && zone && (
             <>
               <p className="gm-eyebrow">
@@ -463,7 +571,11 @@ export default function GymMap(props: Props) {
               <h2>{shown.title}</h2>
               {shown.body}
               <div className="gm-actions">
-                <Link to={shown.to} className="dg-btn dg-btn-primary">
+                <Link
+                  to={shown.to}
+                  className={`dg-btn ${shown.quiet ? "dg-btn-steel" : "dg-btn-primary"}`}
+                  onClick={isGuest && shown.to === "/login" ? () => signupClick(zone) : undefined}
+                >
                   {shown.cta}
                 </Link>
                 <button type="button" className="dg-btn dg-btn-steel" onClick={close}>
@@ -473,6 +585,51 @@ export default function GymMap(props: Props) {
             </>
           )}
         </section>
+
+        {building && (
+          <section className="gm-sheet gm-guest open" aria-label="체험 캐릭터 만들기">
+            <p className="gm-eyebrow">로그인 없이 둘러보기</p>
+            <h2>내 캐릭터부터 만들어요</h2>
+            <div className="gm-guest-row">
+              <div className="gm-mirror-glass gm-guest-preview">
+                <GuestAvatar guest={draft} size={88} />
+              </div>
+              <div className="gm-guest-pick">
+                <div className="gm-seg" role="group" aria-label="성별">
+                  {(["MALE", "FEMALE"] as const).map((g) => (
+                    <button key={g} type="button" aria-pressed={draft.gender === g} onClick={() => setDraft((d) => ({ ...d, gender: g }))}>
+                      {g === "MALE" ? "남" : "여"}
+                    </button>
+                  ))}
+                </div>
+                <div className="gm-seg-label">MBTI · 색과 움직임이 바뀌어요</div>
+                {MBTI_PAIRS.map((pair, i) => (
+                  <div key={pair.join("")} className="gm-seg" role="group" aria-label={`MBTI ${i + 1}번째 글자`}>
+                    {pair.map((ch) => (
+                      <button
+                        key={ch}
+                        type="button"
+                        aria-pressed={draft.mbti[i] === ch}
+                        onClick={() => setDraft((d) => ({ ...d, mbti: d.mbti.slice(0, i) + ch + d.mbti.slice(i + 1) }))}
+                      >
+                        {ch}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="gm-actions">
+              <button type="button" className="dg-btn dg-btn-primary" onClick={createGuest}>
+                이걸로 둘러보기
+              </button>
+              <button type="button" className="dg-btn dg-btn-steel" onClick={skipBuilder}>
+                건너뛰기
+              </button>
+            </div>
+            <p className="gm-guest-note">가입 전에는 이 기기에만 저장돼요. 가입하면 이 캐릭터로 시작해요.</p>
+          </section>
+        )}
       </div>
 
       <div className="gm-dock-cap">
@@ -487,7 +644,7 @@ export default function GymMap(props: Props) {
             className={`gm-dock-btn ${d.zone === "checkin" ? (checkedToday ? "done" : "primary") : ""}`}
             onClick={() => go(d.zone, true)}
           >
-            {d.zone === "checkin" && checkedToday ? "출석 완료" : d.label}
+            {d.zone === "checkin" ? (checkedToday ? (isGuest ? "체험 완료" : "출석 완료") : isGuest ? "출석 체험" : d.label) : d.label}
           </button>
         ))}
       </nav>

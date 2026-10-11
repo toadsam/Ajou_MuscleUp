@@ -11,6 +11,8 @@
   - [2026-10-11-frontend-pages.md](2026-10-11-frontend-pages.md) — 출석·AI·갤러리·이벤트·랭킹·관리자·크루·소개
   - [2026-10-11-frontend-community.md](2026-10-11-frontend-community.md) — 자랑방·단백질 공구·리뷰
 
+- [2026-10-11-guest-map-trial.md](2026-10-11-guest-map-trial.md) — 로그인 없이 지도 체험(캐릭터 만들기 · 출석 체험 · 가입 뒤 이어받기), S 계열 MBTI 색 버그
+
 ## 항목 양식
 
 ```markdown

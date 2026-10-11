@@ -18,6 +18,7 @@ import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
 import { toast } from "../lib/toast";
 import { httpError } from "../lib/httpError";
+import { clearGuestCharacter, loadGuestCharacter } from "../components/gymMap/guestCharacter";
 
 // 처음 보일 때 0 에서 값까지 굴러 올라가는 숫자(표현 전용)
 function CountNum({ value, suffix = "" }: { value: number | null | undefined; suffix?: string }) {
@@ -366,7 +367,10 @@ export default function MyPage() {
             setEvaluation(null);
           }
         } else {
-          setForm(emptyForm);
+          // 로그인 전 지도에서 만든 체험 캐릭터가 있으면 성별 · MBTI 를 이어받는다
+          const guest = loadGuestCharacter();
+          setForm(guest ? { ...emptyForm, gender: guest.gender, mbti: guest.mbti } : emptyForm);
+          if (guest) showToast({ type: "success", message: "체험 때 만든 캐릭터를 불러왔어요. 키·몸무게만 넣으면 완성!" });
         }
       } catch (e: any) {
         // 서버가 꺼져 있거나 네트워크가 끊기면 fetch 는 TypeError 를 던진다
@@ -449,6 +453,7 @@ export default function MyPage() {
       setIsResting(Boolean(res.character.isResting));
       setEvaluation(res.evaluation);
       setChange(res.change);
+      clearGuestCharacter();
       if (res.change?.leveledUp || res.change?.evolved || res.change?.tierChanged) {
         triggerTransformFx(2200);
       }
