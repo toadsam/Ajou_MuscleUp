@@ -15,7 +15,7 @@ export default function Footer() {
       />
       <div className="flex flex-col items-center gap-2 px-5 py-7">
         <p className="text-sm">
-          © 2026 <span className="font-display text-base text-plate-red">득근</span> | 운동을 사랑하는 사람들의 모임
+          © 2026 <span className="font-display text-base text-plate-red">득근득근</span> | 출석하면 캐릭터가 자라는 헬스장
         </p>
         <p className="text-xs text-steel-400">
           최근 업데이트 <span className="font-num text-sm tracking-wide text-chalk">{lastUpdated}</span>

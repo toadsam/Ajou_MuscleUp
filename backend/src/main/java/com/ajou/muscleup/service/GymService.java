@@ -86,9 +86,9 @@ public class GymService {
     }
 
     @Transactional(readOnly = true)
-    public GymSummaryResponse get(String email, String slug) {
+    public GymSummaryResponse get(String email, String slug, String inviteCode) {
         User me = findUser(email);
-        WorkoutCrew gym = visibleGymOrThrow(slug, me);
+        WorkoutCrew gym = visibleGymOrThrow(slug, me, inviteCode);
         boolean joined = me != null && permissions.roleOf(gym, me).isPresent();
         return toSummary(gym, me, memberRepository.countByCrew(gym), joined);
     }
@@ -98,9 +98,9 @@ public class GymService {
      * 아니면 멤버만 볼 수 있다.
      */
     @Transactional(readOnly = true)
-    public List<GymMemberResponse> members(String email, String slug, boolean staffOnly) {
+    public List<GymMemberResponse> members(String email, String slug, boolean staffOnly, String inviteCode) {
         User me = findUser(email);
-        WorkoutCrew gym = visibleGymOrThrow(slug, me);
+        WorkoutCrew gym = visibleGymOrThrow(slug, me, inviteCode);
         if (!staffOnly) {
             if (me == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요해요.");
             permissions.require(me, gym, GymAction.VIEW_MEMBERS);
@@ -206,11 +206,17 @@ public class GymService {
         return m.getRole() != null ? m.getRole() : WorkoutCrewMemberRole.MEMBER;
     }
 
-    /** PRIVATE · 승인 전 · 보관된 짐은 멤버와 앱 운영자에게만 보인다(없는 것처럼 404). */
-    private WorkoutCrew visibleGymOrThrow(String slug, User me) {
+    /**
+     * PRIVATE · 승인 전 · 보관된 짐은 멤버와 앱 운영자에게만 보인다(없는 것처럼 404).
+     * 단, 맞는 초대 코드를 가진 사람은 보관되지 않은 짐을 볼 수 있다(초대 링크 /g/{slug}?code=… 로 들어와 가입).
+     */
+    private WorkoutCrew visibleGymOrThrow(String slug, User me, String inviteCode) {
         WorkoutCrew gym = gymOrThrow(slug);
         boolean open = gym.statusOrDefault() == GymStatus.ACTIVE && gym.visibilityOrDefault() != GymVisibility.PRIVATE;
         if (open) return gym;
+        boolean invited = inviteCode != null && !inviteCode.isBlank() && inviteCode.trim().equals(gym.getInviteCode())
+                && gym.statusOrDefault() != GymStatus.ARCHIVED;
+        if (invited) return gym;
         if (me != null && (RoleUtils.isAdmin(me) || permissions.roleOf(gym, me).isPresent())) return gym;
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "모임을 찾을 수 없어요.");
     }

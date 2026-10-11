@@ -34,9 +34,9 @@ export default defineConfig(({ mode, command }) => {
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: '득근득근 MuscleUp',
+        name: '득근득근',
         short_name: '득근득근',
-        description: '게임형 피트니스 커뮤니티 앱',
+        description: '출석하면 캐릭터가 자라는 헬스장',
         theme_color: '#1A1A1C',
         background_color: '#1A1A1C',
         display: 'standalone',

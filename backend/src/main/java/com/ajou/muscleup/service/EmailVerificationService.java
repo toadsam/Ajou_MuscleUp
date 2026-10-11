@@ -51,7 +51,7 @@ public class EmailVerificationService {
         repo.save(v);
 
         // ★ 요청은 즉시 200으로 끝내고, 메일은 비동기로 발송
-        String subject = "[Ajou MuscleUp] 이메일 인증코드";
+        String subject = "[득근득근] 이메일 인증코드";
         String text = "인증코드: " + code + "\n유효기간: 10분\n(타인에게 공유 금지)";
         emailSender.sendSimpleAsync(email, subject, text);
         // 인증 코드는 로그에 남기지 않는다(운영 로그가 새면 남의 계정 인증에 쓰일 수 있음).

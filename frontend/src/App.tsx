@@ -37,6 +37,8 @@ const Events = lazy(() => import("./pages/Events"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
 const AdminEventsList = lazy(() => import("./pages/admin/AdminEventsList"));
 const AdminEventForm = lazy(() => import("./pages/admin/AdminEventForm"));
+const Gyms = lazy(() => import("./pages/Gyms"));
+const GymPage = lazy(() => import("./pages/GymPage"));
 const CrewHub = lazy(() => import("./pages/CrewHub"));
 const CrewChallenge = lazy(() => import("./pages/CrewChallenge"));
 const CrewLobby = lazy(() => import("./pages/CrewLobby"));
@@ -101,6 +103,9 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
+              {/* 모임 찾기 · 모임 페이지는 로그인 없이 열린다(로그인 여부는 화면이 직접 처리) */}
+              <Route path="/gyms" element={<Gyms />} />
+              <Route path="/g/:slug" element={<GymPage />} />
               <Route
                 path="/admin"
                 element={

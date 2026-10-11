@@ -29,9 +29,9 @@ public class AttendanceSharePageController {
         String targetUrl = frontendBaseUrl + "/attendance/share/" + slug;
 
         String title = (data.getAuthorNickname() == null || data.getAuthorNickname().isBlank()
-                ? "Attendance Brag"
-                : data.getAuthorNickname() + "'s Attendance Brag")
-                + " - MuscleUp";
+                ? "오늘 출석"
+                : data.getAuthorNickname() + "님의 오늘 출석")
+                + " | 득근득근";
         String description = buildDescription(data);
 
         List<String> media = data.getMediaUrls() == null ? List.of() : data.getMediaUrls();
@@ -56,7 +56,7 @@ public class AttendanceSharePageController {
                   <meta name="description" content="%s" />
                   <link rel="canonical" href="%s" />
                   <meta property="og:type" content="article" />
-                  <meta property="og:site_name" content="MuscleUp" />
+                  <meta property="og:site_name" content="득근득근" />
                   <meta property="og:title" content="%s" />
                   <meta property="og:description" content="%s" />
                   <meta property="og:url" content="%s" />
@@ -67,7 +67,7 @@ public class AttendanceSharePageController {
                   <script>window.location.replace(%s);</script>
                 </head>
                 <body>
-                  <p><a href="%s">Open shared attendance page</a></p>
+                  <p><a href="%s">출석 카드 보러 가기</a></p>
                 </body>
                 </html>
                 """
@@ -89,11 +89,11 @@ public class AttendanceSharePageController {
     }
 
     private String buildDescription(AttendancePublicShareResponse data) {
-        String base = data.isDidWorkout() ? "Workout completed today" : "Rest day logged today";
+        String base = data.isDidWorkout() ? "오늘 운동 완료" : "오늘은 쉬어 가는 날";
         // 공개 문구(shareComment)만 쓴다. 예전에는 비어 있으면 본인용 메모(memo)를 링크 미리보기에 그대로 실었다.
         String source = data.getShareComment();
         if (source == null || source.isBlank()) {
-            return base + " on MuscleUp.";
+            return base + " · 득근득근";
         }
         String trimmed = source.trim();
         return base + " - " + (trimmed.length() > 120 ? trimmed.substring(0, 120) + "..." : trimmed);

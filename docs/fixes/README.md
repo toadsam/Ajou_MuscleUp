@@ -22,6 +22,8 @@
 
 - [2026-10-11-social-accounts.md](2026-10-11-social-accounts.md) — 0단계 PR 5: 계정 연결(social_accounts) · 카카오 로그인 준비
 
+- [2026-10-11-brand-and-gym-ui.md](2026-10-11-brand-and-gym-ui.md) — 0단계 PR 6-1: 이름 "득근득근" 통일 · 모임 찾기 / 짐 페이지 · 초대 링크 규칙
+
 ## 항목 양식
 
 ```markdown

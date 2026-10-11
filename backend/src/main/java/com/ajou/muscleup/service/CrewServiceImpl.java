@@ -128,6 +128,10 @@ public class CrewServiceImpl implements CrewService {
     public CrewJoinResultResponse join(String email, Long crewId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
+        // 번호만으로는 운영 중인 공개 · 링크 공개 모임만. 비공개 · 승인 대기 모임은 초대 코드로만 들어온다
+        if (crew.statusOrDefault() != GymStatus.ACTIVE || crew.visibilityOrDefault() == com.ajou.muscleup.entity.GymVisibility.PRIVATE) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "초대 링크로만 들어갈 수 있는 모임이에요.");
+        }
         return joinWithPolicy(me, crew);
     }
 
@@ -136,6 +140,9 @@ public class CrewServiceImpl implements CrewService {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = workoutCrewRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 초대코드입니다."));
+        if (crew.statusOrDefault() == GymStatus.ARCHIVED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "운영을 마친 모임이에요.");
+        }
         return joinWithPolicy(me, crew);
     }
 
