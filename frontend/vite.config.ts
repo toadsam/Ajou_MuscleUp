@@ -61,11 +61,12 @@ export default defineConfig(({ mode, command }) => {
               cacheName: 'pages',
               networkTimeoutSeconds: 4,
               // 서버에 못 닿으면(오프라인) 미리 받아 둔 index.html(precache, 주소 뒤에 버전 표시가 붙어 있어 ignoreSearch)을 보여 준다
-              // (이 함수는 서비스 워커 안에서 돈다. tsconfig.node 에는 DOM 타입이 없어 globalThis 로 꺼낸다)
+              // (이 함수는 서비스 워커 안에서 돈다. tsconfig.node 에는 DOM 타입(caches · Response)이 없어
+              //  globalThis 로 꺼내고, 반환 타입에 Response 라는 이름을 쓰지 않는다 — Vercel 빌드에서 TS2304 가 났다)
               plugins: [
                 {
                   handlerDidError: async () =>
-                    (globalThis as unknown as { caches: { match: (url: string, opts: { ignoreSearch: boolean }) => Promise<Response | undefined> } })
+                    (globalThis as unknown as { caches: { match: (url: string, opts: { ignoreSearch: boolean }) => Promise<undefined> } })
                       .caches.match('/index.html', { ignoreSearch: true }),
                 },
               ],
