@@ -1,4 +1,6 @@
-export type CrewMemberRole = "LEADER" | "MEMBER";
+export type CrewMemberRole = "OWNER" | "STAFF" | "MEMBER";
+// 화면에 보이는 역할 이름(코드 값을 그대로 노출하지 않는다)
+export const CREW_ROLE_LABEL: Record<CrewMemberRole, string> = { OWNER: "모임장", STAFF: "운영진", MEMBER: "멤버" };
 export type CrewJoinPolicy = "AUTO_APPROVE" | "LEADER_APPROVE";
 export type CrewCharacterTier =
   | "BRONZE"
@@ -46,7 +48,9 @@ export interface CrewDetail {
   inviteCode: string | null;
   joinPolicy?: CrewJoinPolicy;
   joined: boolean;
+  // 관리 화면을 볼 수 있는지(모임장 · 운영진). 설정 변경 · 삭제는 myRole === "OWNER" 만
   leader: boolean;
+  myRole?: CrewMemberRole | null;
   month: string;
   targetDays: number;
   // 모임원이 아니면 false — 멤버별 출석 대신 아래 합계만 보여 준다.

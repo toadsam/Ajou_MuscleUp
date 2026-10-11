@@ -27,6 +27,10 @@ public interface WorkoutCrewMemberRepository extends JpaRepository<WorkoutCrewMe
 
     long countByCrew(WorkoutCrew crew);
 
+    // 내 짐 목록용: 짐(crew)을 함께 읽는다
+    @EntityGraph(attributePaths = "crew")
+    List<WorkoutCrewMember> findAllByUser(User user);
+
     boolean existsByCrewAndUser(WorkoutCrew crew, User user);
 
     void deleteAllByCrew(WorkoutCrew crew);

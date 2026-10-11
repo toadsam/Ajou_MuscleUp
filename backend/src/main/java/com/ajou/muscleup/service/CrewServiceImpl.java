@@ -10,6 +10,9 @@ import com.ajou.muscleup.entity.WorkoutCrew;
 import com.ajou.muscleup.entity.WorkoutCrewMember;
 import com.ajou.muscleup.entity.WorkoutCrewMemberRole;
 import com.ajou.muscleup.entity.WorkoutCrewJoinRequest;
+import com.ajou.muscleup.entity.GymStatus;
+import com.ajou.muscleup.entity.GymType;
+import com.ajou.muscleup.service.GymPermissionService.GymAction;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.CrewChallengeRepository;
@@ -46,6 +49,7 @@ public class CrewServiceImpl implements CrewService {
     private final CharacterProfileRepository characterProfileRepository;
     private final CrewChallengeRepository crewChallengeRepository;
     private final AttendanceLogRepository attendanceLogRepository;
+    private final GymPermissionService gymPermissionService;
     // 한국 시간 기준 "오늘"(config/TimeConfig). LocalDate.now() 는 서버 시간대를 따라가 UTC 서버에서 하루 어긋났다.
     private final Clock clock;
 
@@ -53,12 +57,15 @@ public class CrewServiceImpl implements CrewService {
     public CrewDetailResponse create(String email, CrewCreateRequest request) {
         User user = getUserByEmailOrThrow(email);
         CrewJoinPolicy joinPolicy = request.getJoinPolicy() != null ? request.getJoinPolicy() : CrewJoinPolicy.AUTO_APPROVE;
+        String inviteCode = generateInviteCode();
         WorkoutCrew crew = workoutCrewRepository.save(
                 WorkoutCrew.builder()
                         .name(request.getName().trim())
                         .description(normalize(request.getDescription()))
                         .owner(user)
-                        .inviteCode(generateInviteCode())
+                        .inviteCode(inviteCode)
+                        .type(GymType.CREW)
+                        .slug("c-" + inviteCode.toLowerCase(Locale.ROOT))
                         .joinPolicy(joinPolicy)
                         .build()
         );
@@ -66,7 +73,7 @@ public class CrewServiceImpl implements CrewService {
                 WorkoutCrewMember.builder()
                         .crew(crew)
                         .user(user)
-                        .role(WorkoutCrewMemberRole.LEADER)
+                        .role(WorkoutCrewMemberRole.OWNER)
                         .build()
         );
         return buildDetail(crew, user, YearMonth.now(clock));
@@ -90,6 +97,8 @@ public class CrewServiceImpl implements CrewService {
         }
         Set<Long> myCrewIds = new HashSet<>(workoutCrewMemberRepository.findCrewIdsByUserId(me.getId()));
         return crews.stream()
+                // 운동 모임 화면에는 운동 모임(CREW)만. 동아리 · 헬스장 같은 큰 짐은 /api/gyms 로 본다.
+                .filter(crew -> crew.typeOrDefault() == GymType.CREW && crew.statusOrDefault() == GymStatus.ACTIVE)
                 .sorted(Comparator.comparing(WorkoutCrew::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(crew -> {
                     boolean joined = myCrewIds.contains(crew.getId());
@@ -135,7 +144,7 @@ public class CrewServiceImpl implements CrewService {
     public List<CrewJoinRequestResponse> listJoinRequests(String email, Long crewId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_MEMBERS);
         return workoutCrewJoinRequestRepository
                 .findAllByCrewAndStatusOrderByCreatedAtAsc(crew, CrewJoinRequestStatus.PENDING)
                 .stream()
@@ -154,7 +163,7 @@ public class CrewServiceImpl implements CrewService {
     public void approveJoinRequest(String email, Long crewId, Long requestId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_MEMBERS);
         WorkoutCrewJoinRequest request = workoutCrewJoinRequestRepository.findByIdAndCrew(requestId, crew)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join request not found"));
         if (request.getStatus() != CrewJoinRequestStatus.PENDING) {
@@ -170,7 +179,7 @@ public class CrewServiceImpl implements CrewService {
     public void rejectJoinRequest(String email, Long crewId, Long requestId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_MEMBERS);
         WorkoutCrewJoinRequest request = workoutCrewJoinRequestRepository.findByIdAndCrew(requestId, crew)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join request not found"));
         if (request.getStatus() != CrewJoinRequestStatus.PENDING) {
@@ -188,7 +197,7 @@ public class CrewServiceImpl implements CrewService {
         WorkoutCrewMember member = workoutCrewMemberRepository.findByCrewAndUser(crew, me)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "가입된 모임이 아닙니다."));
 
-        if (member.getRole() == WorkoutCrewMemberRole.LEADER) {
+        if (member.getRole() == WorkoutCrewMemberRole.OWNER || Objects.equals(crew.getOwner().getId(), me.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모임장은 탈퇴할 수 없습니다.");
         }
         workoutCrewMemberRepository.delete(member);
@@ -198,7 +207,7 @@ public class CrewServiceImpl implements CrewService {
     public CrewDetailResponse update(String email, Long crewId, CrewUpdateRequest request) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_SETTINGS);
         crew.setName(request.getName().trim());
         crew.setDescription(normalize(request.getDescription()));
         if (request.getJoinPolicy() != null) {
@@ -211,7 +220,11 @@ public class CrewServiceImpl implements CrewService {
     public void delete(String email, Long crewId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_SETTINGS);
+        // 동아리 · 헬스장 같은 큰 짐은 지우지 않고 보관한다(멤버 · 소모임 기록 보호)
+        if (crew.typeOrDefault() != GymType.CREW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "운동 모임만 삭제할 수 있어요. 이 모임은 보관만 할 수 있어요.");
+        }
         crewChallengeRepository.deleteAll(crewChallengeRepository.findAllByCrewOrderByStartDateDesc(crew));
         workoutCrewJoinRequestRepository.deleteAllByCrew(crew);
         workoutCrewMemberRepository.deleteAllByCrew(crew);
@@ -222,7 +235,7 @@ public class CrewServiceImpl implements CrewService {
     public void kickMember(String email, Long crewId, Long memberUserId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_MEMBERS);
         if (Objects.equals(crew.getOwner().getId(), memberUserId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모임장은 강퇴할 수 없습니다.");
         }
@@ -230,6 +243,10 @@ public class CrewServiceImpl implements CrewService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."));
         WorkoutCrewMember member = workoutCrewMemberRepository.findByCrewAndUser(crew, target)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "모임 멤버가 아닙니다."));
+        // 운영진은 모임장만 내보낼 수 있다(운영진끼리 서로 내보내기 방지)
+        if (member.getRole() == WorkoutCrewMemberRole.STAFF) {
+            gymPermissionService.require(me, crew, GymAction.MANAGE_STAFF);
+        }
         workoutCrewMemberRepository.delete(member);
     }
 
@@ -237,7 +254,7 @@ public class CrewServiceImpl implements CrewService {
     public CrewChallengeResponse createChallenge(String email, Long crewId, CrewChallengeCreateRequest request) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_CONTENT);
         validateChallengeRequest(request);
         CrewChallenge saved = crewChallengeRepository.save(CrewChallenge.builder()
                 .crew(crew)
@@ -254,7 +271,7 @@ public class CrewServiceImpl implements CrewService {
     public CrewChallengeResponse updateChallenge(String email, Long crewId, Long challengeId, CrewChallengeCreateRequest request) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_CONTENT);
         validateChallengeRequest(request);
         CrewChallenge challenge = getChallengeOrThrow(challengeId);
         if (!Objects.equals(challenge.getCrew().getId(), crew.getId())) {
@@ -272,7 +289,7 @@ public class CrewServiceImpl implements CrewService {
     public void deleteChallenge(String email, Long crewId, Long challengeId) {
         User me = getUserByEmailOrThrow(email);
         WorkoutCrew crew = getCrewOrThrow(crewId);
-        ensureLeader(crew, me);
+        gymPermissionService.require(me, crew, GymAction.MANAGE_CONTENT);
         CrewChallenge challenge = getChallengeOrThrow(challengeId);
         if (!Objects.equals(challenge.getCrew().getId(), crew.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모임 챌린지가 아닙니다.");
@@ -284,7 +301,9 @@ public class CrewServiceImpl implements CrewService {
         List<WorkoutCrewMember> members = workoutCrewMemberRepository.findAllByCrewOrderByCreatedAtAsc(crew);
         Map<Long, CharacterProfile> profileMap = buildCharacterProfileMap(members);
         boolean joined = members.stream().anyMatch(m -> Objects.equals(m.getUser().getId(), me.getId()));
-        boolean leader = Objects.equals(crew.getOwner().getId(), me.getId());
+        // leader = 관리 화면을 볼 수 있음(모임장 · 운영진). 설정 변경 · 삭제는 모임장만(myRole 로 구분)
+        WorkoutCrewMemberRole myRole = gymPermissionService.roleOf(crew, me).orElse(null);
+        boolean leader = gymPermissionService.can(me, crew, GymAction.MANAGE_MEMBERS);
 
         LocalDate start = month.atDay(1);
         LocalDate end = month.atEndOfMonth();
@@ -351,6 +370,7 @@ public class CrewServiceImpl implements CrewService {
                 .joinPolicy(resolveJoinPolicy(crew))
                 .joined(joined)
                 .leader(leader)
+                .myRole(myRole)
                 .month(month.toString())
                 .targetDays(targetDays)
                 .memberCount(members.size())
@@ -655,12 +675,6 @@ public class CrewServiceImpl implements CrewService {
                 .result("JOINED")
                 .message("바로 모임에 참여했습니다.")
                 .build();
-    }
-
-    private void ensureLeader(WorkoutCrew crew, User user) {
-        if (!Objects.equals(crew.getOwner().getId(), user.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "모임장만 가능한 작업입니다.");
-        }
     }
 
     private void validateChallengeRequest(CrewChallengeCreateRequest request) {

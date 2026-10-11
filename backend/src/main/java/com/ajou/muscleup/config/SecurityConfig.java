@@ -81,6 +81,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/events/*/view", "/api/events/*/click").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                // 짐 찾기 · 짐 정보 · 운영진 소개는 로그인 없이(초대 링크 미리보기). /mine 은 서비스에서 로그인 확인
+                .requestMatchers(HttpMethod.GET, "/api/gyms", "/api/gyms/*", "/api/gyms/*/members").permitAll()
 
                 // Protected APIs (allow USER and ADMIN)
                 .requestMatchers("/api/brags/**").hasAnyRole("USER", "ADMIN")
@@ -101,6 +103,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/events/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/lounge/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/crew/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/gyms/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/friends/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/club/roster").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/admin/events/**").hasRole("ADMIN")

@@ -84,6 +84,8 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
   클라이언트가 보낸 닉네임 · 레벨 · 이메일은 믿지 않는다. 브로드캐스트에 이메일을 싣지 않는다.
 - **배포 빌드는 `VITE_API_BASE` · `VITE_REALTIME_URL` 이 없으면 멈춘다**(`vite.config.ts`). 급할 땐 `SKIP_API_ENV_CHECK=1`.
 - **DB 데이터 이전은 `backend/src/main/resources/db/migration`**(Flyway, Hibernate 다음에 실행 — `config/DataMigrationRunner`). 새 칸은 엔티티로, 채우기 · 옮기기는 SQL 로. 배포한 SQL 파일은 고치지 않는다(규칙: 그 폴더 README).
+- **enum 칸에 새 값을 넣을 땐 DB 제약부터**: Hibernate 가 Postgres 에는 `CHECK (role IN (...))`, MySQL 에는 `enum(...)` 타입으로 만들어 둔다. 새 값만 코드에 넣으면 저장할 때 실패한다 → 같은 PR 에 제약을 푸는 이전 SQL(예: `V2__gyms_and_ajou_club.sql` 1번)을 넣는다.
+- **"짐(Gym)" = `WorkoutCrew`**: 동아리 · 운동 모임 · 헬스장 · PT 가 같은 테이블(`type`). 권한은 `GymPermissionService` 한 곳에서(역할 OWNER · STAFF · MEMBER). 운동 모임 화면(`/api/crew`)은 CREW 만, 짐 API 는 `/api/gyms`.
 - **"오늘"은 한국 시간(KST)**: 백엔드는 `TimeConfig` 의 `Clock` 을 쓴다. `LocalDate.now()` 를 새로 쓰지 않는다.
 - **오류 문구와 알림**: `alert()` 대신 `lib/toast.ts`, 오류는 `lib/httpError.ts`(`httpError`/`friendlyError`)로 한국어 문장만 보여 준다.
 - **이름**: 운동 모임 · 공동구매 · 응원 으로 통일(코드 식별자는 그대로 둬도 됨).

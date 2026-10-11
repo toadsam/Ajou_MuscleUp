@@ -1,6 +1,7 @@
 package com.ajou.muscleup.dto.crew;
 
 import com.ajou.muscleup.entity.CrewJoinPolicy;
+import com.ajou.muscleup.entity.WorkoutCrewMemberRole;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,7 +17,10 @@ public class CrewDetailResponse {
     private String inviteCode;
     private CrewJoinPolicy joinPolicy;
     private boolean joined;
+    // 관리 화면을 볼 수 있는지(모임장 · 운영진 · 앱 운영자)
     private boolean leader;
+    // 이 모임에서 내 역할(OWNER · STAFF · MEMBER), 멤버가 아니면 null
+    private WorkoutCrewMemberRole myRole;
     private String month;
     private int targetDays;
     // 멤버가 아니어도 보이는 모임 전체 집계.

@@ -29,4 +29,8 @@ public class WorkoutCrewMember extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private WorkoutCrewMemberRole role;
+
+    /** 표시용 직함(예: 회장 · 트레이너). 운영진만 */
+    @Column(length = 20)
+    private String title;
 }
