@@ -9,6 +9,9 @@ import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.service.EmailVerificationService;
 import com.ajou.muscleup.service.RefreshTokenService;
 import com.ajou.muscleup.service.UserService;
+import com.ajou.muscleup.service.SocialLoginService;
+import com.ajou.muscleup.service.KakaoOAuthClient;
+import com.ajou.muscleup.entity.SocialProvider;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -50,6 +53,8 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
     private final RateLimiter rateLimiter;
+    private final SocialLoginService socialLoginService;
+    private final KakaoOAuthClient kakaoOAuthClient;
 
     @Value("${spring.mail.username}")
     private String from;
@@ -180,20 +185,27 @@ public class AuthController {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED,
                     "구글 계정의 이메일 인증이 확인되지 않았어요.");
         }
-        String email = payload.getEmail().trim().toLowerCase();
-        String name = (String) payload.get("name");
-        String nickname = name != null && !name.isBlank() ? name : email.split("@")[0];
+        // Google 회원 고유 번호(sub)로 먼저 찾고, 없으면 인증된 이메일로 찾아 연결한다(예전 가입자 자동 이전)
+        User user = socialLoginService.resolveUser(new SocialLoginService.SocialProfile(
+                SocialProvider.GOOGLE, payload.getSubject(), payload.getEmail(), true, (String) payload.get("name")));
+        return loginResponse(user, rememberMe);
+    }
 
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
-            User u = new User();
-            u.setEmail(email);
-            u.setName(name != null ? name : nickname);
-            u.setNickname(nickname);
-            u.setRole("ROLE_USER");
-            u.setPassword(userService.encodePassword("google-" + UUID.randomUUID()));
-            return userRepository.save(u);
-        });
+    /**
+     * 카카오 로그인. 화면이 카카오 로그인 창에서 받은 code 를 보내면 서버가 카카오와 바꿔 회원 정보를 읽는다.
+     * 키(KAKAO_REST_API_KEY · KAKAO_REDIRECT_URIS)가 없으면 503 "준비 중".
+     */
+    @PostMapping("/kakao")
+    public ResponseEntity<LoginResponse> kakaoLogin(@Valid @RequestBody KakaoLoginReq req, HttpServletRequest request) {
+        rateLimiter.check("kakao-login-ip:" + request.getRemoteAddr(), 30, Duration.ofMinutes(5),
+                "로그인 시도가 너무 많아요. 잠시 후 다시 시도해 주세요.");
+        boolean rememberMe = req.getRememberMe() == null || Boolean.TRUE.equals(req.getRememberMe());
+        SocialLoginService.SocialProfile profile = kakaoOAuthClient.fetchProfile(req.getCode(), req.getRedirectUri());
+        return loginResponse(socialLoginService.resolveUser(profile), rememberMe);
+    }
 
+    /** 로그인 성공 공통: 액세스 토큰 + 리프레시 쿠키(httpOnly) */
+    private ResponseEntity<LoginResponse> loginResponse(User user, boolean rememberMe) {
         String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRole());
         String refreshToken = refreshTokenService.issueFor(user);
         LoginResponse response = new LoginResponse(accessToken, user.getEmail(), user.getNickname(), user.getRole());
@@ -296,6 +308,17 @@ public class AuthController {
     static class GoogleLoginReq {
         @NotBlank
         private String idToken;
+        private Boolean rememberMe;
+    }
+
+    @Getter
+    static class KakaoLoginReq {
+        /** 카카오 로그인 창이 돌려준 인가 코드 */
+        @NotBlank
+        private String code;
+        /** 카카오에 보낸 돌아올 주소(서버 허용 목록과 같아야 함) */
+        @NotBlank
+        private String redirectUri;
         private Boolean rememberMe;
     }
 }

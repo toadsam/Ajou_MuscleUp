@@ -9,6 +9,7 @@ import { CREW_ROLE_LABEL } from "../types/crew";
 import { toast } from "../lib/toast";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
+import { displayEmail } from "../lib/displayEmail";
 
 // 입력칸: 철판 안쪽의 어두운 칸 + 포커스 시 노란 외곽선
 const FIELD =
@@ -1318,7 +1319,7 @@ export default function CrewChallenge() {
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold">{request.nickname}</p>
-                        <p className="truncate text-xs text-steel-400">{request.email}</p>
+                        {displayEmail(request.email) && <p className="truncate text-xs text-steel-400">{displayEmail(request.email)}</p>}
                       </div>
                       <div className="flex items-center gap-2">
                         <button

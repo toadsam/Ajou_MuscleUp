@@ -78,6 +78,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 
 - **백엔드 테스트도 `local` 프로필로 돌린다**: `cmd //c "set SPRING_PROFILES_ACTIVE=local&& backend\gradlew.bat -p backend test"`.
   그냥 돌리면 이 PC 의 `mysql` 프로필 때문에 `contextLoads` 가 DataSource 오류로 실패한다.
+- **소셜 로그인은 `SocialLoginService` 로만 사용자를 찾는다**(공급자 · 회원 번호 → 인증된 이메일 → 새 가입). 이메일 없는 가입은 `…@users.musclehub.invalid`(`emailPlaceholder`) — 메일을 보내지 말고 화면엔 `lib/displayEmail.ts` 로. 카카오는 `KAKAO_*`(서버) · `VITE_KAKAO_REST_KEY`(화면)가 있어야 켜진다.
 - **로그인 유지(리프레시) 토큰은 httpOnly 쿠키로만** 오간다. 프론트에서 `refreshToken` 을 저장 · 전송하지 않는다.
 - **실시간 서버는 입장권으로만 들어간다**: 백엔드 `POST /api/realtime/ticket` → 실시간 서버가 서명 확인.
   두 서버에 같은 `REALTIME_TICKET_SECRET`(32자 이상)이 필요하다. 로컬은 개발용 값으로 자동 동작.

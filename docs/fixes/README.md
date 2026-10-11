@@ -20,6 +20,8 @@
 
 - [2026-10-11-group-buy-scope.md](2026-10-11-group-buy-scope.md) — 0단계 PR 4: 공동구매 우리 모임 / 전체 모집(GroupBuyAccess) · 짐 안 랭킹
 
+- [2026-10-11-social-accounts.md](2026-10-11-social-accounts.md) — 0단계 PR 5: 계정 연결(social_accounts) · 카카오 로그인 준비
+
 ## 항목 양식
 
 ```markdown
