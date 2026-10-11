@@ -22,6 +22,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AiChatHistoryService {
+    private static final int MAX_RECENT_LIMIT = 50;
 
     private final AiChatMessageRepository messageRepository;
     private final UserRepository userRepository;
@@ -43,7 +44,9 @@ public class AiChatHistoryService {
     public List<AiChatLogItem> getRecent(String email, AiMessageType type, int limit) {
         User user = loadUser(email);
 
-        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // limit 이 0 이하면 PageRequest 가 IllegalArgumentException(500)을 내고, 너무 크면 한 번에 다 읽는다.
+        int safeLimit = Math.max(1, Math.min(limit, MAX_RECENT_LIMIT));
+        Pageable pageable = PageRequest.of(0, safeLimit, Sort.by(Sort.Direction.DESC, "createdAt"));
         return (type == null
                 ? messageRepository.findByUser(user, pageable)
                 : messageRepository.findByUserAndType(user, type, pageable))
@@ -56,7 +59,7 @@ public class AiChatHistoryService {
     public AiShareResponse share(String email, Long messageId) {
         User user = loadUser(email);
         AiChatMessage message = messageRepository.findByIdAndUser(messageId, user)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "�?록�?는 메시지�??�습?�다."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "기록에 없는 메시지입니다."));
 
         if (message.getShareSlug() == null || message.getShareSlug().isBlank()) {
             message.setShareSlug(UUID.randomUUID().toString().replace("-", ""));
@@ -70,7 +73,7 @@ public class AiChatHistoryService {
     public void unshare(String email, Long messageId) {
         User user = loadUser(email);
         AiChatMessage message = messageRepository.findByIdAndUser(messageId, user)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "�?록�?는 메시지�??�습?�다."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "기록에 없는 메시지입니다."));
 
         message.setShared(false);
         message.setShareSlug(null);
@@ -81,13 +84,13 @@ public class AiChatHistoryService {
     public AiShareResponse getSharedBySlug(String slug) {
         AiChatMessage message = messageRepository.findByShareSlug(slug)
                 .filter(AiChatMessage::isShared)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "공유�??�용?� 메시지�? 아�???�니??"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "공유된 대화가 아니거나 공유가 해제되었습니다."));
         return toShareResponse(message);
     }
 
     private User loadUser(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "?�용?��? 존재?��? ?�습?�다."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자 정보를 찾을 수 없습니다."));
     }
 
     private AiChatLogItem toLogItem(AiChatMessage m) {

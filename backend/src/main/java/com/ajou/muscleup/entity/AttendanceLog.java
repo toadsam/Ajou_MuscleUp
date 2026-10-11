@@ -16,13 +16,23 @@ import lombok.*;
 //
 // 반면 findBySharedTrueOrderByReportCountDescUpdatedAtDesc(Pageable) — 공유된
 // 인증글을 신고 많은 순으로 보는 관리자 화면 — 은 받쳐 줄 인덱스가 없었다.
+//
+// 날짜만으로 거르는 조회(오늘 출석 수 countByDate, 월간 미디어 랭킹, 주간 연속 출석 랭킹)는
+// (user_id, workout_date) 인덱스의 앞 칼럼이 user_id 라 쓰지 못해 전체를 훑었다.
+// → idx_attendance_date_user(workout_date, user_id) 추가. ddl-auto=update 환경에서는 기동 시 생성된다.
 @Table(
         name = "attendance_logs",
         uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "workout_date"}),
-        indexes = @Index(
-                name = "idx_attendance_shared_report",
-                columnList = "shared, report_count, updated_at"
-        )
+        indexes = {
+                @Index(
+                        name = "idx_attendance_shared_report",
+                        columnList = "shared, report_count, updated_at"
+                ),
+                @Index(
+                        name = "idx_attendance_date_user",
+                        columnList = "workout_date, user_id"
+                )
+        }
 )
 public class AttendanceLog extends BaseTimeEntity {
     @Id

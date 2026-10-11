@@ -8,10 +8,14 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
+import java.util.TimeZone;
+
 @SpringBootApplication(scanBasePackages = "com.ajou.muscleup")
 public class BackendApplication {
 
     public static void main(String[] args) {
+        // 서비스의 날짜·시각은 한국 시간 기준. 서버 기본 시간대(UTC 등)에 휘둘리지 않게 가장 먼저 고정한다.
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
         SpringApplication.run(BackendApplication.class, args);
     }
 

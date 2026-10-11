@@ -1,11 +1,13 @@
 package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
+import com.ajou.muscleup.dto.attendance.AttendancePublicShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceRankingItemResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
 import com.ajou.muscleup.service.AttendanceService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -82,19 +84,38 @@ public class AttendanceController {
         return ResponseEntity.noContent().build();
     }
 
+    // 공개 화면용 응답(메모·신고 수·내부 id 없음). 작성자용 전체 응답은 POST /{date}/share 가 준다.
     @GetMapping("/share/{slug}")
-    public ResponseEntity<AttendanceShareResponse> getSharedBySlug(@PathVariable String slug) {
+    public ResponseEntity<AttendancePublicShareResponse> getSharedBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(attendanceService.getSharedBySlug(slug));
     }
 
+    // 로그인 없이도 누를 수 있다. 같은 사람(이메일 또는 IP)·같은 글은 10분에 한 번만 센다.
     @PostMapping("/share/{slug}/cheer")
-    public ResponseEntity<AttendanceShareResponse> cheerBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(attendanceService.addCheerBySlug(slug));
+    public ResponseEntity<AttendancePublicShareResponse> cheerBySlug(
+            @AuthenticationPrincipal String email,
+            @PathVariable String slug,
+            HttpServletRequest httpRequest
+    ) {
+        String viewerKey = isLoggedIn(email) ? "user:" + email : "ip:" + clientIp(httpRequest);
+        return ResponseEntity.ok(attendanceService.addCheerBySlug(slug, viewerKey));
     }
 
+    // 신고는 로그인 필수(경로 자체는 SecurityConfig 에서 permitAll 이라 여기서 401 을 낸다). 1인 1회.
     @PostMapping("/share/{slug}/report")
-    public ResponseEntity<AttendanceShareResponse> reportBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(attendanceService.reportBySlug(slug));
+    public ResponseEntity<AttendancePublicShareResponse> reportBySlug(
+            @AuthenticationPrincipal String email,
+            @PathVariable String slug
+    ) {
+        if (!isLoggedIn(email)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "신고는 로그인한 뒤에 할 수 있어요.");
+        }
+        return ResponseEntity.ok(attendanceService.reportBySlug(slug, email));
+    }
+
+    // permitAll 경로에서 로그인하지 않은 요청은 principal 이 null 이거나 "anonymousUser" 문자열이다.
+    private boolean isLoggedIn(String email) {
+        return email != null && !email.isBlank() && !"anonymousUser".equals(email);
     }
 
     @GetMapping("/rankings/weekly-streak")
@@ -111,6 +132,21 @@ public class AttendanceController {
     ) {
         YearMonth parsed = parseMonthOrThrow(month);
         return ResponseEntity.ok(attendanceService.getMonthlyMediaRanking(parsed, limit));
+    }
+
+    /**
+     * 응원 중복 방지용 IP. 배포 환경은 프록시 뒤라 remoteAddr 가 프록시 주소일 수 있어
+     * X-Forwarded-For 의 첫 값을 먼저 본다(위조 가능 — 응원 수 정도의 가벼운 중복 방지에만 쓴다).
+     */
+    private String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            String first = forwarded.split(",")[0].trim();
+            if (!first.isEmpty()) {
+                return first;
+            }
+        }
+        return request.getRemoteAddr();
     }
 
     private YearMonth parseMonthOrThrow(String month) {
