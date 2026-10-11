@@ -18,6 +18,7 @@ public class ApplicationResponse {
     private String commitment;
     private ApplicationStatus status;
     private LocalDateTime createdAt;
+    private String gymName;
 
     public static ApplicationResponse from(ProgramApplication a) {
         return new ApplicationResponse(
@@ -28,7 +29,8 @@ public class ApplicationResponse {
                 a.getTrack(),
                 a.getCommitment(),
                 a.getStatus(),
-                a.getCreatedAt()
+                a.getCreatedAt(),
+                a.getGym() != null ? a.getGym().getName() : null
         );
     }
 }

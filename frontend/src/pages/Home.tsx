@@ -8,6 +8,7 @@ import "../styles/homeLobby.css";
 import { logEvent } from "../utils/analytics";
 import { eventApi } from "../services/eventApi";
 import { REALTIME_URL } from "../lib/realtime";
+import { useCurrentGym } from "../lib/currentGym";
 import type { EventItem } from "../types/event";
 
 type AttendanceLog = {
@@ -251,15 +252,18 @@ export default function Home() {
     }
   }, []);
 
+  // 홈의 진행 중 소식도 헤더에서 고른 모임(없으면 광장) 기준
+  const [currentGymSlug] = useCurrentGym();
+
   const loadActiveEvents = useCallback(async () => {
     try {
-      const res = await eventApi.getPublicList({ status: "ACTIVE", page: 0, size: 10 });
+      const res = await eventApi.getPublicList({ gym: currentGymSlug, status: "ACTIVE", page: 0, size: 10 });
       setActiveEvents(res.content ?? []);
       setEventIndex(0);
     } catch {
       setActiveEvents([]);
     }
-  }, []);
+  }, [currentGymSlug]);
 
   useEffect(() => {
     if (!user) return;

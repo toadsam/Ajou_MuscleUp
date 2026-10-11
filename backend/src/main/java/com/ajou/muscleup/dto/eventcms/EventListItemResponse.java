@@ -20,6 +20,8 @@ public class EventListItemResponse {
     private boolean isPinned;
     private int priority;
     private long viewCount;
+    private String gymSlug;     // 짐 소식이면 그 짐, 앱 전체 공지면 null
+    private String gymName;
 
     public static EventListItemResponse from(CmsEvent event) {
         return EventListItemResponse.builder()
@@ -34,6 +36,8 @@ public class EventListItemResponse {
                 .isPinned(event.isPinned())
                 .priority(event.getPriority())
                 .viewCount(event.getViewCount())
+                .gymSlug(event.getGym() != null ? event.getGym().getSlug() : null)
+                .gymName(event.getGym() != null ? event.getGym().getName() : null)
                 .build();
     }
 }

@@ -13,6 +13,9 @@ export interface EventItem {
   priority: number;
   viewCount: number;
   updatedAt?: string;
+  /** 모임 소식이면 그 모임 주소 · 이름. 앱 전체 공지면 null */
+  gymSlug?: string | null;
+  gymName?: string | null;
 }
 
 export interface EventDetail extends EventItem {

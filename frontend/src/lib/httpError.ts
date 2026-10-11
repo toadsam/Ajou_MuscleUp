@@ -36,9 +36,22 @@ export async function httpError(res: Response, fallback: string): Promise<HttpEr
   return new HttpError(res.status, usable ? serverMessage : BY_STATUS[res.status] ?? (res.status >= 500 ? `${fallback} 잠시 뒤에 다시 시도해 주세요.` : fallback));
 }
 
-/** catch 한 아무 값을 화면용 문장으로 */
+/** axios 오류(err.response.status · data.message)면 그 상태 코드 */
+export function errorStatus(err: unknown): number | null {
+  if (err instanceof HttpError) return err.status;
+  const status = (err as { response?: { status?: unknown } } | null)?.response?.status;
+  return typeof status === "number" ? status : null;
+}
+
+/** catch 한 아무 값을 화면용 문장으로 (fetch 의 HttpError · axios 오류 모두) */
 export function friendlyError(err: unknown, fallback: string): string {
   if (err instanceof HttpError) return err.message;
+  const axiosRes = (err as { response?: { status?: unknown; data?: { message?: unknown } } } | null)?.response;
+  if (axiosRes && typeof axiosRes.status === "number") {
+    const serverMessage = typeof axiosRes.data?.message === "string" ? axiosRes.data.message : "";
+    if (serverMessage && /[가-힣]/.test(serverMessage) && serverMessage.length <= 120) return serverMessage;
+    return BY_STATUS[axiosRes.status] ?? (axiosRes.status >= 500 ? `${fallback} 잠시 뒤에 다시 시도해 주세요.` : fallback);
+  }
   if (err instanceof TypeError) return "서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.";
   const msg = err instanceof Error ? err.message : "";
   if (msg && /[가-힣]/.test(msg) && msg.length <= 120 && !/HTTP \d{3}/.test(msg)) return msg;

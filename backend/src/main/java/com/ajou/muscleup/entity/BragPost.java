@@ -44,4 +44,9 @@ public class BragPost extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private BragVisibility visibility = BragVisibility.PUBLIC;
+
+    // 어느 짐(모임) 자랑방에 올렸는지. null = 광장(전체)에만. visibility=GYM 이면 그 짐 멤버만 본다
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gym_id")
+    private WorkoutCrew gym;
 }

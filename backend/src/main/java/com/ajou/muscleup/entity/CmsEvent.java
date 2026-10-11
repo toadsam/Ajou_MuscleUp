@@ -6,11 +6,13 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -82,6 +84,11 @@ public class CmsEvent extends BaseTimeEntity {
 
     @Column(name = "created_by")
     private Long createdBy;
+
+    // 어느 짐(모임) 소식인지. null = 앱 전체 공지. 예전 소식은 db/migration V4 에서 아주대 짐으로 채운다
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gym_id")
+    private WorkoutCrew gym;
 
     @ElementCollection
     @CollectionTable(name = "cms_event_tags", joinColumns = @JoinColumn(name = "event_id"))

@@ -1,7 +1,11 @@
-﻿import { Link, useLocation } from "react-router-dom";
+﻿import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Logo from "./Logo";
 import { clearSupportChat } from "../lib/supportChatStorage";
+import { setCurrentGym, useCurrentGym, useMyGyms } from "../lib/currentGym";
+
+// 모임 고르기 select 의 특별한 값(모임 slug 와 겹치지 않게 slug 규칙에 없는 문자를 쓴다)
+const FIND_GYMS_VALUE = "__find";
 
 interface UserState {
   email: string;
@@ -45,6 +49,7 @@ function buildAuthHeaders(user: UserState | null): HeadersInit | undefined {
 
 export default function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<UserState | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,6 +59,39 @@ export default function Header() {
   const role = (user?.role || "").toUpperCase();
   const isAdmin = role === "ADMIN" || role === "ROLE_ADMIN";
   const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+  // 지금 보는 곳(광장 또는 내 모임). 소식 · 자랑방 · 반 신청이 이 값으로 범위를 정한다
+  const { gyms: myGyms } = useMyGyms();
+  const [currentGymSlug, setCurrentGymSlug] = useCurrentGym();
+  const showGymSwitcher = Boolean(user) && myGyms.length > 0;
+  const currentGymKnown = !currentGymSlug || myGyms.some((g) => g.slug === currentGymSlug);
+
+  const renderGymSwitcher = (id: string, className: string) => (
+    <select
+      id={id}
+      aria-label="지금 보는 모임"
+      value={currentGymSlug ?? ""}
+      onChange={(e) => {
+        const value = e.target.value;
+        if (value === FIND_GYMS_VALUE) {
+          setIsMenuOpen(false);
+          navigate("/gyms");
+          return;
+        }
+        setCurrentGymSlug(value || null);
+      }}
+      className={`rounded-md border-2 border-black bg-steel-700 font-semibold text-chalk shadow-sm hover:bg-steel-600 focus:outline-none focus-visible:border-plate-yellow ${className}`}
+    >
+      <option value="">광장 (전체)</option>
+      {myGyms.map((g) => (
+        <option key={g.slug} value={g.slug}>
+          {g.name}
+        </option>
+      ))}
+      {!currentGymKnown && currentGymSlug && <option value={currentGymSlug}>둘러보는 모임</option>}
+      <option value={FIND_GYMS_VALUE}>모임 찾기</option>
+    </select>
+  );
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -137,6 +175,7 @@ export default function Header() {
     } finally {
       localStorage.removeItem("user");
       clearSupportChat(); // 같은 기기에서 다음 사람이 이전 계정의 문의 기록을 보지 않게
+      setCurrentGym(null); // 다음 사람이 이전 계정의 모임을 보고 있지 않게 광장으로
       setUser(null);
       window.location.href = "/";
     }
@@ -306,7 +345,8 @@ export default function Header() {
 
           {user ? (
             <div className="ml-3 flex items-center gap-3">
-              <span className="text-sm font-semibold text-steel-300">{user.nickname}님</span>
+              {showGymSwitcher && renderGymSwitcher("gym-switcher-desktop", "min-h-[42px] max-w-[10rem] truncate px-2 text-sm")}
+              <span className={`text-sm font-semibold text-steel-300 ${showGymSwitcher ? "hidden xl:inline" : ""}`}>{user.nickname}님</span>
               <button onClick={handleLogout} className={`${actionButton} dg-btn-steel`}>
                 로그아웃
               </button>
@@ -333,6 +373,14 @@ export default function Header() {
 
       {isMenuOpen && (
         <div className="max-h-[calc(100dvh-70px)] overflow-y-auto overscroll-y-contain border-t-[3px] border-black bg-steel-800 px-5 py-3 pb-24 text-chalk lg:hidden">
+          {showGymSwitcher && (
+            <div className="border-b-2 border-black/60 py-3">
+              <label htmlFor="gym-switcher-mobile" className="text-sm font-semibold text-steel-400">
+                지금 보는 곳
+              </label>
+              {renderGymSwitcher("gym-switcher-mobile", "mt-2 min-h-[44px] w-full px-3 text-[15px]")}
+            </div>
+          )}
           {navGroups.map((group) => (
             <div key={group.label} className="border-b-2 border-black/60 py-3 last:border-b-0">
               <p className="font-num text-sm tracking-wide text-steel-400">{group.label}</p>

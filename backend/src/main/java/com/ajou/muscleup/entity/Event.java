@@ -34,4 +34,9 @@ public class Event extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 12)
     private EventStatus status;
+
+    // 어느 짐(모임)의 출석 이벤트인지. null = 앱 전체. 그 짐 멤버의 출석만 센다(예전 이벤트는 V4 에서 아주대 짐)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gym_id")
+    private WorkoutCrew gym;
 }

@@ -21,4 +21,7 @@ public class BragPostCreateRequest {
     private String movement;
     private String weight;
     private BragVisibility visibility;
+    // 어느 짐(모임) 자랑방에 올릴지. 비우면 광장. visibility=GYM 이면 필수
+    @Size(max = 40)
+    private String gymSlug;
 }

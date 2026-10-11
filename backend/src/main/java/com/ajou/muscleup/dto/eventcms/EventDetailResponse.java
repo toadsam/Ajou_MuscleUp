@@ -28,6 +28,8 @@ public class EventDetailResponse {
     private long viewCount;
     private long clickCount;
     private LocalDateTime updatedAt;
+    private String gymSlug;
+    private String gymName;
 
     public static EventDetailResponse from(CmsEvent event) {
         return EventDetailResponse.builder()
@@ -49,6 +51,8 @@ public class EventDetailResponse {
                 .viewCount(event.getViewCount())
                 .clickCount(event.getClickCount())
                 .updatedAt(event.getUpdatedAt())
+                .gymSlug(event.getGym() != null ? event.getGym().getSlug() : null)
+                .gymName(event.getGym() != null ? event.getGym().getName() : null)
                 .build();
     }
 }

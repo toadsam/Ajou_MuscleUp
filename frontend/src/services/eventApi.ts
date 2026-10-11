@@ -16,11 +16,18 @@ type EventSavePayload = {
   ctaText: string;
   ctaLink: string;
   tags: string[];
+  /** 비우면 앱 전체 공지 */
+  gymSlug?: string;
 };
 
 export const eventApi = {
-  getPublicList: (params: { status?: EventStatus; q?: string; page?: number; size?: number }) =>
-    api.get<EventPageResponse<EventItem>>("/api/events", { params }).then((res) => res.data),
+  // gym 이 없으면 광장(앱 전체 공지 + 공개 모임 소식), 있으면 그 모임 소식 + 앱 전체 공지
+  getPublicList: (params: { gym?: string | null; status?: EventStatus; q?: string; page?: number; size?: number }) =>
+    api
+      .get<EventPageResponse<EventItem>>("/api/events", {
+        params: { ...params, gym: params.gym || undefined },
+      })
+      .then((res) => res.data),
 
   getPublicDetail: (id: number) =>
     api.get<EventDetail>(`/api/events/${id}`).then((res) => res.data),

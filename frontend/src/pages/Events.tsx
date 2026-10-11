@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { eventApi, eventStatusLabel } from "../services/eventApi";
 import type { EventItem, EventStatus } from "../types/event";
+import { errorStatus, friendlyError } from "../lib/httpError";
+import { findGymName, useCurrentGym, useMyGyms } from "../lib/currentGym";
 
 const PAGE_SIZE = 10;
 const SECTIONS: EventStatus[] = ["ACTIVE", "SCHEDULED", "ENDED"];
@@ -43,6 +45,9 @@ function getDday(endAt: string) {
 }
 
 export default function Events() {
+  // 지금 고른 모임(헤더에서 바꾼다). 없으면 광장 = 앱 전체 공지 + 공개 모임 소식
+  const [gymSlug] = useCurrentGym();
+  const { gyms } = useMyGyms();
   const [state, setState] = useState<Record<EventStatus, SectionState>>({
     DRAFT: emptySection(),
     SCHEDULED: emptySection(),
@@ -51,13 +56,26 @@ export default function Events() {
     HIDDEN: emptySection(),
   });
 
-  const loadSection = async (status: EventStatus, page = 0) => {
+  // 내 모임에 없으면(공개 모임 둘러보기) 받은 소식의 모임 이름을 쓴다
+  const gymName = gymSlug
+    ? findGymName(gyms, gymSlug) ??
+      SECTIONS.flatMap((s) => state[s].items).find((item) => item.gymSlug === gymSlug)?.gymName ??
+      "모임"
+    : null;
+
+  const latestGym = useRef(gymSlug);
+  useEffect(() => {
+    latestGym.current = gymSlug;
+  }, [gymSlug]);
+
+  const loadSection = useCallback(async (status: EventStatus, page = 0) => {
     setState((prev) => ({
       ...prev,
       [status]: { ...prev[status], loading: true, error: "" },
     }));
     try {
-      const res = await eventApi.getPublicList({ status, page, size: PAGE_SIZE });
+      const res = await eventApi.getPublicList({ gym: gymSlug, status, page, size: PAGE_SIZE });
+      if (latestGym.current !== gymSlug) return; // 그사이 모임을 바꿨으면 늦게 온 응답은 버린다
       setState((prev) => ({
         ...prev,
         [status]: {
@@ -68,31 +86,42 @@ export default function Events() {
           totalPages: res.totalPages,
         },
       }));
-    } catch (error: any) {
+    } catch (error) {
+      if (latestGym.current !== gymSlug) return;
       setState((prev) => ({
         ...prev,
         [status]: {
           ...prev[status],
           loading: false,
-          error: error?.response?.data?.message || "이벤트를 불러오지 못했습니다.",
+          items: [],
+          totalPages: 0,
+          // 비공개 모임은 멤버가 아니면 404 로 온다
+          error:
+            gymSlug && errorStatus(error) === 404
+              ? "이 모임 소식은 모임 멤버만 볼 수 있어요."
+              : friendlyError(error, "이벤트를 불러오지 못했어요."),
         },
       }));
     }
-  };
+  }, [gymSlug]);
 
   useEffect(() => {
     SECTIONS.forEach((status) => {
       void loadSection(status, 0);
     });
-  }, []);
+  }, [loadSection]);
 
   return (
     <section className="min-h-screen pt-28 pb-24 text-white">
       <div className="mx-auto max-w-6xl px-6 lg:px-10 space-y-10">
         <header>
-          <p className="text-sm font-bold text-plate-yellow">소식</p>
+          <p className="text-sm font-bold text-plate-yellow">{gymName ? `${gymName} 소식` : "광장 소식"}</p>
           <h1 className="text-4xl">이벤트</h1>
-          <p className="mt-2 text-steel-300">진행 중·예정·종료된 이벤트를 확인해 보세요.</p>
+          <p className="mt-2 text-steel-300">
+            {gymName
+              ? "이 모임 소식과 앱 전체 공지를 모아 보여 줘요."
+              : "앱 전체 공지와 공개 모임 소식이에요. 진행 중·예정·종료된 이벤트를 확인해 보세요."}
+          </p>
         </header>
 
         {SECTIONS.map((status) => {
@@ -148,6 +177,13 @@ export default function Events() {
                           {status === "ACTIVE" ? getDday(event.endAt) : toLabel(event.status)}
                         </span>
                       </div>
+                      {(event.gymName || gymSlug) && (
+                        <span
+                          className={`dg-chip text-xs ${event.gymName ? "bg-plate-blue text-white" : "bg-steel-700 text-steel-200"}`}
+                        >
+                          {event.gymName || "전체 공지"}
+                        </span>
+                      )}
                       <p className="line-clamp-2 text-sm text-steel-300">{event.summary}</p>
                       <p className="font-num text-sm font-semibold text-steel-400">{formatPeriod(event.startAt, event.endAt)}</p>
                       <Link

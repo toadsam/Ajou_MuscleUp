@@ -16,6 +16,8 @@ public class EventResponse {
     private LocalDate endDate;
     private int requiredAttendanceCount;
     private EventStatus status;
+    private String gymSlug;     // 짐 이벤트면 그 짐, 앱 전체면 null
+    private String gymName;
 
     public static EventResponse from(Event event) {
         return EventResponse.builder()
@@ -26,6 +28,8 @@ public class EventResponse {
                 .endDate(event.getEndDate())
                 .requiredAttendanceCount(event.getRequiredAttendanceCount())
                 .status(event.getStatus())
+                .gymSlug(event.getGym() != null ? event.getGym().getSlug() : null)
+                .gymName(event.getGym() != null ? event.getGym().getName() : null)
                 .build();
     }
 }

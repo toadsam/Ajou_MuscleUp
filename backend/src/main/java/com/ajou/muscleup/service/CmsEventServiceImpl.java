@@ -7,6 +7,9 @@ import com.ajou.muscleup.dto.eventcms.EventSaveRequest;
 import com.ajou.muscleup.dto.eventcms.EventViewClickResponse;
 import com.ajou.muscleup.entity.CmsEvent;
 import com.ajou.muscleup.entity.CmsEventStatus;
+import com.ajou.muscleup.entity.GymStatus;
+import com.ajou.muscleup.entity.GymVisibility;
+import com.ajou.muscleup.entity.WorkoutCrew;
 import com.ajou.muscleup.repository.CmsEventRepository;
 import java.util.List;
 import java.util.Set;
@@ -27,26 +30,34 @@ public class CmsEventServiceImpl implements CmsEventService {
             Set.of(CmsEventStatus.ACTIVE, CmsEventStatus.SCHEDULED, CmsEventStatus.ENDED);
 
     private final CmsEventRepository cmsEventRepository;
+    private final GymScope gymScope;
 
     @Override
     @Transactional(readOnly = true)
-    public Page<EventListItemResponse> getPublicList(CmsEventStatus status, String q, Pageable pageable) {
+    public Page<EventListItemResponse> getPublicList(CmsEventStatus status, String q, String gymSlug, String viewerEmail, Pageable pageable) {
         if (status != null && !PUBLIC_STATUSES.contains(status)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only public statuses are allowed");
         }
         Set<CmsEventStatus> statuses = status == null ? PUBLIC_STATUSES : Set.of(status);
-        String normalizedQuery = normalizeQuery(q);
-        Page<CmsEvent> page = normalizedQuery == null
-                ? cmsEventRepository.findPublic(statuses, withDefaultSort(pageable))
-                : cmsEventRepository.findPublicWithQuery(statuses, normalizedQuery, withDefaultSort(pageable));
+        String query = q == null ? "" : q.trim();
+        Page<CmsEvent> page;
+        if (gymSlug == null || gymSlug.isBlank()) {
+            page = cmsEventRepository.findPublicSquare(
+                    statuses, query, GymStatus.ACTIVE, GymVisibility.PUBLIC, withDefaultSort(pageable));
+        } else {
+            // 닫힌 짐(비공개 · 승인 전)의 소식은 멤버만. 모르는 사람에겐 404
+            WorkoutCrew gym = gymScope.visibleOrThrow(gymSlug, gymScope.findUser(viewerEmail), null);
+            page = cmsEventRepository.findPublicInGym(statuses, query, gym.getId(), withDefaultSort(pageable));
+        }
         return page.map(EventListItemResponse::from);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EventDetailResponse getPublicDetail(Long id) {
+    public EventDetailResponse getPublicDetail(Long id, String viewerEmail) {
         CmsEvent event = getByIdOrThrow(id);
-        if (!PUBLIC_STATUSES.contains(event.getStatus())) {
+        if (!PUBLIC_STATUSES.contains(event.getStatus())
+                || !gymScope.canSee(event.getGym(), gymScope.findUser(viewerEmail))) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found");
         }
         return EventDetailResponse.from(event);
@@ -111,6 +122,7 @@ public class CmsEventServiceImpl implements CmsEventService {
                 .viewCount(0L)
                 .clickCount(0L)
                 .createdBy(adminId)
+                .gym(gymOrNull(request.getGymSlug()))
                 .tags(request.getTags() == null ? List.of() : request.getTags())
                 .build();
         return EventDetailResponse.from(cmsEventRepository.save(event));
@@ -135,7 +147,13 @@ public class CmsEventServiceImpl implements CmsEventService {
         event.setCtaText(request.getCtaText().trim());
         event.setCtaLink(request.getCtaLink().trim());
         event.setTags(request.getTags() == null ? List.of() : request.getTags());
+        event.setGym(gymOrNull(request.getGymSlug()));
         return EventDetailResponse.from(cmsEventRepository.save(event));
+    }
+
+    /** 소식을 올릴 짐. 비우면 앱 전체 공지 */
+    private WorkoutCrew gymOrNull(String slug) {
+        return slug == null || slug.isBlank() ? null : gymScope.gymOrThrow(slug);
     }
 
     @Override

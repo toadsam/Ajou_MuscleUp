@@ -18,6 +18,18 @@ type BragPost = {
   authorEmail?: string | null;
   authorId?: number | null;
   createdAt?: string | null;
+  visibility?: BragVisibility | null;
+  /** 모임에 올린 글이면 그 모임. 광장 글이면 null */
+  gymSlug?: string | null;
+  gymName?: string | null;
+};
+
+type BragVisibility = "PUBLIC" | "FRIENDS" | "GYM";
+
+const VISIBILITY_LABEL: Record<BragVisibility, string> = {
+  PUBLIC: "전체 공개",
+  FRIENDS: "친구 공개",
+  GYM: "우리 모임만",
 };
 
 type Comment = {
@@ -160,7 +172,14 @@ export default function BragDetail() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState(false);
-  const [editPostForm, setEditPostForm] = useState({ title: "", content: "", movement: "", weight: "", mediaUrls: [] as string[] });
+  const [editPostForm, setEditPostForm] = useState({
+    title: "",
+    content: "",
+    movement: "",
+    weight: "",
+    mediaUrls: [] as string[],
+    visibility: "PUBLIC" as BragVisibility,
+  });
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
@@ -192,6 +211,7 @@ export default function BragDetail() {
         movement: p.movement ?? "",
         weight: p.weight ?? "",
         mediaUrls: p.mediaUrls ?? [],
+        visibility: p.visibility ?? "PUBLIC",
       });
       const c = await api<Comment[]>(`/api/brags/${postId}/comments`);
       setComments(c);
@@ -347,7 +367,14 @@ export default function BragDetail() {
   if (error || !post) {
     return (
       <section className="pt-32 p-10 min-h-screen text-white">
-        <div className="max-w-3xl mx-auto text-red-300">{error || "게시글을 찾을 수 없습니다."}</div>
+        <div className="max-w-3xl mx-auto space-y-4">
+          <p className="dg-well border-l-4 border-l-plate-red p-4 text-red-200" role="alert">
+            {error || "게시글을 찾을 수 없습니다."}
+          </p>
+          <Link to="/brag" className="dg-btn dg-btn-steel min-h-[36px] px-3 text-sm">
+            목록으로
+          </Link>
+        </div>
       </section>
     );
   }
@@ -437,6 +464,13 @@ export default function BragDetail() {
         )}
 
         <header className="space-y-3">
+          {(post.gymName || (post.visibility && post.visibility !== "PUBLIC")) && (
+            <div className="flex flex-wrap gap-2 text-xs">
+              {post.gymName && <span className="dg-chip bg-steel-900 text-plate-yellow">{post.gymName}</span>}
+              {post.visibility === "FRIENDS" && <span className="dg-chip bg-plate-blue text-white">{VISIBILITY_LABEL.FRIENDS}</span>}
+              {post.visibility === "GYM" && <span className="dg-chip bg-plate-green text-white">{VISIBILITY_LABEL.GYM}</span>}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <p className="text-sm text-plate-yellow font-semibold">
               {post.authorNickname || "익명 회원"} · {formatDate(post.createdAt)}
@@ -489,6 +523,19 @@ export default function BragDetail() {
                   className="dg-well w-full px-4 py-3 text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow flex-1"
                 />
               </div>
+              <label className="flex flex-wrap items-center gap-3 text-sm font-semibold text-steel-200">
+                공개 범위
+                <select
+                  value={editPostForm.visibility}
+                  onChange={(e) => setEditPostForm((p) => ({ ...p, visibility: e.target.value as BragVisibility }))}
+                  className="dg-well px-3 py-2 text-white focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow"
+                >
+                  <option value="PUBLIC">{VISIBILITY_LABEL.PUBLIC}</option>
+                  <option value="FRIENDS">{VISIBILITY_LABEL.FRIENDS}</option>
+                  {post.gymSlug && <option value="GYM">{VISIBILITY_LABEL.GYM}</option>}
+                </select>
+                {post.gymName && <span className="text-xs font-normal text-steel-400">올린 곳: {post.gymName}</span>}
+              </label>
               <textarea
                 value={editPostForm.content}
                 onChange={(e) => setEditPostForm((p) => ({ ...p, content: e.target.value }))}
@@ -538,12 +585,15 @@ export default function BragDetail() {
                   type="button"
                   onClick={async () => {
                     try {
+                      // 공개 범위 · 올린 모임을 같이 보내야 서버가 광장 · 전체 공개로 되돌리지 않는다
                       const payload = {
                         title: editPostForm.title.trim(),
                         content: `${editPostForm.content.trim()}${metaBlock ? `\n\n${metaBlock}` : ""}`,
                         movement: editPostForm.movement.trim() || null,
                         weight: editPostForm.weight.trim() || null,
                         mediaUrls: editPostForm.mediaUrls,
+                        visibility: editPostForm.visibility === "GYM" && !post.gymSlug ? "PUBLIC" : editPostForm.visibility,
+                        gymSlug: post.gymSlug || undefined,
                       };
                       await api(`/api/brags/${postId}`, {
                         method: "PUT",

@@ -39,4 +39,9 @@ public class ProgramApplication extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ApplicationStatus status;
+
+    // 어느 짐(모임) 프로그램에 신청했는지. null = 앱 전체(예전 신청은 V4 에서 아주대 짐)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gym_id")
+    private WorkoutCrew gym;
 }

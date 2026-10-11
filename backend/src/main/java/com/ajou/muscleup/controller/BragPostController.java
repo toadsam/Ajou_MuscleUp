@@ -31,11 +31,12 @@ public class BragPostController {
 
     @GetMapping
     public ResponseEntity<Page<BragPostResponse>> list(@AuthenticationPrincipal String email,
+                                                       @RequestParam(value = "gym", required = false) String gym,
                                                        @RequestParam(value = "page", defaultValue = "0") int page,
                                                        @RequestParam(value = "size", defaultValue = "10") int size) {
         requireEmail(email);
         Pageable pageable = PageRequest.of(page, Math.min(size, 30));
-        return ResponseEntity.ok(bragPostService.list(email, pageable));
+        return ResponseEntity.ok(bragPostService.list(email, gym, pageable));
     }
 
     @GetMapping("/{id}")

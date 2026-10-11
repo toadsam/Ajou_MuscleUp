@@ -4,6 +4,8 @@ import UploadDropzone from "../../components/UploadDropzone";
 import { api } from "../../lib/api";
 import { eventApi } from "../../services/eventApi";
 import type { EventStatus } from "../../types/event";
+import type { GymSummary } from "../../types/gym";
+import { useMyGyms } from "../../lib/currentGym";
 
 type Props = { mode: "create" | "edit" };
 
@@ -22,7 +24,11 @@ type FormState = {
   ctaText: string;
   ctaLink: string;
   tagsText: string;
+  /** 비우면 앱 전체 공지 */
+  gymSlug: string;
 };
+
+type GymOption = { slug: string; name: string };
 
 const STATUS_OPTIONS: EventStatus[] = ["DRAFT", "SCHEDULED", "ACTIVE", "ENDED", "HIDDEN"];
 // 값은 그대로, 화면 라벨만 사람이 읽는 말로
@@ -50,6 +56,7 @@ const initialForm: FormState = {
   ctaText: "자세히 보기",
   ctaLink: "",
   tagsText: "",
+  gymSlug: "",
 };
 
 export default function AdminEventForm({ mode }: Props) {
@@ -66,6 +73,38 @@ export default function AdminEventForm({ mode }: Props) {
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState("");
   const [libraryQuery, setLibraryQuery] = useState("");
+
+  // 어느 모임 소식인지: 공개 모임 검색 결과 + 내 모임 + (수정 중이면) 원래 모임
+  const { gyms: myGyms } = useMyGyms();
+  const [gymQuery, setGymQuery] = useState("");
+  const [gymResults, setGymResults] = useState<GymSummary[]>([]);
+  const [savedGym, setSavedGym] = useState<GymOption | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const q = gymQuery.trim();
+        const res = await api.get<GymSummary[]>("/api/gyms", { params: q ? { q } : undefined });
+        if (!cancelled) setGymResults(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        if (!cancelled) setGymResults([]);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [gymQuery]);
+
+  const gymOptions = useMemo<GymOption[]>(() => {
+    const map = new Map<string, GymOption>();
+    if (savedGym) map.set(savedGym.slug, savedGym);
+    for (const g of [...myGyms, ...gymResults]) {
+      if (!map.has(g.slug)) map.set(g.slug, { slug: g.slug, name: g.name });
+    }
+    return [...map.values()];
+  }, [myGyms, gymResults, savedGym]);
 
   const pageTitle = useMemo(() => (isEdit ? "이벤트 수정" : "이벤트 생성"), [isEdit]);
 
@@ -108,7 +147,9 @@ export default function AdminEventForm({ mode }: Props) {
           ctaText: detail.ctaText,
           ctaLink: detail.ctaLink,
           tagsText: detail.tags.join(", "),
+          gymSlug: detail.gymSlug ?? "",
         });
+        setSavedGym(detail.gymSlug ? { slug: detail.gymSlug, name: detail.gymName || detail.gymSlug } : null);
       } catch (e: any) {
         setError(e?.response?.data?.message || "상세 조회에 실패했습니다.");
       } finally {
@@ -138,6 +179,8 @@ export default function AdminEventForm({ mode }: Props) {
         ctaText: form.ctaText,
         ctaLink: form.ctaLink,
         tags: form.tagsText.split(",").map((tag) => tag.trim()).filter(Boolean),
+        // 비우면 앱 전체 공지
+        gymSlug: form.gymSlug || undefined,
       };
 
       if (isEdit && id) {
@@ -185,6 +228,38 @@ export default function AdminEventForm({ mode }: Props) {
         {error && <p className="rounded-md border-2 border-l-[6px] border-black border-l-plate-red bg-steel-900 p-3 text-red-200" role="alert">{error}</p>}
 
         <form onSubmit={submit} className="dg-steel dg-rise space-y-4 p-5 md:p-6">
+          <div className="dg-well space-y-2 p-4">
+            <label htmlFor="event-gym" className="block text-sm font-semibold text-plate-yellow">어느 모임 소식인가요</label>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <select
+                id="event-gym"
+                className={`w-full ${FIELD}`}
+                value={form.gymSlug}
+                onChange={(e) => {
+                  const slug = e.target.value;
+                  setForm((prev) => ({ ...prev, gymSlug: slug }));
+                  const picked = gymOptions.find((g) => g.slug === slug);
+                  if (picked) setSavedGym(picked);
+                }}
+              >
+                <option value="">앱 전체 공지</option>
+                {gymOptions.map((g) => (
+                  <option key={g.slug} value={g.slug}>{g.name}</option>
+                ))}
+              </select>
+              <input
+                className={`w-full ${FIELD}`}
+                placeholder="모임 이름으로 찾기"
+                aria-label="모임 이름으로 찾기"
+                value={gymQuery}
+                onChange={(e) => setGymQuery(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-steel-400">
+              {form.gymSlug ? "이 모임 소식에만 보여요. 공개 모임이면 광장에도 보여요." : "모든 사람에게 보이는 공지예요."}
+            </p>
+          </div>
+
           <input className={`w-full ${FIELD}`} placeholder="제목" aria-label="제목" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
           <input className={`w-full ${FIELD}`} placeholder="요약" aria-label="요약" value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} required />
           <textarea className={`h-48 w-full ${FIELD}`} placeholder="본문 (HTML)" aria-label="본문" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required />

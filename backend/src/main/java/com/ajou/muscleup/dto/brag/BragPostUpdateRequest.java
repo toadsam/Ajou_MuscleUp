@@ -21,4 +21,6 @@ public class BragPostUpdateRequest {
     private String movement;
     private String weight;
     private BragVisibility visibility;
+    @Size(max = 40)
+    private String gymSlug;
 }

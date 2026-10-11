@@ -3,6 +3,7 @@ import UploadDropzone from "../components/UploadDropzone";
 import { logEvent } from "../utils/analytics";
 import { toast } from "../lib/toast";
 import { friendlyError, httpError } from "../lib/httpError";
+import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
@@ -14,8 +15,12 @@ type BragPostPayload = {
   movement?: string;
   weight?: string;
   mediaUrls: string[];
-  visibility?: "PUBLIC" | "FRIENDS";
+  visibility?: BragVisibility;
+  /** 올릴 모임. 없으면 광장 */
+  gymSlug?: string;
 };
+
+type BragVisibility = "PUBLIC" | "FRIENDS" | "GYM";
 
 type MediaItem = {
   url: string;
@@ -188,6 +193,16 @@ export default function BragWrite() {
 
   const selectedTemplate = getTemplateByKey(templateKey);
 
+  // 올릴 곳: 헤더에서 고른 모임의 멤버면 그 모임(기본) 또는 광장
+  const [currentGymSlug] = useCurrentGym();
+  const { gyms } = useMyGyms();
+  const currentGym = gyms.find((g) => g.slug === currentGymSlug) ?? null;
+  const [plazaOnly, setPlazaOnly] = useState(false);
+  const postGym = currentGym && !plazaOnly ? currentGym : null;
+  // "우리 모임만"은 모임에 올릴 때만 고를 수 있다(임시 저장본에 남아 있어도 광장이면 전체 공개로)
+  const visibility: BragVisibility =
+    form.visibility === "GYM" ? (postGym ? "GYM" : "PUBLIC") : form.visibility === "FRIENDS" ? "FRIENDS" : "PUBLIC";
+
   useEffect(() => {
     logEvent("brag_write", "page_view");
   }, []);
@@ -268,7 +283,8 @@ export default function BragWrite() {
       movement: form.movement.trim() || undefined,
       weight: form.weight.trim() || undefined,
       mediaUrls: mediaItems.map((item) => item.url),
-      visibility: form.visibility as "PUBLIC" | "FRIENDS",
+      visibility,
+      gymSlug: postGym?.slug,
     };
 
     try {
@@ -474,15 +490,37 @@ export default function BragWrite() {
                     placeholder="예: 60분"
                   />
                 </div>
+                {currentGym && (
+                  <div className="space-y-2">
+                    <label htmlFor="brag-target" className="text-sm font-semibold text-steel-200">올릴 곳</label>
+                    <select
+                      id="brag-target"
+                      value={plazaOnly ? "" : currentGym.slug}
+                      onChange={(e) => {
+                        const toPlaza = e.target.value === "";
+                        setPlazaOnly(toPlaza);
+                        if (toPlaza && form.visibility === "GYM") setForm({ ...form, visibility: "PUBLIC" });
+                      }}
+                      className={FIELD}
+                    >
+                      <option value={currentGym.slug}>{currentGym.name}</option>
+                      <option value="">광장에만</option>
+                    </select>
+                  </div>
+                )}
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-steel-200">공개 범위</label>
+                  <label htmlFor="brag-visibility" className="text-sm font-semibold text-steel-200">공개 범위</label>
                   <select
-                    value={form.visibility}
+                    id="brag-visibility"
+                    value={visibility}
                     onChange={(e) => setForm({ ...form, visibility: e.target.value })}
                     className={FIELD}
                   >
                     <option value="PUBLIC">전체 공개</option>
                     <option value="FRIENDS">친구 공개</option>
+                    <option value="GYM" disabled={!postGym}>
+                      {postGym ? "우리 모임만" : "우리 모임만 (모임에 올릴 때)"}
+                    </option>
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
