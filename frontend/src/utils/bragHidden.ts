@@ -4,11 +4,12 @@
 
 const STORAGE_KEY = "brag_blocked_authors";
 
-type AuthorLike = { authorEmail?: string | null; authorId?: number | null };
+type AuthorLike = { authorId?: number | null };
 
-/** 작성자를 가리키는 값: 이메일(지금 응답에 있음), 없으면 id */
+/** 작성자를 가리키는 값: 회원 id. 서버가 개인정보 보호로 이메일을 더 이상 주지 않아,
+ *  예전에 이메일로 저장해 둔 숨김 항목은 맞는 글이 없어 자연히 효과가 없어진다(목록 "숨김 해제"로 비울 수 있음). */
 export const authorKey = (post: AuthorLike): string | null =>
-  post.authorEmail ? post.authorEmail : typeof post.authorId === "number" ? `id:${post.authorId}` : null;
+  typeof post.authorId === "number" ? `id:${post.authorId}` : null;
 
 export function getHiddenAuthors(): string[] {
   try {

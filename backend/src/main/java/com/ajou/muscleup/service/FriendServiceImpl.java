@@ -22,6 +22,7 @@ public class FriendServiceImpl implements FriendService {
     private final FriendChatRoomRepository friendChatRoomRepository;
     private final FriendChatMessageRepository friendChatMessageRepository;
     private final FriendUserSearchRepository friendUserSearchRepository;
+    private final BlockService blockService;
 
     private static final int SEARCH_MIN_LENGTH = 2;
     private static final int SEARCH_LIMIT = 10;
@@ -39,6 +40,9 @@ public class FriendServiceImpl implements FriendService {
         String escaped = q.replace("!", "!!").replace("%", "!%").replace("_", "!_");
         List<User> users = friendUserSearchRepository.searchByNicknamePrefix(
                 escaped, me.getId(), PageRequest.of(0, SEARCH_LIMIT));
+        // 탈퇴한 회원과 차단 관계인 사람은 찾기에 나오지 않는다
+        Set<Long> hidden = new HashSet<>(blockService.hiddenUserIdsForQuery(me.getId()));
+        users = users.stream().filter(u -> !u.isDeleted() && !hidden.contains(u.getId())).toList();
         if (users.isEmpty()) return List.of();
 
         Set<Long> friendIds = new HashSet<>(findFriendIds(me.getId()));
@@ -81,6 +85,9 @@ public class FriendServiceImpl implements FriendService {
         }
         if (Objects.equals(me.getId(), target.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "자기 자신에게 친구 요청을 보낼 수 없습니다.");
+        }
+        if (target.isDeleted() || blockService.blockedEitherWay(me.getId(), target.getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "대상 유저를 찾을 수 없습니다.");
         }
         if (areFriends(me.getId(), target.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 친구입니다.");

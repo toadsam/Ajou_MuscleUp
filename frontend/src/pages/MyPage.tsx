@@ -20,6 +20,7 @@ import { toast } from "../lib/toast";
 import { httpError } from "../lib/httpError";
 import { clearGuestCharacter, loadGuestCharacter } from "../components/gymMap/guestCharacter";
 import { displayEmail } from "../lib/displayEmail";
+import { BlockedUsersSection, WithdrawSection } from "../components/AccountSafety";
 
 // 처음 보일 때 0 에서 값까지 굴러 올라가는 숫자(표현 전용)
 function CountNum({ value, suffix = "" }: { value: number | null | undefined; suffix?: string }) {
@@ -1308,6 +1309,9 @@ export default function MyPage() {
             </div>
           </div>
         )}
+
+        {data && <BlockedUsersSection />}
+        {data && <WithdrawSection />}
       </div>
 
       {toast && (

@@ -10,6 +10,7 @@ import com.ajou.muscleup.service.EmailVerificationService;
 import com.ajou.muscleup.service.RefreshTokenService;
 import com.ajou.muscleup.service.UserService;
 import com.ajou.muscleup.service.SocialLoginService;
+import com.ajou.muscleup.service.AccountDeletionService;
 import com.ajou.muscleup.service.KakaoOAuthClient;
 import com.ajou.muscleup.entity.SocialProvider;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -21,6 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +57,7 @@ public class AuthController {
     private final RateLimiter rateLimiter;
     private final SocialLoginService socialLoginService;
     private final KakaoOAuthClient kakaoOAuthClient;
+    private final AccountDeletionService accountDeletionService;
 
     @Value("${spring.mail.username}")
     private String from;
@@ -140,32 +143,40 @@ public class AuthController {
             log.debug("Logout token revoke skipped: {}", e.getClass().getSimpleName());
         }
 
-        ResponseCookie clearRefresh = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(0)
-                .build();
-        ResponseCookie clearAccess = ResponseCookie.from("accessToken", "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(0)
-                .build();
-        ResponseCookie clearRememberMe = ResponseCookie.from("rememberMe", "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(0)
-                .build();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, clearRefresh.toString())
-                .header(HttpHeaders.SET_COOKIE, clearAccess.toString())
-                .header(HttpHeaders.SET_COOKIE, clearRememberMe.toString())
-                .build();
+        return withClearedAuthCookies(ResponseEntity.ok()).build();
+    }
+
+    /**
+     * 회원 탈퇴(0단계 PR 8). 본문 { "confirm": "탈퇴" } 가 있어야 한다(실수로 누르는 것 방지).
+     * 개인 데이터를 지우고 계정을 "탈퇴한 회원"으로 익명화한 뒤 로그인 쿠키를 지운다. 되돌릴 수 없다.
+     */
+    @PostMapping("/withdraw")
+    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal String email, @RequestBody(required = false) Map<String, String> body) {
+        if (email == null || email.isBlank() || "anonymousUser".equals(email)) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "로그인이 필요해요.");
+        }
+        if (body == null || !"탈퇴".equals(body.get("confirm"))) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "확인 문구를 입력해 주세요.");
+        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "로그인이 필요해요."));
+        accountDeletionService.delete(user);
+        return withClearedAuthCookies(ResponseEntity.ok()).build();
+    }
+
+    /** 로그인 유지 · 접근 · 자동 로그인 쿠키를 지운다(로그아웃 · 탈퇴) */
+    private ResponseEntity.BodyBuilder withClearedAuthCookies(ResponseEntity.BodyBuilder builder) {
+        for (String name : List.of("refreshToken", "accessToken", "rememberMe")) {
+            builder.header(HttpHeaders.SET_COOKIE, ResponseCookie.from(name, "")
+                    .httpOnly(true)
+                    .secure(cookieSecure)
+                    .sameSite(cookieSameSite)
+                    .path("/")
+                    .maxAge(0)
+                    .build()
+                    .toString());
+        }
+        return builder;
     }
 
     @PostMapping("/google")

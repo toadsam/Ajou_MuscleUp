@@ -1,4 +1,5 @@
 ﻿import { api } from "../lib/api";
+import type { ReportReason, ReportStatus, ReportTargetType } from "../lib/reportLabels";
 
 type ActionCount = { action: string; count: number };
 type PageCount = { page: string; count: number };
@@ -25,6 +26,23 @@ export type Application = {
   commitment: string;
   status: "PENDING" | "REVIEWING" | "APPROVED" | "REJECTED";
   createdAt: string;
+};
+
+export type AdminReportItem = {
+  id: number;
+  targetType: ReportTargetType;
+  targetId: number;
+  reason: ReportReason;
+  detail?: string | null;
+  /** 신고 당시 내용(지워져도 확인할 수 있게 서버가 복사해 둔 글) */
+  snapshot?: string | null;
+  status: ReportStatus;
+  reporterNickname?: string | null;
+  targetUserId?: number | null;
+  targetUserNickname?: string | null;
+  adminNote?: string | null;
+  createdAt?: string | null;
+  handledAt?: string | null;
 };
 
 export type ProteinItem = { id: number; name: string };
@@ -234,6 +252,20 @@ export const adminApi = {
     api.get<AuditLogItem[]>("/api/admin/audit", { params: { limit } }).then((res) => res.data),
 
   getMe: () => api.get<{ role?: AdminRole }>('/api/auth/me').then((res) => res.data),
+
+  getReports: (params: { status?: ReportStatus | "all"; page?: number; size?: number }) =>
+    api
+      .get<PagedResult<AdminReportItem>>("/api/admin/reports", {
+        params: {
+          status: !params.status || params.status === "all" ? undefined : params.status,
+          page: params.page ?? 0,
+          size: params.size ?? 20,
+        },
+      })
+      .then((res) => res.data),
+
+  resolveReport: (id: number, payload: { status: Exclude<ReportStatus, "OPEN">; deleteContent: boolean; note?: string }) =>
+    api.patch<AdminReportItem>(`/api/admin/reports/${id}`, payload).then((res) => res.data),
 
   writeManualAudit: (payload: { action: string; resource: string; summary: string; metadata?: string }) =>
     api.post('/api/admin/audit/manual', payload),

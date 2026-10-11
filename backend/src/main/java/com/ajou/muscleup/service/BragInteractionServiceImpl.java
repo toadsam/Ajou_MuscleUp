@@ -31,6 +31,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     private final BragPostRepository postRepository;
     private final UserRepository userRepository;
     private final BragAccess bragAccess;
+    private final BlockService blockService;
 
     private User requireUser(String email) {
         return userRepository.findByEmail(email)
@@ -48,8 +49,13 @@ public class BragInteractionServiceImpl implements BragInteractionService {
         User user = requireUser(userEmail);
         BragPost post = requirePost(postId);
         ensureCanView(post, user);
+        // 내가 차단했거나 나를 차단한 사람의 댓글은 보이지 않는다
+        java.util.Set<Long> hidden = new java.util.HashSet<>(blockService.hiddenUserIdsForQuery(user.getId()));
         return commentRepository.findByBragPost_IdOrderByCreatedAtAsc(postId)
-                .stream().map(BragCommentResponse::from).toList();
+                .stream()
+                .filter(c -> c.getUser() == null || !hidden.contains(c.getUser().getId()))
+                .map(c -> BragCommentResponse.from(c, user.getId()))
+                .toList();
     }
 
     @Override
@@ -62,7 +68,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
                 .user(user)
                 .content(req.getContent().trim())
                 .build());
-        return BragCommentResponse.from(saved);
+        return BragCommentResponse.from(saved, user.getId());
     }
 
     @Override
@@ -75,7 +81,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
         }
         c.setContent(req.getContent().trim());
         BragComment saved = commentRepository.save(c);
-        return BragCommentResponse.from(saved);
+        return BragCommentResponse.from(saved, user.getId());
     }
 
     @Override

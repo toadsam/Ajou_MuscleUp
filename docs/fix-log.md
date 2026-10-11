@@ -8,6 +8,30 @@
 
 ---
 
+## 2026-10-12 · 탈퇴할 방법이 없고, 신고는 문의함으로 가고, 차단이 없다 → 탈퇴 · 신고 · 차단
+
+**불편**
+약관 · 개인정보 처리방침(초안 `docs/legal/`)에 "언제든 탈퇴 · 지우면 바로 삭제 · 신고 · 차단"을 쓰려 했는데 그 기능이 하나도 없었다. 자랑방 "신고" 버튼은 고객 문의로 보내고 있었다.
+
+**원인(근거)**
+- 탈퇴 API · 화면 없음(`탈퇴` 검색 결과는 모임 나가기뿐).
+- 신고 · 차단 테이블 없음. `BragDetail.tsx` 신고 → `/api/support/inquiries`.
+- 덤으로 찾은 것: `BragPostResponse` · `BragCommentResponse` 가 작성자 **이메일**을 모든 로그인 사용자에게 보냄.
+
+**고친 방법** — 세부: [fixes/2026-10-12-withdraw-report-block.md](fixes/2026-10-12-withdraw-report-block.md)
+- `POST /api/auth/withdraw`(확인 문구) → `AccountDeletionService`: 개인 데이터 20여 곳 삭제, 사용자 행은 "탈퇴한 회원"으로 익명화, 모임장 자리는 운영진에게 넘기고 혼자면 보관.
+- `ContentReport` · `/api/reports` · 관리자 처리(`/api/admin/reports`, 신고 순간 내용 보관, 삭제하고 조치), `UserBlock` · `/api/blocks`(친구 끊기, 서로 글 · 댓글 · 친구 요청 숨김).
+- 자랑방 응답의 이메일 → `authorId` · `mine`.
+- 화면: 마이페이지 차단 목록 · 탈퇴, 자랑방 글/댓글 신고 · 차단, 공동구매 신고, 관리자 "신고" 탭.
+
+**확인한 방법**
+- 새 `AccountSafetyTest` 3개 포함 백엔드 38개 통과(MySQL · Postgres 17). `verify.sh` 통과.
+
+**아직 못 한 것**
+- 화면 확인(전부 로그인 필요). 약관 빈칸 → `/terms` · `/privacy` · 가입 동의. 올린 파일 실제 삭제, 이용 정지, 라운지 · 공동구매에서의 차단.
+
+---
+
 ## 2026-10-11 · 라운지가 방 하나라 모든 모임 사람이 섞인다 → 광장 + 모임 방
 
 **불편**

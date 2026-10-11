@@ -18,13 +18,15 @@ public interface BragPostRepository extends JpaRepository<BragPost, Long> {
      */
     @Query("""
       select p from BragPost p
-      where p.visibility = :pub
+      where (p.visibility = :pub
          or (p.visibility = :friends and p.user.id in :friendIds)
-         or p.user.id = :me
+         or p.user.id = :me)
+        and p.user.id not in :hidden
       order by p.createdAt desc
       """)
     Page<BragPost> findSquareFeed(
             @Param("me") Long me,
+            @Param("hidden") Collection<Long> hidden,
             @Param("friendIds") Collection<Long> friendIds,
             @Param("pub") BragVisibility pub,
             @Param("friends") BragVisibility friends,
@@ -39,11 +41,13 @@ public interface BragPostRepository extends JpaRepository<BragPost, Long> {
           or p.visibility = :gymOnly
           or (p.visibility = :friends and p.user.id in :friendIds)
           or p.user.id = :me)
+        and p.user.id not in :hidden
       order by p.createdAt desc
       """)
     Page<BragPost> findGymFeed(
             @Param("gymId") Long gymId,
             @Param("me") Long me,
+            @Param("hidden") Collection<Long> hidden,
             @Param("friendIds") Collection<Long> friendIds,
             @Param("pub") BragVisibility pub,
             @Param("gymOnly") BragVisibility gymOnly,

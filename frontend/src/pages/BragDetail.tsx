@@ -1,7 +1,11 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 import UploadDropzone from "../components/UploadDropzone";
+import ReportDialog from "../components/ReportDialog";
+import DialogFrame from "../components/DialogFrame";
+import { api as http } from "../lib/api";
+import type { ReportTargetType } from "../lib/reportLabels";
 import { logEvent } from "../utils/analytics";
 import { toast } from "../lib/toast";
 import { friendlyError, httpError } from "../lib/httpError";
@@ -15,8 +19,9 @@ type BragPost = {
   weight?: string | null;
   mediaUrls: string[];
   authorNickname?: string | null;
-  authorEmail?: string | null;
   authorId?: number | null;
+  /** 내가 쓴 글이면 true (서버가 알려 준다. 작성자 이메일은 더 이상 오지 않는다) */
+  mine?: boolean;
   createdAt?: string | null;
   visibility?: BragVisibility | null;
   /** 모임에 올린 글이면 그 모임. 광장 글이면 null */
@@ -36,7 +41,8 @@ type Comment = {
   id: number;
   content: string;
   authorNickname?: string | null;
-  authorEmail?: string | null;
+  authorId?: number | null;
+  mine?: boolean;
   createdAt?: string | null;
 };
 
@@ -182,17 +188,20 @@ export default function BragDetail() {
   });
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
-  const [reportOpen, setReportOpen] = useState(false);
-  const [reportText, setReportText] = useState("");
+  const navigate = useNavigate();
+  // 신고 창 대상(글 또는 댓글). null 이면 닫힘
+  const [reportTarget, setReportTarget] = useState<{ type: ReportTargetType; id: number; label: string } | null>(null);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   // "이 기기에서 숨김": 서버에 저장되지 않는 개인 설정(목록 화면도 같은 값을 읽는다)
   const [hiddenAuthors, setHiddenAuthorsState] = useState<string[]>(() => getHiddenAuthors());
   const shareCardRef = useRef<HTMLDivElement | null>(null);
 
   const userRaw = localStorage.getItem("user");
-  const user = userRaw ? (JSON.parse(userRaw) as { email?: string; role?: string; nickname?: string }) : null;
+  const user = userRaw ? (JSON.parse(userRaw) as { role?: string; nickname?: string }) : null;
   const isAdmin = (user?.role || "").toUpperCase().includes("ADMIN");
-  const isOwner = post && user?.email && post.authorEmail === user.email;
+  const isOwner = !!post?.mine;
   const shareUrl = useMemo(() => `${window.location.origin}/brag/${postId}`, [postId]);
 
   const fetchData = useCallback(async () => {
@@ -284,23 +293,19 @@ export default function BragDetail() {
     );
   };
 
-  const submitReport = async () => {
-    if (!post || !reportText.trim()) return;
+  // 차단: 서버에 저장되어 서로의 글 · 댓글이 안 보이고 친구도 끊긴다("이 기기에서 숨기기"와 다름)
+  const blockAuthor = async () => {
+    if (!post || typeof post.authorId !== "number" || blocking) return;
+    setBlocking(true);
     try {
-      await api("/api/support/inquiries", {
-        method: "POST",
-        body: JSON.stringify({
-          name: user?.nickname || "익명",
-          email: user?.email || "",
-          message: `자랑방 신고\n게시글: ${post.title}\n사유: ${reportText.trim()}`,
-          page: `/brag/${postId}`,
-        }),
-      });
-      toast("신고를 접수했어요. 운영진이 확인할게요.", "success");
-      setReportOpen(false);
-      setReportText("");
+      await http.post("/api/blocks", { userId: post.authorId });
+      setBlockOpen(false);
+      toast(`${post.authorNickname || "이 회원"}님을 차단했어요. 마이페이지에서 풀 수 있어요.`, "success");
+      navigate("/brag");
     } catch (e) {
-      toast(friendlyError(e, "신고를 접수하지 못했어요."), "error");
+      toast(friendlyError(e, "차단하지 못했어요. 잠시 뒤에 다시 시도해 주세요."), "error");
+    } finally {
+      setBlocking(false);
     }
   };
 
@@ -448,12 +453,24 @@ export default function BragDetail() {
                 이 기기에서 숨기기
               </button>
             )}
-            <button
-              onClick={() => setReportOpen(true)}
-              className="dg-btn min-h-[34px] bg-steel-900 px-3 text-xs text-red-300"
-            >
-              신고
-            </button>
+            {user && !isOwner && (
+              <button
+                type="button"
+                onClick={() => setReportTarget({ type: "BRAG_POST", id: post.id, label: "이 글" })}
+                className="dg-btn min-h-[34px] bg-steel-900 px-3 text-xs text-red-300"
+              >
+                신고
+              </button>
+            )}
+            {user && !isOwner && typeof post.authorId === "number" && (
+              <button
+                type="button"
+                onClick={() => setBlockOpen(true)}
+                className="dg-btn min-h-[34px] bg-steel-900 px-3 text-xs text-steel-300"
+              >
+                이 사람 차단
+              </button>
+            )}
           </div>
         </div>
 
@@ -814,12 +831,12 @@ export default function BragDetail() {
 
           <div className="space-y-3">
             {comments.map((c) => {
-              const mine = c.authorEmail && user?.email === c.authorEmail;
+              const mine = !!c.mine;
               return (
                 <div key={c.id} className={`dg-well dg-rise p-4 ${mine ? "border-l-[6px] border-l-plate-yellow" : ""}`}>
-                  <div className="flex items-center justify-between text-sm text-steel-300">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-steel-300">
                     <span className="font-semibold">{c.authorNickname || "익명 회원"}</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-steel-500">{formatDate(c.createdAt)}</span>
                       <button
                         className="text-xs font-semibold text-plate-yellow hover:text-white"
@@ -853,6 +870,15 @@ export default function BragDetail() {
                             삭제
                           </button>
                         </>
+                      )}
+                      {user && !mine && (
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-steel-400 hover:text-red-300"
+                          onClick={() => setReportTarget({ type: "BRAG_COMMENT", id: c.id, label: "이 댓글" })}
+                        >
+                          신고
+                        </button>
                       )}
                     </div>
                   </div>
@@ -924,33 +950,41 @@ export default function BragDetail() {
         </div>
       )}
 
-      {reportOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="dg-steel dg-pop w-full max-w-md p-6 space-y-4">
-            <h3 className="font-display text-xl">게시글 신고</h3>
-            <textarea
-              value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
-              className="dg-well w-full px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:border-plate-yellow focus:outline focus:outline-[3px] focus:outline-plate-yellow"
-              placeholder="신고 사유를 적어주세요"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                className="dg-btn dg-btn-steel min-h-[40px] px-4"
-                onClick={() => setReportOpen(false)}
-              >
-                취소
-              </button>
-              <button
-                className="dg-btn dg-btn-primary min-h-[40px] px-4"
-                onClick={submitReport}
-              >
-                신고하기
-              </button>
-            </div>
-          </div>
+      <ReportDialog
+        open={reportTarget !== null}
+        onClose={() => setReportTarget(null)}
+        targetType={reportTarget?.type ?? "BRAG_POST"}
+        targetId={reportTarget?.id ?? post.id}
+        subjectLabel={reportTarget?.label}
+      />
+
+      <DialogFrame
+        open={blockOpen}
+        onClose={() => setBlockOpen(false)}
+        busy={blocking}
+        tone="danger"
+        title={`${post.authorNickname || "이 회원"}님을 차단할까요?`}
+        description="서로의 글과 댓글이 안 보이고 친구도 끊겨요. 마이페이지에서 언제든 풀 수 있어요."
+      >
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setBlockOpen(false)}
+            disabled={blocking}
+            className="dg-btn dg-btn-steel min-h-[42px] px-4 text-sm"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={() => void blockAuthor()}
+            disabled={blocking}
+            className="dg-btn dg-btn-primary min-h-[42px] px-4 text-sm"
+          >
+            {blocking ? "차단하는 중" : "차단하기"}
+          </button>
         </div>
-      )}
+      </DialogFrame>
     </section>
   );
 }

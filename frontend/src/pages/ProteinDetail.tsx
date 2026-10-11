@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCountUp } from "../hooks/useCountUp";
+import ReportDialog from "../components/ReportDialog";
 import { toast } from "../lib/toast";
 import { HttpError, friendlyError, httpError } from "../lib/httpError";
 import { deadlineLabel, distributionOf, findMetaLine, isClosed, remainingLabel } from "../utils/proteinMeta";
@@ -128,6 +129,7 @@ export default function ProteinDetail() {
   const [messageInput, setMessageInput] = useState("");
   const [loadingApps, setLoadingApps] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const userRaw = localStorage.getItem("user");
   const user = userRaw ? (JSON.parse(userRaw) as { email?: string; role?: string }) : null;
@@ -335,7 +337,18 @@ export default function ProteinDetail() {
                 <div>
                   {brand && <p className="text-sm font-semibold text-steel-400">{brand}</p>}
                   <h1 className="text-3xl md:text-4xl">{data.name}</h1>
-                  <p className="text-xs text-steel-400 mt-1">작성자: {data.ownerNickname || "익명"}</p>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-steel-400">
+                    <span>작성자: {data.ownerNickname || "익명"}</span>
+                    {user && !isOwner && (
+                      <button
+                        type="button"
+                        onClick={() => setReportOpen(true)}
+                        className="font-semibold text-steel-400 underline-offset-2 hover:text-red-300 hover:underline"
+                      >
+                        신고
+                      </button>
+                    )}
+                  </p>
                 </div>
                 <div className="text-right text-sm text-steel-300">
                   <p>
@@ -605,6 +618,8 @@ export default function ProteinDetail() {
           </aside>
         </div>
       </div>
+
+      <ReportDialog open={reportOpen} onClose={() => setReportOpen(false)} targetType="PROTEIN" targetId={data.id} subjectLabel="이 공동구매" />
     </section>
   );
 }

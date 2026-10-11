@@ -19,7 +19,8 @@ public class BragPostResponse {
     private List<String> mediaUrls;
     private Long likeCount;
     private String authorNickname;
-    private String authorEmail;
+    private Long authorId;      // 신고 · 차단에 쓴다(이메일은 내보내지 않음)
+    private boolean mine;
     private LocalDateTime createdAt;
     private BragVisibility visibility;
     private String gymSlug;     // 올린 짐(모임). 광장 글이면 null
@@ -30,6 +31,12 @@ public class BragPostResponse {
     }
 
     public static BragPostResponse from(BragPost post, Long likeCount) {
+        return from(post, likeCount, null);
+    }
+
+    /** viewerId: 지금 보는 사람(내 글 표시용) */
+    public static BragPostResponse from(BragPost post, Long likeCount, Long viewerId) {
+        Long authorId = post.getUser() != null ? post.getUser().getId() : null;
         return new BragPostResponse(
                 post.getId(),
                 post.getTitle(),
@@ -39,7 +46,8 @@ public class BragPostResponse {
                 post.getMediaUrls(),
                 likeCount,
                 post.getUser() != null ? post.getUser().getNickname() : null,
-                post.getUser() != null ? post.getUser().getEmail() : null,
+                authorId,
+                viewerId != null && viewerId.equals(authorId),
                 post.getCreatedAt(),
                 post.getVisibility(),
                 post.getGym() != null ? post.getGym().getSlug() : null,
