@@ -18,6 +18,8 @@ public class EventAdminListResponse {
     private boolean isPinned;
     private int priority;
     private LocalDateTime updatedAt;
+    private String gymSlug;
+    private String gymName;
 
     public static EventAdminListResponse from(CmsEvent event) {
         return EventAdminListResponse.builder()
@@ -30,6 +32,8 @@ public class EventAdminListResponse {
                 .isPinned(event.isPinned())
                 .priority(event.getPriority())
                 .updatedAt(event.getUpdatedAt())
+                .gymSlug(event.getGym() != null ? event.getGym().getSlug() : null)
+                .gymName(event.getGym() != null ? event.getGym().getName() : null)
                 .build();
     }
 }

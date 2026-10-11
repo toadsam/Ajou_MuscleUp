@@ -54,4 +54,8 @@ public class EventSaveRequest {
     private String ctaLink;
 
     private List<@Size(max = 40) String> tags;
+
+    // 어느 짐(모임) 소식인지. 비우면 앱 전체 공지
+    @Size(max = 40)
+    private String gymSlug;
 }

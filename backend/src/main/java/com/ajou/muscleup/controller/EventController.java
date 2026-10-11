@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,8 +25,11 @@ public class EventController {
     private final UserRepository userRepository;
 
     @GetMapping("/active")
-    public ResponseEntity<List<EventResponse>> getActiveEvents() {
-        List<EventResponse> events = eventService.getActiveEvents(LocalDate.now(KST));
+    public ResponseEntity<List<EventResponse>> getActiveEvents(
+            @RequestParam(required = false) String gym,
+            @AuthenticationPrincipal String email
+    ) {
+        List<EventResponse> events = eventService.getActiveEvents(LocalDate.now(KST), gym, email);
         return ResponseEntity.ok(events);
     }
 

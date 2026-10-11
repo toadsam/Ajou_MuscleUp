@@ -5,14 +5,19 @@ import com.ajou.muscleup.dto.event.EventResponse;
 import com.ajou.muscleup.entity.Event;
 import com.ajou.muscleup.entity.EventParticipant;
 import com.ajou.muscleup.entity.EventStatus;
+import com.ajou.muscleup.entity.GymStatus;
+import com.ajou.muscleup.entity.GymVisibility;
 import com.ajou.muscleup.entity.User;
+import com.ajou.muscleup.entity.WorkoutCrew;
 import com.ajou.muscleup.repository.EventParticipantRepository;
 import com.ajou.muscleup.repository.EventRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +30,30 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final EventParticipantRepository participantRepository;
     private final CharacterGrowthService characterGrowthService;
+    private final GymScope gymScope;
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventResponse> getActiveEvents(LocalDate date) {
-        return eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date)
-                .stream()
+    public List<EventResponse> getActiveEvents(LocalDate date, String gymSlug, String viewerEmail) {
+        User viewer = gymScope.findUser(viewerEmail);
+        List<Event> active = eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date);
+        if (gymSlug != null && !gymSlug.isBlank()) {
+            WorkoutCrew gym = gymScope.visibleOrThrow(gymSlug, viewer, null);
+            return active.stream()
+                    .filter(e -> e.getGym() == null || e.getGym().getId().equals(gym.getId()))
+                    .map(EventResponse::from)
+                    .toList();
+        }
+        Set<Long> mine = new HashSet<>(gymScope.myGymIdsForQuery(viewer));
+        return active.stream()
+                .filter(e -> e.getGym() == null || mine.contains(e.getGym().getId()) || listedInSquare(e.getGym()))
                 .map(EventResponse::from)
                 .toList();
+    }
+
+    /** 광장에 보이는 짐: 운영 중 · 공개(찾기에 나오는 짐) */
+    private static boolean listedInSquare(WorkoutCrew gym) {
+        return gym.statusOrDefault() == GymStatus.ACTIVE && gym.visibilityOrDefault() == GymVisibility.PUBLIC;
     }
 
     @Override
@@ -61,7 +82,12 @@ public class EventServiceImpl implements EventService {
         }
         int delta = currentDidWorkout ? 1 : -1;
 
-        List<Event> events = eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date);
+        // 앱 전체 이벤트 + 내가 멤버인 짐의 이벤트만 센다(다른 짐 이벤트에 자동 참가되지 않게)
+        Set<Long> myGymIds = new HashSet<>(gymScope.myGymIdsForQuery(user));
+        List<Event> events = eventRepository.findAllByStartDateLessThanEqualAndEndDateGreaterThanEqual(date, date)
+                .stream()
+                .filter(e -> e.getGym() == null || myGymIds.contains(e.getGym().getId()))
+                .toList();
         List<EventProgressResponse> progress = new ArrayList<>();
         for (Event event : events) {
             if (event.getStatus() != EventStatus.ONGOING) {

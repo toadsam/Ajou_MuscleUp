@@ -147,7 +147,10 @@ export default function EventDetail() {
           <h1 className="text-4xl">{event.title}</h1>
           <p className="text-steel-300">{event.summary}</p>
           <p className="font-num text-base font-semibold text-steel-400">{formatPeriod(event.startAt, event.endAt)}</p>
-          <span className="dg-chip bg-plate-yellow text-sm text-black">{eventStatusLabel(event.status)}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="dg-chip bg-plate-yellow text-sm text-black">{eventStatusLabel(event.status)}</span>
+            {event.gymName && <span className="dg-chip bg-plate-blue text-sm text-white">{event.gymName}</span>}
+          </div>
         </div>
 
         {safeContent.trim() && (

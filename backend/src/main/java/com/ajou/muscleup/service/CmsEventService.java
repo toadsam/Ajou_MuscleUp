@@ -10,9 +10,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface CmsEventService {
-    Page<EventListItemResponse> getPublicList(CmsEventStatus status, String q, Pageable pageable);
+    /** gymSlug 가 비면 광장(앱 전체 공지 + 공개 짐 소식), 있으면 그 짐 소식 + 앱 전체 공지 */
+    Page<EventListItemResponse> getPublicList(CmsEventStatus status, String q, String gymSlug, String viewerEmail, Pageable pageable);
 
-    EventDetailResponse getPublicDetail(Long id);
+    EventDetailResponse getPublicDetail(Long id, String viewerEmail);
 
     EventViewClickResponse increaseView(Long id);
 

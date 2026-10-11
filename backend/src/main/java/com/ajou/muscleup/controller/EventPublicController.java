@@ -6,6 +6,7 @@ import com.ajou.muscleup.dto.eventcms.EventViewClickResponse;
 import com.ajou.muscleup.entity.CmsEventStatus;
 import com.ajou.muscleup.service.CmsEventService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,17 +28,19 @@ public class EventPublicController {
     public ResponseEntity<Page<EventListItemResponse>> list(
             @RequestParam(required = false) CmsEventStatus status,
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) String gym,
+            @AuthenticationPrincipal String email,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         int safeSize = Math.max(1, Math.min(50, size));
         Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize);
-        return ResponseEntity.ok(cmsEventService.getPublicList(status, q, pageable));
+        return ResponseEntity.ok(cmsEventService.getPublicList(status, q, gym, email, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EventDetailResponse> detail(@PathVariable Long id) {
-        return ResponseEntity.ok(cmsEventService.getPublicDetail(id));
+    public ResponseEntity<EventDetailResponse> detail(@PathVariable Long id, @AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(cmsEventService.getPublicDetail(id, email));
     }
 
     @PostMapping("/{id}/view")

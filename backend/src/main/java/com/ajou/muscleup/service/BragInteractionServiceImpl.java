@@ -30,7 +30,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     private final BragLikeRepository likeRepository;
     private final BragPostRepository postRepository;
     private final UserRepository userRepository;
-    private final FriendService friendService;
+    private final BragAccess bragAccess;
 
     private User requireUser(String email) {
         return userRepository.findByEmail(email)
@@ -123,9 +123,6 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     }
 
     private void ensureCanView(BragPost post, User viewer) {
-        if (post.getVisibility() == BragVisibility.PUBLIC) return;
-        if (post.getUser().getId().equals(viewer.getId())) return;
-        if (friendService.areFriends(post.getUser().getId(), viewer.getId())) return;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "친구 공개 게시글입니다.");
+        bragAccess.requireView(post, viewer);
     }
 }

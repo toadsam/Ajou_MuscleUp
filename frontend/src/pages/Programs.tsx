@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 import Barbell from "../components/gym/Barbell";
 import { friendlyError, httpError } from "../lib/httpError";
+import { useCurrentGym } from "../lib/currentGym";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -412,6 +413,8 @@ export default function Programs() {
   const location = useLocation();
   const surveyRef = useRef<HTMLElement | null>(null);
   const applyRef = useRef<HTMLElement | null>(null);
+  // 헤더에서 고른 모임이 있으면 그 모임 앞으로 신청한다(없으면 앱 전체)
+  const [currentGymSlug] = useCurrentGym();
 
   const [answers, setAnswers] = useState<SurveyAnswers>(initialAnswers);
   const [selectedTrack, setSelectedTrack] = useState<TrackId>("starter");
@@ -508,7 +511,7 @@ export default function Programs() {
       const response = await fetch(`${API_BASE}/api/programs/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, gymSlug: currentGymSlug ?? undefined }),
       });
 
       if (!response.ok) {

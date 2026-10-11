@@ -22,6 +22,8 @@ public class BragPostResponse {
     private String authorEmail;
     private LocalDateTime createdAt;
     private BragVisibility visibility;
+    private String gymSlug;     // 올린 짐(모임). 광장 글이면 null
+    private String gymName;
 
     public static BragPostResponse from(BragPost post) {
         return from(post, null);
@@ -39,7 +41,9 @@ public class BragPostResponse {
                 post.getUser() != null ? post.getUser().getNickname() : null,
                 post.getUser() != null ? post.getUser().getEmail() : null,
                 post.getCreatedAt(),
-                post.getVisibility()
+                post.getVisibility(),
+                post.getGym() != null ? post.getGym().getSlug() : null,
+                post.getGym() != null ? post.getGym().getName() : null
         );
     }
 }

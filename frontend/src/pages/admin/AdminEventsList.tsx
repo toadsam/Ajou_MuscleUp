@@ -150,6 +150,7 @@ export default function AdminEventsList() {
                 <tr>
                   <th className="p-3">번호</th>
                   <th className="p-3">제목</th>
+                  <th className="p-3">모임</th>
                   <th className="p-3">상태</th>
                   <th className="p-3">기간</th>
                   <th className="p-3">메인배너</th>
@@ -168,6 +169,13 @@ export default function AdminEventsList() {
                   >
                     <td className="p-3 font-num text-base text-steel-400">{item.id}</td>
                     <td className="p-3 font-semibold">{item.title}</td>
+                    <td className="p-3">
+                      {item.gymName ? (
+                        <span className="dg-chip whitespace-nowrap bg-plate-blue text-xs text-white">{item.gymName}</span>
+                      ) : (
+                        <span className="whitespace-nowrap text-xs text-steel-400">앱 전체</span>
+                      )}
+                    </td>
                     <td className="p-3">
                       <select
                         value={item.status}

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 import { toast } from "../lib/toast";
-import { friendlyError, httpError } from "../lib/httpError";
+import { errorStatus, friendlyError, httpError } from "../lib/httpError";
+import { findGymName, useCurrentGym, useMyGyms } from "../lib/currentGym";
 import { authorKey, getHiddenAuthors, setHiddenAuthors } from "../utils/bragHidden";
 
 type BragPost = {
@@ -17,7 +18,10 @@ type BragPost = {
   authorEmail?: string | null;
   authorId?: number | null;
   createdAt?: string | null;
-  visibility?: "PUBLIC" | "FRIENDS";
+  visibility?: "PUBLIC" | "FRIENDS" | "GYM";
+  /** 모임에 올린 글이면 그 모임. 광장 글이면 null */
+  gymSlug?: string | null;
+  gymName?: string | null;
 };
 
 type PageResponse<T> = {
@@ -92,6 +96,9 @@ function TemplateIcon({ kind }: { kind: "trophy" | "flame" | "camera" }) {
 }
 
 export default function BragList() {
+  // 헤더에서 고른 모임. 없으면 광장(전체 공개 글 + 친구 공개 글 + 내 글)
+  const [gymSlug] = useCurrentGym();
+  const { gyms } = useMyGyms();
   const [posts, setPosts] = useState<BragPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -102,18 +109,37 @@ export default function BragList() {
   // 상세 화면에서 "이 기기에서 숨기기"한 작성자(서버에 저장되지 않음)
   const [hiddenAuthors, setHiddenAuthorsState] = useState<string[]>(() => getHiddenAuthors());
 
+  const latestGym = useRef(gymSlug);
+  useEffect(() => {
+    latestGym.current = gymSlug;
+  }, [gymSlug]);
+
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await api<PageResponse<BragPost>>("/api/brags");
+      const query = gymSlug ? `?gym=${encodeURIComponent(gymSlug)}` : "";
+      const data = await api<PageResponse<BragPost>>(`/api/brags${query}`);
+      if (latestGym.current !== gymSlug) return; // 그사이 모임을 바꿨으면 늦게 온 응답은 버린다
       setPosts(Array.isArray(data) ? data : data.content ?? []);
     } catch (e) {
-      setError(friendlyError(e, "자랑글 목록을 불러오지 못했어요."));
+      if (latestGym.current !== gymSlug) return;
+      setPosts([]);
+      // 비공개 모임은 멤버가 아니면 404 로 온다
+      setError(
+        gymSlug && errorStatus(e) === 404
+          ? "이 모임 자랑방은 모임 멤버만 볼 수 있어요."
+          : friendlyError(e, "자랑글 목록을 불러오지 못했어요."),
+      );
     } finally {
-      setLoading(false);
+      if (latestGym.current === gymSlug) setLoading(false);
     }
-  }, []);
+  }, [gymSlug]);
+
+  // 내 모임에 없으면(공개 모임 둘러보기) 받은 글의 모임 이름을 쓴다
+  const gymName = gymSlug
+    ? findGymName(gyms, gymSlug) ?? posts.find((p) => p.gymSlug === gymSlug)?.gymName ?? "모임"
+    : null;
 
   const fetchLikeStatus = useCallback(async (postId: number) => {
     try {
@@ -209,7 +235,7 @@ export default function BragList() {
         <header className="dg-steel grid gap-4 p-6 lg:grid-cols-[1.1fr,0.9fr]">
           <div className="space-y-3">
             <p className="font-num text-sm font-bold text-plate-yellow">BRAG</p>
-            <h1 className="text-3xl md:text-5xl">운동 자랑방</h1>
+            <h1 className="text-3xl md:text-5xl">{gymName ? `${gymName} 자랑방` : "광장 자랑방"}</h1>
             <p className="max-w-2xl text-sm leading-relaxed text-steel-300">
               기록이 짧아도 괜찮습니다. 오늘 운동, PR 달성, 체형 변화처럼 자랑할 주제만 고르면
               초보도 빠르게 올릴 수 있게 만들었습니다.
@@ -345,9 +371,13 @@ export default function BragList() {
                     ) : (
                       <img loading="lazy" decoding="async" src={withBase(cover)} alt={post.title} className="h-full w-full object-cover" />
                     )}
-                    <div className="absolute left-3 top-3 flex gap-2 text-xs">
+                    <div className="absolute left-3 right-3 top-3 flex flex-wrap gap-2 text-xs">
+                      {post.gymName && <span className="dg-chip bg-steel-900 text-plate-yellow">{post.gymName}</span>}
                       {post.visibility === "FRIENDS" && (
                         <span className="dg-chip bg-plate-blue text-white">친구 공개</span>
+                      )}
+                      {post.visibility === "GYM" && (
+                        <span className="dg-chip bg-plate-green text-white">우리 모임만</span>
                       )}
                       {post.movement && (
                         <span className="dg-chip bg-steel-900 text-chalk">{post.movement}</span>
@@ -357,6 +387,13 @@ export default function BragList() {
                 ) : (
                   <div className="dg-rubber flex h-40 items-end border-b-[3px] border-black p-5">
                     <div>
+                      {(post.gymName || post.visibility === "FRIENDS" || post.visibility === "GYM") && (
+                        <div className="mb-2 flex flex-wrap gap-2 text-xs">
+                          {post.gymName && <span className="dg-chip bg-steel-900 text-plate-yellow">{post.gymName}</span>}
+                          {post.visibility === "FRIENDS" && <span className="dg-chip bg-plate-blue text-white">친구 공개</span>}
+                          {post.visibility === "GYM" && <span className="dg-chip bg-plate-green text-white">우리 모임만</span>}
+                        </div>
+                      )}
                       <div className="font-num text-sm font-bold text-plate-yellow">WORKOUT BRAG</div>
                       <div className="mt-1 text-lg font-bold">{post.movement || "오늘 운동 기록"}</div>
                     </div>

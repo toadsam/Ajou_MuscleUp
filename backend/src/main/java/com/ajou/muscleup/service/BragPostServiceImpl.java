@@ -6,6 +6,7 @@ import com.ajou.muscleup.dto.brag.BragPostUpdateRequest;
 import com.ajou.muscleup.entity.BragPost;
 import com.ajou.muscleup.entity.BragVisibility;
 import com.ajou.muscleup.entity.User;
+import com.ajou.muscleup.entity.WorkoutCrew;
 import com.ajou.muscleup.repository.BragLikeRepository;
 import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.UserRepository;
@@ -33,6 +34,8 @@ public class BragPostServiceImpl implements BragPostService {
     private final UserRepository userRepository;
     private final BragLikeRepository bragLikeRepository;
     private final FriendService friendService;
+    private final BragAccess bragAccess;
+    private final GymScope gymScope;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -43,12 +46,14 @@ public class BragPostServiceImpl implements BragPostService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
 
         List<String> media = req.getMediaUrls() == null
-                ? List.of()
+                ? new ArrayList<String>()  // Hibernate 가 비우고 채울 수 있게(List.of() 는 병합 시 오류)
                 : req.getMediaUrls().stream()
                 .filter(url -> url != null && !url.isBlank())
                 .map(String::trim)
                 .collect(Collectors.toCollection(ArrayList::new));
 
+        BragVisibility visibility = req.getVisibility() == null ? BragVisibility.PUBLIC : req.getVisibility();
+        WorkoutCrew gym = bragAccess.resolveGym(req.getGymSlug(), visibility, user);
         BragPost saved = bragPostRepository.save(BragPost.builder()
                 .user(user)
                 .title(req.getTitle().trim())
@@ -56,7 +61,8 @@ public class BragPostServiceImpl implements BragPostService {
                 .movement(req.getMovement() == null ? null : req.getMovement().trim())
                 .weight(req.getWeight() == null ? null : req.getWeight().trim())
                 .mediaUrls(media)
-                .visibility(req.getVisibility() == null ? BragVisibility.PUBLIC : req.getVisibility())
+                .visibility(visibility)
+                .gym(gym)
                 .build());
 
         return BragPostResponse.from(saved);
@@ -64,14 +70,23 @@ public class BragPostServiceImpl implements BragPostService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BragPostResponse> list(String userEmail, Pageable pageable) {
+    public Page<BragPostResponse> list(String userEmail, String gymSlug, Pageable pageable) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
-        List<Long> friendIds = friendService.findFriendIds(user.getId());
-        List<Long> allowedUserIds = new ArrayList<>(friendIds);
-        allowedUserIds.add(user.getId());
-        Page<BragPost> posts = bragPostRepository
-                .findByVisibilityOrUser_IdInOrderByCreatedAtDesc(BragVisibility.PUBLIC, allowedUserIds, pageable);
+        List<Long> friendIds = new ArrayList<>(friendService.findFriendIds(user.getId()));
+        if (friendIds.isEmpty()) friendIds.add(-1L);
+        Page<BragPost> posts;
+        if (gymSlug == null || gymSlug.isBlank()) {
+            posts = bragPostRepository.findSquareFeed(
+                    user.getId(), friendIds, BragVisibility.PUBLIC, BragVisibility.FRIENDS, pageable);
+        } else {
+            // 닫힌 짐은 멤버만(모르는 사람에겐 404). 열린 짐은 누구나 보되, "우리 모임만" 글은 멤버에게만
+            WorkoutCrew gym = gymScope.visibleOrThrow(gymSlug, user, null);
+            boolean member = isAdmin(user) || gymScope.isMember(gym, user);
+            posts = bragPostRepository.findGymFeed(gym.getId(), user.getId(), friendIds,
+                    BragVisibility.PUBLIC, member ? BragVisibility.GYM : BragVisibility.PUBLIC, BragVisibility.FRIENDS,
+                    pageable);
+        }
         Map<Long, Long> likeCounts = countLikesByPostIds(posts.getContent().stream().map(BragPost::getId).toList());
         return posts.map(p -> BragPostResponse.from(p, likeCounts.getOrDefault(p.getId(), 0L)));
     }
@@ -83,9 +98,7 @@ public class BragPostServiceImpl implements BragPostService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
         BragPost post = bragPostRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        if (!canView(post, viewer)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "친구 공개 게시글입니다.");
-        }
+        bragAccess.requireView(post, viewer);
         long likes = bragLikeRepository.countByPostId(id);
         return BragPostResponse.from(post, likes);
     }
@@ -103,7 +116,7 @@ public class BragPostServiceImpl implements BragPostService {
         }
 
         List<String> media = req.getMediaUrls() == null
-                ? List.of()
+                ? new ArrayList<String>()  // Hibernate 가 비우고 채울 수 있게(List.of() 는 병합 시 오류)
                 : req.getMediaUrls().stream()
                 .filter(url -> url != null && !url.isBlank())
                 .map(String::trim)
@@ -114,7 +127,21 @@ public class BragPostServiceImpl implements BragPostService {
         post.setMovement(req.getMovement() == null ? null : req.getMovement().trim());
         post.setWeight(req.getWeight() == null ? null : req.getWeight().trim());
         post.setMediaUrls(media);
-        post.setVisibility(req.getVisibility() == null ? BragVisibility.PUBLIC : req.getVisibility());
+        // 보내지 않은 칸은 원래 값 그대로(예전 화면이 공개 범위 · 짐을 안 보내도 글이 광장으로 옮겨지지 않게).
+        // gymSlug 를 빈 문자열로 보내면 광장으로 옮긴다.
+        BragVisibility visibility = req.getVisibility() != null ? req.getVisibility()
+                : post.getVisibility() != null ? post.getVisibility() : BragVisibility.PUBLIC;
+        // 짐을 그대로 두면 다시 확인하지 않는다(운영자가 남의 글을 고칠 때). 새로 고르거나 바꾸면 그 짐 멤버여야 한다
+        String currentSlug = post.getGym() != null ? post.getGym().getSlug() : null;
+        boolean sameGym = req.getGymSlug() == null
+                ? true
+                : currentSlug != null && req.getGymSlug().trim().equalsIgnoreCase(currentSlug);
+        WorkoutCrew gym = sameGym ? post.getGym() : bragAccess.resolveGym(req.getGymSlug(), visibility, user);
+        if (gym == null && visibility == BragVisibility.GYM) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "어느 모임에 올릴지 골라 주세요.");
+        }
+        post.setVisibility(visibility);
+        post.setGym(gym);
 
         BragPost saved = bragPostRepository.save(post);
         long likes = bragLikeRepository.countByPostId(id);
@@ -132,12 +159,6 @@ public class BragPostServiceImpl implements BragPostService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 글만 삭제할 수 있습니다.");
         }
         bragPostRepository.delete(post);
-    }
-
-    private boolean canView(BragPost post, User viewer) {
-        if (post.getVisibility() == BragVisibility.PUBLIC) return true;
-        if (post.getUser().getId().equals(viewer.getId())) return true;
-        return friendService.areFriends(post.getUser().getId(), viewer.getId());
     }
 
     private boolean isAdmin(User user) {

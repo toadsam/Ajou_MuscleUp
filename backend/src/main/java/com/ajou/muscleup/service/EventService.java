@@ -7,7 +7,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface EventService {
-    List<EventResponse> getActiveEvents(LocalDate date);
+    /** gymSlug 가 비면 앱 전체 + 공개 짐 + 내 짐의 이벤트, 있으면 그 짐 + 앱 전체 이벤트 */
+    List<EventResponse> getActiveEvents(LocalDate date, String gymSlug, String viewerEmail);
 
     List<EventProgressResponse> getActiveProgress(User user, LocalDate date);
 
