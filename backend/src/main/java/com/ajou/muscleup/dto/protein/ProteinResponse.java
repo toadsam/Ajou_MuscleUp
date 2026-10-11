@@ -34,6 +34,14 @@ public class ProteinResponse {
     private String distributionMethod;
     private String receiptUrl;  // 작성자 · 관리자 · 승인된 참여자에게만 채운다
     private boolean mine;       // 보는 사람이 작성자인지
+    private String gymSlug;     // 연 짐(없으면 null)
+    private String gymName;
+    private com.ajou.muscleup.entity.GroupBuyVisibility visibility; // GYM 우리 모임만 · PUBLIC 전체 모집
+    private String region;
+    private Integer maxParticipants;
+    // 상세에서만: 여는 사람 신뢰 표시(가입 후 지난 날 · 누적 운동 일수)
+    private Long ownerMemberDays;
+    private Long ownerWorkoutDays;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -69,6 +77,11 @@ public class ProteinResponse {
                 .daysLeft(daysLeft)
                 .closed(daysLeft != null && daysLeft < 0)
                 .distributionMethod(p.getDistributionMethod())
+                .gymSlug(p.getGym() != null ? p.getGym().getSlug() : null)
+                .gymName(p.getGym() != null ? p.getGym().getName() : null)
+                .visibility(p.visibilityOrDefault())
+                .region(p.getRegion())
+                .maxParticipants(p.getMaxParticipants())
                 .receiptUrl(null)
                 .mine(false)
                 .build();

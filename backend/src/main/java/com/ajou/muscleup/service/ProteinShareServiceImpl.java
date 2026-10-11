@@ -27,11 +27,14 @@ public class ProteinShareServiceImpl implements ProteinShareService {
     private final ProteinShareApplicationRepository applicationRepository;
     private final ProteinShareMessageRepository messageRepository;
     private final UserRepository userRepository;
+    private final GroupBuyAccess access;
 
     @Override
     public ProteinShareApplicationResponse apply(Long proteinId, String email) {
         User user = getUser(email);
         Protein protein = getProtein(proteinId);
+        // 우리 모임만 공동구매는 그 모임 멤버만 신청할 수 있다(못 보는 글은 404)
+        access.requireView(protein, user);
         ProteinShareApplication existing = applicationRepository
                 .findByProteinIdAndUserId(proteinId, user.getId())
                 .orElse(null);
@@ -42,6 +45,9 @@ public class ProteinShareServiceImpl implements ProteinShareService {
         if (protein.getDeadline() != null
                 && protein.getDeadline().isBefore(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모집이 마감된 공동구매예요.");
+        }
+        if (isFull(protein)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모집 인원이 다 찼어요.");
         }
         ProteinShareApplication created = applicationRepository.save(
                 ProteinShareApplication.builder()
@@ -83,6 +89,9 @@ public class ProteinShareServiceImpl implements ProteinShareService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
         if (!application.getProtein().getId().equals(proteinId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid protein application");
+        }
+        if (status == ProteinShareStatus.APPROVED && application.getStatus() != ProteinShareStatus.APPROVED && isFull(protein)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모집 인원이 다 차서 더 승인할 수 없어요.");
         }
         application.setStatus(status);
         return ProteinShareApplicationResponse.from(application);
@@ -151,6 +160,12 @@ public class ProteinShareServiceImpl implements ProteinShareService {
 
     private boolean isAdmin(User user) {
         return user.getRole() != null && user.getRole().contains("ADMIN");
+    }
+
+    /** 승인된 참여자 수가 최대 인원에 닿았는지(최대 인원이 없으면 false) */
+    private boolean isFull(Protein protein) {
+        Integer max = protein.getMaxParticipants();
+        return max != null && applicationRepository.countByProteinIdAndStatus(protein.getId(), ProteinShareStatus.APPROVED) >= max;
     }
 
     private User getUser(String email) {

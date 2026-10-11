@@ -20,8 +20,10 @@ public class RankingController {
     public ResponseEntity<CharacterRankingListResponse> characters(
             @AuthenticationPrincipal String email,
             @RequestParam(defaultValue = "LEVEL") String type,
-            @RequestParam(defaultValue = "50") int limit
+            @RequestParam(defaultValue = "50") int limit,
+            // 짐(모임) 슬러그 — 있으면 그 짐 멤버 안에서의 순위
+            @RequestParam(required = false) String gym
     ) {
-        return ResponseEntity.ok(rankingService.getCharacterRankings(email, type, limit));
+        return ResponseEntity.ok(rankingService.getCharacterRankings(email, type, limit, gym));
     }
 }

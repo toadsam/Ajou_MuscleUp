@@ -20,9 +20,35 @@ type Protein = {
   daysLeft?: number | null;
   closed?: boolean;
   distributionMethod?: string | null;
+  gymSlug?: string | null;
+  gymName?: string | null;
+  visibility?: "GYM" | "PUBLIC" | null; // GYM 우리 모임만 · PUBLIC 전체 모집
+  region?: string | null;
+  maxParticipants?: number | null;
 };
 
 type LocationMode = "region" | "gym";
+
+// 목록 범위: all 내가 볼 수 있는 전부 · gym 우리 모임 · public 전체 모집
+type Scope = "all" | "gym" | "public";
+
+const SCOPE_TABS: { key: Scope; label: string }[] = [
+  { key: "all", label: "전체" },
+  { key: "gym", label: "우리 모임" },
+  { key: "public", label: "전체 모집" },
+];
+
+const SCOPE_STORAGE_KEY = "protein:scope";
+
+// 마지막으로 본 탭(저장소가 막혀 있으면 기본값)
+const readSavedScope = (): Scope => {
+  try {
+    const saved = localStorage.getItem(SCOPE_STORAGE_KEY);
+    return saved === "gym" || saved === "public" ? saved : "all";
+  } catch {
+    return "all";
+  }
+};
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -49,8 +75,8 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-async function fetchProteins(): Promise<Protein[]> {
-  const data = await api<{ content?: Protein[] } | Protein[]>("/api/proteins?size=50");
+async function fetchProteins(scope: Scope): Promise<Protein[]> {
+  const data = await api<{ content?: Protein[] } | Protein[]>(`/api/proteins?scope=${scope}&size=50`);
   return Array.isArray(data) ? data : (data.content ?? []);
 }
 
@@ -84,6 +110,18 @@ const factsOf = (p: Protein) => {
   return facts;
 };
 
+/** 모집 범위 칩: 우리 모임(파랑, 모임 이름은 길면 자른다) · 전체 모집(노랑) */
+function VisibilityChip({ visibility, gymName }: { visibility?: Protein["visibility"]; gymName?: string | null }) {
+  if (visibility === "PUBLIC") return <span className="dg-chip bg-plate-yellow text-black">전체 모집</span>;
+  if (visibility !== "GYM") return null;
+  return (
+    <span className="dg-chip max-w-full bg-plate-blue text-white">
+      <span className="flex-none">우리 모임</span>
+      {gymName && <span className="min-w-0 max-w-[9rem] truncate font-sans font-bold">· {gymName}</span>}
+    </span>
+  );
+}
+
 export default function Protein() {
   const [products, setProducts] = useState<Protein[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,19 +131,39 @@ export default function Protein() {
   const [selectedGym, setSelectedGym] = useState("전체 헬스장");
   const [statusFilter, setStatusFilter] = useState("전체");
   const [distributionFilter, setDistributionFilter] = useState("전체");
+  const [scope, setScope] = useState<Scope>(readSavedScope);
 
   useEffect(() => {
+    // 탭을 빨리 바꾸면 늦게 온 이전 응답이 덮어쓰지 않게 막는다
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
-        setProducts(await fetchProteins());
+        setErr(null);
+        const list = await fetchProteins(scope);
+        if (!cancelled) setProducts(list);
       } catch (e) {
-        setErr(friendlyError(e, "공동구매 목록을 불러오지 못했어요."));
+        if (!cancelled) {
+          setProducts([]);
+          setErr(friendlyError(e, "공동구매 목록을 불러오지 못했어요."));
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [scope]);
+
+  const changeScope = (next: Scope) => {
+    setScope(next);
+    try {
+      localStorage.setItem(SCOPE_STORAGE_KEY, next);
+    } catch {
+      // 저장소가 막혀 있어도 탭 전환은 그대로 된다
+    }
+  };
 
   // 1인 부담 = 총 금액 ÷ 목표 인원 기준(예전엔 총 금액으로 정렬했다). 값이 없는 글은 뒤로.
   const sortByPerPersonAsc = () =>
@@ -244,6 +302,29 @@ export default function Protein() {
             ))}
           </div>
         </header>
+
+        {/* 모집 범위 탭: 서버가 scope 로 걸러 준다(우리 모임 글은 그 모임 멤버에게만 온다) */}
+        <div className="relative grid grid-cols-3 border-b-2 border-steel-700 sm:inline-grid" role="tablist" aria-label="모집 범위">
+          {SCOPE_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={scope === tab.key}
+              onClick={() => changeScope(tab.key)}
+              className={`min-h-[44px] px-5 pb-2 pt-1 text-base font-black transition-colors ${
+                scope === tab.key ? "text-white" : "text-steel-400 hover:text-steel-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+          <span
+            aria-hidden
+            className="absolute -bottom-[2px] left-0 h-1 w-1/3 bg-plate-red transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(${SCOPE_TABS.findIndex((t) => t.key === scope) * 100}%)` }}
+          />
+        </div>
 
         <div className="dg-well grid gap-4 p-4 lg:grid-cols-[0.7fr,1fr]">
           <div>
@@ -388,6 +469,13 @@ export default function Protein() {
                     </span>
                   </div>
 
+                  {(p.visibility || p.region) && (
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <VisibilityChip visibility={p.visibility} gymName={p.gymName} />
+                      {p.region && <span className="truncate text-steel-300">{p.region}</span>}
+                    </div>
+                  )}
+
                   <div>
                     <h3 className="text-xl font-bold">{p.name}</h3>
                     {facts.length > 0 && (
@@ -450,8 +538,32 @@ export default function Protein() {
         </div>
 
         {!loading && !err && filtered.length === 0 && (
-          <div className="dg-well p-8 text-center text-steel-400">
-            조건에 맞는 공동구매 모집글이 없습니다.
+          <div className="dg-well space-y-4 p-8 text-center text-steel-400">
+            {products.length > 0 ? (
+              // 서버엔 글이 있는데 위 필터에 걸린 경우
+              <p>조건에 맞는 공동구매 모집글이 없습니다.</p>
+            ) : scope === "gym" ? (
+              <>
+                <p>우리 모임에서 열린 공동구매가 아직 없어요.</p>
+                <Link to="/protein/write" className="dg-btn dg-btn-primary min-h-[44px] px-5 text-sm">
+                  우리 모임 공동구매 열기
+                </Link>
+              </>
+            ) : scope === "public" ? (
+              <>
+                <p>지금 전체 모집 중인 공동구매가 없어요.</p>
+                <button type="button" onClick={() => changeScope("all")} className="dg-btn dg-btn-steel min-h-[44px] px-5 text-sm">
+                  전체 목록 보기
+                </button>
+              </>
+            ) : (
+              <>
+                <p>아직 공동구매 모집글이 없어요.</p>
+                <Link to="/protein/write" className="dg-btn dg-btn-primary min-h-[44px] px-5 text-sm">
+                  첫 공동구매 열기
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

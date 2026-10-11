@@ -36,4 +36,26 @@ public class Protein {
     // 분배 방식: 직접 만나서 / 헬스장 보관함 / 택배 / 기타 (없으면 null)
     @Column(length = 20)
     private String distributionMethod;
+
+    // 어느 짐(모임)에서 연 공동구매인지. null = 짐 없이 연 전체 모집
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gym_id")
+    private WorkoutCrew gym;
+
+    // 모집 범위(우리 모임만 / 전체 모집). 예전 글은 db/migration V3 에서 GYM(아주대 짐)으로 채운다
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private GroupBuyVisibility visibility;
+
+    // 받는 지역(전체 모집에서 직거래 · 보관함일 때 참고)
+    @Column(length = 40)
+    private String region;
+
+    // 최대 참여 인원(승인 기준). null 이면 제한 없음
+    private Integer maxParticipants;
+
+    public GroupBuyVisibility visibilityOrDefault() {
+        if (visibility != null) return visibility;
+        return gym != null ? GroupBuyVisibility.GYM : GroupBuyVisibility.PUBLIC;
+    }
 }

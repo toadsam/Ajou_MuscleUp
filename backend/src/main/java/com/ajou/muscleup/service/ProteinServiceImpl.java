@@ -8,6 +8,12 @@ import com.ajou.muscleup.repository.ProteinRepository;
 import com.ajou.muscleup.repository.ProteinShareApplicationRepository;
 import com.ajou.muscleup.repository.ReviewRepository;
 import com.ajou.muscleup.repository.UserRepository;
+import com.ajou.muscleup.repository.WorkoutCrewRepository;
+import com.ajou.muscleup.entity.GroupBuyVisibility;
+import com.ajou.muscleup.entity.WorkoutCrew;
+import com.ajou.muscleup.util.RoleUtils;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collection;
@@ -27,6 +33,12 @@ public class ProteinServiceImpl implements ProteinService {
     private final ReviewRepository reviewRepository;
     private final ProteinShareApplicationRepository applicationRepository;
     private final UserRepository userRepository;
+    private final WorkoutCrewRepository gymRepository;
+    private final GroupBuyAccess access;
+
+    /** 짐을 고르지 않고 연 "우리 모임" 공동구매가 들어갈 짐(짐 고르기 화면이 생기기 전까지의 기본값) */
+    @Value("${app.default-gym-slug:ajou-muscleup}")
+    private String defaultGymSlug;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     /** 분배 방식으로 받는 값. 그 밖의 값은 저장하지 않는다(null) */
@@ -49,7 +61,19 @@ public class ProteinServiceImpl implements ProteinService {
 
     @Override
     public Protein create(ProteinCreateUpdateRequest req, User owner) {
+        if (owner == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요해요.");
+        WorkoutCrew gym = resolveGym(req, owner);
+        GroupBuyVisibility visibility = req.getVisibility() != null ? req.getVisibility()
+                : (gym != null ? GroupBuyVisibility.GYM : GroupBuyVisibility.PUBLIC);
+        if (visibility == GroupBuyVisibility.GYM && gym == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "우리 모임 공동구매는 모임을 골라야 해요. 들어간 모임이 없으면 전체 모집으로 열어 주세요.");
+        }
+        access.requireCanOpen(owner, gym, visibility);
         Protein p = Protein.builder()
+                .gym(gym)
+                .visibility(visibility)
+                .region(blankToNull(req.getRegion()))
+                .maxParticipants(req.getMaxParticipants())
                 .owner(owner)
                 .name(req.getName()).price(req.getPrice()).days(req.getDays()).goal(req.getGoal())
                 .imageUrl(blankToNull(req.getImageUrl())).description(req.getDescription()).category(req.getCategory())
@@ -84,6 +108,8 @@ public class ProteinServiceImpl implements ProteinService {
         if (req.getDistributionMethod() != null) p.setDistributionMethod(normalizeDistribution(req.getDistributionMethod()));
         if (req.getDescription() != null) p.setDescription(req.getDescription());
         if (req.getCategory() != null) p.setCategory(req.getCategory());
+        if (req.getRegion() != null) p.setRegion(blankToNull(req.getRegion()));
+        if (req.getMaxParticipants() != null) p.setMaxParticipants(req.getMaxParticipants());
         return p; // dirty checking
     }
 
@@ -96,9 +122,43 @@ public class ProteinServiceImpl implements ProteinService {
     }
 
     @Override @Transactional(readOnly = true)
-    public Page<Protein> list(String q, Pageable pageable) {
-        if (q == null || q.isBlank()) return proteinRepository.findAll(pageable);
-        return proteinRepository.findByNameContainingIgnoreCase(q, pageable);
+    public Page<Protein> list(User viewer, String scope, String gymSlug, String q, Pageable pageable) {
+        String query = q == null ? "" : q.trim(); // 빈 문자열이면 전부(ProteinRepository.NAME_FILTER 주석)
+        if (gymSlug != null && !gymSlug.isBlank()) {
+            WorkoutCrew gym = gymRepository.findBySlug(gymSlug.trim().toLowerCase(java.util.Locale.ROOT))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "모임을 찾을 수 없어요."));
+            if (!access.myGymIdsForQuery(viewer).contains(gym.getId()) && !RoleUtils.isAdmin(viewer)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "그 모임 멤버만 볼 수 있어요.");
+            }
+            return proteinRepository.searchInGyms(List.of(gym.getId()), query, pageable);
+        }
+        if ("public".equalsIgnoreCase(scope)) return proteinRepository.searchPublic(query, pageable);
+        if ("gym".equalsIgnoreCase(scope)) return proteinRepository.searchInGyms(access.myGymIdsForQuery(viewer), query, pageable);
+        return proteinRepository.searchVisible(RoleUtils.isAdmin(viewer), access.myGymIdsForQuery(viewer), query, pageable);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public void requireView(Protein p, User viewer) {
+        access.requireView(p, viewer);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public long[] ownerTrust(Protein p) {
+        if (p.getOwner() == null) return null;
+        long days = access.memberDays(p.getOwner());
+        return new long[]{days > 100000 ? -1 : days, access.workoutDays(p.getOwner())};
+    }
+
+    /** gymSlug 가 있으면 그 짐, 없고 전체 모집이 아니면 기본 짐(멤버일 때만) */
+    private WorkoutCrew resolveGym(ProteinCreateUpdateRequest req, User owner) {
+        if (req.getGymSlug() != null && !req.getGymSlug().isBlank()) {
+            return gymRepository.findBySlug(req.getGymSlug().trim().toLowerCase(java.util.Locale.ROOT))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "모임을 찾을 수 없어요."));
+        }
+        if (req.getVisibility() == GroupBuyVisibility.PUBLIC) return null;
+        return gymRepository.findBySlug(defaultGymSlug)
+                .filter(g -> access.myGymIdsForQuery(owner).contains(g.getId()))
+                .orElse(null);
     }
 
     @Override @Transactional(readOnly = true)
