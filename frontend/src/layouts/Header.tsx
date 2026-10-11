@@ -188,6 +188,7 @@ export default function Header() {
         label: "오늘 운동",
         links: [
           { to: "/attendance", label: "출석 체크" },
+          { to: "/diet", label: "식단 기록" },
           { to: "/lounge", label: "라운지" },
           { to: "/rankings", label: "랭킹" },
         ],
