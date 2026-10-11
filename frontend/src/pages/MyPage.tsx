@@ -19,6 +19,7 @@ import { useInView } from "../hooks/useInView";
 import { toast } from "../lib/toast";
 import { httpError } from "../lib/httpError";
 import { clearGuestCharacter, loadGuestCharacter } from "../components/gymMap/guestCharacter";
+import { displayEmail } from "../lib/displayEmail";
 
 // 처음 보일 때 0 에서 값까지 굴러 올라가는 숫자(표현 전용)
 function CountNum({ value, suffix = "" }: { value: number | null | undefined; suffix?: string }) {
@@ -678,7 +679,8 @@ export default function MyPage() {
           <h1 className="text-3xl md:text-4xl">마이페이지</h1>
           {data && (
             <p className="text-steel-300">
-              {data.nickname} ({data.email})
+              {data.nickname}
+              {displayEmail(data.email) && ` (${displayEmail(data.email)})`}
             </p>
           )}
         </header>

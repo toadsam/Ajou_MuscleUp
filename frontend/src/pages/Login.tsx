@@ -21,6 +21,10 @@ declare global {
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 const FRONTEND_BASE_URL = import.meta.env.VITE_FRONTEND_BASE_URL ?? "https://musclehub.co.kr";
+// 카카오 REST API 키(로그인 창 주소에 들어가는 공개 값). 없으면 카카오 버튼을 숨긴다.
+// 서버에도 KAKAO_REST_API_KEY · KAKAO_REDIRECT_URIS(= 이 사이트의 /login) 가 있어야 한다.
+const KAKAO_REST_KEY = import.meta.env.VITE_KAKAO_REST_KEY ?? "";
+const KAKAO_STATE_KEY = "kakao_oauth_state";
 
 function isSafariBrowser() {
   const ua = navigator.userAgent;
@@ -166,6 +170,51 @@ export default function Login() {
     window.location.href = url.toString();
   };
 
+  // 카카오: 로그인 창으로 보냈다가 /login?code=…&state=… 로 돌아오면 서버가 code 를 카카오와 바꾼다
+  const startKakaoLogin = () => {
+    if (!KAKAO_REST_KEY) return;
+    const state = crypto.randomUUID();
+    try {
+      sessionStorage.setItem(KAKAO_STATE_KEY, state);
+      sessionStorage.setItem("kakao_remember_me", rememberMe ? "1" : "0");
+    } catch {
+      /* 저장소를 못 쓰면 돌아왔을 때 state 확인에 실패해 다시 시도하게 된다 */
+    }
+    const url = new URL("https://kauth.kakao.com/oauth/authorize");
+    url.searchParams.set("client_id", KAKAO_REST_KEY);
+    url.searchParams.set("redirect_uri", `${window.location.origin}/login`);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("state", state);
+    window.location.href = url.toString();
+  };
+
+  const handleKakaoCode = async (code: string, state: string | null) => {
+    let expected: string | null = null;
+    let remember = true;
+    try {
+      expected = sessionStorage.getItem(KAKAO_STATE_KEY);
+      remember = sessionStorage.getItem("kakao_remember_me") !== "0";
+      sessionStorage.removeItem(KAKAO_STATE_KEY);
+      sessionStorage.removeItem("kakao_remember_me");
+    } catch {
+      /* 아래에서 state 불일치로 처리 */
+    }
+    // 다른 사이트가 만든 로그인 응답을 받지 않도록 내가 보낸 state 와 같은지 본다
+    if (!state || !expected || state !== expected) {
+      toast("카카오 로그인을 확인하지 못했어요. 다시 시도해 주세요.", "error");
+      return;
+    }
+    try {
+      const data = await loginRequest({ code, redirectUri: `${window.location.origin}/login`, rememberMe: remember }, "kakao");
+      storeSession(data);
+      const target = readStoredReturn() ?? returnTo;
+      writeStoredReturn(null);
+      window.location.replace(target);
+    } catch (err) {
+      toast(friendlyError(err, "카카오 로그인에 실패했어요. 다시 시도해 주세요."), "error");
+    }
+  };
+
   const openInExternalBrowser = () => {
     const target = externalLoginUrl;
     if (kakao) {
@@ -191,6 +240,14 @@ export default function Login() {
   };
 
   useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const kakaoCode = query.get("code");
+    if (kakaoCode || query.get("error")) {
+      // 주소에 남은 code 를 지운다(새로고침 · 뒤로 가기로 같은 code 를 다시 보내지 않게)
+      window.history.replaceState(null, "", "/login");
+      if (kakaoCode) void handleKakaoCode(kakaoCode, query.get("state"));
+      else toast("카카오 로그인을 취소했어요.", "info");
+    }
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const idTokenFromHash = hash.get("id_token");
     if (idTokenFromHash) {
@@ -249,8 +306,8 @@ export default function Login() {
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-2 border-b-2 border-black bg-plate-red" />
         <div className="text-center">
           <p className="font-num text-sm tracking-[0.12em] text-steel-400">SIGN IN</p>
-          <h2 className="mt-1 font-display text-3xl text-chalk">Google 로그인</h2>
-          <p className="mt-2 text-sm text-steel-300">Google 계정으로 빠르게 시작하세요.</p>
+          <h2 className="mt-1 font-display text-3xl text-chalk">{KAKAO_REST_KEY ? "로그인" : "Google 로그인"}</h2>
+          <p className="mt-2 text-sm text-steel-300">{KAKAO_REST_KEY ? "Google 이나 카카오 계정으로 빠르게 시작하세요." : "Google 계정으로 빠르게 시작하세요."}</p>
         </div>
 
         {fromRegister && (
@@ -344,8 +401,20 @@ export default function Login() {
           )}
         </div>
 
+        {KAKAO_REST_KEY && (!inApp || kakao) && (
+          // 카카오 로그인 버튼 규격 색(#FEE500 · 검정 글자). 카카오톡 안 브라우저에서도 그대로 된다(다른 앱 안 브라우저는 숨김)
+          <button
+            type="button"
+            onClick={startKakaoLogin}
+            className="dg-btn w-full py-3 text-base font-bold text-black"
+            style={{ background: "#FEE500" }}
+          >
+            카카오로 시작하기
+          </button>
+        )}
+
         <p className="break-keep text-center text-xs text-steel-400">
-          처음이라면 Google 로그인만 하면 가입까지 끝나요.
+          {KAKAO_REST_KEY ? "처음이라면 Google 이나 카카오로 로그인하면 가입까지 끝나요." : "처음이라면 Google 로그인만 하면 가입까지 끝나요."}
         </p>
       </div>
     </section>

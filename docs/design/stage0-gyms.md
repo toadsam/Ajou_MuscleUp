@@ -164,7 +164,7 @@ POST   /api/realtime/ticket { room: "square" | "gym:{id}" }
 | 2 | ✅ **Flyway 도입**(데이터 이전 전용, Hibernate 다음 실행) | `flyway_schema_history` 테이블만 생김 | – (스냅샷 권장) |
 | 3 | ✅ 짐 칸 · 역할 · `GymPermissionService` · `/api/gyms` + 아주대 이전 마이그레이션([기록](../fixes/2026-10-11-gyms.md)) | **구조 변경 + 데이터 이전** | 배포 전 확인 · 운영진 지정 |
 | 4 | ✅ 공동구매 우리 모임 / 전체 모집 · 짐 안 랭킹([기록](../fixes/2026-10-11-group-buy-scope.md)) | 칸 추가 + 예전 공동구매 이전(V3) | – |
-| 5 | `social_accounts` + Google 연결 이전 + 카카오 로그인 | 테이블 추가 | 카카오 디벨로퍼스 앱 등록 · 키 |
+| 5 | ✅ `social_accounts` + Google 연결 이전 + 카카오 로그인 준비([기록](../fixes/2026-10-11-social-accounts.md)) | 테이블 추가 | 카카오 디벨로퍼스 앱 등록 · 키 |
 | 6 | 화면: 짐 전환 · `/g/:slug` · 멤버/운영진 API · 브랜드 중립화 + (PR 4 에서 옮김) 소식 · 이벤트 · 프로그램 신청 · 자랑방 `gym_id` | 칸 추가 | 서비스 이름 결정 |
 | 7 | 실시간 라운지 짐별 방 + 광장 | 없음 | – |
 | 8 | 약관 · 개인정보 처리방침 · 신고 · 차단 | 테이블 추가 | 문구 검토 |
