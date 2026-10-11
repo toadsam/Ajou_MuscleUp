@@ -36,6 +36,7 @@ public class BragPostServiceImpl implements BragPostService {
     private final FriendService friendService;
     private final BragAccess bragAccess;
     private final GymScope gymScope;
+    private final BlockService blockService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -65,7 +66,7 @@ public class BragPostServiceImpl implements BragPostService {
                 .gym(gym)
                 .build());
 
-        return BragPostResponse.from(saved);
+        return BragPostResponse.from(saved, 0L, user.getId());
     }
 
     @Override
@@ -75,20 +76,22 @@ public class BragPostServiceImpl implements BragPostService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
         List<Long> friendIds = new ArrayList<>(friendService.findFriendIds(user.getId()));
         if (friendIds.isEmpty()) friendIds.add(-1L);
+        // 내가 차단했거나 나를 차단한 사람의 글은 어디에도 보이지 않는다
+        List<Long> hidden = blockService.hiddenUserIdsForQuery(user.getId());
         Page<BragPost> posts;
         if (gymSlug == null || gymSlug.isBlank()) {
             posts = bragPostRepository.findSquareFeed(
-                    user.getId(), friendIds, BragVisibility.PUBLIC, BragVisibility.FRIENDS, pageable);
+                    user.getId(), hidden, friendIds, BragVisibility.PUBLIC, BragVisibility.FRIENDS, pageable);
         } else {
             // 닫힌 짐은 멤버만(모르는 사람에겐 404). 열린 짐은 누구나 보되, "우리 모임만" 글은 멤버에게만
             WorkoutCrew gym = gymScope.visibleOrThrow(gymSlug, user, null);
             boolean member = isAdmin(user) || gymScope.isMember(gym, user);
-            posts = bragPostRepository.findGymFeed(gym.getId(), user.getId(), friendIds,
+            posts = bragPostRepository.findGymFeed(gym.getId(), user.getId(), hidden, friendIds,
                     BragVisibility.PUBLIC, member ? BragVisibility.GYM : BragVisibility.PUBLIC, BragVisibility.FRIENDS,
                     pageable);
         }
         Map<Long, Long> likeCounts = countLikesByPostIds(posts.getContent().stream().map(BragPost::getId).toList());
-        return posts.map(p -> BragPostResponse.from(p, likeCounts.getOrDefault(p.getId(), 0L)));
+        return posts.map(p -> BragPostResponse.from(p, likeCounts.getOrDefault(p.getId(), 0L), user.getId()));
     }
 
     @Override
@@ -100,7 +103,7 @@ public class BragPostServiceImpl implements BragPostService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
         bragAccess.requireView(post, viewer);
         long likes = bragLikeRepository.countByPostId(id);
-        return BragPostResponse.from(post, likes);
+        return BragPostResponse.from(post, likes, viewer.getId());
     }
 
     @Override
@@ -145,7 +148,7 @@ public class BragPostServiceImpl implements BragPostService {
 
         BragPost saved = bragPostRepository.save(post);
         long likes = bragLikeRepository.countByPostId(id);
-        return BragPostResponse.from(saved, likes);
+        return BragPostResponse.from(saved, likes, user.getId());
     }
 
     @Override

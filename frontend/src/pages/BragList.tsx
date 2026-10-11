@@ -15,8 +15,9 @@ type BragPost = {
   mediaUrls: string[];
   likeCount?: number;
   authorNickname?: string | null;
-  authorEmail?: string | null;
   authorId?: number | null;
+  /** 내가 쓴 글이면 true (서버가 알려 준다) */
+  mine?: boolean;
   createdAt?: string | null;
   visibility?: "PUBLIC" | "FRIENDS" | "GYM";
   /** 모임에 올린 글이면 그 모임. 광장 글이면 null */

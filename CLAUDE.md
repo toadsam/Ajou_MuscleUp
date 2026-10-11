@@ -91,6 +91,9 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 - **enum 칸에 새 값을 넣을 땐 DB 제약부터**: Hibernate 가 Postgres 에는 `CHECK (role IN (...))`, MySQL 에는 `enum(...)` 타입으로 만들어 둔다. 새 값만 코드에 넣으면 저장할 때 실패한다 → 같은 PR 에 제약을 푸는 이전 SQL(예: `V2__gyms_and_ajou_club.sql` 1번)을 넣는다.
 - **"짐(Gym)" = `WorkoutCrew`**: 동아리 · 운동 모임 · 헬스장 · PT 가 같은 테이블(`type`). 권한은 `GymPermissionService` 한 곳에서(역할 OWNER · STAFF · MEMBER). 운동 모임 화면(`/api/crew`)은 CREW 만, 짐 API 는 `/api/gyms`.
 - **서비스 워커(PWA) 시험은 Chrome 에서**: 앱 안 미리보기 브라우저는 새로고침마다 Cache Storage 를 비워 결과가 거짓으로 좋게 나온다. 빌드본은 `frontend-built`(4173)로 띄우고 Chrome 에서 `localhost:4173` 으로 본다. 화면 HTML 은 NetworkFirst(`vite.config.ts`) — `navigateFallback` 을 되살리지 않는다.
+- **사용자를 가리키는 새 테이블을 만들면 탈퇴에도 넣는다**: `AccountDeletionService` 가 개인 데이터를 일괄 삭제한다(사용자 행은 "탈퇴한 회원"으로 남김). 빠뜨리면 탈퇴 뒤에도 개인정보가 남거나 FK 때문에 탈퇴가 실패한다. `AccountSafetyTest` 에 확인을 추가한다.
+- **다른 사용자에게 가는 응답에 이메일을 싣지 않는다**: "내 것인가"는 서버가 `mine` 으로, 신고 · 차단 대상은 `authorId` 로(예전 자랑방 `authorEmail` 을 바꿨다). 처리방침에 "이메일은 보여 주지 않아요"라고 썼다.
+- **운영 사이트(musclehub.co.kr)를 짧은 간격으로 반복 조회하지 않는다**: 배포를 기다리며 10초마다 조회했더니 Vercel 보안 확인(봇 판정)에 걸려 같은 PC 의 브라우저까지 막혔다. 배포 확인은 백엔드 · 실시간 서버 주소로, 화면은 한두 번만.
 - **"오늘"은 한국 시간(KST)**: 백엔드는 `TimeConfig` 의 `Clock` 을 쓴다. `LocalDate.now()` 를 새로 쓰지 않는다.
 - **오류 문구와 알림**: `alert()` 대신 `lib/toast.ts`, 오류는 `lib/httpError.ts`(`httpError`/`friendlyError`)로 한국어 문장만 보여 준다.
 - **이름**: 운동 모임 · 공동구매 · 응원 으로 통일(코드 식별자는 그대로 둬도 됨).

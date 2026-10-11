@@ -22,11 +22,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class BragAccess {
     private final FriendService friendService;
     private final GymScope gymScope;
+    private final BlockService blockService;
 
     public boolean canView(BragPost post, User viewer) {
         if (viewer == null) return false;
         if (post.getUser() != null && Objects.equals(post.getUser().getId(), viewer.getId())) return true;
         if (RoleUtils.isAdmin(viewer)) return true;
+        // 내가 차단했거나 나를 차단한 사람의 글은 볼 수 없다
+        if (post.getUser() != null && blockService.blockedEitherWay(post.getUser().getId(), viewer.getId())) return false;
         BragVisibility visibility = post.getVisibility() == null ? BragVisibility.PUBLIC : post.getVisibility();
         return switch (visibility) {
             case PUBLIC -> true;
@@ -37,7 +40,9 @@ public class BragAccess {
 
     public void requireView(BragPost post, User viewer) {
         if (canView(post, viewer)) return;
-        String message = post.getVisibility() == BragVisibility.GYM ? "모임 멤버에게만 공개된 글이에요." : "친구 공개 게시글입니다.";
+        String message = post.getUser() != null && blockService.blockedEitherWay(post.getUser().getId(), viewer.getId())
+                ? "볼 수 없는 글이에요."
+                : post.getVisibility() == BragVisibility.GYM ? "모임 멤버에게만 공개된 글이에요." : "친구 공개 게시글입니다.";
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, message);
     }
 

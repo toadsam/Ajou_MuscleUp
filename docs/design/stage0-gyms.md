@@ -167,7 +167,7 @@ POST   /api/realtime/ticket { room: "square" | "gym:{id}" }
 | 5 | ✅ `social_accounts` + Google 연결 이전 + 카카오 로그인 준비([기록](../fixes/2026-10-11-social-accounts.md)) | 테이블 추가 | 카카오 디벨로퍼스 앱 등록 · 키 |
 | 6 | ✅ 6-1 이름 · `/g/:slug` · 모임 찾기([기록](../fixes/2026-10-11-brand-and-gym-ui.md)) / ✅ 6-2 헤더 짐 전환 · 소식 · 이벤트 · 프로그램 신청 · 자랑방 `gym_id`(V4, [기록](../fixes/2026-10-11-gym-scoped-content.md)) | 칸 추가 + 예전 소식 · 이벤트 · 신청 이전(V4) | 서비스 이름 결정 |
 | 7 | ✅ 실시간 라운지 짐별 방 + 광장([기록](../fixes/2026-10-11-gym-lounge-rooms.md)) | 없음 | – |
-| 8 | 약관 · 개인정보 처리방침 · 신고 · 차단 | 테이블 추가 | 문구 검토 |
+| 8 | ✅ 탈퇴 · 신고 · 차단([기록](../fixes/2026-10-12-withdraw-report-block.md)) / 약관 · 처리방침은 초안(`docs/legal/`) — 빈칸 채운 뒤 화면 · 가입 동의 | 테이블 추가(`content_reports` · `user_blocks` · `users.deleted_at`) | 문구 검토 · 빈칸 |
 
 ## 9. 정해야 할 것
 

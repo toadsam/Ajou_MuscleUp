@@ -2,6 +2,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { Link } from "react-router-dom";
 import AdminToast from "../components/admin/AdminToast";
+import AdminReportsPanel from "../components/admin/AdminReportsPanel";
 import { MediaPanel, StatCard, TopListCard, toChangingSet, type ActionCount, type Application, type AttendanceShareItem, type BragItem, type ProteinItem } from "../components/admin/AdminDashboardPanels";
 import { useAdminToast } from "../components/admin/useAdminToast";
 import { adminApi } from "../services/adminApi";
@@ -42,12 +43,13 @@ type ScheduledJob = {
   ids: number[];
   payload: { status?: Application["status"]; hidden?: boolean; reason: string };
 };
-type AdminTab = "overview" | "behavior" | "moderation" | "attendance" | "operations";
+type AdminTab = "overview" | "behavior" | "moderation" | "reports" | "attendance" | "operations";
 
 const ADMIN_TABS: Array<[AdminTab, string]> = [
   ["overview", "개요"],
   ["behavior", "행동 추적"],
   ["moderation", "검수/콘텐츠"],
+  ["reports", "신고"],
   ["attendance", "출석 기록"],
   ["operations", "운영 자동화"],
 ];
@@ -1207,6 +1209,8 @@ export default function Admin() {
           </MediaPanel>
         </div>
         )}
+
+        {activeTab === "reports" && <AdminReportsPanel onSuccess={showSuccess} onError={showError} />}
 
         {activeTab === "attendance" && (
         <>

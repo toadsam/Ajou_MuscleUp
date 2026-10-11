@@ -42,6 +42,14 @@ public class User {
     @Column(name = "email_placeholder")
     private Boolean emailPlaceholder;
 
+    /** 탈퇴한 시각. 탈퇴하면 개인정보를 지우고 이 행은 "탈퇴한 회원"으로 남는다(AccountDeletionService) */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
     public boolean hasRealEmail() {
         return !Boolean.TRUE.equals(emailPlaceholder);
     }
