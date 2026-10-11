@@ -170,7 +170,49 @@ public class CharacterServiceImpl implements CharacterService {
 
     private CharacterProfileResponse toProfileResponse(CharacterProfile profile, UserBodyStats stats) {
         GrowthParamsResponse growthParams = growthCalculator.calculate(stats);
-        return CharacterProfileResponse.from(profile, growthParams);
+        return CharacterProfileResponse.from(profile, growthParams, buildExpInfo(profile, stats));
+    }
+
+    /**
+     * 화면에 "다음 레벨까지"를 보여 주기 위한 경험치 정보. 레벨을 정하는 evaluateStats 를 그대로 다시 돌려
+     * 이번 레벨 안에서 몇 점까지 왔는지를 0..99 로 환산한다(규칙은 CharacterProfileResponse 주석 참고).
+     */
+    private CharacterProfileResponse.ExpInfo buildExpInfo(CharacterProfile profile, UserBodyStats stats) {
+        double attendanceBonus = calculateAttendanceBonus(profile.getAttendancePoints());
+        if (stats == null) {
+            return new CharacterProfileResponse.ExpInfo(
+                    roundTwoDecimals(attendanceBonus), ATTENDANCE_BONUS_MAX, false, null, null, null, null);
+        }
+        CharacterEvaluationResponse evaluation;
+        try {
+            evaluation = evaluateStats(stats, attendanceBonus);
+        } catch (ResponseStatusException invalidStats) {
+            // 몸무게가 범위를 벗어나는 등 평가할 수 없는 값이면 경험치는 비워 둔다.
+            return new CharacterProfileResponse.ExpInfo(
+                    roundTwoDecimals(attendanceBonus), ATTENDANCE_BONUS_MAX, true, null, null, null, null);
+        }
+        int level = evaluation.getLevel();
+        if (level >= 100) {
+            return new CharacterProfileResponse.ExpInfo(
+                    roundTwoDecimals(attendanceBonus), ATTENDANCE_BONUS_MAX, true, null, null, 1.0, null);
+        }
+        // totalScore 는 소수 둘째 자리 반올림 값이라 경계에서 1.0 이 될 수 있어 0.99 로 막는다.
+        double withinLevel = clamp(evaluation.getTotalScore() - (level - 1), 0.0, 0.99);
+        int exp = (int) Math.floor(withinLevel * 100.0);
+        double scoreToNext = 1.0 - withinLevel;
+        double bonusRoom = ATTENDANCE_BONUS_MAX - attendanceBonus;
+        Integer pointsToNext = scoreToNext <= bonusRoom + 1e-9
+                ? (int) Math.ceil(scoreToNext / ATTENDANCE_POINT_SCORE - 1e-9)
+                : null;
+        return new CharacterProfileResponse.ExpInfo(
+                roundTwoDecimals(attendanceBonus),
+                ATTENDANCE_BONUS_MAX,
+                true,
+                exp,
+                100 - exp,
+                roundTwoDecimals(exp / 100.0),
+                pointsToNext
+        );
     }
 
     private void ensureIdentity(CharacterProfile profile, UserBodyStats stats) {
@@ -426,9 +468,13 @@ public class CharacterServiceImpl implements CharacterService {
                 .build();
     }
 
+    // 출석 포인트 1점 = 레벨 점수 0.4, 최대 8점(= 20포인트). 값은 예전 그대로.
+    private static final double ATTENDANCE_POINT_SCORE = 0.4;
+    private static final double ATTENDANCE_BONUS_MAX = 8.0;
+
     private double calculateAttendanceBonus(int attendancePoints) {
         // Attendance helps, but should not override physical metrics.
-        return clamp(attendancePoints * 0.4, 0.0, 8.0);
+        return clamp(attendancePoints * ATTENDANCE_POINT_SCORE, 0.0, ATTENDANCE_BONUS_MAX);
     }
 
     private User getUserOrThrow(String email) {

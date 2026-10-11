@@ -6,6 +6,8 @@ import java.util.List;
 public interface FriendService {
     FriendRequestResponse sendRequest(String email, FriendRequestCreateRequest request);
 
+    List<FriendSearchResultResponse> searchByNickname(String email, String query);
+
     List<FriendRequestResponse> listIncoming(String email);
 
     List<FriendRequestResponse> listOutgoing(String email);

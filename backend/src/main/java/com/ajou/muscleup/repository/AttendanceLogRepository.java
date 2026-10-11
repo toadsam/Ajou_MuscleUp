@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -86,4 +87,39 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
             @Param("toDate") LocalDate toDate,
             Pageable pageable
     );
+
+    // 연속 출석 계산용: 기간 안의 (날짜, 운동 여부)만 한 번에 읽는다. 하루마다 한 번씩 조회하던 것을 대신한다.
+    @Query("""
+            select l.date, l.didWorkout
+            from AttendanceLog l
+            where l.user.id = :userId
+              and l.date between :start and :end
+            """)
+    List<Object[]> findDateFlagsByUserIdAndDateRange(
+            @Param("userId") Long userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
+
+    // 주간 연속 출석 랭킹용: 기간 안의 운동한 날을 회원 닉네임과 함께 한 번에 읽는다(회원마다 조회하던 N+1 대체).
+    @Query("""
+            select u.id, u.nickname, l.date
+            from AttendanceLog l
+            join l.user u
+            where l.didWorkout = true
+              and l.date between :start and :end
+            """)
+    List<Object[]> findWorkoutDaysWithNicknameBetween(
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
+
+    // 응원·신고 수는 읽고-더하고-저장하면 동시 요청에서 숫자가 빠진다. DB 에서 한 번에 +1 한다.
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update AttendanceLog l set l.cheerCount = l.cheerCount + 1 where l.id = :id")
+    int incrementCheerCount(@Param("id") Long id);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update AttendanceLog l set l.reportCount = l.reportCount + 1 where l.id = :id")
+    int incrementReportCount(@Param("id") Long id);
 }

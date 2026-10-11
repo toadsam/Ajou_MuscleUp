@@ -1,5 +1,8 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { friendlyError, httpError } from "../lib/httpError";
+import { REALTIME_URL, realtimeAuth, realtimeConnectError } from "../lib/realtime";
+import { toast } from "../lib/toast";
 import PlayerAvatar from "../components/PlayerAvatar";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { GrowthParams } from "../components/avatar/types";
@@ -30,7 +33,8 @@ type CharacterResponse = {
 
 type PlayerState = {
   socketId: string;
-  userId?: string;
+  /** 공개 id(이메일·DB id 아님). 실시간 서버가 입장권에서 만든다 */
+  id?: string;
   nickname: string;
   level: number;
   tier: CharacterTier;
@@ -151,7 +155,6 @@ type MovementConfig = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
-const REALTIME_URL = import.meta.env.VITE_REALTIME_URL ?? "http://localhost:4001";
 
 const DEFAULT_MAP = { width: 2000, height: 1200 };
 const MOVE_EMIT_MS = 80;
@@ -313,6 +316,8 @@ export default function Lounge() {
   const [followingSocketId, setFollowingSocketId] = useState<string | null>(null);
   const [partyInvites, setPartyInvites] = useState<Array<{ fromSocketId: string; nickname: string; type: "follow" | "teleport"; ts: number }>>([]);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  /** 게임 화면 아래 보조 조작 묶음. null = 기본값(데스크톱 펼침, 모바일 접힘) */
+  const [toolsOpen, setToolsOpen] = useState<boolean | null>(null);
   const [voicePtT, setVoicePtT] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "ready" | "recording" | "error">("idle");
   const [movementQuality, setMovementQuality] = useState<"high" | "balanced" | "performance">("balanced");
@@ -497,6 +502,8 @@ export default function Lounge() {
 
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
+    // 보이스를 켠 사람에게만 서버가 음성을 보낸다
+    socketRef.current?.emit("voice:listen", { enabled: voiceEnabled });
   }, [voiceEnabled]);
 
   useEffect(() => {
@@ -514,10 +521,7 @@ export default function Lounge() {
           window.location.href = "/login";
           return;
         }
-        if (!loungeRes.ok) {
-          const text = await loungeRes.text().catch(() => "");
-          throw new Error(text || "Failed to load character data.");
-        }
+        if (!loungeRes.ok) throw await httpError(loungeRes, "캐릭터 정보를 불러오지 못했어요.");
         const loungePayload = (await loungeRes.json()) as LoungeProfileResponse;
         setCharacter(loungePayload.character);
         setRecentAttendanceCount(loungePayload.recentAttendanceCount ?? 0);
@@ -535,8 +539,8 @@ export default function Lounge() {
           const statsPayload = await statsRes.json().catch(() => null);
           setMbti(statsPayload?.mbti ?? null);
         }
-      } catch (err: any) {
-        setError(err?.message ?? "Failed to load character data.");
+      } catch (err) {
+        setError(friendlyError(err, "캐릭터 정보를 불러오지 못했어요."));
       } finally {
         setLoading(false);
       }
@@ -545,16 +549,22 @@ export default function Lounge() {
 
   useEffect(() => {
     if (!user || !character) return;
+    if (!REALTIME_URL) {
+      setError("라운지 실시간 기능을 지금은 쓸 수 없어요. 잠시 뒤에 다시 들어와 주세요.");
+      return;
+    }
+    // 입장권(auth)에 담긴 이름·레벨·티어·아바타를 서버가 쓴다. 아래 join 의 같은 값은 개발용 손님 입장에서만 쓰인다.
     const socket = io(REALTIME_URL, {
       transports: ["websocket"],
+      auth: realtimeAuth,
     });
     socketRef.current = socket;
 
     socket.on("connect", () => {
       setConnected(true);
+      setError(null);
       setMySocketId(socket.id ?? null);
       socket.emit("lounge:join", {
-        userId: user.email,
         nickname: user.nickname,
         level: character.level,
         tier: character.tier,
@@ -569,6 +579,11 @@ export default function Lounge() {
         activeEventTitle: activeEventSummary?.title,
         activeEventProgress: activeEventSummary?.progress,
       });
+      socket.emit("voice:listen", { enabled: voiceEnabledRef.current });
+    });
+
+    socket.on("connect_error", (err) => {
+      setError(realtimeConnectError(err));
     });
 
     socket.on("disconnect", () => {
@@ -584,8 +599,7 @@ export default function Lounge() {
       }
     });
 
-    socket.on("lounge:players", (payload: LoungePlayersPayload) => {
-      const nextPlayers = payload?.players ?? [];
+    const applyPlayers = (nextPlayers: PlayerState[]) => {
       queuedPlayersRef.current = nextPlayers;
       if (playersFlushTimerRef.current === null) {
         playersFlushTimerRef.current = window.setTimeout(() => {
@@ -655,6 +669,25 @@ export default function Lounge() {
           });
         }
       }
+    };
+
+    // 전체 목록은 입장·퇴장 때만 온다
+    socket.on("lounge:players", (payload: LoungePlayersPayload) => {
+      applyPlayers(payload?.players ?? []);
+    });
+
+    // 위치는 움직인 사람만 100ms 마다 묶어서 온다
+    socket.on("lounge:moves", (payload: { moves?: { socketId: string; x: number; y: number }[] }) => {
+      const moves = payload?.moves;
+      if (!Array.isArray(moves) || moves.length === 0) return;
+      const byId = new Map(moves.map((move) => [move.socketId, move]));
+      const base = queuedPlayersRef.current ?? playersRef.current;
+      applyPlayers(
+        base.map((player) => {
+          const move = byId.get(player.socketId);
+          return move && Number.isFinite(move.x) && Number.isFinite(move.y) ? { ...player, x: move.x, y: move.y } : player;
+        })
+      );
     });
 
     socket.on("chat:message", (payload: ChatMessage) => {
@@ -803,8 +836,8 @@ export default function Lounge() {
       }
     });
 
-    socket.on("lounge:error", (payload) => {
-      setError(payload?.message ?? "Failed to connect to lounge.");
+    socket.on("lounge:error", () => {
+      setError("라운지에 들어가지 못했어요. 새로고침해 주세요.");
     });
 
     return () => {
@@ -1265,6 +1298,36 @@ export default function Lounge() {
     }, 1500);
   };
 
+  const reportedChatRef = useRef<Set<string>>(new Set());
+  /** 채팅 신고: 문의(운영진이 관리자 화면에서 확인)로 접수한다 */
+  const reportChatMessage = async (nickname: string, message: string, ts: string) => {
+    const key = `${nickname}|${ts}|${message}`;
+    if (reportedChatRef.current.has(key)) {
+      toast("이미 신고한 메시지예요.");
+      return;
+    }
+    if (!window.confirm(`${nickname}님의 메시지를 운영진에게 신고할까요?`)) return;
+    try {
+      const url = API_BASE ? `${API_BASE}/api/support/inquiries` : "/api/support/inquiries";
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: user?.nickname || "익명",
+          email: user?.email || null,
+          message: `라운지 채팅 신고\n대상: ${nickname}\n메시지: ${message.slice(0, 600)}\n보낸 시각: ${ts}`,
+          page: "/lounge",
+        }),
+      });
+      if (!res.ok) throw await httpError(res, "신고를 보내지 못했어요.");
+      reportedChatRef.current.add(key);
+      toast("신고를 접수했어요. 운영진이 확인할게요.", "success");
+    } catch (err) {
+      toast(friendlyError(err, "신고를 보내지 못했어요. 잠시 뒤에 다시 시도해 주세요."), "error");
+    }
+  };
+
   const toggleMute = (nickname: string) => {
     setMutedUsers((prev) => ({
       ...prev,
@@ -1290,6 +1353,9 @@ export default function Lounge() {
 
   const EMOTES = ["wave", "cheer", "gg", "clap"] as const;
   const STICKERS = ["🔥", "💪", "👏", "🚀"] as const;
+  // 서버로 보내는 값(id)은 그대로 두고, 화면에는 한국어 글자만 보여 준다(이모지 아이콘 금지)
+  const EMOTE_LABELS: Record<string, string> = { wave: "손 흔들기", cheer: "응원", gg: "수고", clap: "박수" };
+  const STICKER_LABELS: Record<string, string> = { "🔥": "불타요", "💪": "근육", "👏": "짝짝", "🚀": "가즈아" };
 
   const sendEmote = (emote: string) => {
     socketRef.current?.emit("social:emote", { emote });
@@ -2027,6 +2093,7 @@ export default function Lounge() {
   const nearEquipmentId = interactFocus === "equipment" ? nearestEquipment?.id ?? null : null;
   const nearNpcId = interactFocus === "npc" ? nearestNpc?.id ?? null : null;
   const hudDebugOpen = isMobile ? showMobileHudDetails : showHudDebug;
+  const toolsOpenEffective = toolsOpen ?? !isMobile;
   const pingTone = pingMs === null ? "" : pingMs < 120 ? "hud-ping-ok" : pingMs < 250 ? "hud-ping-mid" : "hud-ping-bad";
   const sidebarTabIndex = Math.max(0, ["players", "profile", "equipment", "chat"].indexOf(sidebarTab));
 
@@ -2041,17 +2108,17 @@ export default function Lounge() {
     >
       <div
         ref={loungeViewportShellRef}
-        className={`${isImmersiveFullscreen ? "w-screen h-screen max-w-none space-y-0" : "max-w-6xl mx-auto space-y-8"} lounge-shell`}
+        className={`${isImmersiveFullscreen ? "w-screen h-screen max-w-none space-y-0" : "max-w-6xl mx-auto space-y-4"} lounge-shell`}
       >
         {!isImmersiveFullscreen && (
-          <header className="flex flex-col gap-3">
+          <header className="flex flex-col gap-1 sm:gap-2">
             <p className="dg-chip w-fit bg-plate-red text-xs text-white">
               라운지
             </p>
-            <h1 className="text-3xl md:text-4xl">
+            <h1 className="text-2xl md:text-3xl">
               2D 운동 라운지
             </h1>
-            <p className="text-gray-300">
+            <p className="hidden text-gray-300 sm:block">
               실시간으로 이동하고 대화할 수 있는 소셜 피트니스 공간입니다.
             </p>
           </header>
@@ -2063,7 +2130,7 @@ export default function Lounge() {
             라운지 연결을 준비 중입니다...
           </div>
         )}
-        {error && <div className="dg-well border-l-4 border-l-plate-red px-3 py-2 text-rose-300">{error}</div>}
+        {error && <div role="alert" className="dg-well border-l-4 border-l-plate-red px-3 py-2 text-chalk">{error}</div>}
 
         <div className={`grid ${isImmersiveFullscreen ? "grid-cols-1 gap-0 h-full" : "lg:grid-cols-[1.4fr,0.6fr] gap-6"} lounge-main-grid`}>
           <div className="space-y-4">
@@ -2171,101 +2238,8 @@ export default function Lounge() {
               </div>
             )}
 
-            {!isImmersiveFullscreen && !isMobile && (
-            <div className="dg-steel space-y-3 px-5 py-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="font-display text-sm text-gray-300">소셜</span>
-                {EMOTES.map((emote) => (
-                  <button
-                    key={emote}
-                    onClick={() => sendEmote(emote)}
-                    className="lounge-ctl font-num text-[13px] uppercase"
-                  >
-                    {emote}
-                  </button>
-                ))}
-                {STICKERS.map((sticker) => (
-                  <button
-                    key={sticker}
-                    onClick={() => sendSticker(sticker)}
-                    className="lounge-ctl px-2 py-0.5 text-sm"
-                  >
-                    {sticker}
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <button
-                  onClick={() => setVoiceEnabled((prev) => !prev)}
-                  className={`lounge-ctl ${voiceEnabled ? "lounge-ctl-on" : ""}`}
-                >
-                  {voiceEnabled ? "보이스 켜짐" : "보이스 꺼짐"}
-                </button>
-                <button
-                  onMouseDown={() => setVoicePtT(true)}
-                  onMouseUp={() => setVoicePtT(false)}
-                  onMouseLeave={() => setVoicePtT(false)}
-                  onTouchStart={() => setVoicePtT(true)}
-                  onTouchEnd={() => setVoicePtT(false)}
-                  disabled={!voiceEnabled}
-                  className={`lounge-ctl ${voicePtT && voiceEnabled ? "lounge-ctl-danger" : ""}`}
-                >
-                  누르고 말하기
-                </button>
-                <span className="text-gray-400">
-                  보이스:{" "}
-                  {{
-                    idle: "대기",
-                    ready: "준비",
-                    recording: "녹음 중",
-                    error: "오류",
-                  }[voiceStatus]}
-                </span>
-                <label className="lounge-ctl text-gray-300">
-                  품질
-                  <select
-                    value={movementQuality}
-                    onChange={(event) => setMovementQuality(event.target.value as "high" | "balanced" | "performance")}
-                    className="ml-1 px-1 py-0.5 text-[11px]"
-                  >
-                    <option value="high">높음</option>
-                    <option value="balanced">균형</option>
-                    <option value="performance">성능</option>
-                  </select>
-                </label>
-                {followingSocketId && (
-                  <button
-                    onClick={() => setFollowingSocketId(null)}
-                    className="lounge-ctl lounge-ctl-warn"
-                  >
-                    따라가기 중지
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <button
-                  onClick={() =>
-                    setMiniGame({
-                      active: true,
-                      startedAt: Date.now(),
-                      durationMs: 75_000,
-                      collectedIds: {},
-                      finishedMs: null,
-                    })
-                  }
-                  className="dg-btn dg-btn-primary min-h-0 px-3 py-1 text-xs"
-                >
-                  타임어택 시작
-                </button>
-                <span className="font-num text-[13px] text-gray-300">
-                  {miniGame.active
-                    ? `남은 시간 ${Math.ceil(miniTimeLeftMs / 1000)}초 | 코인 ${Object.keys(miniGame.collectedIds).length}/${miniGameCoins.length}`
-                    : miniGame.finishedMs
-                      ? `최근 기록 ${(miniGame.finishedMs / 1000).toFixed(1)}초`
-                      : "미니게임 대기 중"}
-                </span>
-              </div>
-              {partyInvites.length > 0 && (
+            {!isImmersiveFullscreen && partyInvites.length > 0 && (
+              <div className="dg-steel space-y-1 px-3 py-2">
                 <div className="space-y-1">
                   {partyInvites.slice(-2).map((invite) => (
                     <div key={`${invite.type}-${invite.fromSocketId}-${invite.ts}`} className="lounge-row dg-rise flex items-center justify-between border-l-4 border-l-plate-yellow px-2 py-1.5 text-xs">
@@ -2312,8 +2286,7 @@ export default function Lounge() {
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
             )}
 
             <div className={`${isImmersiveFullscreen ? "rounded-none border-0 bg-transparent p-0 shadow-none h-full" : "dg-steel p-4"}`}>
@@ -2321,7 +2294,7 @@ export default function Lounge() {
                 ref={(element) => {
                   viewportRef.current = element;
                 }}
-                className={`relative w-full overflow-hidden ${isImmersiveFullscreen ? "h-[100dvh] rounded-none border-0" : isMobile ? "h-[68dvh] min-h-[360px] rounded-md border-[3px] border-black" : "h-[78vh] rounded-md border-[3px] border-black"} lounge-viewport`}
+                className={`relative w-full overflow-hidden ${isImmersiveFullscreen ? "h-[100dvh] rounded-none border-0" : isMobile ? "h-[68dvh] min-h-[360px] rounded-md border-[3px] border-black" : "h-[min(78vh,calc(100dvh_-_19rem))] min-h-[420px] rounded-md border-[3px] border-black"} lounge-viewport`}
                 style={mapBackground}
                 onWheel={(event) => {
                   if (!event.ctrlKey) return;
@@ -2825,10 +2798,10 @@ export default function Lounge() {
                           </div>
                         )}
                         {emoteMap[player.socketId] && (
-                          <div className="emote-bubble">{emoteMap[player.socketId].emote}</div>
+                          <div className="emote-bubble">{EMOTE_LABELS[emoteMap[player.socketId].emote] ?? ""}</div>
                         )}
                         {stickerMap[player.socketId] && (
-                          <div className="sticker-bubble">{stickerMap[player.socketId].sticker}</div>
+                          <div className="sticker-bubble">{STICKER_LABELS[stickerMap[player.socketId].sticker] ?? ""}</div>
                         )}
                         {showProximity && (
                           // 이름·레벨·티어는 아바타 아래 이름표(PlayerAvatar)에 이미 있으므로 여기서는 단계만 보여 준다.
@@ -2884,7 +2857,7 @@ export default function Lounge() {
                     className="minimap-inner"
                     role="button"
                     tabIndex={0}
-                    aria-label="Mini map navigation"
+                    aria-label="미니맵: 누른 곳으로 이동"
                     onClick={(event) => {
                       const mode = event.shiftKey || event.altKey ? "ping" : "move";
                       handleMinimapPoint(event.clientX, event.clientY, mode);
@@ -3088,6 +3061,117 @@ export default function Lounge() {
                 )}
               </div>
             </div>
+
+            {!isImmersiveFullscreen && (
+              <div className="dg-steel lounge-tools">
+                <button
+                  type="button"
+                  onClick={() => setToolsOpen((prev) => !(prev ?? !isMobile))}
+                  aria-expanded={toolsOpenEffective}
+                  aria-controls="lounge-tools-body"
+                  className="lounge-tools-toggle"
+                >
+                  <span className="font-display text-sm">소셜 · 보이스 · 미니게임</span>
+                  <span className="text-xs text-steel-400">{toolsOpenEffective ? "접기" : "펼치기"}</span>
+                </button>
+                {toolsOpenEffective && (
+                  <div id="lounge-tools-body" className="space-y-3 px-4 pb-4 pt-1 sm:px-5">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="font-display text-sm text-gray-300">소셜</span>
+                      {EMOTES.map((emote) => (
+                        <button
+                          key={emote}
+                          onClick={() => sendEmote(emote)}
+                          className="lounge-ctl text-[13px]"
+                        >
+                          {EMOTE_LABELS[emote]}
+                        </button>
+                      ))}
+                      {STICKERS.map((sticker) => (
+                        <button
+                          key={sticker}
+                          onClick={() => sendSticker(sticker)}
+                          className="lounge-ctl text-[13px]"
+                        >
+                          {STICKER_LABELS[sticker]}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <button
+                        onClick={() => setVoiceEnabled((prev) => !prev)}
+                        className={`lounge-ctl ${voiceEnabled ? "lounge-ctl-on" : ""}`}
+                      >
+                        {voiceEnabled ? "보이스 켜짐" : "보이스 꺼짐"}
+                      </button>
+                      <button
+                        onMouseDown={() => setVoicePtT(true)}
+                        onMouseUp={() => setVoicePtT(false)}
+                        onMouseLeave={() => setVoicePtT(false)}
+                        onTouchStart={() => setVoicePtT(true)}
+                        onTouchEnd={() => setVoicePtT(false)}
+                        disabled={!voiceEnabled}
+                        className={`lounge-ctl ${voicePtT && voiceEnabled ? "lounge-ctl-danger" : ""}`}
+                      >
+                        누르고 말하기
+                      </button>
+                      <span className="text-gray-400">
+                        보이스:{" "}
+                        {{
+                          idle: "대기",
+                          ready: "준비",
+                          recording: "녹음 중",
+                          error: "오류",
+                        }[voiceStatus]}
+                      </span>
+                      <label className="lounge-ctl text-gray-300">
+                        품질
+                        <select
+                          value={movementQuality}
+                          onChange={(event) => setMovementQuality(event.target.value as "high" | "balanced" | "performance")}
+                          className="ml-1 px-1 py-0.5 text-[11px]"
+                        >
+                          <option value="high">높음</option>
+                          <option value="balanced">균형</option>
+                          <option value="performance">성능</option>
+                        </select>
+                      </label>
+                      {followingSocketId && (
+                        <button
+                          onClick={() => setFollowingSocketId(null)}
+                          className="lounge-ctl lounge-ctl-warn"
+                        >
+                          따라가기 중지
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <button
+                        onClick={() =>
+                          setMiniGame({
+                            active: true,
+                            startedAt: Date.now(),
+                            durationMs: 75_000,
+                            collectedIds: {},
+                            finishedMs: null,
+                          })
+                        }
+                        className="dg-btn dg-btn-primary min-h-0 px-3 py-1 text-xs"
+                      >
+                        타임어택 시작
+                      </button>
+                      <span className="font-num text-[13px] text-gray-300">
+                        {miniGame.active
+                          ? `남은 시간 ${Math.ceil(miniTimeLeftMs / 1000)}초 | 코인 ${Object.keys(miniGame.collectedIds).length}/${miniGameCoins.length}`
+                          : miniGame.finishedMs
+                            ? `최근 기록 ${(miniGame.finishedMs / 1000).toFixed(1)}초`
+                            : "미니게임 대기 중"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {!isImmersiveFullscreen && <div className="space-y-4">
@@ -3301,7 +3385,7 @@ export default function Lounge() {
                             {mutedUsers[msg.nickname] ? "음소거 해제" : "음소거"}
                           </button>
                           <button
-                            onClick={() => alert(`신고가 접수되었습니다: ${msg.nickname}`)}
+                            onClick={() => void reportChatMessage(msg.nickname, msg.message, msg.ts)}
                             className="rounded px-1 hover:bg-steel-700 hover:text-chalk active:translate-y-px"
                           >
                             신고

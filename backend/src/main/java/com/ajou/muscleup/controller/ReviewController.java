@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
+    private static final int MAX_PAGE_SIZE = 50;
     private final ReviewService reviewService;
 
     @PostMapping
@@ -28,11 +30,14 @@ public class ReviewController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ReviewResponse>> list(@RequestParam("proteinId") Long proteinId,
+    public ResponseEntity<Page<ReviewResponse>> list(@AuthenticationPrincipal String email,
+                                                     @RequestParam(value = "proteinId", required = false) Long proteinId,
                                                      @RequestParam(value = "page", defaultValue = "0") int page,
                                                      @RequestParam(value = "size", defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<ReviewResponse> result = reviewService.listByProtein(proteinId, pageable);
+        // 한 번에 너무 많이 달라는 요청을 막는다(최대 50개), 최신 후기부터
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(Math.max(1, size), MAX_PAGE_SIZE),
+                Sort.by(Sort.Direction.DESC, "id"));
+        Page<ReviewResponse> result = reviewService.listByProtein(proteinId, pageable, email);
         return ResponseEntity.ok(result);
     }
 

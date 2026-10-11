@@ -52,8 +52,7 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   color: var(--dg-yellow);
 }
 
@@ -574,10 +573,16 @@
   margin-top: 0.25rem;
 }
 
-.log-memo.dg-whiteboard {
+.log-memo.dg-whiteboard,
+.today-done-memo.dg-whiteboard {
   padding: 0.85rem 1rem;
   font-size: 0.95rem;
   border-width: 7px;
+}
+
+/* 오늘 이미 출석했을 때 맨 위에 보이는 요약 카드 */
+.today-done-card {
+  gap: 1rem;
 }
 
 /* ---------- 오늘의 운동 체크 ---------- */

@@ -10,6 +10,7 @@ import com.ajou.muscleup.dto.crew.CrewJoinRequestResponse;
 import com.ajou.muscleup.dto.crew.CrewJoinResultResponse;
 import com.ajou.muscleup.service.CrewService;
 import jakarta.validation.Valid;
+import java.time.Clock;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -27,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class CrewController {
     private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
     private final CrewService crewService;
+    private final Clock clock; // 한국 시간 기준(config/TimeConfig)
 
     @PostMapping("/groups")
     public ResponseEntity<CrewDetailResponse> create(
@@ -164,7 +166,7 @@ public class CrewController {
     }
 
     private YearMonth parseMonthOrDefault(String month) {
-        if (month == null || month.isBlank()) return YearMonth.now();
+        if (month == null || month.isBlank()) return YearMonth.now(clock);
         try {
             return YearMonth.parse(month, MONTH_FORMAT);
         } catch (DateTimeParseException ex) {

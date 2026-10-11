@@ -1,6 +1,6 @@
 package com.ajou.muscleup.controller;
 
-import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
+import com.ajou.muscleup.dto.attendance.AttendancePublicShareResponse;
 import com.ajou.muscleup.service.AttendanceService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class AttendanceSharePageController {
 
     @GetMapping(value = "/share/attendance/{slug}", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> sharePage(@PathVariable String slug) {
-        AttendanceShareResponse data = attendanceService.getSharedBySlug(slug);
+        AttendancePublicShareResponse data = attendanceService.getSharedBySlug(slug);
 
         String backendOrigin = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         String canonicalUrl = backendOrigin + "/share/attendance/" + slug;
@@ -88,12 +88,10 @@ public class AttendanceSharePageController {
         return ResponseEntity.ok(html);
     }
 
-    private String buildDescription(AttendanceShareResponse data) {
+    private String buildDescription(AttendancePublicShareResponse data) {
         String base = data.isDidWorkout() ? "Workout completed today" : "Rest day logged today";
+        // 공개 문구(shareComment)만 쓴다. 예전에는 비어 있으면 본인용 메모(memo)를 링크 미리보기에 그대로 실었다.
         String source = data.getShareComment();
-        if (source == null || source.isBlank()) {
-            source = data.getMemo();
-        }
         if (source == null || source.isBlank()) {
             return base + " on MuscleUp.";
         }

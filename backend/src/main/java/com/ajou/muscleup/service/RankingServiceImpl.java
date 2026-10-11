@@ -3,6 +3,7 @@ package com.ajou.muscleup.service;
 import com.ajou.muscleup.dto.character.CharacterRankingListResponse;
 import com.ajou.muscleup.dto.character.CharacterRankingResponse;
 import com.ajou.muscleup.entity.CharacterProfile;
+import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.UserBodyStats;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.UserBodyStatsRepository;
@@ -70,6 +71,8 @@ public class RankingServiceImpl implements RankingService {
                         .gender(profile.getGender())
                         .isResting(profile.isResting())
                         .threeLiftTotal(null)
+                        // 레벨도 본인이 입력한 키·몸무게·3대 중량으로 계산된다(검증 없음).
+                        .selfReported(true)
                         .updatedAt(profile.getUpdatedAt())
                         .build())
                 .toList();
@@ -83,6 +86,7 @@ public class RankingServiceImpl implements RankingService {
         for (Object[] row : rows) {
             CharacterProfile profile = (CharacterProfile) row[0];
             UserBodyStats stats = (UserBodyStats) row[1];
+            User user = (User) row[2];
             Double total = null;
             if (stats != null) {
                 double bench = stats.getBenchKg() == null ? 0.0 : stats.getBenchKg();
@@ -91,7 +95,7 @@ public class RankingServiceImpl implements RankingService {
                 total = bench + squat + deadlift;
             }
             result.add(CharacterRankingResponse.builder()
-                    .nickname(profile.getUser().getNickname())
+                    .nickname(user.getNickname())
                     .level(profile.getLevel())
                     .tier(profile.getTier())
                     .evolutionStage(profile.getEvolutionStage())
@@ -100,6 +104,8 @@ public class RankingServiceImpl implements RankingService {
                     .gender(profile.getGender())
                     .isResting(profile.isResting())
                     .threeLiftTotal(total)
+                    // 3대 중량은 본인 입력값이다(인증 기록 아님). 화면에서 "본인 입력" 표시용.
+                    .selfReported(true)
                     .updatedAt(profile.getUpdatedAt())
                     .build());
         }

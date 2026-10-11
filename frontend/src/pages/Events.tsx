@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { eventApi } from "../services/eventApi";
+import { eventApi, eventStatusLabel } from "../services/eventApi";
 import type { EventItem, EventStatus } from "../types/event";
 
 const PAGE_SIZE = 10;
@@ -22,11 +22,8 @@ const emptySection = (): SectionState => ({
   error: "",
 });
 
-const toLabel = (status: EventStatus) => {
-  if (status === "ACTIVE") return "진행중";
-  if (status === "SCHEDULED") return "예정";
-  return "종료";
-};
+// 상태 이름은 services/eventApi.ts 의 eventStatusLabel 하나로 맞춘다(상세 화면과 같은 말).
+const toLabel = (status: EventStatus) => eventStatusLabel(status);
 
 function formatPeriod(startAt: string, endAt: string) {
   const start = new Date(startAt).toLocaleDateString("ko-KR");
@@ -93,9 +90,9 @@ export default function Events() {
     <section className="min-h-screen pt-28 pb-24 text-white">
       <div className="mx-auto max-w-6xl px-6 lg:px-10 space-y-10">
         <header>
-          <p className="font-num text-sm font-bold text-plate-yellow">Event</p>
+          <p className="text-sm font-bold text-plate-yellow">동아리 소식</p>
           <h1 className="text-4xl">이벤트</h1>
-          <p className="mt-2 text-steel-300">진행중/예정/종료 이벤트를 확인해보세요.</p>
+          <p className="mt-2 text-steel-300">진행 중·예정·종료된 이벤트를 확인해 보세요.</p>
         </header>
 
         {SECTIONS.map((status) => {
@@ -120,7 +117,7 @@ export default function Events() {
                     <i />
                     <i />
                   </span>
-                  로딩 중...
+                  불러오는 중...
                 </p>
               )}
               {!section.loading && section.error && (
@@ -137,7 +134,9 @@ export default function Events() {
                     className="dg-steel dg-lift dg-rise overflow-hidden"
                     style={{ animationDelay: `${Math.min(idx, 10) * 50}ms` }}
                   >
-                    <img src={event.thumbnailUrl} alt={event.title} className="h-44 w-full border-b-[3px] border-black object-cover" />
+                    {event.thumbnailUrl && (
+                      <img src={event.thumbnailUrl} alt={event.title} className="h-44 w-full border-b-[3px] border-black object-cover" />
+                    )}
                     <div className="space-y-3 p-4">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="line-clamp-1 text-lg font-bold">{event.title}</h3>

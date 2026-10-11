@@ -42,9 +42,9 @@ const seedFromCrew = (crew: CrewListItem): CrewSeed => {
 };
 
 const crewEnergy = (memberCount: number) => {
-  if (memberCount >= 20) return { label: "LEGEND", className: "bg-plate-yellow text-black" };
-  if (memberCount >= 10) return { label: "HYPE", className: "bg-plate-red text-white" };
-  return { label: "START", className: "bg-plate-green text-white" };
+  if (memberCount >= 20) return { label: "큰 모임", className: "bg-plate-yellow text-black" };
+  if (memberCount >= 10) return { label: "활발", className: "bg-plate-red text-white" };
+  return { label: "새 모임", className: "bg-plate-green text-white" };
 };
 
 export default function CrewHub() {
@@ -127,10 +127,7 @@ export default function CrewHub() {
     <section className="relative min-h-screen overflow-hidden pt-24 pb-24 text-white">
       <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-10">
         <header className="dg-steel relative p-5 sm:p-6">
-          <div className="dg-chip absolute right-6 top-5 bg-steel-700 text-sm text-chalk">
-            MuscleUp
-          </div>
-          <p className="font-num text-sm font-bold text-plate-yellow">Crew Hub</p>
+          <p className="text-sm font-bold text-plate-yellow">운동 모임</p>
           <h1 className="mt-1 text-3xl sm:text-4xl">모임 찾기 · 만들기</h1>
           <p className="mt-2 text-sm text-steel-300">
             모임을 선택하면 챌린지 전용 화면으로 이동합니다. 캐릭터를 중심으로 성장과 경쟁을 확인하세요.
@@ -155,8 +152,8 @@ export default function CrewHub() {
 
         <div className="dg-steel p-4 sm:p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-lg">오늘 인기 모임</h2>
-            <span className="font-num text-base font-black text-plate-yellow">TOP 3</span>
+            <h2 className="font-display text-lg">인기 모임</h2>
+            <span className="text-sm font-black text-plate-yellow">인원 많은 순 3곳</span>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             {featuredGroups.map((crew, idx) => {

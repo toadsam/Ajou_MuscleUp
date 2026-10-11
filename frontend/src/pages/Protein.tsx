@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
+import { DISTRIBUTION_METHODS, distributionOf, isClosed, remainingLabel } from "../utils/proteinMeta";
 
 type Protein = {
   id: number;
@@ -7,11 +10,16 @@ type Protein = {
   price?: number;
   days?: number;
   goal?: number;
-  imageUrl?: string;
+  imageUrl?: string; // 공개용 대표 이미지(영수증은 목록에 오지 않는다)
   description?: string;
   category?: string;
   avgRating?: number | null;
+  reviewCount?: number;
   ownerNickname?: string | null;
+  deadline?: string | null;
+  daysLeft?: number | null;
+  closed?: boolean;
+  distributionMethod?: string | null;
 };
 
 type LocationMode = "region" | "gym";
@@ -31,27 +39,24 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
+    toast("로그인이 필요해요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw await httpError(res, "로그인이 필요해요.");
   }
 
-  if (res.status === 403) {
-    alert("권한이 없습니다.");
-    throw new Error("Forbidden");
-  }
-
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
+  if (!res.ok) throw await httpError(res, "공동구매 목록을 불러오지 못했어요.");
 
   return res.json();
 }
 
 async function fetchProteins(): Promise<Protein[]> {
-  const data = await api<any>("/api/proteins");
+  const data = await api<{ content?: Protein[] } | Protein[]>("/api/proteins?size=50");
   return Array.isArray(data) ? data : (data.content ?? []);
 }
+
+/** 1인 부담금 = 총 금액 ÷ 목표 인원(둘 중 하나라도 없으면 null) */
+const perPersonOf = (p: Protein) =>
+  typeof p.price === "number" && typeof p.goal === "number" && p.goal > 0 ? Math.ceil(p.price / p.goal) : null;
 
 const formatPrice = (value?: number) =>
   typeof value === "number" ? `${value.toLocaleString()}원` : "미정";
@@ -65,30 +70,18 @@ const parseLocation = (category?: string) => {
   };
 };
 
-const getDistributionType = (description?: string) => {
-  if (!description) return "직접 분배";
-  if (description.includes("보관")) return "헬스장 보관";
-  if (description.includes("직접")) return "직접 분배";
-  return "직접 분배";
-};
+// 상태는 서버가 마감일로 계산한 closed 만 쓴다(예전: days 숫자가 줄지 않아 영원히 "모집 중")
+const getStatus = (p: Protein) => (isClosed(p) ? "모집 마감" : "모집 중");
 
-const getStatus = (days?: number, rating?: number | null) => {
-  if (typeof days === "number" && days <= 0) {
-    return (rating ?? 0) > 0 ? "분배 완료" : "모집 마감";
+/** 카드에 보여 줄 사실들(실제 값이 있을 때만). 지어낸 추천 문구는 쓰지 않는다 */
+const factsOf = (p: Protein) => {
+  const facts: string[] = [];
+  if ((p.reviewCount ?? 0) > 0 && typeof p.avgRating === "number") {
+    facts.push(`후기 ${p.reviewCount}개 · 평균 ${p.avgRating.toFixed(1)}점`);
   }
-  return "모집 중";
-};
-
-const getBeginnerReason = (protein: Protein) => {
-  const perPerson =
-    typeof protein.price === "number" && typeof protein.goal === "number" && protein.goal > 0
-      ? Math.ceil(protein.price / protein.goal)
-      : null;
-
-  if ((protein.avgRating ?? 0) >= 4.3) return "후기 평점이 높아서 초보도 선택하기 편해요.";
-  if (perPerson !== null && perPerson <= 30000) return "1인 부담금이 낮아서 처음 공동구매 참여하기 좋아요.";
-  if ((protein.days ?? 99) <= 3) return "곧 마감되는 모집이라 빠르게 합류하기 좋아요.";
-  return "지역 기반 소분 공구라 직접 만나서 분배받기 쉬워요.";
+  const method = distributionOf(p);
+  if (method) facts.push(`분배: ${method}`);
+  return facts;
 };
 
 export default function Protein() {
@@ -100,33 +93,34 @@ export default function Protein() {
   const [selectedGym, setSelectedGym] = useState("전체 헬스장");
   const [statusFilter, setStatusFilter] = useState("전체");
   const [distributionFilter, setDistributionFilter] = useState("전체");
-  const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         setProducts(await fetchProteins());
-      } catch (e: any) {
-        setErr(e.message ?? "목록을 불러오지 못했습니다.");
+      } catch (e) {
+        setErr(friendlyError(e, "공동구매 목록을 불러오지 못했어요."));
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  useEffect(() => {
-    if (!shareMessage) return;
-    const timer = window.setTimeout(() => setShareMessage(null), 2200);
-    return () => window.clearTimeout(timer);
-  }, [shareMessage]);
-
-  const sortByPriceAsc = () =>
-    setProducts((p) => [...p].sort((a, b) => (a.price ?? 0) - (b.price ?? 0)));
+  // 1인 부담 = 총 금액 ÷ 목표 인원 기준(예전엔 총 금액으로 정렬했다). 값이 없는 글은 뒤로.
+  const sortByPerPersonAsc = () =>
+    setProducts((p) => [...p].sort((a, b) => (perPersonOf(a) ?? 9e15) - (perPersonOf(b) ?? 9e15)));
   const sortByPriceDesc = () =>
     setProducts((p) => [...p].sort((a, b) => (b.price ?? 0) - (a.price ?? 0)));
+  // 남은 날이 적은 순. 마감일 없는 글, 마감된 글 순으로 뒤에.
   const sortByDays = () =>
-    setProducts((p) => [...p].sort((a, b) => (a.days ?? 9e9) - (b.days ?? 9e9)));
+    setProducts((p) =>
+      [...p].sort((a, b) => {
+        const key = (x: Protein) =>
+          typeof x.daysLeft === "number" && x.daysLeft >= 0 ? x.daysLeft : x.closed ? 9e9 + 1 : 9e9;
+        return key(a) - key(b);
+      })
+    );
 
   const locationOptions = useMemo(() => {
     const regions = new Set<string>();
@@ -150,8 +144,8 @@ export default function Protein() {
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const { region, gym } = parseLocation(p.category);
-      const status = getStatus(p.days, p.avgRating);
-      const distributionType = getDistributionType(p.description);
+      const status = getStatus(p);
+      const distributionType = distributionOf(p) ?? "정보 없음";
       const regionOk = selectedRegion === "전체 지역" || region === selectedRegion;
       const gymOk = selectedGym === "전체 헬스장" || gym === selectedGym;
       const locationOk = locationMode === "region" ? regionOk : gymOk;
@@ -161,7 +155,8 @@ export default function Protein() {
     });
   }, [distributionFilter, locationMode, products, selectedGym, selectedRegion, statusFilter]);
 
-  const highlights = filtered.slice(0, 3);
+  // 위 세 칸은 아직 모집 중인 글만
+  const highlights = filtered.filter((p) => !isClosed(p)).slice(0, 3);
 
   const handleShare = async (proteinId: number, proteinName: string) => {
     const url = `${window.location.origin}/proteins/${proteinId}`;
@@ -174,7 +169,7 @@ export default function Protein() {
         });
       } else {
         await navigator.clipboard.writeText(url);
-        setShareMessage("공구 링크를 복사했습니다.");
+        toast("공동구매 링크를 복사했어요.", "success");
       }
     } catch {
       // user cancelled
@@ -196,10 +191,10 @@ export default function Protein() {
       <div className="relative mx-auto max-w-6xl space-y-8">
         <header className="dg-steel grid gap-6 p-6 lg:grid-cols-[1.1fr,0.9fr]">
           <div className="space-y-4">
-            <p className="font-num text-sm font-bold text-plate-green">Protein Share Crew</p>
+            <p className="font-num text-sm font-bold text-plate-green">GROUP BUY</p>
             <h1 className="text-4xl leading-tight md:text-6xl">
               프로틴 공동구매 모집방
-              <span className="mt-2 block font-sans text-xl font-bold text-orange-300 md:text-2xl">대표 구매자가 사고, 참가자가 N빵하는 구조</span>
+              <span className="mt-2 block font-sans text-xl font-bold text-plate-yellow md:text-2xl">대표 구매자가 사고, 참가자가 N빵하는 구조</span>
             </h1>
             <p className="max-w-2xl text-sm text-steel-300">
               이곳은 쇼핑몰이 아니라 지역 기반 공동구매 모집방입니다. 대표 구매자가 대량 구매하고,
@@ -228,7 +223,7 @@ export default function Protein() {
                 />
               </div>
               <Link to="/protein/write" className="dg-btn dg-btn-primary min-h-[44px] px-5 text-sm">
-                공구 모집 등록
+                공동구매 모집 등록
               </Link>
             </div>
           </div>
@@ -237,7 +232,7 @@ export default function Protein() {
             {[
               { title: "대표 구매자", desc: "한 사람이 대표로 구매하고 분배를 진행합니다.", plate: "bg-plate-red" },
               { title: "참가자 N빵", desc: "전체 금액을 인원수로 나눠 1인 부담금을 줄입니다.", plate: "bg-plate-blue" },
-              { title: "외부 공유 가능", desc: "공구 링크를 복사하거나 공유해서 다른 플랫폼에 보낼 수 있습니다.", plate: "bg-plate-yellow" },
+              { title: "외부 공유 가능", desc: "공동구매 링크를 복사하거나 공유해서 다른 플랫폼에 보낼 수 있습니다.", plate: "bg-plate-yellow" },
             ].map((item, idx) => (
               <div key={item.title} className="dg-well dg-rise flex gap-3 p-4" style={{ animationDelay: `${idx * 60}ms` }}>
                 <span aria-hidden className={`mt-0.5 h-8 w-2.5 flex-none rounded-sm border-2 border-black ${item.plate}`} />
@@ -252,7 +247,7 @@ export default function Protein() {
 
         <div className="dg-well grid gap-4 p-4 lg:grid-cols-[0.7fr,1fr]">
           <div>
-            <div className="font-display text-lg">공구 찾기</div>
+            <div className="font-display text-lg">공동구매 찾기</div>
             <p className="mt-1 text-xs text-steel-400">지역, 헬스장, 모집 상태로 빠르게 걸러보세요.</p>
           </div>
           <div className="space-y-3">
@@ -284,7 +279,7 @@ export default function Protein() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                {["전체", "모집 중", "모집 마감", "분배 완료"].map((item) => (
+                {["전체", "모집 중", "모집 마감"].map((item) => (
                   <option key={item} value={item} className="bg-steel-900">
                     {item}
                   </option>
@@ -295,7 +290,7 @@ export default function Protein() {
                 value={distributionFilter}
                 onChange={(e) => setDistributionFilter(e.target.value)}
               >
-                {["전체", "직접 분배", "헬스장 보관"].map((item) => (
+                {["전체", ...DISTRIBUTION_METHODS, "정보 없음"].map((item) => (
                   <option key={item} value={item} className="bg-steel-900">
                     {item}
                   </option>
@@ -306,7 +301,7 @@ export default function Protein() {
               <button onClick={sortByDays} className={SORT_CHIP}>
                 마감 임박순
               </button>
-              <button onClick={sortByPriceAsc} className={SORT_CHIP}>
+              <button onClick={sortByPerPersonAsc} className={SORT_CHIP}>
                 1인 부담 낮은 순
               </button>
               <button onClick={sortByPriceDesc} className={SORT_CHIP}>
@@ -316,19 +311,10 @@ export default function Protein() {
           </div>
         </div>
 
-        {shareMessage && (
-          <div className="dg-pop dg-well border-l-[6px] border-l-plate-green px-4 py-3 text-sm font-semibold text-green-200">
-            {shareMessage}
-          </div>
-        )}
-
         <div className="grid gap-4 md:grid-cols-3">
           {highlights.map((p, idx) => {
             const { region } = parseLocation(p.category);
-            const perPrice =
-              typeof p.price === "number" && typeof p.goal === "number" && p.goal > 0
-                ? Math.ceil(p.price / p.goal)
-                : null;
+            const perPrice = perPersonOf(p);
             return (
               <div
                 key={`highlight-${p.id}`}
@@ -337,8 +323,8 @@ export default function Protein() {
               >
                 <div className="text-xs font-bold text-green-300">{region}</div>
                 <div className="mt-2 text-lg font-bold">{p.name}</div>
-                <div className="mt-2 text-sm text-steel-300">{getBeginnerReason(p)}</div>
-                <div className="mt-3 text-sm font-semibold text-orange-300">
+                <div className="mt-2 text-sm text-steel-300">{remainingLabel(p)}</div>
+                <div className="mt-3 text-sm font-semibold text-plate-yellow">
                   1인 부담 <span className="font-num text-xl font-black">{perPrice ? `${perPrice.toLocaleString()}원` : "미정"}</span>
                 </div>
               </div>
@@ -354,21 +340,18 @@ export default function Protein() {
               <i />
               <i />
             </span>
-            공구 목록을 불러오는 중입니다...
+            공동구매 목록을 불러오는 중입니다...
           </p>
         )}
         {err && <p className="text-center text-red-300">{err}</p>}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((p, idx) => {
-            const rating = p.avgRating ?? 0;
-            const status = getStatus(p.days, p.avgRating);
-            const distributionType = getDistributionType(p.description);
+            const status = getStatus(p);
+            const distributionType = distributionOf(p);
+            const facts = factsOf(p);
             const { region, gym } = parseLocation(p.category);
-            const perPrice =
-              typeof p.price === "number" && typeof p.goal === "number" && p.goal > 0
-                ? Math.ceil(p.price / p.goal)
-                : null;
+            const perPrice = perPersonOf(p);
 
             return (
               <article
@@ -382,14 +365,14 @@ export default function Protein() {
                   ) : (
                     <div className="dg-rubber flex h-44 items-end p-5">
                       <div>
-                        <div className="font-num text-sm font-bold text-orange-300">Group Buy</div>
+                        <div className="text-sm font-bold text-plate-yellow">공동구매</div>
                         <div className="mt-1 text-lg font-bold">{region}</div>
                       </div>
                     </div>
                   )}
                   <div className="absolute left-3 top-3 flex flex-wrap gap-2 text-xs">
                     <span className="dg-chip bg-plate-green text-white">{region}</span>
-                    <span className="dg-chip bg-orange-500 text-black">{gym}</span>
+                    <span className="dg-chip bg-plate-yellow text-black">{gym}</span>
                   </div>
                 </div>
 
@@ -407,7 +390,9 @@ export default function Protein() {
 
                   <div>
                     <h3 className="text-xl font-bold">{p.name}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-steel-300">{getBeginnerReason(p)}</p>
+                    {facts.length > 0 && (
+                      <p className="mt-2 text-sm leading-relaxed text-steel-300">{facts.join(" · ")}</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm text-steel-100">
@@ -425,16 +410,22 @@ export default function Protein() {
                     </div>
                     <div className="dg-well p-3">
                       <p className="text-xs text-steel-400">분배 방식</p>
-                      <p className="mt-1 font-semibold">{distributionType}</p>
+                      <p className="mt-1 font-semibold">{distributionType ?? "정보 없음"}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-steel-300">
                     <div>
-                      <span className="font-num text-base font-black text-green-300">{rating.toFixed(1)}</span>
-                      <span className="ml-1">신뢰 후기 평점</span>
+                      {(p.reviewCount ?? 0) > 0 && typeof p.avgRating === "number" ? (
+                        <>
+                          <span className="font-num text-base font-black text-green-300">{p.avgRating.toFixed(1)}</span>
+                          <span className="ml-1">후기 평균 ({p.reviewCount}개)</span>
+                        </>
+                      ) : (
+                        <span>아직 후기 없음</span>
+                      )}
                     </div>
-                    <div className="font-semibold">{p.days ? `${p.days}일 남음` : "마감일 미정"}</div>
+                    <div className={`font-semibold ${isClosed(p) ? "text-steel-500" : ""}`}>{remainingLabel(p)}</div>
                   </div>
 
                   <div className="flex flex-wrap gap-2">

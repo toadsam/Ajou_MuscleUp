@@ -9,8 +9,13 @@ import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.BragLikeRepository;
 import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.UserRepository;
+import com.ajou.muscleup.util.RoleUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +33,9 @@ public class BragPostServiceImpl implements BragPostService {
     private final UserRepository userRepository;
     private final BragLikeRepository bragLikeRepository;
     private final FriendService friendService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public BragPostResponse create(String userEmail, BragPostCreateRequest req) {
@@ -62,9 +70,10 @@ public class BragPostServiceImpl implements BragPostService {
         List<Long> friendIds = friendService.findFriendIds(user.getId());
         List<Long> allowedUserIds = new ArrayList<>(friendIds);
         allowedUserIds.add(user.getId());
-        return bragPostRepository
-                .findByVisibilityOrUser_IdInOrderByCreatedAtDesc(BragVisibility.PUBLIC, allowedUserIds, pageable)
-                .map(p -> BragPostResponse.from(p, bragLikeRepository.countByPostId(p.getId())));
+        Page<BragPost> posts = bragPostRepository
+                .findByVisibilityOrUser_IdInOrderByCreatedAtDesc(BragVisibility.PUBLIC, allowedUserIds, pageable);
+        Map<Long, Long> likeCounts = countLikesByPostIds(posts.getContent().stream().map(BragPost::getId).toList());
+        return posts.map(p -> BragPostResponse.from(p, likeCounts.getOrDefault(p.getId(), 0L)));
     }
 
     @Override
@@ -132,6 +141,21 @@ public class BragPostServiceImpl implements BragPostService {
     }
 
     private boolean isAdmin(User user) {
-        return user != null && "ADMIN".equalsIgnoreCase(user.getRole());
+        return RoleUtils.isAdmin(user);
+    }
+
+    /** 한 페이지 글들의 좋아요 수를 쿼리 한 번으로 센다(글마다 count 쿼리를 날리던 N+1 대신). */
+    private Map<Long, Long> countLikesByPostIds(List<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) return Map.of();
+        List<Object[]> rows = entityManager.createQuery(
+                        "select bl.bragPost.id, count(bl) from BragLike bl where bl.bragPost.id in :ids group by bl.bragPost.id",
+                        Object[].class)
+                .setParameter("ids", postIds)
+                .getResultList();
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : rows) {
+            counts.put((Long) row[0], ((Number) row[1]).longValue());
+        }
+        return counts;
     }
 }

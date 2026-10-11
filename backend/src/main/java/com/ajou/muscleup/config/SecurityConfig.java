@@ -64,7 +64,6 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
-                .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/ping", "/api/ping").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/auth/google").permitAll()
@@ -84,7 +83,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                 // Protected APIs (allow USER and ADMIN)
-                .requestMatchers("/uploads/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/brags/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/proteins/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/proteins/**").hasAnyRole("USER", "ADMIN")

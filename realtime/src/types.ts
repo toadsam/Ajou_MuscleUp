@@ -32,9 +32,33 @@ export type GrowthParams = {
   contrastBoost: number;
 };
 
+export const GROWTH_PARAM_KEYS: (keyof GrowthParams)[] = [
+  "bmiNormalized",
+  "muscularityNormalized",
+  "fatNormalized",
+  "armGrowth",
+  "legGrowth",
+  "torsoGrowth",
+  "armScale",
+  "legScale",
+  "torsoScaleX",
+  "chestGrowth",
+  "backGrowth",
+  "shoulderGrowth",
+  "quadGrowth",
+  "hamstringGrowth",
+  "gluteGrowth",
+  "strokeWidth",
+  "muscleDetailOpacity",
+  "fatShadowOpacity",
+  "contrastBoost",
+];
+
+/** What every lounge client sees about a player. No email / DB user id. */
 export type PlayerState = {
   socketId: string;
-  userId?: string;
+  /** opaque public id (HMAC of user id) or "guest-..." in dev mode */
+  id: string;
   nickname: string;
   level: number;
   tier: CharacterTier;
@@ -53,22 +77,26 @@ export type PlayerState = {
   lastUpdatedAt: string;
 };
 
-export type JoinPayload = {
-  userId?: string;
-  nickname: string;
-  level: number;
-  tier: CharacterTier;
-  evolutionStage: number;
-  gender?: Gender;
-  avatarSeed?: string;
-  stylePreset?: string;
-  mbti?: string;
-  isResting?: boolean;
-  growthParams?: GrowthParams;
-  recentAttendanceCount?: number;
-  activeEventTitle?: string;
-  activeEventProgress?: string;
-};
+/** Profile fields decided by the server (from the verified ticket). */
+export type VerifiedProfile = Pick<
+  PlayerState,
+  | "id"
+  | "nickname"
+  | "level"
+  | "tier"
+  | "evolutionStage"
+  | "gender"
+  | "avatarSeed"
+  | "stylePreset"
+  | "isResting"
+  | "growthParams"
+>;
+
+/** Self-described, cosmetic fields the client may still send (validated + length-limited). */
+export type ClientExtras = Pick<
+  PlayerState,
+  "mbti" | "recentAttendanceCount" | "activeEventTitle" | "activeEventProgress"
+>;
 
 export type TypingPayload = {
   isTyping: boolean;

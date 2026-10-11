@@ -7,6 +7,7 @@ import { useAdminToast } from "../components/admin/useAdminToast";
 import { adminApi } from "../services/adminApi";
 import type { AdminAttendanceLogItem, AnalyticsEventItem, AuditLogItem, SupportInquiryItem } from "../services/adminApi";
 import { logEvent } from "../utils/analytics";
+import { friendlyError, httpError } from "../lib/httpError";
 
 type PageCount = { page: string; count: number };
 type SummaryResponse = {
@@ -17,6 +18,9 @@ type SummaryResponse = {
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const PAGE_SIZE = 12;
 const SCHEDULE_KEY = "admin_schedule_jobs_v1";
+// 일괄 처리 대기열은 서버 예약이 아니다. 이 브라우저 localStorage 에 저장되고, 관리자 화면이 열려 있는 동안
+// 10초마다 시간이 지난 항목을 실행한다. 화면에 그대로 알려 준다(예전엔 "예약 작업"이라 서버가 실행하는 줄 알 수 있었다).
+const QUEUE_NOTICE = "서버 예약이 아니에요. 이 브라우저에만 저장되고, 관리자 화면을 열어 둔 동안 정한 시간이 지나면 실행돼요. 탭을 닫으면 실행되지 않아요.";
 
 type BulkProgress = {
   label: string;
@@ -266,12 +270,12 @@ export default function Admin() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok) throw await httpError(res, "요청을 처리하지 못했어요.");
       const data: SummaryResponse = await res.json();
       setActions(data.actionCounts ?? []);
       setPages(data.pageCounts ?? []);
     } catch (e: any) {
-      const message = e?.message || "요약 데이터를 불러오지 못했습니다.";
+      const message = friendlyError(e, "요약 데이터를 불러오지 못했습니다.");
       setError(message);
       showError(message);
     }
@@ -296,7 +300,7 @@ export default function Admin() {
       const data = await adminApi.getAnalyticsEvents(500);
       setAnalyticsEvents(data ?? []);
     } catch (e: any) {
-      showError(e?.message || "행동 이벤트를 불러오지 못했습니다.");
+      showError(friendlyError(e, "행동 이벤트를 불러오지 못했습니다."));
     } finally {
       setLoadingEvents(false);
     }
@@ -308,7 +312,7 @@ export default function Admin() {
       const data = await adminApi.getAudit(500);
       setAuditLogs(data ?? []);
     } catch (e: any) {
-      showError(e?.message || "감사 로그를 불러오지 못했습니다.");
+      showError(friendlyError(e, "감사 로그를 불러오지 못했습니다."));
     } finally {
       setLoadingAuditLogs(false);
     }
@@ -332,7 +336,7 @@ export default function Admin() {
       setTotalAttendanceLogPages(data.totalPages ?? 1);
       setPageAttendanceLogs(data.number ?? page);
     } catch (e: any) {
-      showError(e?.message || "출석 원본 로그를 불러오지 못했습니다.");
+      showError(friendlyError(e, "출석 원본 로그를 불러오지 못했습니다."));
     } finally {
       setLoadingAttendanceLogs(false);
     }
@@ -352,7 +356,7 @@ export default function Admin() {
       setTotalSupportInquiryPages(data.totalPages ?? 1);
       setPageSupportInquiries(data.number ?? page);
     } catch (e: any) {
-      showError(e?.message || "문의/제안 데이터를 불러오지 못했습니다.");
+      showError(friendlyError(e, "문의/제안 데이터를 불러오지 못했습니다."));
     } finally {
       setLoadingSupportInquiries(false);
     }
@@ -370,7 +374,7 @@ export default function Admin() {
       showSuccess("문의 상태를 업데이트했습니다.");
       await loadSupportInquiries(pageSupportInquiries);
     } catch (e: any) {
-      showError(e?.message || "문의 상태 업데이트에 실패했습니다.");
+      showError(friendlyError(e, "문의 상태 업데이트에 실패했습니다."));
     }
   };
 
@@ -433,7 +437,7 @@ export default function Admin() {
       setTotalAppsPages((res as any).totalPages ?? 1);
       setPageApps((res as any).number ?? page);
     } catch (e: any) {
-      showError(e?.message || "신청 목록을 불러오지 못했습니다.");
+      showError(friendlyError(e, "신청 목록을 불러오지 못했습니다."));
     } finally {
       setLoadingApps(false);
     }
@@ -460,7 +464,7 @@ export default function Admin() {
         });
       }
     } catch (e: any) {
-      showError(e?.message || "상태 변경에 실패했습니다.");
+      showError(friendlyError(e, "상태 변경에 실패했습니다."));
     } finally {
       toChangingSet(setChangingStatusIds, id, false);
     }
@@ -474,7 +478,7 @@ export default function Admin() {
       setTotalGalleryPages(res.totalPages ?? 1);
       setPageGallery(res.number ?? page);
     } catch (e: any) {
-      showError(e?.message || "갤러리 목록을 불러오지 못했습니다.");
+      showError(friendlyError(e, "갤러리 목록을 불러오지 못했습니다."));
     } finally {
       setLoadingGallery(false);
     }
@@ -488,7 +492,7 @@ export default function Admin() {
       setTotalProteinPages(data.totalPages ?? 1);
       setPageProteins(data.number ?? page);
     } catch (e: any) {
-      showError(e?.message || "단백질 목록을 불러오지 못했습니다.");
+      showError(friendlyError(e, "단백질 목록을 불러오지 못했습니다."));
     } finally {
       setLoadingProteins(false);
     }
@@ -502,7 +506,7 @@ export default function Admin() {
       setTotalBragPages(data.totalPages ?? 1);
       setPageBrags(data.number ?? page);
     } catch (e: any) {
-      showError(e?.message || "자랑방 목록을 불러오지 못했습니다.");
+      showError(friendlyError(e, "자랑방 목록을 불러오지 못했습니다."));
     } finally {
       setLoadingBrags(false);
     }
@@ -516,7 +520,7 @@ export default function Admin() {
       setTotalAttendancePages(data.totalPages ?? 1);
       setPageAttendance(data.number ?? page);
     } catch (e: any) {
-      showError(e?.message || "출석 공유 목록을 불러오지 못했습니다.");
+      showError(friendlyError(e, "출석 공유 목록을 불러오지 못했습니다."));
     } finally {
       setLoadingAttendanceShares(false);
     }
@@ -531,11 +535,11 @@ export default function Admin() {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok && res.status !== 204) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok && res.status !== 204) throw await httpError(res, "요청을 처리하지 못했어요.");
       await loadGallery();
       showSuccess("갤러리 파일을 삭제했습니다.");
     } catch (e: any) {
-      showError(e?.message || "삭제에 실패했습니다.");
+      showError(friendlyError(e, "삭제에 실패했습니다."));
     }
   };
 
@@ -563,11 +567,11 @@ export default function Admin() {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok && res.status !== 204) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok && res.status !== 204) throw await httpError(res, "요청을 처리하지 못했어요.");
       await loadProteins();
       showSuccess("상품을 삭제했습니다.");
     } catch (e: any) {
-      showError(e?.message || "삭제에 실패했습니다.");
+      showError(friendlyError(e, "삭제에 실패했습니다."));
     }
   };
 
@@ -595,11 +599,11 @@ export default function Admin() {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok && res.status !== 204) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok && res.status !== 204) throw await httpError(res, "요청을 처리하지 못했어요.");
       await loadBrags();
       showSuccess("게시글을 삭제했습니다.");
     } catch (e: any) {
-      showError(e?.message || "삭제에 실패했습니다.");
+      showError(friendlyError(e, "삭제에 실패했습니다."));
     }
   };
 
@@ -696,12 +700,12 @@ export default function Admin() {
     if (due.length === 0) return;
     for (const job of due) {
       if (job.type === "application_status" && job.payload.status) {
-        await runBulkWithProgress("예약 신청 상태 변경", job.ids, async (aid) => {
+        await runBulkWithProgress("대기열: 신청 상태 변경", job.ids, async (aid) => {
           await adminApi.updateApplicationStatus(aid, job.payload.status as Application["status"]);
         });
       }
       if (job.type === "attendance_hidden" && typeof job.payload.hidden === "boolean") {
-        await runBulkWithProgress("예약 출석 처리", job.ids, async (aid) => {
+        await runBulkWithProgress("대기열: 출석 공유 처리", job.ids, async (aid) => {
           await adminApi.setAttendanceHidden(aid, Boolean(job.payload.hidden));
         });
       }
@@ -709,13 +713,13 @@ export default function Admin() {
     await loadApplications(pageApps);
     await loadAttendanceShares(pageAttendance);
     setScheduledJobs((prev) => prev.filter((x) => !due.some((d) => d.id === x.id)));
-    showSuccess(`${due.length}건의 예약 작업을 실행했습니다.`);
+    showSuccess(`대기열의 일괄 처리 ${due.length}건을 실행했어요.`);
   };
 
   const createSchedule = () => {
-    const reason = window.prompt("예약 작업 사유를 입력하세요.");
+    const reason = window.prompt("일괄 처리 사유를 입력하세요.");
     if (!reason || !reason.trim()) return;
-    if (!scheduleDateTime) return showError("예약 시간을 선택해 주세요.");
+    if (!scheduleDateTime) return showError("실행할 시간을 선택해 주세요.");
 
     if (scheduleType === "application_status") {
       const ids = [...selectedApplications];
@@ -730,7 +734,7 @@ export default function Admin() {
           payload: { status: scheduleStatus, reason: reason.trim() },
         },
       ]);
-      showSuccess(`신청 상태 예약 ${ids.length}건을 등록했습니다.`);
+      showSuccess(`신청 상태 변경 ${ids.length}건을 대기열에 넣었어요. 이 화면을 열어 둔 동안 실행돼요.`);
       return;
     }
 
@@ -746,7 +750,7 @@ export default function Admin() {
         payload: { hidden: scheduleHidden, reason: reason.trim() },
       },
     ]);
-    showSuccess(`출석 공유 예약 ${ids.length}건을 등록했습니다.`);
+    showSuccess(`출석 공유 처리 ${ids.length}건을 대기열에 넣었어요. 이 화면을 열어 둔 동안 실행돼요.`);
   };
 
   const setAttendanceHidden = async (id: number, hidden: boolean) => {
@@ -773,7 +777,7 @@ export default function Admin() {
         },
       });
     } catch (e: any) {
-      showError(e?.message || "처리에 실패했습니다.");
+      showError(friendlyError(e, "처리에 실패했습니다."));
     } finally {
       setProcessingAttendanceId(null);
     }
@@ -857,20 +861,20 @@ export default function Admin() {
         {activeTab === "overview" && (
         <>
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard title="액션 이벤트" value={actions.length} desc="최근 30일 이벤트 종류" accent="from-pink-500 to-orange-400" />
-          <StatCard title="페이지 이벤트" value={pages.length} desc="최근 30일 페이지 종류" accent="from-emerald-400 to-cyan-400" />
-          <StatCard title="프로그램 신청" value={applications.length} desc="현재 전체 신청 수" accent="from-blue-500 to-indigo-500" />
-          <StatCard title="권한" value={roleLabel(role)} desc="관리자 인증 완료" accent="from-purple-500 to-pink-400" />
+          <StatCard title="액션 이벤트" value={actions.length} desc="최근 30일 이벤트 종류" accent="plate-red" />
+          <StatCard title="페이지 이벤트" value={pages.length} desc="최근 30일 페이지 종류" accent="plate-green" />
+          <StatCard title="프로그램 신청" value={applications.length} desc="현재 전체 신청 수" accent="plate-blue" />
+          <StatCard title="권한" value={roleLabel(role)} desc="관리자 인증 완료" accent="plate-yellow" />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <TopListCard title="액션 TOP" subtitle="최근 30일 · 많이 일어난 행동 순" items={actions} max={maxAction} color="from-pink-500 to-orange-400" />
+          <TopListCard title="액션 TOP" subtitle="최근 30일 · 많이 일어난 행동 순" items={actions} max={maxAction} color="plate-red" />
           <TopListCard
             title="페이지 TOP"
             subtitle="최근 30일 · 많이 열린 페이지 순"
             items={pages.map((page) => ({ action: page.page, count: page.count }))}
             max={maxPage}
-            color="from-emerald-400 to-cyan-400"
+            color="plate-green"
           />
         </div>
 
@@ -880,7 +884,7 @@ export default function Admin() {
               {!healthSummary?.adminPingOk && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-red bg-steel-900 px-3 py-2 text-red-200">관리자 API 상태가 불안정합니다.</div>}
               {applications.filter((a) => a.status === "PENDING").length >= 5 && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-yellow bg-steel-900 px-3 py-2 text-yellow-200">검토 대기 신청이 5건 이상입니다.</div>}
               {attendanceShares.filter((it) => it.reportCount >= 5).length > 0 && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-yellow bg-steel-900 px-3 py-2 text-yellow-200">신고 다수 출석 공유가 존재합니다.</div>}
-              {scheduledJobs.length > 0 && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-blue bg-steel-900 px-3 py-2 text-blue-200">예약 작업 {scheduledJobs.length}건 대기 중</div>}
+              {scheduledJobs.length > 0 && <div className="rounded-md border-2 border-l-[6px] border-black border-l-plate-blue bg-steel-900 px-3 py-2 text-blue-200">일괄 처리 대기열 {scheduledJobs.length}건 (이 브라우저에서만 실행)</div>}
               {healthSummary && (
                 <div className="grid grid-cols-3 gap-2 pt-2 text-xs">
                   {([
@@ -899,32 +903,24 @@ export default function Admin() {
             </div>
           </MediaPanel>
 
-          <MediaPanel title="예약 작업" description="선택 항목 예약 실행" loading={false} hasData={true} onRefresh={() => void executeDueSchedule()} emptyMessage="">
-            <div className="grid gap-2 md:grid-cols-2">
-              <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value as ScheduledJob["type"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
-                <option value="application_status">신청 상태 변경</option>
-                <option value="attendance_hidden">출석 공유 공개/비공개</option>
-              </select>
-              {scheduleType === "application_status" ? (
-                <select value={scheduleStatus} onChange={(e) => setScheduleStatus(e.target.value as Application["status"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
-                  {statuses.map((s) => <option key={s} value={s}>{APPLICATION_STATUS_LABEL[s] ?? s}</option>)}
-                </select>
-              ) : (
-                <select value={String(scheduleHidden)} onChange={(e) => setScheduleHidden(e.target.value === "true")} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
-                  <option value="true">비공개</option>
-                  <option value="false">공개</option>
-                </select>
-              )}
-              <input type="datetime-local" value={scheduleDateTime} onChange={(e) => setScheduleDateTime(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
-              <button type="button" onClick={createSchedule} className="dg-btn dg-btn-primary px-3 py-2 text-sm">예약 생성</button>
-            </div>
-            <div className="mt-3 space-y-1 text-xs">
-              {scheduledJobs.slice(0, 5).map((job) => (
-                <div key={job.id} className="dg-well px-2 py-1">
-                  {new Date(job.executeAt).toLocaleString("ko-KR")} · {JOB_TYPE_LABEL[job.type] ?? job.type} · {job.ids.length}건
-                </div>
-              ))}
-              {scheduledJobs.length > 5 && <p className="text-gray-400">+{scheduledJobs.length - 5}건 더 있음</p>}
+          {/* 일괄 처리 대기열은 "운영" 탭 한 곳에서만 만든다(예전엔 개요·운영 두 곳에 같은 입력 칸이 있었다). */}
+          <MediaPanel title="일괄 처리 대기열" description="이 브라우저에서만 실행돼요" loading={false} hasData={true} onRefresh={() => void executeDueSchedule()} emptyMessage="">
+            <div className="space-y-2 text-sm text-steel-200">
+              <p>
+                대기 중 <span className="font-num text-lg text-chalk">{scheduledJobs.length}</span>건
+              </p>
+              <p className="text-xs text-steel-400">{QUEUE_NOTICE}</p>
+              <div className="space-y-1 text-xs">
+                {scheduledJobs.slice(0, 5).map((job) => (
+                  <div key={job.id} className="dg-well px-2 py-1">
+                    {new Date(job.executeAt).toLocaleString("ko-KR")} · {JOB_TYPE_LABEL[job.type] ?? job.type} · {job.ids.length}건
+                  </div>
+                ))}
+                {scheduledJobs.length > 5 && <p className="text-gray-400">+{scheduledJobs.length - 5}건 더 있음</p>}
+              </div>
+              <button type="button" onClick={() => setActiveTab("operations")} className="dg-btn dg-btn-steel px-3 py-2 text-sm">
+                운영 탭에서 대기열 관리
+              </button>
             </div>
           </MediaPanel>
         </div>
@@ -1045,7 +1041,7 @@ export default function Admin() {
         )}
 
         {activeTab === "operations" && (
-          <MediaPanel title="자동화 / 시스템 운영" description="예약 작업, 상태 점검, 이력 동기화" loading={false} hasData={true} onRefresh={() => void loadSummaryAndHealth()} emptyMessage="">
+          <MediaPanel title="일괄 처리 대기열 (이 브라우저에서만 실행)" description="선택한 항목을 정한 시간에 한꺼번에 처리" loading={false} hasData={true} onRefresh={() => void loadSummaryAndHealth()} emptyMessage="">
             <div className="grid gap-2 md:grid-cols-2">
               <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value as ScheduledJob["type"])} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm">
                 <option value="application_status">신청 상태 변경</option>
@@ -1062,16 +1058,17 @@ export default function Admin() {
                 </select>
               )}
               <input type="datetime-local" value={scheduleDateTime} onChange={(e) => setScheduleDateTime(e.target.value)} className="rounded-md border-2 border-black bg-steel-900 text-chalk focus:outline-none focus-visible:border-plate-yellow px-3 py-2 text-sm" />
-              <button type="button" onClick={createSchedule} className="dg-btn dg-btn-primary px-3 py-2 text-sm">예약 생성</button>
-              <button type="button" onClick={() => void executeDueSchedule()} className="dg-btn dg-btn-steel px-3 py-2 text-sm">지금 실행</button>
+              <button type="button" onClick={createSchedule} className="dg-btn dg-btn-primary px-3 py-2 text-sm">대기열에 추가</button>
+              <button type="button" onClick={() => void executeDueSchedule()} className="dg-btn dg-btn-steel px-3 py-2 text-sm">시간 지난 항목 지금 실행</button>
             </div>
+            <p className="mt-2 text-xs text-steel-400">{QUEUE_NOTICE}</p>
             <div className="mt-3 space-y-1 text-xs">
               {scheduledJobs.slice(0, 10).map((job) => (
                 <div key={job.id} className="dg-well px-2 py-1">
                   {new Date(job.executeAt).toLocaleString("ko-KR")} · {JOB_TYPE_LABEL[job.type] ?? job.type} · {job.ids.length}건
                 </div>
               ))}
-              {scheduledJobs.length === 0 && <p className="text-gray-400">예약 작업이 없습니다.</p>}
+              {scheduledJobs.length === 0 && <p className="text-gray-400">대기 중인 일괄 처리가 없어요.</p>}
             </div>
           </MediaPanel>
         )}

@@ -79,7 +79,7 @@ export default function DevAvatars() {
           <Cell label="출석 경고">
             <AvatarRenderer avatarSeed="warn" tier="SILVER" stage={3} attendanceRisk="warning" mbti="ESTP" growthParams={growth(0.3)} size={120} />
           </Cell>
-          <Cell label="탈락위기">
+          <Cell label="오래 쉼(다시 시작해요)">
             <AvatarRenderer avatarSeed="crit" tier="MASTER" stage={8} attendanceRisk="critical" mbti="ESTJ" growthParams={growth(0.9)} evolutionBranch="TITAN" size={120} />
           </Cell>
           {(["TITAN", "BLAZE", "PHANTOM"] as const).map((b) => (

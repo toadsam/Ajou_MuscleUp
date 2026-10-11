@@ -886,3 +886,37 @@
 .lounge-preview:hover .lounge-dot {
   animation-duration: 0.9s;
 }
+
+/* ---------- 헬스장 지도(첫 화면) ---------- */
+
+.hero-map {
+  flex: 0 1 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  border-left: 3px solid var(--dg-ink);
+}
+
+/* 노트북 화면에서도 지도 전체(HUD~바로 가기)가 한 화면에 들어오게 높이로 폭을 제한 */
+.hero-map .gm-app {
+  max-width: min(400px, max(300px, calc((100svh - 330px) / 1.625)));
+}
+
+@media (max-width: 768px) {
+  .hero-map .gm-app {
+    max-width: 400px;
+  }
+
+  .hero-map {
+    flex-basis: 100%;
+    padding: 0.6rem 0.3rem 0.8rem;
+    border-left: 0;
+    border-top: 3px solid var(--dg-ink);
+  }
+
+  .hero-desc,
+  .hero-actions {
+    display: none;
+  }
+}

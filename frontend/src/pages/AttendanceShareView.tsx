@@ -15,9 +15,12 @@ import {
 } from "../utils/attendanceShareCard";
 import watermarkLogo from "../assets/images/워터마크.png";
 import "../styles/attendanceShare.css";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
 
+// 공개 공유 응답. 백엔드가 공개 응답에서 memo·reportCount·hiddenByAdmin·id 를 뺄 수 있어 모두 선택 값으로 둔다.
 type ShareData = {
-  id: number;
+  id?: number;
   date: string;
   didWorkout: boolean;
   memo?: string | null;
@@ -26,8 +29,9 @@ type ShareData = {
   workoutIntensity?: string | null;
   mediaUrls?: string[] | null;
   authorNickname?: string | null;
-  cheerCount: number;
-  reportCount: number;
+  cheerCount?: number | null;
+  reportCount?: number | null;
+  hiddenByAdmin?: boolean | null;
   currentStreak?: number | null;
   lastEditedAt?: string | null;
   updatedAt?: string | null;
@@ -101,21 +105,21 @@ const withProxy = (url: string) => `${API_BASE}/api/files/proxy?path=${encodeURI
 const isVideo = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?|$)/i.test(url.split("?")[0]);
 
 const THEME_OPTIONS: Array<{ id: ShareCardTheme; label: string }> = [
-  { id: "sunset", label: "Sunset" },
-  { id: "mint", label: "Mint" },
-  { id: "midnight", label: "Midnight" },
+  { id: "sunset", label: "노을" },
+  { id: "mint", label: "민트" },
+  { id: "midnight", label: "한밤" },
 ];
 
 const RATIO_OPTIONS: Array<{ id: ShareCardRatio; label: string }> = [
-  { id: "feed", label: "Feed 4:5" },
-  { id: "square", label: "Square" },
-  { id: "story", label: "Story 9:16" },
+  { id: "feed", label: "피드 4:5" },
+  { id: "square", label: "정사각 1:1" },
+  { id: "story", label: "스토리 9:16" },
 ];
 
 const QUOTE_OPTIONS: Array<{ id: ShareCardQuoteStyle; label: string }> = [
-  { id: "glass", label: "Glass" },
-  { id: "outline", label: "Outline" },
-  { id: "solid", label: "Solid" },
+  { id: "glass", label: "반투명" },
+  { id: "outline", label: "테두리" },
+  { id: "solid", label: "단색" },
 ];
 
 const MEDIA_FIT_OPTIONS: Array<{ id: ShareCardMediaFit; label: string }> = [
@@ -129,22 +133,22 @@ const CHARACTER_OPTIONS: Array<{ id: ShareCardCharacter; label: string }> = [
   { id: "deukgeun", label: "득근이" },
 ];
 
-const CHARACTER_POSE_OPTIONS: Array<{ id: ShareCardCharacterPose; label: string; emoji: string }> = [
-  { id: "flex", label: "근육", emoji: "??" },
-  { id: "wave", label: "인사", emoji: "??" },
-  { id: "heart", label: "하트", emoji: "??" },
-  { id: "victory", label: "브이", emoji: "??" },
-  { id: "fire", label: "파워", emoji: "??" },
-  { id: "squat", label: "스쿼트", emoji: "???" },
-  { id: "jump", label: "점프", emoji: "??" },
-  { id: "run", label: "러닝", emoji: "??" },
+const CHARACTER_POSE_OPTIONS: Array<{ id: ShareCardCharacterPose; label: string }> = [
+  { id: "flex", label: "근육" },
+  { id: "wave", label: "인사" },
+  { id: "heart", label: "하트" },
+  { id: "victory", label: "브이" },
+  { id: "fire", label: "파워" },
+  { id: "squat", label: "스쿼트" },
+  { id: "jump", label: "점프" },
+  { id: "run", label: "러닝" },
 ];
 
-const CHARACTER_EXPRESSION_OPTIONS: Array<{ id: CharacterExpression; label: string; emoji: string }> = [
-  { id: "smile", label: "웃음", emoji: "??" },
-  { id: "proud", label: "뿌듯", emoji: "??" },
-  { id: "serious", label: "진지", emoji: "??" },
-  { id: "surprised", label: "놀람", emoji: "??" },
+const CHARACTER_EXPRESSION_OPTIONS: Array<{ id: CharacterExpression; label: string }> = [
+  { id: "smile", label: "웃음" },
+  { id: "proud", label: "뿌듯" },
+  { id: "serious", label: "진지" },
+  { id: "surprised", label: "놀람" },
 ];
 
 const TEXT_FONT_OPTIONS: Array<{ id: TextFontPreset; label: string }> = [
@@ -164,9 +168,9 @@ const TEXT_DECOR_OPTIONS: Array<{ id: TextDecorPreset; label: string }> = [
 
 const DECO_GLYPH: Record<DecoType, string> = {
   star: "★",
-  heart: "?",
-  bolt: "?",
-  tape: "?",
+  heart: "❤",
+  bolt: "⚡",
+  tape: "▭",
   mychar: "ME",
   deukgeun: "DG",
 };
@@ -186,7 +190,7 @@ const THEME_PACKS: Array<{
     label: "귀여움",
     theme: "mint",
     quoteStyle: "glass",
-    sticker: "?",
+    sticker: "✨",
     textFont: "cute",
     textDecor: "gradient",
     defaultDecos: [
@@ -199,7 +203,7 @@ const THEME_PACKS: Array<{
     label: "레트로",
     theme: "sunset",
     quoteStyle: "outline",
-    sticker: "???",
+    sticker: "🎞️",
     textFont: "retro",
     textDecor: "outline",
     defaultDecos: [
@@ -212,7 +216,7 @@ const THEME_PACKS: Array<{
     label: "헬스장 포스터",
     theme: "midnight",
     quoteStyle: "solid",
-    sticker: "??",
+    sticker: "💪",
     textFont: "gym",
     textDecor: "shadow",
     defaultDecos: [
@@ -225,7 +229,7 @@ const THEME_PACKS: Array<{
     label: "만화풍",
     theme: "sunset",
     quoteStyle: "outline",
-    sticker: "??",
+    sticker: "💥",
     textFont: "comic",
     textDecor: "outline",
     defaultDecos: [
@@ -235,7 +239,8 @@ const THEME_PACKS: Array<{
   },
 ];
 
-const STICKERS = ["", "??", "??", "?", "??", "??", "?", "??"];
+// 카드에 붙이는 스티커(카드 내용물). 커밋 2de4f34 에서 "??" 로 깨졌던 것을 그 직전 커밋 값으로 되살렸다.
+const STICKERS = ["", "🔥", "💪", "✨", "🚀", "🏆", "⚡", "🎯"];
 
 const DEFAULT_PRESET: SharePreset = {
   theme: "sunset",
@@ -266,7 +271,8 @@ function loadPreset(): SharePreset {
       theme: parsed.theme ?? DEFAULT_PRESET.theme,
       ratio: parsed.ratio ?? DEFAULT_PRESET.ratio,
       quoteStyle: parsed.quoteStyle ?? DEFAULT_PRESET.quoteStyle,
-      sticker: parsed.sticker ?? DEFAULT_PRESET.sticker,
+      // 깨진 "??" 가 저장된 예전 프리셋은 스티커 없음으로 되돌린다
+      sticker: parsed.sticker && !parsed.sticker.includes("?") ? parsed.sticker : DEFAULT_PRESET.sticker,
       showMeta: parsed.showMeta ?? DEFAULT_PRESET.showMeta,
       mediaFit: parsed.mediaFit ?? DEFAULT_PRESET.mediaFit,
       mediaPositionX: parsed.mediaPositionX ?? DEFAULT_PRESET.mediaPositionX,
@@ -574,11 +580,11 @@ export default function AttendanceShareView() {
         setLoading(true);
         setError(null);
         const res = await fetch(`${API_BASE}/api/attendance/share/${slug}`);
-        if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+        if (!res.ok) throw await httpError(res, "공유된 출석을 불러오지 못했어요.");
         const payload: ShareData = await res.json();
         setData(payload);
-      } catch (e: any) {
-        setError(e?.message || "공유된 출석을 불러오지 못했어요.");
+      } catch (e: unknown) {
+        setError(friendlyError(e, "공유된 출석을 불러오지 못했어요."));
       } finally {
         setLoading(false);
       }
@@ -674,7 +680,7 @@ export default function AttendanceShareView() {
     0,
     photoFilter.warmth / 100
   )}) blur(${photoFilter.blur}px)`;
-  const expressionLabel = CHARACTER_EXPRESSION_OPTIONS.find((item) => item.id === characterExpression)?.emoji ?? "??";
+  const expressionLabel = CHARACTER_EXPRESSION_OPTIONS.find((item) => item.id === characterExpression)?.label ?? "";
   const isSectionOpen = (key: SectionKey) => openSections[key];
   const toggleSection = (key: SectionKey) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -816,7 +822,7 @@ export default function AttendanceShareView() {
           characterSize,
           characterLabel: character === "me" ? (data.authorNickname || "내 캐릭터") : "득근이",
           watermarkText: "득근득근",
-          cheerCount: data.cheerCount,
+          cheerCount: data.cheerCount ?? 0,
           showTitle,
           showSubtitle,
         });
@@ -893,7 +899,7 @@ export default function AttendanceShareView() {
       exportScale,
     };
     localStorage.setItem(PRESET_KEY, JSON.stringify(next));
-    alert("커스텀 프리셋을 저장했어요.");
+    toast("지금 설정을 프리셋으로 저장했어요.", "success");
   };
 
   const applyRandomTemplate = () => {
@@ -931,7 +937,7 @@ export default function AttendanceShareView() {
       characterSize,
       characterLabel: character === "me" ? (data.authorNickname || "내 캐릭터") : "득근이",
       watermarkText: "득근득근",
-      cheerCount: data.cheerCount,
+      cheerCount: data.cheerCount ?? 0,
       showTitle,
       showSubtitle,
       scale: effectiveExportScale,
@@ -1181,20 +1187,26 @@ export default function AttendanceShareView() {
   const sendReaction = async (kind: "cheer" | "report") => {
     if (!data || sending) return;
     if (hasReacted(kind)) {
-      alert(kind === "cheer" ? "이미 응원했어요." : "이미 신고했어요.");
+      toast(kind === "cheer" ? "이미 응원했어요." : "이미 신고했어요.");
       return;
     }
 
     try {
       setSending(true);
-      const res = await fetch(`${API_BASE}/api/attendance/share/${data.shareSlug}/${kind}`, { method: "POST" });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      // 신고는 로그인이 필요하다(서버가 쿠키로 사용자를 확인). 응원도 같은 방식으로 쿠키를 보낸다.
+      const res = await fetch(`${API_BASE}/api/attendance/share/${data.shareSlug}/${kind}`, { method: "POST", credentials: "include" });
+      if (res.status === 401) {
+        toast(kind === "report" ? "로그인하면 신고할 수 있어요." : "로그인하면 응원할 수 있어요.", "error");
+        return;
+      }
+      if (!res.ok) throw await httpError(res, kind === "cheer" ? "응원을 보내지 못했어요." : "신고를 접수하지 못했어요.");
       const payload: ShareData = await res.json();
-      setData(payload);
+      // 공개 응답에서 빠질 수 있는 값(memo·reportCount 등)은 기존 값을 지우지 않게 합친다
+      setData((prev) => (prev ? { ...prev, ...payload } : payload));
       markReacted(kind);
-      if (kind === "report") alert("신고가 접수됐어요.");
-    } catch (e: any) {
-      alert(e?.message || "처리에 실패했어요.");
+      toast(kind === "report" ? "신고가 접수됐어요. 운영진이 확인할게요." : "응원을 보냈어요.", "success");
+    } catch (e: unknown) {
+      toast(friendlyError(e, "처리하지 못했어요. 다시 시도해 주세요."), "error");
     } finally {
       setSending(false);
     }
@@ -1225,7 +1237,7 @@ export default function AttendanceShareView() {
     <section className={`attendance-share-page theme-${theme}`}>
       <div className="share-shell">
         <div className="share-head mb-6 dg-rise">
-          <p className="share-eyebrow font-num">Attendance Brag Studio</p>
+          <p className="share-eyebrow">출석 자랑 카드</p>
           <h1 className="text-3xl md:text-5xl mt-2 text-chalk">{title}</h1>
           <p className="text-sm text-steel-300 mt-2">
             {data.date} · {data.didWorkout ? "운동 완료" : "휴식 기록"} · 연속 {data.currentStreak ?? 0}일
@@ -1233,7 +1245,7 @@ export default function AttendanceShareView() {
         </div>
 
         <div className="share-grid">
-          <div className="share-panel dg-steel dg-rise" aria-label="share preview panel">
+          <div className="share-panel dg-steel dg-rise" role="region" aria-label="카드 미리보기">
             {/* 화면 미리보기용 받침: 카드 템플릿 테마 색(--bg-a/b/c)을 카드 뒤에 깔아 준다. 캡처 대상(share-preview)은 그대로. */}
             <div className={`share-preview-stage ratio-${ratio}`}>
             <div ref={previewCaptureRef} className={`share-preview ratio-${ratio}`}>
@@ -1368,15 +1380,15 @@ export default function AttendanceShareView() {
                   </div>
                   <div className="share-character-meta">
                     <strong>{character === "deukgeun" ? "득근이" : "내 캐릭터"}</strong>
-                    <span>{activePose.emoji} {activePose.label} · {expressionLabel}</span>
+                    <span>{activePose.label} · {expressionLabel}</span>
                   </div>
                 </div>
               )}
 
               {ratio === "story" && (
                 <>
-                  <div className="story-safe top" aria-hidden="true">Story Safe Area</div>
-                  <div className="story-safe bottom" aria-hidden="true">Story Safe Area</div>
+                  <div className="story-safe top" aria-hidden="true" data-html2canvas-ignore="true">스토리 안전 영역</div>
+                  <div className="story-safe bottom" aria-hidden="true" data-html2canvas-ignore="true">스토리 안전 영역</div>
                 </>
               )}
 
@@ -1386,21 +1398,24 @@ export default function AttendanceShareView() {
                 <p className={`share-quote quote-${quoteStyle}`}>{customMessage || data.shareComment || data.memo || "오늘 출석 완료!"}</p>
 
                 {showMeta && (
-                  <p className="share-meta">응원 {data.cheerCount} · 신고 {data.reportCount} · 득근득근</p>
+                  <p className="share-meta">응원 {data.cheerCount ?? 0} · 득근득근</p>
                 )}
               </div>
             </div>
             </div>
 
-            <div className="share-memo dg-whiteboard mt-5">
-              <p className="share-memo-title font-pen">오늘의 메모</p>
-              <p className="whitespace-pre-line">{data.memo || "메모 없음"}</p>
-            </div>
+            {/* 메모는 공개 응답에서 빠질 수 있다. 없으면 칸 자체를 숨긴다(예전엔 "메모 없음"이 떴다) */}
+            {data.memo?.trim() && (
+              <div className="share-memo dg-whiteboard mt-5">
+                <p className="share-memo-title font-pen">오늘의 메모</p>
+                <p className="whitespace-pre-line">{data.memo}</p>
+              </div>
+            )}
           </div>
 
-          <div className="share-panel share-controls dg-steel dg-rise" style={{ animationDelay: "80ms" }} aria-label="customization controls">
+          <div className="share-panel share-controls dg-steel dg-rise" style={{ animationDelay: "80ms" }} role="region" aria-label="카드 꾸미기">
             <div className="quick-action-dock">
-              <button className={`action-btn primary quick-action-btn dg-btn dg-btn-primary ${arrivedForShare && preparedFile ? "share-ready-pulse" : ""}`} onClick={quickShare} disabled={isActionDisabled} aria-label="quick share top">
+              <button className={`action-btn primary quick-action-btn dg-btn dg-btn-primary ${arrivedForShare && preparedFile ? "share-ready-pulse" : ""}`} onClick={quickShare} disabled={isActionDisabled}>
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
                     <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
@@ -1410,7 +1425,7 @@ export default function AttendanceShareView() {
                   shareButtonLabel
                 )}
               </button>
-              <button className="action-btn quick-action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card top">
+              <button className="action-btn quick-action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled}>
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
                     <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
@@ -1438,7 +1453,7 @@ export default function AttendanceShareView() {
                       key={`quick-media-fit-${option.id}`}
                       className={`choice-btn ${mediaFit === option.id ? "active" : ""}`}
                       onClick={() => setMediaFit(option.id)}
-                      aria-label={`media fit quick ${option.label}`}
+                      aria-label={`사진 맞춤 ${option.label}`}
                       aria-pressed={mediaFit === option.id}
                     >
                       {option.label}
@@ -1468,7 +1483,7 @@ export default function AttendanceShareView() {
 
             {simpleMode && (
               <div className="control-row simple-core-bar">
-                <button className="action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card quick">
+                <button className="action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled}>
                   {isActionDisabled ? (
                     <span className="action-btn-loading">
                       <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
@@ -1496,13 +1511,13 @@ export default function AttendanceShareView() {
                   onClick={() => toggleSection("preset")}
                   aria-expanded={isSectionOpen("preset")}
                 >
-                  <span>Preset</span>
+                  <span>프리셋</span>
                   <ChevronDown />
                 </button>
                 {isSectionOpen("preset") && (
                   <div className="control-section">
                     <div className="choice-wrap">
-                      <button className="choice-btn" onClick={savePreset} aria-label="save preset">현재 설정 저장</button>
+                      <button className="choice-btn" onClick={savePreset}>현재 설정 저장</button>
                     </div>
                   </div>
                 )}
@@ -1547,84 +1562,84 @@ export default function AttendanceShareView() {
                 </button>
                 {isSectionOpen("advancedCard") && (
                   <div className="control-section">
-                    <p className="control-subtitle">Theme</p>
+                    <p className="control-subtitle">테마</p>
                     <div className="choice-wrap">
                       {THEME_OPTIONS.map((option) => (
                         <button
                           key={option.id}
                           className={`choice-btn ${theme === option.id ? "active" : ""}`}
                           onClick={() => setTheme(option.id)}
-                          aria-label={`theme ${option.label}`}
+                          aria-label={`테마 ${option.label}`}
                           aria-pressed={theme === option.id}
                         >
                           {option.label}
                         </button>
                       ))}
                     </div>
-                    <p className="control-subtitle mt-3">Image Ratio</p>
+                    <p className="control-subtitle mt-3">이미지 비율</p>
                     <div className="choice-wrap">
                       {RATIO_OPTIONS.map((option) => (
                         <button
                           key={option.id}
                           className={`choice-btn ${ratio === option.id ? "active" : ""}`}
                           onClick={() => setRatio(option.id)}
-                          aria-label={`ratio ${option.label}`}
+                          aria-label={`비율 ${option.label}`}
                           aria-pressed={ratio === option.id}
                         >
                           {option.label}
                         </button>
                       ))}
                     </div>
-                    <p className="control-subtitle mt-3">Quote Style</p>
+                    <p className="control-subtitle mt-3">문구 상자</p>
                     <div className="choice-wrap">
                       {QUOTE_OPTIONS.map((option) => (
                         <button
                           key={option.id}
                           className={`choice-btn ${quoteStyle === option.id ? "active" : ""}`}
                           onClick={() => setQuoteStyle(option.id)}
-                          aria-label={`quote style ${option.label}`}
+                          aria-label={`문구 상자 ${option.label}`}
                           aria-pressed={quoteStyle === option.id}
                         >
                           {option.label}
                         </button>
                       ))}
                     </div>
-                    <p className="control-subtitle mt-3">Sticker</p>
+                    <p className="control-subtitle mt-3">스티커</p>
                     <div className="choice-wrap">
                       {STICKERS.map((item) => (
                         <button
                           key={item || "none"}
                           className={`choice-btn ${sticker === item ? "active" : ""}`}
                           onClick={() => setSticker(item)}
-                          aria-label={`sticker ${item || "none"}`}
+                          aria-label={`스티커 ${item || "없음"}`}
                           aria-pressed={sticker === item}
                         >
-                          {item || "None"}
+                          {item || "없음"}
                         </button>
                       ))}
                     </div>
-                    <p className="control-subtitle mt-3">Export Quality</p>
+                    <p className="control-subtitle mt-3">저장 화질</p>
                     <div className="choice-wrap">
                       {[1, 2, 3, 4].map((scale) => (
                         <button
                           key={scale}
                           className={`choice-btn ${exportScale === scale ? "active" : ""}`}
                           onClick={() => setExportScale(scale as 1 | 2 | 3 | 4)}
-                          aria-label={`export ${scale}x`}
+                          aria-label={`저장 화질 ${scale}배`}
                           aria-pressed={exportScale === scale}
                         >
-                          {scale}x PNG
+                          {scale}배
                         </button>
                       ))}
                     </div>
                     <div className="mt-3 flex items-center gap-2">
-                      <input id="meta-toggle" type="checkbox" checked={showMeta} onChange={(e) => setShowMeta(e.target.checked)} aria-label="toggle meta" />
+                      <input id="meta-toggle" type="checkbox" checked={showMeta} onChange={(e) => setShowMeta(e.target.checked)} />
                       <label htmlFor="meta-toggle" className="text-sm text-steel-200">응원/공유 메타 표시</label>
                     </div>
                     {previewThumb && (
                       <div className="mt-3">
-                        <p className="control-subtitle">Live Thumbnail</p>
-                        <img src={previewThumb} alt="share thumbnail preview" className="thumb-preview" />
+                        <p className="control-subtitle">미리보기</p>
+                        <img src={previewThumb} alt="공유 카드 작은 미리보기" className="thumb-preview" />
                       </div>
                     )}
                   </div>
@@ -1808,7 +1823,7 @@ export default function AttendanceShareView() {
                         key={option.id}
                         className={`choice-btn ${character === option.id ? "active" : ""}`}
                         onClick={() => setCharacter(option.id)}
-                        aria-label={`character ${option.label}`}
+                        aria-label={`캐릭터 ${option.label}`}
                         aria-pressed={character === option.id}
                       >
                         {option.label}
@@ -1823,7 +1838,7 @@ export default function AttendanceShareView() {
                             key={pose.id}
                             className={`choice-btn ${characterPose === pose.id ? "active" : ""}`}
                             onClick={() => setCharacterPose(pose.id)}
-                            aria-label={`pose ${pose.label}`}
+                            aria-label={`포즈 ${pose.label}`}
                             aria-pressed={characterPose === pose.id}
                           >
                             {pose.label}
@@ -1954,7 +1969,7 @@ export default function AttendanceShareView() {
                   onClick={() => toggleSection("message")}
                   aria-expanded={isSectionOpen("message")}
                 >
-                  <span>Brag Message</span>
+                  <span>자랑 멘트</span>
                   <ChevronDown />
                 </button>
                 {isSectionOpen("message") && (
@@ -1965,15 +1980,15 @@ export default function AttendanceShareView() {
                     className="comment-editor"
                     maxLength={280}
                     placeholder="자랑 멘트를 적어보세요"
-                    aria-label="custom brag message"
+                    aria-label="자랑 멘트"
                   />
                   <div className="choice-wrap mt-2">
                     {templatePool.slice(0, 3).map((template) => (
-                      <button key={template} className="choice-btn" onClick={() => setCustomMessage(template)} aria-label="apply template">
+                      <button key={template} className="choice-btn" onClick={() => setCustomMessage(template)} aria-label={`템플릿 넣기: ${template}`}>
                         템플릿
                       </button>
                     ))}
-                    <button className="choice-btn" onClick={applyRandomTemplate} aria-label="random recommendation">랜덤 추천</button>
+                    <button className="choice-btn" onClick={applyRandomTemplate}>랜덤 추천</button>
                   </div>
                   <p className="text-xs text-steel-400 mt-2 font-num">{customMessage.length}/280</p>
                 </div>
@@ -1982,7 +1997,7 @@ export default function AttendanceShareView() {
             )}
 
             <div className="action-list">
-              <button className={`action-btn primary dg-btn dg-btn-primary ${arrivedForShare && preparedFile ? "share-ready-pulse" : ""}`} onClick={quickShare} disabled={isActionDisabled} aria-label="quick share">
+              <button className={`action-btn primary dg-btn dg-btn-primary ${arrivedForShare && preparedFile ? "share-ready-pulse" : ""}`} onClick={quickShare} disabled={isActionDisabled}>
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
                     <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
@@ -1992,7 +2007,7 @@ export default function AttendanceShareView() {
                   shareButtonLabel
                 )}
               </button>
-              <button className="action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled} aria-label="save custom card">
+              <button className="action-btn dg-btn dg-btn-steel" onClick={saveImage} disabled={isActionDisabled}>
                 {isActionDisabled ? (
                   <span className="action-btn-loading">
                     <span className="dg-loading-plates action-btn-spinner" aria-hidden="true"><i /><i /><i /><i /></span>
@@ -2004,27 +2019,27 @@ export default function AttendanceShareView() {
               </button>
               {showSimpleExtra && (
                 <>
-                  <button className="action-btn dg-btn dg-btn-steel" onClick={async () => { await navigator.clipboard.writeText(composeShareText()); alert("멘트와 링크를 복사했어요."); }} aria-label="copy message and link">
+                  <button className="action-btn dg-btn dg-btn-steel" onClick={async () => { await navigator.clipboard.writeText(composeShareText()); toast("멘트와 링크를 복사했어요.", "success"); }}>
                     멘트+링크 복사
                   </button>
                   <button
                     disabled={sending || hasReacted("cheer")}
                     className="action-btn dg-btn dg-btn-steel"
                     onClick={() => sendReaction("cheer")}
-                    aria-label="send cheer"
+                   
                   >
-                    응원하기 {data.cheerCount}
+                    응원하기 {data.cheerCount ?? 0}
                   </button>
                   <button
                     disabled={sending || hasReacted("report")}
                     className="action-btn dg-btn dg-btn-steel"
                     onClick={() => sendReaction("report")}
-                    aria-label="report share"
+                   
                   >
                     신고하기
                   </button>
-                  <a href={appShareLink} className="action-btn dg-btn dg-btn-steel" aria-label="refresh current share page">현재 페이지 링크</a>
-                  <Link to="/" className="action-btn dg-btn dg-btn-steel" aria-label="go home">홈으로</Link>
+                  <a href={appShareLink} className="action-btn dg-btn dg-btn-steel" aria-label="이 공유 페이지 링크 열기">현재 페이지 링크</a>
+                  <Link to="/" className="action-btn dg-btn dg-btn-steel">홈으로</Link>
                 </>
               )}
             </div>

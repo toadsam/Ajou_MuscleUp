@@ -2,6 +2,7 @@ package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
 import com.ajou.muscleup.dto.attendance.AdminAttendanceLogResponse;
+import com.ajou.muscleup.dto.attendance.AttendancePublicShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceRankingItemResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceShareResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceSummaryResponse;
@@ -24,11 +25,14 @@ public interface AttendanceService {
 
     void unshareByDate(String email, LocalDate date);
 
-    AttendanceShareResponse getSharedBySlug(String slug);
+    /** 공개 공유 화면용(메모·신고 수·내부 id 제외). */
+    AttendancePublicShareResponse getSharedBySlug(String slug);
 
-    AttendanceShareResponse addCheerBySlug(String slug);
+    /** viewerKey: 로그인했으면 이메일, 아니면 IP. 같은 키·같은 글은 짧은 시간 안에 한 번만 센다. */
+    AttendancePublicShareResponse addCheerBySlug(String slug, String viewerKey);
 
-    AttendanceShareResponse reportBySlug(String slug);
+    /** 로그인 필수(email 이 없으면 401). 한 사람이 한 글에 한 번만 센다. */
+    AttendancePublicShareResponse reportBySlug(String slug, String email);
 
     List<AttendanceRankingItemResponse> getWeeklyStreakRanking(int limit);
 

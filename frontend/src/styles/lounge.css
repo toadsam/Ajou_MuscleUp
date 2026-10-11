@@ -1907,3 +1907,28 @@ button.lounge-ctl:active:not(:disabled) {
     width: 0;
   }
 }
+/* 게임 화면 아래 보조 조작 묶음(소셜·보이스·미니게임). 2026-10-11 게임 화면을 맨 위로 올리면서 생김 */
+.lounge-tools {
+  padding: 0;
+}
+
+.lounge-tools-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  color: var(--dg-chalk);
+  text-align: left;
+}
+
+.lounge-tools-toggle:hover {
+  background: var(--dg-steel-hi);
+}
+
+.lounge-tools-toggle:focus-visible {
+  outline: 3px solid var(--dg-yellow, #f2c230);
+  outline-offset: -3px;
+}

@@ -65,46 +65,65 @@ function showPwaUpdateToast(onConfirm: () => void) {
   const existing = document.getElementById("pwa-update-toast");
   if (existing) return;
 
+  // 짐 플로어(v2): 볼트 철판 바탕 + 검은 테두리 + 아래로 떨어지는 단단한 그림자, 주요 행동은 빨강(25kg 원판)
   const toast = document.createElement("div");
   toast.id = "pwa-update-toast";
-  toast.style.position = "fixed";
-  toast.style.left = "16px";
-  toast.style.right = "16px";
-  toast.style.bottom = "16px";
-  toast.style.zIndex = "99999";
-  toast.style.padding = "12px 14px";
-  toast.style.borderRadius = "12px";
-  toast.style.background = "rgba(11, 17, 35, 0.95)";
-  toast.style.border = "1px solid rgba(120, 221, 255, 0.45)";
-  toast.style.color = "#e9f8ff";
-  toast.style.fontSize = "14px";
-  toast.style.display = "flex";
-  toast.style.alignItems = "center";
-  toast.style.justifyContent = "space-between";
-  toast.style.gap = "10px";
+  toast.setAttribute("role", "status");
+  Object.assign(toast.style, {
+    position: "fixed",
+    left: "16px",
+    right: "16px",
+    bottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
+    zIndex: "99999",
+    maxWidth: "480px",
+    margin: "0 auto",
+    padding: "12px 14px",
+    borderRadius: "6px",
+    background: "var(--dg-steel, #26272b)",
+    border: "3px solid var(--dg-ink, #0e0e10)",
+    boxShadow: "0 5px 0 var(--dg-ink, #0e0e10)",
+    color: "var(--dg-chalk, #eeece6)",
+    fontSize: "14px",
+    fontWeight: "700",
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "10px",
+  });
   toast.textContent = "새 버전이 준비됐어요.";
 
   const actions = document.createElement("div");
   actions.style.display = "flex";
   actions.style.gap = "8px";
 
+  const buttonBase = {
+    minHeight: "40px",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    border: "3px solid var(--dg-ink, #0e0e10)",
+    boxShadow: "0 3px 0 var(--dg-ink, #0e0e10)",
+    fontSize: "14px",
+    fontWeight: "700",
+    cursor: "pointer",
+  };
+
   const later = document.createElement("button");
+  later.type = "button";
   later.textContent = "나중에";
-  later.style.padding = "6px 10px";
-  later.style.borderRadius = "8px";
-  later.style.border = "1px solid rgba(255,255,255,0.22)";
-  later.style.background = "transparent";
-  later.style.color = "#d8e5ff";
+  Object.assign(later.style, buttonBase, {
+    background: "var(--dg-steel-hi, #3a3d43)",
+    color: "var(--dg-chalk, #eeece6)",
+  });
   later.onclick = () => toast.remove();
 
   const update = document.createElement("button");
+  update.type = "button";
   update.textContent = "지금 업데이트";
-  update.style.padding = "6px 10px";
-  update.style.borderRadius = "8px";
-  update.style.border = "none";
-  update.style.background = "linear-gradient(90deg, #2ec5ff, #7f6bff)";
-  update.style.color = "#04111a";
-  update.style.fontWeight = "700";
+  Object.assign(update.style, buttonBase, {
+    background: "var(--dg-red, #d9302a)",
+    color: "#ffffff",
+  });
   update.onclick = () => {
     toast.remove();
     onConfirm();

@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
+import { friendlyError, httpError } from "../lib/httpError";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -274,12 +275,12 @@ export default function InbodyConsult() {
         body: formData,
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok) throw await httpError(res, "상담 요청을 처리하지 못했어요.");
       const data = (await res.json()) as InbodyResponse;
       setResult(data);
       setConfirmedMetrics(extractCoreMetrics(data.metrics));
     } catch (err: any) {
-      setError(err?.message ?? "분석 중 오류가 발생했습니다.");
+      setError(friendlyError(err, "분석 중 오류가 발생했습니다."));
     } finally {
       setLoading(false);
     }
@@ -316,12 +317,12 @@ export default function InbodyConsult() {
           heightCm: parseOptionalInt(profileHeightCm),
         }),
       });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok) throw await httpError(res, "상담 요청을 처리하지 못했어요.");
       const data = (await res.json()) as InbodyResponse;
       setResult(data);
       setConfirmedMetrics(extractCoreMetrics(data.metrics));
     } catch (err: any) {
-      setError(err?.message ?? "직접 입력 상담 중 오류가 발생했습니다.");
+      setError(friendlyError(err, "직접 입력 상담 중 오류가 발생했습니다."));
     } finally {
       setLoading(false);
     }
@@ -348,12 +349,12 @@ export default function InbodyConsult() {
           heightCm: parseOptionalInt(profileHeightCm),
         }),
       });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok) throw await httpError(res, "상담 요청을 처리하지 못했어요.");
       const data = (await res.json()) as InbodyResponse;
       setResult(data);
       setConfirmedMetrics(extractCoreMetrics(data.metrics));
     } catch (err: any) {
-      setError(err?.message ?? "재상담 중 오류가 발생했습니다.");
+      setError(friendlyError(err, "재상담 중 오류가 발생했습니다."));
     } finally {
       setReviewLoading(false);
     }
@@ -486,7 +487,7 @@ export default function InbodyConsult() {
 
       pdf.save(`inbody-report-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (err: any) {
-      setError(err?.message ?? "PDF 생성 중 오류가 발생했습니다.");
+      setError(friendlyError(err, "PDF 생성 중 오류가 발생했습니다."));
     } finally {
       if (exportTarget) {
         const fullRawDetails = Array.from(exportTarget.querySelectorAll<HTMLDetailsElement>("details.ai-full-raw"));
@@ -537,7 +538,7 @@ export default function InbodyConsult() {
                     className={`rounded-md border-2 px-4 py-4 text-left transition duration-150 ${
                       selected
                         ? "-translate-y-0.5 border-board-ink border-l-[8px] border-l-board-red bg-white shadow-md"
-                        : "border-steel-300 bg-white/60 hover:-translate-y-0.5 hover:border-board-ink hover:bg-white"
+                        : "border-steel-300 bg-board hover:-translate-y-0.5 hover:border-board-ink hover:bg-white"
                     }`}
                   >
                     <p className="flex items-center gap-2 text-sm font-bold text-board-ink">

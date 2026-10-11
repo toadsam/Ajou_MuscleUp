@@ -38,6 +38,11 @@ public class ProteinShareServiceImpl implements ProteinShareService {
         if (existing != null) {
             return ProteinShareApplicationResponse.from(existing);
         }
+        // 마감일이 지난 모집에는 새로 신청할 수 없다(마감일이 없는 예전 글은 그대로 받는다)
+        if (protein.getDeadline() != null
+                && protein.getDeadline().isBefore(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모집이 마감된 공동구매예요.");
+        }
         ProteinShareApplication created = applicationRepository.save(
                 ProteinShareApplication.builder()
                         .protein(protein)

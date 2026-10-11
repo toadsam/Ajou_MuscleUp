@@ -9,6 +9,7 @@ import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.ProteinRepository;
 import com.ajou.muscleup.repository.ReviewRepository;
 import com.ajou.muscleup.repository.UserRepository;
+import com.ajou.muscleup.util.RoleUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,13 +38,16 @@ public class ReviewServiceImpl implements ReviewService {
                 .rating(req.getRating())
                 .content(req.getContent())
                 .build());
-        return ReviewResponse.from(saved);
+        return ReviewResponse.from(saved, userEmail);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ReviewResponse> listByProtein(Long proteinId, Pageable pageable) {
-        return reviewRepository.findByProtein_Id(proteinId, pageable).map(ReviewResponse::from);
+    public Page<ReviewResponse> listByProtein(Long proteinId, Pageable pageable, String viewerEmail) {
+        Page<Review> page = proteinId == null
+                ? reviewRepository.findAllBy(pageable)
+                : reviewRepository.findByProtein_Id(proteinId, pageable);
+        return page.map(r -> ReviewResponse.from(r, viewerEmail));
     }
 
     @Override
@@ -52,7 +56,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
         Review r = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "후기를 찾을 수 없습니다."));
-        if (!r.getUser().getId().equals(user.getId()) && !"ADMIN".equalsIgnoreCase(user.getRole())) {
+        if (!r.getUser().getId().equals(user.getId()) && !RoleUtils.isAdmin(user)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 후기만 수정할 수 있습니다.");
         }
         r.setRating(req.getRating());
@@ -67,7 +71,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
         Review r = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "후기를 찾을 수 없습니다."));
-        if (!r.getUser().getId().equals(user.getId()) && !"ADMIN".equalsIgnoreCase(user.getRole())) {
+        if (!r.getUser().getId().equals(user.getId()) && !RoleUtils.isAdmin(user)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 후기만 삭제할 수 있습니다.");
         }
         reviewRepository.delete(r);

@@ -8,6 +8,8 @@ import com.ajou.muscleup.service.ProteinService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page; import org.springframework.data.domain.PageRequest; import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import java.util.Map;
 import org.springframework.http.ResponseEntity; import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
@@ -17,19 +19,30 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 public class ProteinController {
     private final ProteinService proteinService;
     private final UserRepository userRepository;
+    private static final int MAX_PAGE_SIZE = 50;
+
+    /** 상세 응답: 평균 · 후기 수 + 보는 사람 기준 mine · 영수증 */
+    private ProteinResponse detail(Protein p, String email) {
+        long count = proteinService.reviewCount(p.getId());
+        ProteinResponse res = ProteinResponse.from(p, count > 0 ? proteinService.averageRating(p.getId()) : null);
+        res.setReviewCount(count);
+        res.setMine(proteinService.isOwner(p, email));
+        if (proteinService.canSeeReceipt(p, email)) res.setReceiptUrl(ProteinResponse.receiptOf(p));
+        return res;
+    }
 
     @PostMapping
     public ResponseEntity<?> create(@AuthenticationPrincipal String email,
                                     @Valid @RequestBody ProteinCreateUpdateRequest req) {
         User owner = userRepository.findByEmail(email).orElse(null);
         Protein saved = proteinService.create(req, owner);
-        return ResponseEntity.ok(ProteinResponse.from(saved, 0.0));
+        return ResponseEntity.ok(detail(saved, email));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable("id") Long id, @RequestBody ProteinCreateUpdateRequest req) {
-        return ResponseEntity.ok(ProteinResponse.from(
-                proteinService.update(id, req), proteinService.averageRating(id)));
+    public ResponseEntity<?> update(@AuthenticationPrincipal String email,
+                                    @PathVariable("id") Long id, @RequestBody ProteinCreateUpdateRequest req) {
+        return ResponseEntity.ok(detail(proteinService.update(id, req), email));
     }
 
     @DeleteMapping("/{id}")
@@ -39,17 +52,27 @@ public class ProteinController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable("id") Long id) {
-        Protein p = proteinService.get(id);
-        return ResponseEntity.ok(ProteinResponse.from(p, proteinService.averageRating(id)));
+    public ResponseEntity<?> get(@AuthenticationPrincipal String email, @PathVariable("id") Long id) {
+        return ResponseEntity.ok(detail(proteinService.get(id), email));
     }
 
     @GetMapping
-    public ResponseEntity<?> list(@RequestParam(value = "q", required = false) String q,
+    public ResponseEntity<?> list(@AuthenticationPrincipal String email,
+                                  @RequestParam(value = "q", required = false) String q,
                                   @RequestParam(value = "page", defaultValue = "0") int page,
                                   @RequestParam(value = "size", defaultValue = "12") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        // 한 번에 최대 50개, 최신 글부터
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(Math.max(1, size), MAX_PAGE_SIZE),
+                Sort.by(Sort.Direction.DESC, "id"));
         Page<Protein> result = proteinService.list(q, pageable);
-        return ResponseEntity.ok(result.map(p -> ProteinResponse.from(p, proteinService.averageRating(p.getId()))));
+        // 평균 평점 · 후기 수를 글마다 묻지 않고 한 번에 모아 온다(예전: 글 수만큼 쿼리)
+        Map<Long, double[]> stats = proteinService.ratingStats(result.map(Protein::getId).getContent());
+        return ResponseEntity.ok(result.map(p -> {
+            double[] s = stats.get(p.getId());
+            ProteinResponse res = ProteinResponse.from(p, s != null ? s[0] : null);
+            res.setReviewCount(s != null ? (long) s[1] : 0L);
+            res.setMine(proteinService.isOwner(p, email));
+            return res; // 목록에는 영수증을 싣지 않는다
+        }));
     }
 }

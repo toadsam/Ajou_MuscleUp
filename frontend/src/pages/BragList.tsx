@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
+import { authorKey, getHiddenAuthors, setHiddenAuthors } from "../utils/bragHidden";
 
 type BragPost = {
   id: number;
@@ -11,6 +14,8 @@ type BragPost = {
   mediaUrls: string[];
   likeCount?: number;
   authorNickname?: string | null;
+  authorEmail?: string | null;
+  authorId?: number | null;
   createdAt?: string | null;
   visibility?: "PUBLIC" | "FRIENDS";
 };
@@ -36,13 +41,11 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (res.status === 401) {
+    toast("로그인이 필요해요.", "error");
     window.location.href = "/login";
-    throw new Error("로그인이 필요합니다.");
+    throw await httpError(res, "로그인이 필요해요.");
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
-  }
+  if (!res.ok) throw await httpError(res, "요청을 처리하지 못했어요.");
   return res.json();
 }
 
@@ -96,6 +99,8 @@ export default function BragList() {
   const [visibilityFilter, setVisibilityFilter] = useState<"ALL" | "FRIENDS">("ALL");
   const [likes, setLikes] = useState<Record<number, { count: number; liked: boolean }>>({});
   const [shareMessage, setShareMessage] = useState<string | null>(null);
+  // 상세 화면에서 "이 기기에서 숨기기"한 작성자(서버에 저장되지 않음)
+  const [hiddenAuthors, setHiddenAuthorsState] = useState<string[]>(() => getHiddenAuthors());
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -103,8 +108,8 @@ export default function BragList() {
       setError(null);
       const data = await api<PageResponse<BragPost>>("/api/brags");
       setPosts(Array.isArray(data) ? data : data.content ?? []);
-    } catch (e: any) {
-      setError(e?.message || "자랑글 목록을 불러오지 못했습니다.");
+    } catch (e) {
+      setError(friendlyError(e, "자랑글 목록을 불러오지 못했어요."));
     } finally {
       setLoading(false);
     }
@@ -134,9 +139,19 @@ export default function BragList() {
     return () => window.clearTimeout(timer);
   }, [shareMessage]);
 
+  const isHidden = useCallback(
+    (post: BragPost) => {
+      const key = authorKey(post);
+      return !!key && hiddenAuthors.includes(key);
+    },
+    [hiddenAuthors]
+  );
+  const hiddenCount = useMemo(() => posts.filter(isHidden).length, [posts, isHidden]);
+
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     return posts
+      .filter((post) => !isHidden(post))
       .filter((post) => (visibilityFilter === "FRIENDS" ? post.visibility === "FRIENDS" : true))
       .filter((post) => {
         if (!keyword) return true;
@@ -146,7 +161,13 @@ export default function BragList() {
           (post.movement || "").toLowerCase().includes(keyword)
         );
       });
-  }, [posts, search, visibilityFilter]);
+  }, [posts, search, visibilityFilter, isHidden]);
+
+  const showHidden = () => {
+    setHiddenAuthors([]);
+    setHiddenAuthorsState([]);
+    toast("이 기기에서 숨긴 작성자를 모두 다시 보이게 했어요.", "success");
+  };
 
   const featuredTemplates = [
     { label: "PR 달성", desc: "무게나 횟수를 자랑하는 가장 쉬운 템플릿", icon: "trophy" as const },
@@ -158,8 +179,8 @@ export default function BragList() {
     try {
       const res = await api<BragLikeResponse>(`/api/brags/${postId}/like`, { method: "POST" });
       setLikes((prev) => ({ ...prev, [postId]: { count: res.likeCount, liked: res.liked } }));
-    } catch (e: any) {
-      alert(e?.message || "좋아요 처리에 실패했습니다.");
+    } catch (e) {
+      toast(friendlyError(e, "응원을 반영하지 못했어요."), "error");
     }
   };
 
@@ -187,7 +208,7 @@ export default function BragList() {
       <div className="mx-auto max-w-6xl space-y-6 px-6 lg:px-10">
         <header className="dg-steel grid gap-4 p-6 lg:grid-cols-[1.1fr,0.9fr]">
           <div className="space-y-3">
-            <p className="font-num text-sm font-bold text-orange-300">Brag</p>
+            <p className="font-num text-sm font-bold text-plate-yellow">BRAG</p>
             <h1 className="text-3xl md:text-5xl">운동 자랑방</h1>
             <p className="max-w-2xl text-sm leading-relaxed text-steel-300">
               기록이 짧아도 괜찮습니다. 오늘 운동, PR 달성, 체형 변화처럼 자랑할 주제만 고르면
@@ -267,6 +288,15 @@ export default function BragList() {
           </div>
         )}
 
+        {!loading && hiddenCount > 0 && (
+          <div className="dg-well flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-steel-300">
+            <span>이 기기에서 숨긴 작성자의 글 {hiddenCount}개를 빼고 보여 주고 있어요.</span>
+            <button type="button" onClick={showHidden} className="dg-btn dg-btn-steel min-h-[36px] px-3 text-xs">
+              모두 다시 보기
+            </button>
+          </div>
+        )}
+
         {loading && (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, idx) => (
@@ -327,7 +357,7 @@ export default function BragList() {
                 ) : (
                   <div className="dg-rubber flex h-40 items-end border-b-[3px] border-black p-5">
                     <div>
-                      <div className="font-num text-sm font-bold text-orange-300">Workout Brag</div>
+                      <div className="font-num text-sm font-bold text-plate-yellow">WORKOUT BRAG</div>
                       <div className="mt-1 text-lg font-bold">{post.movement || "오늘 운동 기록"}</div>
                     </div>
                   </div>
@@ -349,7 +379,7 @@ export default function BragList() {
                   </div>
 
                   <div>
-                    <Link to={`/brag/${post.id}`} className="line-clamp-2 text-xl font-bold transition-colors hover:text-orange-300">
+                    <Link to={`/brag/${post.id}`} className="line-clamp-2 text-xl font-bold transition-colors hover:text-plate-yellow">
                       {post.title}
                     </Link>
                     <p className="mt-2 min-h-[64px] text-sm leading-relaxed text-steel-300">{summary || "운동 기록이 등록되어 있습니다."}</p>
@@ -357,7 +387,7 @@ export default function BragList() {
 
                   <div className="flex flex-wrap gap-2 text-xs text-steel-300">
                     {post.movement && <span className="dg-chip bg-steel-700">{post.movement}</span>}
-                    <span className="dg-chip bg-steel-700">좋아요 {likeCount}</span>
+                    <span className="dg-chip bg-steel-700">응원 {likeCount}</span>
                     <span className="dg-chip bg-steel-700">상세 보기 가능</span>
                   </div>
 
@@ -374,7 +404,7 @@ export default function BragList() {
                           <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
                         </svg>
                       </span>
-                      좋아요 <span key={likeCount} className="dg-pop font-num inline-block text-base font-black">{likeCount}</span>
+                      응원 <span key={likeCount} className="dg-pop font-num inline-block text-base font-black">{likeCount}</span>
                     </button>
                     <button
                       onClick={() => void handleShare(post)}

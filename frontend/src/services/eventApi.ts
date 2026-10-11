@@ -51,3 +51,23 @@ export const eventApi = {
   patchPin: (id: number, value: boolean) =>
     api.patch(`/api/admin/events/${id}/pin`, { value }),
 };
+
+// 이벤트 상태 코드를 화면용 한국어로. 목록(Events)과 상세(EventDetail)가 같이 쓴다.
+// ONGOING 은 예전 서버 값이 섞여 올 때를 대비한 별칭.
+export const eventStatusLabel = (status?: EventStatus | string | null): string => {
+  switch ((status ?? "").toUpperCase()) {
+    case "ACTIVE":
+    case "ONGOING":
+      return "진행 중";
+    case "SCHEDULED":
+      return "예정";
+    case "ENDED":
+      return "종료";
+    case "DRAFT":
+      return "준비 중";
+    case "HIDDEN":
+      return "숨김";
+    default:
+      return "이벤트";
+  }
+};

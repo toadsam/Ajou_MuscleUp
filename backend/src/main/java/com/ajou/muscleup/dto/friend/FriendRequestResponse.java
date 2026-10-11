@@ -9,10 +9,10 @@ import lombok.Getter;
 @Builder
 public class FriendRequestResponse {
     private Long id;
-    private String requesterEmail;
+    private Long requesterId;
     private String requesterNickname;
     private FriendCharacterResponse requesterCharacter;
-    private String receiverEmail;
+    private Long receiverId;
     private String receiverNickname;
     private FriendCharacterResponse receiverCharacter;
     private FriendRequestStatus status;
@@ -24,10 +24,10 @@ public class FriendRequestResponse {
     ) {
         return FriendRequestResponse.builder()
                 .id(req.getId())
-                .requesterEmail(req.getRequester().getEmail())
+                .requesterId(req.getRequester().getId())
                 .requesterNickname(req.getRequester().getNickname())
                 .requesterCharacter(requesterCharacter)
-                .receiverEmail(req.getReceiver().getEmail())
+                .receiverId(req.getReceiver().getId())
                 .receiverNickname(req.getReceiver().getNickname())
                 .receiverCharacter(receiverCharacter)
                 .status(req.getStatus())

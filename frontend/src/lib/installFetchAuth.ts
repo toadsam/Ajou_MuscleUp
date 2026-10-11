@@ -18,19 +18,24 @@ function getAccessToken(): string | null {
   return typeof token === "string" && token.length > 0 ? token : null;
 }
 
-function getRefreshToken(): string | null {
-  const user = readUserRecord();
-  const token = user?.refreshToken;
-  return typeof token === "string" && token.length > 0 ? token : null;
+// 리프레시 토큰은 서버가 httpOnly 쿠키로만 다룬다. 자바스크립트(localStorage)에는 두지 않는다.
+// 예전 버전이 저장해 둔 refreshToken 이 남아 있으면 지운다.
+export function scrubStoredRefreshToken() {
+  try {
+    const user = readUserRecord();
+    if (!user || !("refreshToken" in user)) return;
+    delete user.refreshToken;
+    localStorage.setItem("user", JSON.stringify(user));
+  } catch {
+    // ignore storage errors
+  }
 }
 
-function setTokens(accessToken: string, refreshToken?: string | null) {
+function setAccessToken(accessToken: string) {
   const user = readUserRecord();
   if (!user) return;
   user.accessToken = accessToken;
-  if (typeof refreshToken === "string" && refreshToken.length > 0) {
-    user.refreshToken = refreshToken;
-  }
+  delete user.refreshToken;
   localStorage.setItem("user", JSON.stringify(user));
 }
 
@@ -96,28 +101,25 @@ export function installFetchAuth() {
   const globalAny = window as unknown as { __authFetchInstalled?: boolean };
   if (globalAny.__authFetchInstalled) return;
   globalAny.__authFetchInstalled = true;
+  scrubStoredRefreshToken();
 
   const originalFetch = window.fetch.bind(window);
   let refreshPromise: Promise<boolean> | null = null;
 
   async function refreshAccessToken(): Promise<boolean> {
     const refreshUrl = API_BASE ? `${API_BASE}/api/auth/refresh` : "/api/auth/refresh";
-    const refreshToken = getRefreshToken();
-    const headers: Record<string, string> = { [RETRY_HEADER]: "1" };
-    if (refreshToken) {
-      headers.Authorization = `Bearer ${refreshToken}`;
-    }
+    // 리프레시 토큰은 httpOnly 쿠키로 자동 전송된다(credentials: "include").
     const res = await originalFetch(refreshUrl, {
       method: "POST",
       credentials: "include",
-      headers,
+      headers: { [RETRY_HEADER]: "1" },
     });
     if (res.ok) {
       try {
-        const payload = (await res.json()) as { accessToken?: string; token?: string; refreshToken?: string };
+        const payload = (await res.json()) as { accessToken?: string; token?: string };
         const accessToken = payload?.accessToken || payload?.token;
         if (accessToken) {
-          setTokens(accessToken, payload?.refreshToken);
+          setAccessToken(accessToken);
         }
       } catch {
         // ignore non-JSON refresh responses
@@ -174,16 +176,11 @@ export async function bootstrapAuthSession(): Promise<boolean> {
   const user = readUserRecord();
   if (!user) return false;
   const refreshUrl = API_BASE ? `${API_BASE}/api/auth/refresh` : "/api/auth/refresh";
-  const refreshToken = getRefreshToken();
-  const headers: Record<string, string> = { [RETRY_HEADER]: "1" };
-  if (refreshToken) {
-    headers.Authorization = `Bearer ${refreshToken}`;
-  }
   try {
     const res = await fetch(refreshUrl, {
       method: "POST",
       credentials: "include",
-      headers,
+      headers: { [RETRY_HEADER]: "1" },
     });
     if (!res.ok) {
       // Safari can fail early refresh-cookie reads right after navigation.
@@ -192,10 +189,10 @@ export async function bootstrapAuthSession(): Promise<boolean> {
       return false;
     }
     try {
-      const payload = (await res.json()) as { accessToken?: string; token?: string; refreshToken?: string };
+      const payload = (await res.json()) as { accessToken?: string; token?: string };
       const accessToken = payload?.accessToken || payload?.token;
       if (accessToken) {
-        setTokens(accessToken, payload?.refreshToken);
+        setAccessToken(accessToken);
       }
     } catch {
       // ignore non-JSON refresh responses

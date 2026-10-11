@@ -18,26 +18,14 @@ function getStoredAccessToken(): string | null {
   }
 }
 
-function getStoredRefreshToken(): string | null {
-  try {
-    const raw = localStorage.getItem("user");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { refreshToken?: string };
-    return parsed?.refreshToken ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function setStoredTokens(accessToken: string, refreshToken?: string | null) {
+// 리프레시 토큰은 httpOnly 쿠키로만 오간다. 여기서는 새 액세스 토큰만 저장한다.
+function setStoredAccessToken(accessToken: string) {
   try {
     const raw = localStorage.getItem("user");
     if (!raw) return;
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     parsed.accessToken = accessToken;
-    if (typeof refreshToken === "string" && refreshToken.length > 0) {
-      parsed.refreshToken = refreshToken;
-    }
+    delete parsed.refreshToken;
     localStorage.setItem("user", JSON.stringify(parsed));
   } catch {
     // ignore storage errors
@@ -86,17 +74,11 @@ api.interceptors.response.use(
     refreshing = true;
     originalRequest._retry = true;
     try {
-      const refreshToken = getStoredRefreshToken();
-      const refreshRes = await api.post<{ accessToken?: string; token?: string; refreshToken?: string }>(
-        "/api/auth/refresh",
-        undefined,
-        {
-          headers: refreshToken ? { Authorization: `Bearer ${refreshToken}` } : undefined,
-        },
-      );
+      // 리프레시 토큰은 httpOnly 쿠키(withCredentials)로 자동 전송된다.
+      const refreshRes = await api.post<{ accessToken?: string; token?: string }>("/api/auth/refresh");
       const accessToken = refreshRes.data?.accessToken || refreshRes.data?.token;
       if (accessToken) {
-        setStoredTokens(accessToken, refreshRes.data?.refreshToken);
+        setStoredAccessToken(accessToken);
       }
       waiters.forEach((resolve) => resolve(true));
       waiters = [];

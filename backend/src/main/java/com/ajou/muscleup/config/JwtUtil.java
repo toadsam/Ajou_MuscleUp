@@ -20,8 +20,8 @@ public class JwtUtil {
 
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-expiration-ms:900000}") long accessTokenExpirationMs,
-            @Value("${jwt.refresh-expiration-ms:7776000000}") long refreshTokenExpirationMs
+            @Value("${jwt.access.expiration-ms:${jwt.access-expiration-ms:900000}}") long accessTokenExpirationMs,
+            @Value("${jwt.refresh.expiration-ms:${jwt.refresh-expiration-ms:7776000000}}") long refreshTokenExpirationMs
     ) {
         if (secret == null || secret.trim().length() < 32) {
             throw new IllegalStateException("JWT_SECRET must be at least 32 characters");

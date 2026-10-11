@@ -18,6 +18,7 @@ import com.ajou.muscleup.repository.WorkoutCrewMemberRepository;
 import com.ajou.muscleup.repository.WorkoutCrewJoinRequestRepository;
 import com.ajou.muscleup.repository.WorkoutCrewRepository;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -45,6 +46,8 @@ public class CrewServiceImpl implements CrewService {
     private final CharacterProfileRepository characterProfileRepository;
     private final CrewChallengeRepository crewChallengeRepository;
     private final AttendanceLogRepository attendanceLogRepository;
+    // 한국 시간 기준 "오늘"(config/TimeConfig). LocalDate.now() 는 서버 시간대를 따라가 UTC 서버에서 하루 어긋났다.
+    private final Clock clock;
 
     @Override
     public CrewDetailResponse create(String email, CrewCreateRequest request) {
@@ -66,26 +69,41 @@ public class CrewServiceImpl implements CrewService {
                         .role(WorkoutCrewMemberRole.LEADER)
                         .build()
         );
-        return buildDetail(crew, user, YearMonth.now());
+        return buildDetail(crew, user, YearMonth.now(clock));
     }
 
+    /**
+     * 모임 목록.
+     * 예전: 모임 전체를 읽고 모임마다 인원 수 · 내 가입 여부 · 모임장(lazy)을 따로 조회(N+1),
+     *       초대코드를 가입하지 않은 사람에게도 내려줬다.
+     * 지금: 모임(+모임장) 1번, 모임별 인원 수 1번, 내 모임 id 1번 = 쿼리 3번.
+     *       초대코드는 내가 멤버(모임장 포함)인 모임에만 채운다.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<CrewListItemResponse> list(String email) {
         User me = getUserByEmailOrThrow(email);
-        List<WorkoutCrew> crews = workoutCrewRepository.findAll();
+        List<WorkoutCrew> crews = workoutCrewRepository.findAllWithOwner();
+        Map<Long, Long> memberCountByCrew = new HashMap<>();
+        for (Object[] row : workoutCrewMemberRepository.countMembersGroupByCrewId()) {
+            memberCountByCrew.put((Long) row[0], (Long) row[1]);
+        }
+        Set<Long> myCrewIds = new HashSet<>(workoutCrewMemberRepository.findCrewIdsByUserId(me.getId()));
         return crews.stream()
                 .sorted(Comparator.comparing(WorkoutCrew::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                .map(crew -> CrewListItemResponse.builder()
-                        .id(crew.getId())
-                        .name(crew.getName())
-                        .description(crew.getDescription())
-                        .ownerNickname(crew.getOwner().getNickname())
-                        .memberCount(workoutCrewMemberRepository.countByCrew(crew))
-                        .joined(workoutCrewMemberRepository.existsByCrewAndUser(crew, me))
-                        .inviteCode(crew.getInviteCode())
-                        .joinPolicy(resolveJoinPolicy(crew))
-                        .build())
+                .map(crew -> {
+                    boolean joined = myCrewIds.contains(crew.getId());
+                    return CrewListItemResponse.builder()
+                            .id(crew.getId())
+                            .name(crew.getName())
+                            .description(crew.getDescription())
+                            .ownerNickname(crew.getOwner().getNickname())
+                            .memberCount(memberCountByCrew.getOrDefault(crew.getId(), 0L))
+                            .joined(joined)
+                            .inviteCode(joined ? crew.getInviteCode() : null)
+                            .joinPolicy(resolveJoinPolicy(crew))
+                            .build();
+                })
                 .toList();
     }
 
@@ -145,7 +163,7 @@ public class CrewServiceImpl implements CrewService {
         joinCrewIfNotExists(request.getUser(), crew);
         request.setStatus(CrewJoinRequestStatus.APPROVED);
         request.setDecidedBy(me);
-        request.setDecidedAt(LocalDateTime.now());
+        request.setDecidedAt(LocalDateTime.now(clock));
     }
 
     @Override
@@ -160,7 +178,7 @@ public class CrewServiceImpl implements CrewService {
         }
         request.setStatus(CrewJoinRequestStatus.REJECTED);
         request.setDecidedBy(me);
-        request.setDecidedAt(LocalDateTime.now());
+        request.setDecidedAt(LocalDateTime.now(clock));
     }
 
     @Override
@@ -186,7 +204,7 @@ public class CrewServiceImpl implements CrewService {
         if (request.getJoinPolicy() != null) {
             crew.setJoinPolicy(request.getJoinPolicy());
         }
-        return buildDetail(crew, me, YearMonth.now());
+        return buildDetail(crew, me, YearMonth.now(clock));
     }
 
     @Override
@@ -270,8 +288,8 @@ public class CrewServiceImpl implements CrewService {
 
         LocalDate start = month.atDay(1);
         LocalDate end = month.atEndOfMonth();
-        LocalDate today = LocalDate.now();
-        if (month.equals(YearMonth.now()) && today.isBefore(end)) {
+        LocalDate today = LocalDate.now(clock);
+        if (month.equals(YearMonth.from(today)) && today.isBefore(end)) {
             end = today;
         }
         int targetDays = Math.max(1, (int) (end.toEpochDay() - start.toEpochDay() + 1));
@@ -302,34 +320,62 @@ public class CrewServiceImpl implements CrewService {
                 .sorted(Comparator.comparing(CrewMemberAttendanceResponse::getAttendanceRate).reversed())
                 .toList();
 
+        // 모임 전체 집계는 누구에게나 보여 준다.
+        long monthWorkoutTotal = workoutCountByUser.values().stream().mapToLong(Long::longValue).sum();
+        double averageAttendanceRate = memberResponses.isEmpty()
+                ? 0.0
+                : round1(memberResponses.stream().mapToDouble(CrewMemberAttendanceResponse::getAttendanceRate).average().orElse(0.0));
+
+        // 멤버가 아니면 개인별 출석(멤버 목록 · 챌린지 진행 · 경쟁판 · 왕 타이틀)과 초대코드를 내려주지 않는다.
+        boolean memberDetailVisible = joined;
+
         List<CrewChallengeResponse> challenges = crewChallengeRepository.findAllByCrewOrderByStartDateDesc(crew).stream()
-                .map(challenge -> buildChallengeResponse(challenge, crew))
+                .map(challenge -> memberDetailVisible
+                        ? buildChallengeResponse(challenge, members, profileMap)
+                        : buildChallengeResponse(challenge, List.of(), Map.of()))
                 .toList();
 
-        List<CrewCompetitionEntryResponse> competitionBoard = buildCompetitionBoard(crew, members, memberResponses);
-        List<CrewKingTitleResponse> kingTitles = buildKingTitles(memberResponses, competitionBoard);
+        List<CrewCompetitionEntryResponse> competitionBoard = memberDetailVisible
+                ? buildCompetitionBoard(crew, members, memberResponses)
+                : List.of();
+        List<CrewKingTitleResponse> kingTitles = memberDetailVisible
+                ? buildKingTitles(memberResponses, competitionBoard)
+                : List.of();
 
         return CrewDetailResponse.builder()
                 .id(crew.getId())
                 .name(crew.getName())
                 .description(crew.getDescription())
                 .ownerNickname(crew.getOwner().getNickname())
-                .inviteCode(crew.getInviteCode())
+                .inviteCode(memberDetailVisible ? crew.getInviteCode() : null)
                 .joinPolicy(resolveJoinPolicy(crew))
                 .joined(joined)
                 .leader(leader)
                 .month(month.toString())
                 .targetDays(targetDays)
-                .members(memberResponses)
+                .memberCount(members.size())
+                .monthWorkoutTotal(monthWorkoutTotal)
+                .averageAttendanceRate(averageAttendanceRate)
+                .memberDetailVisible(memberDetailVisible)
+                .members(memberDetailVisible ? memberResponses : List.of())
                 .challenges(challenges)
                 .kingTitles(kingTitles)
                 .competitionBoard(competitionBoard)
                 .build();
     }
 
+    // 챌린지 생성·수정 응답용(호출하는 쪽이 모임장 = 멤버).
     private CrewChallengeResponse buildChallengeResponse(CrewChallenge challenge, WorkoutCrew crew) {
         List<WorkoutCrewMember> members = workoutCrewMemberRepository.findAllByCrewOrderByCreatedAtAsc(crew);
-        Map<Long, CharacterProfile> profileMap = buildCharacterProfileMap(members);
+        return buildChallengeResponse(challenge, members, buildCharacterProfileMap(members));
+    }
+
+    // 상세 화면에서는 멤버 목록·캐릭터를 한 번만 읽어 챌린지마다 다시 읽지 않는다.
+    private CrewChallengeResponse buildChallengeResponse(
+            CrewChallenge challenge,
+            List<WorkoutCrewMember> members,
+            Map<Long, CharacterProfile> profileMap
+    ) {
         Map<Long, Long> workoutCountByUser = countWorkout(members, challenge.getStartDate(), challenge.getEndDate());
         List<CrewChallengeMemberProgressResponse> progress = members.stream()
                 .map(member -> {
@@ -379,7 +425,7 @@ public class CrewServiceImpl implements CrewService {
         Map<Long, Double> attendanceRateMap = new HashMap<>();
         monthAttendance.forEach(item -> attendanceRateMap.put(item.getUserId(), item.getAttendanceRate()));
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDate recentStart = startOfWeekMonday(today);
         Map<Long, Long> recentWorkoutMap = countWorkout(members, recentStart, today);
 
@@ -527,7 +573,7 @@ public class CrewServiceImpl implements CrewService {
     }
 
     private String resolveChallengeStatus(LocalDate start, LocalDate end) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (today.isBefore(start)) return "UPCOMING";
         if (today.isAfter(end)) return "ENDED";
         return "ONGOING";
@@ -590,7 +636,7 @@ public class CrewServiceImpl implements CrewService {
             return CrewJoinResultResponse.builder()
                     .crewId(crew.getId())
                     .crewName(crew.getName())
-                    .inviteCode(crew.getInviteCode())
+                    .inviteCode(null) // 승인 대기 중이라 아직 멤버가 아니다. 초대코드는 멤버에게만.
                     .result("PENDING")
                     .message("가입 신청을 보냈습니다. 방장 승인 후 참여됩니다.")
                     .build();
@@ -600,7 +646,7 @@ public class CrewServiceImpl implements CrewService {
         workoutCrewJoinRequestRepository.findByCrewAndUser(crew, me).ifPresent(existing -> {
             existing.setStatus(CrewJoinRequestStatus.APPROVED);
             existing.setDecidedBy(crew.getOwner());
-            existing.setDecidedAt(LocalDateTime.now());
+            existing.setDecidedAt(LocalDateTime.now(clock));
         });
         return CrewJoinResultResponse.builder()
                 .crewId(crew.getId())

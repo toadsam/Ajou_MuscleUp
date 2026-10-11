@@ -1,28 +1,6 @@
-import { useCountUp } from "../hooks/useCountUp";
-
-// "05", "24/yr", "18+" 같은 값의 앞쪽 숫자만 굴려 올린다.
-function StatValue({ value }: { value: string }) {
-  const match = value.match(/^(\d+)(.*)$/);
-  const target = match ? Number(match[1]) : 0;
-  const v = useCountUp(target, { duration: 900 });
-  if (!match) return <>{value}</>;
-  return (
-    <>
-      {String(Math.round(v)).padStart(match[1].length, "0")}
-      {match[2]}
-    </>
-  );
-}
-
-type Member = {
-  name: string;
-  role: string;
-  bio: string;
-  tags: string[];
-  vibe: string;
-};
-
-const memberNames = [
+// 동아리 멤버 명단(실명). 로그인한 회원에게만 보인다(App.tsx 에서 ProtectedRoute 로 감쌈).
+// 서버에서 받지 않고 여기 적어 둔 값이라, 학기마다 명단이 바뀌면 이 배열을 고쳐 주세요.
+const MEMBER_NAMES: readonly string[] = [
   "강민규",
   "강민제",
   "강승완",
@@ -35,7 +13,6 @@ const memberNames = [
   "권용빈",
   "권유영",
   "김교진",
-  "김규민",
   "김규민",
   "김기현",
   "김다희",
@@ -135,79 +112,31 @@ const memberNames = [
   "현진",
 ];
 
-const members: Member[] = memberNames.map((name) => ({
-  name,
-  role: "Ajou MuscleUp Member",
-  bio: "아주머슬업에서 함께 운동하고 성장하는 멤버입니다.",
-  tags: ["Ajou MuscleUp"],
-  vibe: "Crew",
-}));
-
-const highlights = [
-  { label: "전체 멤버", value: String(memberNames.length) },
-  { label: "운영 프로그램", value: "18+" },
-  { label: "월간 챌린지", value: "12" },
-] as const;
 
 export default function Members() {
   return (
     <section className="relative min-h-screen overflow-hidden px-6 pb-20 pt-28 text-white lg:px-10">
       <div className="relative mx-auto max-w-6xl space-y-8">
         <header className="dg-steel relative overflow-hidden p-6 md:p-8">
-          <p className="font-num text-sm font-bold text-plate-green">Team Members</p>
+          <p className="font-num text-sm font-bold text-plate-green">Members</p>
           <h1 className="mt-2 text-3xl md:text-5xl">멤버 소개</h1>
-          <p className="mt-3 max-w-3xl text-sm text-steel-300 md:text-base">
-            코칭, 영양, 데이터, 콘텐츠까지 각자의 전문성이 연결되어 더 좋은 운동 경험을 만듭니다.
+          <p className="mt-3 max-w-3xl break-keep text-sm text-steel-300 md:text-base">
+            득근득근에서 함께 운동하는 멤버 {MEMBER_NAMES.length}명이에요. 회원끼리만 볼 수 있어요.
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {highlights.map((item) => (
-              <div key={item.label} className="dg-well px-4 py-3">
-                <p className="text-xs text-steel-400">{item.label}</p>
-                <p className="font-num mt-1 text-4xl font-black text-plate-yellow">
-                  <StatValue value={item.value} />
-                </p>
-              </div>
-            ))}
-          </div>
         </header>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {members.map((m, idx) => (
-            <article
-              key={`${m.name}-${idx}`}
-              className="dg-lift dg-rise group relative overflow-hidden rounded-xl border-[3px] border-black bg-steel-800 p-5 shadow-md"
-              style={{ animationDelay: `${Math.min(idx, 12) * 40}ms` }}
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {MEMBER_NAMES.map((name, idx) => (
+            <li
+              key={`${name}-${idx}`}
+              className="dg-rise flex items-center gap-3 rounded-lg border-[3px] border-black bg-steel-800 px-4 py-3 shadow-md"
+              style={{ animationDelay: `${Math.min(idx, 12) * 30}ms` }}
             >
-              <div className="relative space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-num text-sm font-bold text-steel-400">
-                      Member {String(idx + 1).padStart(2, "0")}
-                    </p>
-                    <h3 className="font-display mt-1 text-2xl">{m.name}</h3>
-                    <p className="font-num text-sm font-bold text-green-300">{m.role}</p>
-                  </div>
-                  <div className="dg-chip bg-steel-700 text-sm text-chalk transition-colors group-hover:bg-plate-yellow group-hover:text-black">
-                    {m.vibe}
-                  </div>
-                </div>
-
-                <p className="text-sm leading-relaxed text-steel-300">{m.bio}</p>
-
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {m.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="dg-chip bg-steel-700 text-chalk"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </article>
+              <span className="font-num text-sm font-bold text-steel-500">{String(idx + 1).padStart(2, "0")}</span>
+              <span className="font-display text-lg">{name}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

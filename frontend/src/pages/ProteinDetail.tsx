@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCountUp } from "../hooks/useCountUp";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
+import { deadlineLabel, distributionOf, findMetaLine, isClosed, remainingLabel } from "../utils/proteinMeta";
 
 function CountNumber({ value, digits = 0 }: { value: number; digits?: number }) {
   const v = useCountUp(value, { duration: 900 });
@@ -13,12 +16,18 @@ type Protein = {
   price?: number;
   days?: number;
   goal?: number;
-  imageUrl?: string;
+  imageUrl?: string; // 공개용 대표 이미지
+  receiptUrl?: string | null; // 서버가 볼 수 있는 사람(작성자 · 관리자 · 승인된 참여자)에게만 채운다
   description?: string;
   category?: string;
   avgRating?: number | null;
-  ownerEmail?: string | null;
+  reviewCount?: number;
   ownerNickname?: string | null;
+  mine?: boolean; // 내가 작성자인지(서버 계산, 이메일은 내려오지 않는다)
+  deadline?: string | null;
+  daysLeft?: number | null;
+  closed?: boolean;
+  distributionMethod?: string | null;
 };
 
 type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -57,27 +66,13 @@ const parseLocation = (category?: string) => {
   };
 };
 
-const getDistributionType = (description?: string) => {
-  if (!description) return "직접 만남";
-  if (description.includes("보관함")) return "헬스장 보관함";
-  if (description.includes("직접")) return "직접 만남";
-  return "직접 만남";
-};
+// 단계는 실제로 알 수 있는 것만: 마감일 전/후. (예전 "분배완료"는 후기 유무로 짐작한 값이었다)
+const statusSteps = ["모집 중", "모집 마감"] as const;
 
-const getStatus = (days?: number, rating?: number | null) => {
-  if (typeof days === "number" && days <= 0) {
-    return (rating ?? 0) > 0 ? "분배완료" : "모집완료";
-  }
-  return "모집중";
-};
-
-const statusSteps = ["모집중", "모집완료", "분배완료"] as const;
-
-const findMetaLine = (description?: string, key?: string) => {
-  if (!description || !key) return null;
-  const regex = new RegExp(`${key}\\s*[:：]\\s*(.+)$`, "im");
-  const match = description.match(regex);
-  return match?.[1]?.trim() || null;
+const APPLICATION_LABEL: Record<ApplicationStatus, string> = {
+  PENDING: "승인 대기",
+  APPROVED: "승인 완료",
+  REJECTED: "거절",
 };
 
 const formatDate = (value?: string) => {
@@ -100,15 +95,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
+    toast("로그인이 필요해요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw await httpError(res, "로그인이 필요해요.");
   }
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
-  }
+  if (!res.ok) throw await httpError(res, "요청을 처리하지 못했어요.");
 
   return res.json();
 }
@@ -131,9 +123,7 @@ export default function ProteinDetail() {
   const user = userRaw ? (JSON.parse(userRaw) as { email?: string; role?: string }) : null;
   const isAdmin = (user?.role || "").includes("ADMIN");
 
-  const isOwner = useMemo(() => {
-    return !!user?.email && !!data?.ownerEmail && user.email === data.ownerEmail;
-  }, [user, data]);
+  const isOwner = !!data?.mine;
 
   const canAccessChat = useMemo(() => {
     return isAdmin || isOwner || myApplication?.status === "APPROVED";
@@ -146,11 +136,11 @@ export default function ProteinDetail() {
         setLoading(true);
         const url = (BASE ? `${BASE}` : "") + `/api/proteins/${id}`;
         const res = await fetch(url, { credentials: "include" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw await httpError(res, "모집글을 불러오지 못했어요.");
         const json: Protein = await res.json();
         setData(json);
-      } catch (e: any) {
-        setErr(e.message ?? "불러오기에 실패했습니다.");
+      } catch (e) {
+        setErr(friendlyError(e, "모집글을 불러오지 못했어요."));
       } finally {
         setLoading(false);
       }
@@ -196,8 +186,8 @@ export default function ProteinDetail() {
       setMyApplication(applied);
       const latest = await api<Summary>(`/api/proteins/${id}/applications/summary`);
       setSummary(latest);
-    } catch (e: any) {
-      alert(e?.message || "신청에 실패했습니다.");
+    } catch (e) {
+      toast(friendlyError(e, "참여 신청을 하지 못했어요."), "error");
     }
   };
 
@@ -211,8 +201,8 @@ export default function ProteinDetail() {
       setApplications((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
       const latest = await api<Summary>(`/api/proteins/${id}/applications/summary`);
       setSummary(latest);
-    } catch (e: any) {
-      alert(e?.message || "상태 변경에 실패했습니다.");
+    } catch (e) {
+      toast(friendlyError(e, "신청 상태를 바꾸지 못했어요."), "error");
     }
   };
 
@@ -225,8 +215,8 @@ export default function ProteinDetail() {
       });
       setMessages((prev) => [...prev, next]);
       setMessageInput("");
-    } catch (e: any) {
-      alert(e?.message || "메시지 전송에 실패했습니다.");
+    } catch (e) {
+      toast(friendlyError(e, "메시지를 보내지 못했어요."), "error");
     }
   };
 
@@ -262,32 +252,37 @@ export default function ProteinDetail() {
     );
   }
 
+  const hasReviews = (data.reviewCount ?? 0) > 0 && typeof data.avgRating === "number";
   const rating = data.avgRating ?? 0;
-  const status = getStatus(data.days, data.avgRating);
+  const closed = isClosed(data);
+  const status = closed ? "모집 마감" : "모집 중";
   const perPrice =
     typeof data.price === "number" && typeof data.goal === "number" && data.goal > 0
       ? Math.ceil(data.price / data.goal)
       : null;
-  const target = data.goal ?? 4;
+  const target = data.goal ?? 0; // 목표 인원이 없으면 지어내지 않는다(예전 기본값 4)
   const approved = summary.approvedCount;
   const pending = summary.pendingCount;
   const { region, gym } = parseLocation(data.category);
-  const distributionType = getDistributionType(data.description);
+  const distributionType = distributionOf(data) ?? "정보 없음";
   const distributionSpot =
     findMetaLine(data.description, "분배 위치") ||
     findMetaLine(data.description, "분배위치") ||
     "협의 중";
-  const totalCapacity = findMetaLine(data.description, "총 용량") || (data.goal ? `${data.goal}인분` : "미정");
-  const perCapacity = findMetaLine(data.description, "1인 분배") || (data.goal ? "균등 분배" : "미정");
-  const brand = findMetaLine(data.description, "브랜드") || data.name.split(" ")[0] || "브랜드 미정";
+  // 작성자가 적은 값만 보여 준다(예전: 목표 인원으로 "N인분", 제품명 첫 낱말로 브랜드를 지어냈다)
+  const totalCapacity = findMetaLine(data.description, "총 용량") || "미정";
+  const perCapacity = findMetaLine(data.description, "1인 분배") || "미정";
+  const brand = findMetaLine(data.description, "브랜드");
+  const canSeeReceipt = isOwner || isAdmin || myApplication?.status === "APPROVED";
+  const deadlineText = deadlineLabel(data);
 
   return (
     <section className="pt-24 pb-16 px-6 lg:px-12 min-h-screen text-white">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex flex-wrap items-center gap-3">
           <span className="dg-chip bg-plate-green text-sm text-white">{region}</span>
-          <span className="dg-chip bg-orange-500 text-sm text-black">{gym}</span>
-          <span className="text-xs text-steel-400">지역 또는 헬스장 기반 나눔 모집글</span>
+          <span className="dg-chip bg-plate-yellow text-sm text-black">{gym}</span>
+          <span className="text-xs text-steel-400">지역 또는 헬스장 기반 공동구매 모집글</span>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
@@ -295,21 +290,27 @@ export default function ProteinDetail() {
             <div className="dg-steel p-6 space-y-6">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-steel-400">{brand}</p>
+                  {brand && <p className="text-sm font-semibold text-steel-400">{brand}</p>}
                   <h1 className="text-3xl md:text-4xl">{data.name}</h1>
                   <p className="text-xs text-steel-400 mt-1">작성자: {data.ownerNickname || "익명"}</p>
                 </div>
                 <div className="text-right text-sm text-steel-300">
                   <p>
-                    상태: <span className="dg-chip bg-plate-yellow text-sm text-black">{status}</span>
+                    상태:{" "}
+                    <span className={`dg-chip text-sm ${closed ? "bg-steel-700 text-steel-200" : "bg-plate-yellow text-black"}`}>
+                      {status}
+                    </span>
                   </p>
-                  <p>{data.days ? `마감까지 ${data.days}일` : "마감 일정 미정"}</p>
+                  <p>
+                    {remainingLabel(data)}
+                    {deadlineText && <span className="text-steel-400"> · {deadlineText} 마감</span>}
+                  </p>
                 </div>
               </div>
 
               <div className="flex gap-1.5">
                 {statusSteps.map((step, idx) => {
-                  const isActive = statusSteps.indexOf(step) <= statusSteps.indexOf(status as typeof step);
+                  const isActive = statusSteps.indexOf(step) <= statusSteps.indexOf(status);
                   return (
                     <div key={step} className="flex-1">
                       <div
@@ -354,10 +355,12 @@ export default function ProteinDetail() {
                 </div>
                 <div className="dg-well p-4">
                   <p className="text-xs text-steel-400">영수증/실구매 인증</p>
-                  {data.imageUrl ? (
-                    <img src={data.imageUrl} alt="receipt" className="mt-2 h-32 w-full object-cover rounded border-2 border-black" />
-                  ) : (
+                  {data.receiptUrl ? (
+                    <img src={data.receiptUrl} alt="영수증 사진" className="mt-2 h-32 w-full object-cover rounded border-2 border-black" />
+                  ) : canSeeReceipt ? (
                     <p className="text-sm mt-2">등록된 인증 이미지가 없습니다.</p>
+                  ) : (
+                    <p className="text-sm mt-2 text-steel-300">작성자, 운영진, 승인된 참여자에게만 보여요.</p>
                   )}
                 </div>
               </div>
@@ -370,22 +373,29 @@ export default function ProteinDetail() {
             </div>
 
             <div className="dg-steel p-6">
-              <h2 className="font-display text-xl mb-4">공구 후기 요약</h2>
+              <h2 className="font-display text-xl mb-4">공동구매 후기 요약</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="dg-well p-4">
-                  <p className="text-xs text-steel-400">제품 만족도</p>
-                  <p className="font-num text-4xl font-black text-green-300"><CountNumber value={rating} digits={1} /> <span className="text-lg text-steel-400">/ 5</span></p>
+                  <p className="text-xs text-steel-400">평균 만족도</p>
+                  {hasReviews ? (
+                    <p className="font-num text-4xl font-black text-green-300"><CountNumber value={rating} digits={1} /> <span className="text-lg text-steel-400">/ 5</span></p>
+                  ) : (
+                    <p className="mt-2 text-sm text-steel-300">아직 후기가 없어요.</p>
+                  )}
                 </div>
                 <div className="dg-well p-4">
-                  <p className="text-xs text-steel-400">재거래 의향</p>
-                  <p className="font-num text-4xl font-black text-orange-300"><CountNumber value={Math.round((rating / 5) * 100)} />%</p>
+                  <p className="text-xs text-steel-400">후기 수</p>
+                  <p className="font-num text-4xl font-black text-white">{data.reviewCount ?? 0}<span className="ml-1 text-lg text-steel-400">개</span></p>
                 </div>
               </div>
+              <Link to={`/reviews?proteinId=${data.id}`} className="dg-btn dg-btn-steel mt-4 px-4 text-sm">
+                후기 보기
+              </Link>
             </div>
 
             <div className="dg-steel p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-display text-xl">공구 소통 공간</h2>
+                <h2 className="font-display text-xl">공동구매 소통 공간</h2>
                 <span className="text-xs text-steel-400">승인된 참여자 전용</span>
               </div>
               {!canAccessChat && (
@@ -436,10 +446,16 @@ export default function ProteinDetail() {
               <p className="text-sm text-steel-300">결제는 플랫폼 외부에서 진행돼요. 신청 후 승인된 사람만 소통 공간에 입장합니다.</p>
               <div className="dg-well p-4 text-sm text-steel-200">
                 <p className="mb-2">
-                  목표 <span className="font-num text-lg font-black">{target}</span>명 중{" "}
+                  {target > 0 ? (
+                    <>
+                      목표 <span className="font-num text-lg font-black">{target}</span>명 중{" "}
+                    </>
+                  ) : (
+                    "목표 인원 미정 · "
+                  )}
                   <span key={approved} className="dg-pop font-num inline-block text-lg font-black text-plate-green">{approved}</span>명 승인
                 </p>
-                {target <= 12 ? (
+                {target <= 0 ? null : target <= 12 ? (
                   <div className="flex gap-1" aria-hidden>
                     {Array.from({ length: target }, (_, i) => (
                       <span
@@ -465,8 +481,10 @@ export default function ProteinDetail() {
                 </div>
               ) : myApplication ? (
                 <div key={myApplication.status} className="dg-pop dg-well border-l-[6px] border-l-plate-yellow p-4 text-xs text-steel-200">
-                  신청 상태: {myApplication.status === "PENDING" ? "승인 대기" : myApplication.status === "APPROVED" ? "승인 완료" : "거절"}
+                  신청 상태: {APPLICATION_LABEL[myApplication.status] ?? myApplication.status}
                 </div>
+              ) : closed ? (
+                <div className="dg-well p-4 text-xs text-steel-300">모집이 마감되어 새로 신청할 수 없어요.</div>
               ) : (
                 <button
                   className="dg-btn dg-btn-primary w-full"
@@ -476,7 +494,7 @@ export default function ProteinDetail() {
                 </button>
               )}
               <div className="dg-well p-4 text-xs text-steel-300">
-                승인된 사용자만 공구 전용 소통 공간에 접근할 수 있습니다.
+                승인된 사용자만 공동구매 전용 소통 공간에 접근할 수 있습니다.
               </div>
             </div>
 
@@ -494,7 +512,7 @@ export default function ProteinDetail() {
                         <span className="font-semibold">{app.userNickname}</span>
                         <span className="text-xs text-steel-400">{formatDate(app.createdAt)}</span>
                       </div>
-                      <p className="text-xs text-steel-400 mt-1">상태: {app.status}</p>
+                      <p className="text-xs text-steel-400 mt-1">상태: {APPLICATION_LABEL[app.status] ?? app.status}</p>
                       <div className="flex gap-2 mt-3 text-xs">
                         <button
                           type="button"
@@ -518,25 +536,10 @@ export default function ProteinDetail() {
             )}
 
             <div className="dg-steel p-6 space-y-3">
-              <h2 className="font-display text-xl">작성자 신뢰 지표</h2>
-              <div className="flex items-center justify-between text-sm text-steel-300">
-                <span>완료 공구 수</span>
-                <span className="font-num text-lg font-black text-white"><CountNumber value={Math.max(1, Math.round(rating * 3))} />회</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-steel-300">
-                <span>평균 평점</span>
-                <span className="font-num text-lg font-black text-white">{rating.toFixed(1)} / 5</span>
-              </div>
-              <div className="dg-well p-4 text-xs text-steel-300">
-                이 작성자는 지역 기반 나눔을 꾸준히 완료한 사용자입니다.
-              </div>
-            </div>
-
-            <div className="dg-steel p-6 space-y-3">
               <h2 className="font-display text-xl">모집글 안내</h2>
               <p className="text-sm text-steel-300">승인 후 입장 가능</p>
               <div className="dg-well p-4 text-xs text-steel-300">
-                <p>최근 공지: 분배 일정은 승인 이후 일괄 공유됩니다.</p>
+                <p>분배 일정은 승인된 참여자에게 소통 공간에서 공유돼요.</p>
               </div>
               <Link
                 to="/protein"
