@@ -190,7 +190,7 @@ export default function AvatarRenderer({
         <div className="avatar-risk-banner warning">{"경고"}</div>
       )}
       {!resolvedResting && resolvedAttendanceRisk === "critical" && (
-        <div className="avatar-risk-banner critical">{"탈락위기"}</div>
+        <div className="avatar-risk-banner critical">{"다시 시작해요"}</div>
       )}
 
       <svg

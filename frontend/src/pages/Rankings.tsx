@@ -1,5 +1,7 @@
 ﻿import { useEffect, useState, type CSSProperties } from "react";
 import { useCountUp } from "../hooks/useCountUp";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
 
 type RankingItem = {
   nickname: string;
@@ -9,6 +11,8 @@ type RankingItem = {
   title: string;
   threeLiftTotal?: number | null;
   updatedAt?: string | null;
+  // 서버가 붙여 주는 값: 3대 중량은 본인이 입력한 기록이다
+  selfReported?: boolean | null;
 };
 
 type RankingResponse = {
@@ -24,13 +28,12 @@ async function api<T>(path: string): Promise<T> {
   const url = API_BASE ? `${API_BASE}${path}` : path;
   const res = await fetch(url, { credentials: "include" });
   if (res.status === 401) {
-    alert("Login required.");
+    toast("로그인이 필요해요. 로그인 화면으로 이동할게요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw new Error("로그인이 필요해요.");
   }
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
+    throw await httpError(res, "랭킹을 불러오지 못했어요.");
   }
   return res.json();
 }
@@ -64,8 +67,8 @@ function CountNumber({ value, className = "" }: { value: number; className?: str
 }
 
 const TABS: { key: "LEVEL" | "THREE_LIFT"; label: string }[] = [
-  { key: "LEVEL", label: "Level" },
-  { key: "THREE_LIFT", label: "3-Lift" },
+  { key: "LEVEL", label: "레벨" },
+  { key: "THREE_LIFT", label: "3대 중량" },
 ];
 
 export default function Rankings() {
@@ -87,8 +90,8 @@ export default function Rankings() {
         setMyRank(res.myRank ?? null);
         setMyTopPercent(res.myTopPercent ?? null);
         setTotalPublic(res.totalPublic ?? 0);
-      } catch (e: any) {
-        setError(e?.message || "Failed to load rankings.");
+      } catch (e: unknown) {
+        setError(friendlyError(e, "랭킹을 불러오지 못했어요."));
       } finally {
         setLoading(false);
       }
@@ -101,8 +104,8 @@ export default function Rankings() {
     <section className="pt-28 pb-20 px-5 md:px-10 min-h-screen text-white">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="space-y-2">
-          <p className="font-num text-sm font-bold text-plate-yellow">Character Rankings</p>
-          <h1 className="text-3xl md:text-4xl">Public Rankings</h1>
+          <p className="text-sm font-bold text-plate-yellow">캐릭터 랭킹</p>
+          <h1 className="text-3xl md:text-4xl">공개 랭킹</h1>
         </header>
 
         <div className="relative inline-grid grid-cols-2 border-b-2 border-steel-700" role="tablist">
@@ -112,7 +115,7 @@ export default function Rankings() {
               role="tab"
               aria-selected={type === tab.key}
               onClick={() => setType(tab.key)}
-              className={`font-num px-6 pb-2 pt-1 text-lg font-black transition-colors ${
+              className={`px-6 pb-2 pt-1 text-lg font-black transition-colors ${
                 type === tab.key ? "text-white" : "text-steel-400 hover:text-steel-200"
               }`}
             >
@@ -128,19 +131,19 @@ export default function Rankings() {
 
         <div className="dg-steel p-5 text-sm text-steel-300 grid grid-cols-3 gap-3">
           <div className="dg-well px-4 py-3">
-            <div className="font-num text-xs font-bold text-steel-400">
-              {type === "LEVEL" ? "My Level Rank" : "My 3-Lift Rank"}
+            <div className="text-xs font-bold text-steel-400">
+              {type === "LEVEL" ? "내 레벨 순위" : "내 3대 순위"}
             </div>
             <div className="font-num text-3xl font-black text-plate-yellow">
               {myRank !== null ? <CountNumber value={myRank} /> : "-"}
             </div>
           </div>
           <div className="dg-well px-4 py-3">
-            <div className="font-num text-xs font-bold text-steel-400">Top Percent</div>
+            <div className="text-xs font-bold text-steel-400">상위</div>
             <div className="font-num text-3xl font-black text-white">{myTopPercent !== null ? `${myTopPercent}%` : "-"}</div>
           </div>
           <div className="dg-well px-4 py-3">
-            <div className="font-num text-xs font-bold text-steel-400">Public Total</div>
+            <div className="text-xs font-bold text-steel-400">공개 캐릭터</div>
             <div className="font-num text-3xl font-black text-white">
               <CountNumber value={totalPublic} />
             </div>
@@ -155,10 +158,13 @@ export default function Rankings() {
               <i />
               <i />
             </span>
-            Loading...
+            불러오는 중...
           </div>
         )}
         {error && <div className="text-red-400">{error}</div>}
+        {type === "THREE_LIFT" && data.some((item) => item.selfReported) && (
+          <p className="text-xs text-steel-400">3대 중량은 각자 본인이 입력한 기록이에요. 측정·검증된 값이 아니에요.</p>
+        )}
 
         <div className="space-y-3" key={type}>
           {data.map((item, idx) => {
@@ -181,7 +187,7 @@ export default function Rankings() {
                   <div className="min-w-0">
                     <p className="truncate text-lg font-bold">{item.nickname}</p>
                     <p className="font-num text-sm font-semibold text-steel-400">
-                      Lv.{item.level} - {item.tier} - Stage {item.evolutionStage}
+                      Lv.{item.level} · {item.tier} · {item.evolutionStage}단계
                     </p>
                   </div>
                   <div className="text-right text-sm text-steel-300">
@@ -189,7 +195,7 @@ export default function Rankings() {
                     {type === "THREE_LIFT" ? (
                       <p className="font-num text-2xl font-black text-plate-yellow">
                         <CountNumber value={item.threeLiftTotal ?? 0} />
-                        <span className="ml-1 text-xs text-steel-400">3-Lift</span>
+                        <span className="ml-1 text-xs text-steel-400">kg</span>
                       </p>
                     ) : (
                       <p className="font-num text-2xl font-black text-plate-yellow">
@@ -202,7 +208,7 @@ export default function Rankings() {
               </div>
             );
           })}
-          {data.length === 0 && !loading && <div className="dg-well p-6 text-center text-steel-400">No public characters yet.</div>}
+          {data.length === 0 && !loading && <div className="dg-well p-6 text-center text-steel-400">아직 공개된 캐릭터가 없어요.</div>}
         </div>
       </div>
     </section>

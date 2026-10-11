@@ -5,6 +5,7 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
 import { crewApi } from "../services/crewApi";
 import type { CrewChallenge, CrewDetail, CrewJoinRequest } from "../types/crew";
+import { toast } from "../lib/toast";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
 
@@ -126,7 +127,7 @@ const resolveAvatarConfig = (row: AvatarRow | null | undefined, fallbackRate = 0
 function EnhancedAvatar({ seed, tier, stage, size, gender, isResting, rank, badge }: { seed: string; tier: CharacterTier; stage: number; size: number; gender?: "MALE" | "FEMALE" | null; isResting?: boolean; rank?: number; badge?: string }) {
   return (
     <div className="relative inline-flex items-center justify-center">
-      {rank && rank <= 3 && <span className={`font-num absolute -top-3 z-20 rounded-sm border-2 border-black px-1.5 py-0 text-xs font-black ${RANK_PLATE[rank]}`}>{rank === 1 ? "CROWN" : `TOP${rank}`}</span>}
+      {rank && rank <= 3 && <span className={`font-num absolute -top-3 z-20 rounded-sm border-2 border-black px-1.5 py-0 text-xs font-black ${RANK_PLATE[rank]}`}>{`${rank}위`}</span>}
       <div className={`relative z-10 rounded-md border-[3px] bg-steel-900 p-1 ${tierAuraClass[tier]}`}>
         <AvatarRenderer avatarSeed={seed} tier={tier} stage={stage} gender={gender} isResting={isResting ?? false} size={size} />
       </div>
@@ -258,6 +259,7 @@ export default function CrewChallenge() {
   const myWeeklyWorkout = myBoardRow?.recentWorkoutDays ?? 0;
   const attendanceGauge = Math.max(0, Math.min(100, myAttendanceRow?.attendanceRate ?? 0));
   const weeklyGauge = Math.max(0, Math.min(100, (myWeeklyWorkout / 7) * 100));
+  // 화면에서만 계산하는 참고 점수다. 서버가 경험치로 지급하지 않으므로 "EXP"라고 약속하지 않는다.
   const questReward = Math.round((myWeeklyWorkout + 1) * 12 + (attendanceGauge >= 80 ? 18 : 8));
   const chasePressure = rivalRow ? Math.max(0, Math.min(100, 100 - chaseGap * 4)) : 100;
 
@@ -270,7 +272,7 @@ export default function CrewChallenge() {
 
   const membersWithBoardMeta = useMemo(() => {
     if (!detail?.members) return [];
-    const boardMap = new Map(detail.competitionBoard.map((row) => [row.userId, row]));
+    const boardMap = new Map((detail.competitionBoard ?? []).map((row) => [row.userId, row]));
     const q = memberQuery.trim().toLowerCase();
     const merged = detail.members
       .filter((member) => (q ? member.nickname.toLowerCase().includes(q) : true))
@@ -363,7 +365,7 @@ export default function CrewChallenge() {
   }, [crewIdNum, month]);
 
   const copyInviteLink = async () => {
-    if (!detail) return;
+    if (!detail?.inviteCode) return;
     const link = `${window.location.origin}/crew?invite=${detail.inviteCode}`;
     try {
       await navigator.clipboard.writeText(link);
@@ -380,7 +382,7 @@ export default function CrewChallenge() {
     try {
       const result = await crewApi.join(crewIdNum);
       if (result.result === "PENDING") {
-        window.alert(result.message);
+        toast(result.message || "참여 신청을 보냈어요. 방장이 승인하면 들어갈 수 있어요.");
       }
       await loadDetail(crewIdNum, month);
     } catch (e: any) {
@@ -548,7 +550,7 @@ export default function CrewChallenge() {
       <div className="space-y-4">
         <div className="grid gap-3 lg:grid-cols-[1.1fr_1fr]">
           <article className="dg-steel dg-rise p-5">
-            <p className="font-num text-sm font-bold text-plate-yellow">Battle Status</p>
+            <p className="text-sm font-bold text-plate-yellow">순위 현황</p>
             <h3 className="font-display mt-1 text-xl text-white">랭크 전투 현황</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <div className="dg-well p-3">
@@ -586,7 +588,7 @@ export default function CrewChallenge() {
           </article>
 
           <article className="dg-steel dg-rise p-5" style={{ animationDelay: "80ms" }}>
-            <p className="font-num text-sm font-bold text-orange-300">Today Quest</p>
+            <p className="text-sm font-bold text-orange-300">오늘의 미션</p>
             <h3 className="font-display mt-1 text-xl text-white">즉시 수행 미션</h3>
             <p className="dg-whiteboard mt-3 px-4 py-2 text-sm font-bold">{missionLabel}</p>
             <div className="dg-well mt-4 p-3">
@@ -597,8 +599,8 @@ export default function CrewChallenge() {
               <p className="mt-2 text-xs text-steel-300">{rivalRow ? `${rivalRow.nickname}까지 ${chaseGap}점` : "현재 최상위권 유지 중"}</p>
             </div>
             <div className="mt-3 flex items-center justify-between rounded border-2 border-black bg-plate-green px-3 py-2 text-white shadow-sm">
-              <span className="text-xs font-bold">미션 성공 보상</span>
-              <span className="font-num text-2xl font-black">+<CountNumber value={questReward} /> EXP</span>
+              <span className="text-xs font-bold">미션 목표 점수<span className="block font-normal opacity-80">참고용 · 경험치로 지급되지 않아요</span></span>
+              <span className="font-num text-2xl font-black"><CountNumber value={questReward} />점</span>
             </div>
           </article>
         </div>
@@ -653,7 +655,7 @@ export default function CrewChallenge() {
 
   const renderLeaderboard = () => {
     if (!detail) return null;
-    const top3 = detail.competitionBoard.slice(0, 3);
+    const top3 = (detail.competitionBoard ?? []).slice(0, 3);
     return (
       <div className="space-y-4">
         <div className="grid gap-3 md:grid-cols-3">
@@ -1122,12 +1124,9 @@ export default function CrewChallenge() {
     <section className="relative min-h-screen overflow-hidden pb-28 pt-24 text-white">
       <div className="mx-auto max-w-6xl space-y-4 px-4 sm:px-6 lg:px-10">
         <div className="dg-steel relative overflow-hidden p-5">
-          <div className="dg-chip absolute right-6 top-5 bg-steel-700 text-sm text-chalk">
-            MuscleUp
-          </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-num text-sm font-bold text-plate-yellow">Crew Challenge Arena</p>
+              <p className="text-sm font-bold text-plate-yellow">운동 모임 챌린지</p>
               <h1 className="text-2xl text-white sm:text-3xl">{detail?.name || "모임 챌린지"}</h1>
               <p className="text-xs text-steel-300">{nextGoal}</p>
             </div>
@@ -1260,6 +1259,16 @@ export default function CrewChallenge() {
                       <option value="LEADER_APPROVE">가입 방식: 방장 승인 필요</option>
                     </select>
                   )}
+                  {/* 초대 코드는 모임원에게만 온다(모임원이 아니면 null) */}
+                  {detail.memberDetailVisible === false && (
+                    <div className="dg-well px-3 py-2 text-xs text-steel-300">
+                      <p className="font-semibold text-chalk">모임에 참여하면 멤버별 출석 기록을 볼 수 있어요.</p>
+                      <p className="mt-1">
+                        멤버 {detail.memberCount ?? 0}명 · 이번 달 운동 합계 {detail.monthWorkoutTotal ?? 0}회 · 평균 출석률 {Math.round(detail.averageAttendanceRate ?? 0)}%
+                      </p>
+                    </div>
+                  )}
+                  {detail.inviteCode && (
                   <div className="flex items-center gap-2 text-xs text-steel-300">
                     <span>초대코드: <span className="font-num text-base font-black text-plate-yellow">{detail.inviteCode}</span></span>
                     <button
@@ -1270,10 +1279,11 @@ export default function CrewChallenge() {
                       <span key={copiedLink ? "done" : "idle"} className="dg-pop inline-block">{copiedLink ? "복사됨" : "링크 복사"}</span>
                     </button>
                   </div>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {detail.joined ? <button type="button" onClick={() => void onLeave()} className="dg-btn min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 탈퇴</button> : <button type="button" onClick={() => void onJoin()} className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">모임 참여</button>}
-                  {detail.leader && <><button type="button" aria-pressed={manageMode} onClick={() => setManageMode((prev) => !prev)} className={`dg-btn min-h-[40px] px-3 text-sm ${manageMode ? "bg-plate-yellow text-black" : "dg-btn-steel"}`}>{manageMode ? "관리 모드 ON" : "관리 모드"}</button>{manageMode && <><button type="button" onClick={() => void onUpdateCrew()} className="dg-btn dg-btn-steel dg-pop min-h-[40px] px-3 text-sm">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="dg-btn dg-pop min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 삭제</button></>}</>}
+                  {detail.leader && <><button type="button" aria-pressed={manageMode} onClick={() => setManageMode((prev) => !prev)} className={`dg-btn min-h-[40px] px-3 text-sm ${manageMode ? "bg-plate-yellow text-black" : "dg-btn-steel"}`}>{manageMode ? "관리 모드 켜짐" : "관리 모드"}</button>{manageMode && <><button type="button" onClick={() => void onUpdateCrew()} className="dg-btn dg-btn-steel dg-pop min-h-[40px] px-3 text-sm">모임 수정</button><button type="button" onClick={() => void onDeleteCrew()} className="dg-btn dg-pop min-h-[40px] bg-steel-900 px-3 text-sm text-red-300 hover:bg-plate-red hover:text-white">모임 삭제</button></>}</>}
                 </div>
               </div>
             </div>

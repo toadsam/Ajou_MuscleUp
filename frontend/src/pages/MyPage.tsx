@@ -16,6 +16,8 @@ import { saveAppearanceBySeed } from "../utils/avatarAppearanceState";
 import { ChalkPuff } from "../components/avatar/TierUpAnimation";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
+import { toast } from "../lib/toast";
+import { httpError } from "../lib/httpError";
 
 // 처음 보일 때 0 에서 값까지 굴러 올라가는 숫자(표현 전용)
 function CountNum({ value, suffix = "" }: { value: number | null | undefined; suffix?: string }) {
@@ -105,6 +107,12 @@ type CharacterProfile = {
   stylePreset: string;
   growthParams?: GrowthParams | null;
   lastEvaluatedAt?: string | null;
+  // 서버가 새로 주는 레벨 진행 정보(없을 수도 있어 모두 선택 값)
+  exp?: number | null;
+  expToNextLevel?: number | null;
+  levelProgress?: number | null; // 0..1
+  attendancePoints?: number | null;
+  hasBodyStats?: boolean | null;
 };
 
 type CharacterEvaluation = {
@@ -170,13 +178,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
+    toast("로그인이 필요해요. 로그인 화면으로 이동할게요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw new Error("로그인이 필요해요.");
   }
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
+    throw await httpError(res, "정보를 불러오지 못했어요.");
   }
   return res.json();
 }
@@ -597,9 +604,9 @@ export default function MyPage() {
 
   const attendanceRiskLabel =
     attendanceRiskState === "critical"
-      ? "탈락위기"
+      ? "다시 시작해요"
       : attendanceRiskState === "warning"
-        ? "경고"
+        ? "조금 쉬었어요"
         : isResting
           ? "회복/휴식 중"
           : "활동 가능";
@@ -661,7 +668,7 @@ export default function MyPage() {
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex flex-col gap-2">
           <p className="flex items-center gap-2 text-sm font-semibold text-plate-yellow">
-            내 기록 <span className="font-num text-xs tracking-wide text-steel-500">MY PAGE</span>
+            내 기록
           </p>
           <h1 className="text-3xl md:text-4xl">마이페이지</h1>
           {data && (
@@ -1055,6 +1062,35 @@ export default function MyPage() {
                 skillEnabledMap={skillEnabledMap}
                 onToggleSkill={toggleSkillEnabled}
               />
+              {(typeof character.levelProgress === "number" || character.hasBodyStats === false) && (
+                <div className="dg-steel p-4 text-sm text-steel-300 space-y-2">
+                  {typeof character.levelProgress === "number" && (
+                    <>
+                      <div className="flex items-center justify-between text-xs font-semibold text-steel-400">
+                        <span>다음 레벨까지</span>
+                        <span className="font-num text-sm text-chalk">
+                          {typeof character.exp === "number" && typeof character.expToNextLevel === "number"
+                            ? `${character.exp} / ${character.expToNextLevel}`
+                            : `${Math.round(Math.max(0, Math.min(1, character.levelProgress)) * 100)}%`}
+                        </span>
+                      </div>
+                      <div
+                        className="dg-well h-3 overflow-hidden p-0"
+                        role="progressbar"
+                        aria-label="다음 레벨까지 진행률"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(Math.max(0, Math.min(1, character.levelProgress)) * 100)}
+                      >
+                        <div className="h-full bg-plate-yellow" style={{ width: `${Math.max(0, Math.min(1, character.levelProgress)) * 100}%` }} />
+                      </div>
+                    </>
+                  )}
+                  {character.hasBodyStats === false && (
+                    <p className="text-xs text-steel-300">체성분 정보를 입력하면 레벨에 반영돼요.</p>
+                  )}
+                </div>
+              )}
               <div className="dg-steel p-4 text-sm text-steel-300 grid md:grid-cols-2 gap-3">
                 <div className="dg-well px-3 py-2">
                   <div className="text-xs font-semibold text-steel-400">티어 정보</div>
@@ -1080,10 +1116,10 @@ export default function MyPage() {
                 </div>
                 <div className="dg-well px-3 py-2 md:col-span-2">
                   <div className="text-xs font-semibold text-steel-400">컨디션</div>
-                  <div className={`flex items-center gap-2 font-semibold ${attendanceRiskState === "critical" ? "text-red-300" : attendanceRiskState === "warning" ? "text-yellow-300" : isResting ? "text-blue-300" : "text-chalk"}`}>
+                  <div className={`flex items-center gap-2 font-semibold ${attendanceRiskState === "critical" || attendanceRiskState === "warning" ? "text-yellow-300" : isResting ? "text-blue-300" : "text-chalk"}`}>
                     <span
                       aria-hidden="true"
-                      className={`h-2.5 w-2.5 rounded-full border border-black ${attendanceRiskState === "critical" ? "bg-plate-red" : attendanceRiskState === "warning" ? "bg-plate-yellow" : isResting ? "bg-plate-blue" : "bg-plate-green"}`}
+                      className={`h-2.5 w-2.5 rounded-full border border-black ${attendanceRiskState === "critical" || attendanceRiskState === "warning" ? "bg-plate-yellow" : isResting ? "bg-plate-blue" : "bg-plate-green"}`}
                     />
                     {attendanceRiskLabel}
                   </div>
@@ -1112,7 +1148,7 @@ export default function MyPage() {
                 <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 border-b-2 border-black bg-plate-yellow" />
                 <div className="pt-1">
                   <p className="flex items-center gap-2 text-xs font-semibold text-plate-yellow">
-                    출석 해금 <span className="font-num text-[11px] tracking-wide text-steel-500">UNLOCK</span>
+                    출석 해금
                   </p>
                   <h3 className="font-display text-lg text-chalk">사진 커스텀 해금</h3>
                   <p className="text-xs text-steel-300">

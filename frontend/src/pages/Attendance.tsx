@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import UploadDropzone from "../components/UploadDropzone";
 import "../styles/attendance.css";
-import { renderAttendanceShareCard } from "../utils/attendanceShareCard";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
+import { toast as showGlobalToast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
 
 type AttendanceLog = {
   date: string;
@@ -39,7 +40,6 @@ type IntensityOption = { id: string; label: string; tag: string; power: number }
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const withBase = (url: string) => (url?.startsWith("http") ? url : `${API_BASE}${url}`);
-const withProxy = (url: string) => `${API_BASE}/api/files/proxy?path=${encodeURIComponent(url)}`;
 const isVideo = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?|$)/i.test(url.split("?")[0]);
 
 const WORKOUT_TYPES: WorkoutOption[] = [
@@ -73,13 +73,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (res.status === 401) {
-    alert("로그인이 필요합니다.");
+    showGlobalToast("로그인이 필요해요. 로그인 화면으로 이동할게요.", "error");
     window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw new Error("로그인이 필요해요.");
   }
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
+    throw await httpError(res, "요청을 처리하지 못했어요.");
   }
   return res.json();
 }
@@ -218,7 +217,11 @@ export default function Attendance() {
   const [memo, setMemo] = useState("");
   const [shareComment, setShareComment] = useState("");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [shareImageFile, setShareImageFile] = useState<File | null>(null);
+  // 오늘 기록이 이미 있으면 맨 위에 요약만 보여 주고, "기록 고치기"를 눌렀을 때만 입력 폼을 편다.
+  const [editingToday, setEditingToday] = useState(false);
+  // 오늘 출석 기록. 맨 위 출석 카드가 다른 달을 볼 때도 오늘 기준으로 동작하도록 달력 목록과 따로 둔다.
+  // (예전에는 이번 달 목록에서만 찾아서, 달을 넘기면 오늘 기록이 없는 것처럼 보이고 "출석 기록 저장"이 나왔다)
+  const [todayLog, setTodayLog] = useState<AttendanceLog | null>(null);
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [weeklyRank, setWeeklyRank] = useState<RankingItem[]>([]);
   const [mediaRank, setMediaRank] = useState<RankingItem[]>([]);
@@ -235,7 +238,6 @@ export default function Attendance() {
 
   const monthKey = formatMonthKey(month);
   const todayKey = formatDateKey(new Date());
-  const isCurrentMonth = monthKey === formatMonthKey(new Date());
 
   const reloadMonth = async () => {
     const [logsRes, summaryRes, weeklyRes, mediaRes] = await Promise.all([
@@ -245,6 +247,10 @@ export default function Attendance() {
       api<RankingItem[]>(`/api/attendance/rankings/monthly-media?month=${monthKey}&limit=5`),
     ]);
     setLogs(logsRes);
+    // 이번 달을 불러왔을 때만 "오늘 기록"을 갱신한다. 다른 달을 보고 있어도 맨 위 출석 카드는 오늘 기준.
+    if (monthKey === formatMonthKey(new Date())) {
+      setTodayLog(logsRes.find((log) => log.date === todayKey) ?? null);
+    }
     setSummary(summaryRes);
     setWeeklyRank(weeklyRes);
     setMediaRank(mediaRes);
@@ -256,8 +262,8 @@ export default function Attendance() {
         setLoading(true);
         setError(null);
         await reloadMonth();
-      } catch (e: any) {
-        setError(e?.message || "출석 기록을 불러오지 못했어요.");
+      } catch (e: unknown) {
+        setError(friendlyError(e, "출석 기록을 불러오지 못했어요."));
       } finally {
         setLoading(false);
       }
@@ -268,15 +274,9 @@ export default function Attendance() {
     setSelectedDateKey(null);
   }, [monthKey]);
 
-  const todayLog = useMemo(() => {
-    if (!isCurrentMonth) return null;
-    return logs.find((log) => log.date === todayKey) ?? null;
-  }, [logs, isCurrentMonth, todayKey]);
-
   const hasTodayLog = Boolean(todayLog);
 
   useEffect(() => {
-    if (!isCurrentMonth) return;
     if (todayLog) {
       setDidWorkout(todayLog.didWorkout);
       setMemo(todayLog.memo ?? "");
@@ -292,7 +292,7 @@ export default function Attendance() {
     setWorkoutTypes([]);
     setWorkoutIntensity(null);
     setMediaUrls([]);
-  }, [todayLog, isCurrentMonth]);
+  }, [todayLog]);
 
   useEffect(() => {
     if (!didWorkout) {
@@ -369,6 +369,7 @@ export default function Attendance() {
   const saveToday = async () => {
     try {
       setSaving(true);
+      // 새 출석은 POST /today, 이미 있는 오늘 기록 수정만 PUT /{오늘 날짜}
       const res = await api<AttendanceLog>(hasTodayLog ? `/api/attendance/${todayKey}` : "/api/attendance/today", {
         method: hasTodayLog ? "PUT" : "POST",
         body: JSON.stringify({
@@ -380,6 +381,7 @@ export default function Attendance() {
           mediaUrls,
         }),
       });
+      setTodayLog((prev) => ({ ...(prev ?? {}), ...res, date: todayKey }));
       localStorage.setItem("attendanceCompletedAt", todayKey);
       showToast({
         type: "success",
@@ -388,16 +390,12 @@ export default function Attendance() {
       });
       await reloadMonth();
       setPlateKey((prev) => prev + 1);
-    } catch (e: any) {
-      showToast({ type: "error", message: e?.message || "저장에 실패했어요." });
+      setEditingToday(false);
+    } catch (e: unknown) {
+      showToast({ type: "error", message: friendlyError(e, "저장하지 못했어요. 다시 시도해 주세요.") });
     } finally {
       setSaving(false);
     }
-  };
-
-  const composeShareText = (link: string) => {
-    const base = shareComment.trim() || memo.trim() || "오늘 출석 완료!";
-    return `${base}\n${link}`;
   };
 
   const ensureShareSlug = async () => {
@@ -419,80 +417,27 @@ export default function Attendance() {
       await navigator.clipboard.writeText(link);
       showToast({ type: "success", message: "자랑 링크를 복사했어요." });
       await reloadMonth();
-    } catch (e: any) {
-      showToast({ type: "error", message: e?.message || "공유 링크 생성에 실패했어요." });
+    } catch (e: unknown) {
+      showToast({ type: "error", message: friendlyError(e, "공유 링크를 만들지 못했어요.") });
     } finally {
       setSharing(false);
     }
   };
 
-  const buildShareImageFile = async () => {
-    const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
-    const mediaImageForRender = mediaImage ? withProxy(mediaImage) : null;
-    const blob = await renderAttendanceShareCard({
-      date: todayKey,
-      didWorkout,
-      workoutTypes: workoutTypes.map((type) => WORKOUT_TYPES.find((item) => item.id === type)?.label ?? type),
-      workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
-      memo,
-      shareComment,
-      mediaUrl: mediaImageForRender,
-    });
-    return new File([blob], `attendance-card-${todayKey}.png`, { type: "image/png" });
-  };
-
+  // 공유·저장은 공유 카드 화면에서 한다(그 화면이 카드를 그려서 바로 공유/저장).
+  // 예전에 이 화면에서 직접 공유하던 코드는 return 뒤에 남아 실행되지 않아 지웠다.
   const quickShare = async () => {
     try {
       if (!todayLog) {
         showToast({ type: "error", message: "먼저 오늘 출석을 저장해 주세요." });
         return;
       }
-
       setSharing(true);
       const autoSlug = await ensureShareSlug();
       // 새 탭(window.open)은 await 뒤라 모바일에서 팝업 차단에 걸렸다. 같은 탭으로 넘어간다.
       window.location.assign(`${appShareLinkForSlug(autoSlug)}?auto=share&from=attendance`);
-      return;
-
-      const ensuredLog = todayLog as AttendanceLog;
-
-      const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
-      const shareFn = navigator.share?.bind(navigator);
-      const link = ensuredLog.shareSlug ? publicShareLinkForSlug(ensuredLog.shareSlug as string) : "";
-      const text = composeShareText(link);
-      const canShareFile = Boolean(shareImageFile && nav.canShare && nav.canShare({ files: [shareImageFile] as File[] }));
-
-      if (shareFn) {
-        if (canShareFile && shareImageFile) {
-          await shareFn({
-            title: "출석 자랑",
-            text,
-            files: [shareImageFile as File],
-          });
-          showToast({ type: "success", message: "이미지로 공유했어요." });
-        } else if (link) {
-          await shareFn({ title: "출석 자랑", text, url: link });
-          showToast({ type: "success", message: "링크로 공유했어요." });
-        } else {
-          await shareFn({ title: "출석 자랑", text });
-          showToast({ type: "success", message: "메시지로 공유했어요." });
-        }
-      } else {
-        await navigator.clipboard.writeText(text);
-        showToast({ type: "success", message: "멘트+링크를 복사했어요." });
-      }
-
-      if (!ensuredLog.shareSlug) {
-        setSharing(true);
-        try {
-          await ensureShareSlug();
-          await reloadMonth();
-        } catch {
-          // Sharing already succeeded; link creation can be retried later.
-        }
-      }
-    } catch (e: any) {
-      showToast({ type: "error", message: e?.message || "공유에 실패했어요." });
+    } catch (e: unknown) {
+      showToast({ type: "error", message: friendlyError(e, "공유하지 못했어요.") });
     } finally {
       setSharing(false);
     }
@@ -506,30 +451,8 @@ export default function Attendance() {
       }
       const autoSlug = await ensureShareSlug();
       window.location.href = `${appShareLinkForSlug(String(autoSlug))}?auto=save&from=attendance`;
-      return;
-
-      const mediaImage = (mediaUrls || []).map(withBase).find((url) => !isVideo(url));
-      const mediaImageForRender = mediaImage ? withProxy(mediaImage as string) : null;
-      const blob = await renderAttendanceShareCard({
-        date: todayKey,
-        didWorkout,
-        workoutTypes: workoutTypes.map((type) => WORKOUT_TYPES.find((item) => item.id === type)?.label ?? type),
-        workoutIntensity: workoutIntensity ? INTENSITIES.find((item) => item.id === workoutIntensity)?.label ?? workoutIntensity : null,
-        memo,
-        shareComment,
-        mediaUrl: mediaImageForRender,
-      });
-      const fileUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = fileUrl;
-      a.download = `attendance-card-${todayKey}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(fileUrl);
-      showToast({ type: "success", message: "자랑 카드 이미지를 저장했어요." });
-    } catch (e: any) {
-      showToast({ type: "error", message: e?.message || "이미지 저장에 실패했어요." });
+    } catch (e: unknown) {
+      showToast({ type: "error", message: friendlyError(e, "이미지를 저장하지 못했어요.") });
     }
   };
 
@@ -540,8 +463,8 @@ export default function Attendance() {
       await api(`/api/attendance/${todayLog.date}/share`, { method: "DELETE" });
       showToast({ type: "success", message: "공유를 해제했어요." });
       await reloadMonth();
-    } catch (e: any) {
-      showToast({ type: "error", message: e?.message || "공유 해제에 실패했어요." });
+    } catch (e: unknown) {
+      showToast({ type: "error", message: friendlyError(e, "공유를 해제하지 못했어요.") });
     } finally {
       setSharing(false);
     }
@@ -577,21 +500,6 @@ export default function Attendance() {
     return base + typeBonus + intensityBonus + memoBonus + keywordBonus + mediaBonus + streakBonus(projectedStreak);
   }, [didWorkout, workoutTypes, workoutIntensity, memo, keywordMatches.length, projectedStreak, hasTodayLog, mediaUrls.length]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const imageFile = await buildShareImageFile();
-        if (!cancelled) setShareImageFile(imageFile);
-      } catch {
-        if (!cancelled) setShareImageFile(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [todayKey, didWorkout, workoutTypes, workoutIntensity, memo, shareComment, mediaUrls]);
-
   const jumpTo = (id: "att-record" | "att-media" | "att-share") => {
     setMobileStep(id === "att-record" ? "record" : id === "att-media" ? "media" : "share");
     const el = document.getElementById(id);
@@ -604,15 +512,263 @@ export default function Attendance() {
   const toggleIndex = didWorkout ? 0 : 1;
   const stepIndex = mobileStep === "record" ? 0 : mobileStep === "media" ? 1 : 2;
 
+  const todayDoneSummary = (() => {
+    if (!todayLog) return "";
+    if (!todayLog.didWorkout) return "오늘은 쉬는 날로 기록했어요.";
+    const types = (todayLog.workoutTypes ?? []).map((type) => WORKOUT_TYPES.find((item) => item.id === type)?.label ?? type);
+    const intensity = INTENSITIES.find((item) => item.id === todayLog.workoutIntensity)?.label;
+    const parts = [types.join(" · "), intensity ? `강도 ${intensity}` : "", todayLog.expEarned ? `EXP +${todayLog.expEarned}` : ""].filter(Boolean);
+    return parts.length ? parts.join(" / ") : "오늘 운동을 기록했어요.";
+  })();
+
+  const shareActions = todayLog ? (
+    <div className="mt-4 flex flex-wrap gap-3">
+      <button onClick={quickShare} disabled={sharing} className="share-btn dg-btn dg-btn-primary">
+        {sharing ? "공유 중..." : "원클릭 자랑하기"}
+      </button>
+      <button onClick={copyShareLink} disabled={sharing} className="share-btn dg-btn dg-btn-steel">
+        {sharing ? "생성 중..." : todayLog.shareSlug ? "자랑 링크 복사" : "자랑 링크 만들기"}
+      </button>
+      <button onClick={saveInstaImage} className="share-btn dg-btn dg-btn-steel">
+        인스타용 이미지 저장
+      </button>
+      {todayLog.shared && (
+        <button onClick={unshareToday} disabled={sharing} className="share-btn dg-btn dg-btn-steel">
+          공유 해제
+        </button>
+      )}
+      <span className="share-stats self-center">응원 {todayLog.cheerCount ?? 0} · 수정 {todayLog.editCount ?? 0}회</span>
+    </div>
+  ) : null;
+
   return (
     <section className="attendance-shell">
       <div className="attendance-bg" />
       <div className="attendance-wrap">
         <header className="attendance-hero dg-rise">
-          <p className="attendance-eyebrow font-num">MuscleUp Attendance Engine</p>
+          <p className="attendance-eyebrow">오늘의 출석</p>
           <h1>출석 체크</h1>
           <p>운동 기록과 사진/영상을 함께 저장하고, 바로 자랑 링크로 공유해보세요.</p>
         </header>
+
+        {/* 출석 입력은 맨 위. 오늘 이미 기록했으면 요약만 보여 주고 "기록 고치기"로 폼을 연다. */}
+        {todayLog && !editingToday ? (
+          <div className="attendance-card dg-steel action-card today-done-card dg-rise">
+            <div className="action-header">
+              <div>
+                <h2>오늘 출석 완료</h2>
+                <p>{todayDoneSummary}</p>
+              </div>
+              <div className={`status-pill dg-chip ${todayLog.didWorkout ? "active" : "rest"}`}>
+                {todayLog.didWorkout ? "운동 완료" : "휴식"}
+              </div>
+            </div>
+            {todayLog.memo?.trim() && <p className="today-done-memo dg-whiteboard whitespace-pre-line">{todayLog.memo}</p>}
+            {shareActions}
+            <div>
+              <button type="button" className="ghost-btn dg-btn dg-btn-steel" onClick={() => setEditingToday(true)}>
+                오늘 기록 고치기
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={`attendance-card dg-steel action-card ${mobileStep === "share" ? "has-mobile-save-gap" : ""}`}>
+            <div className="action-header">
+              <div>
+                <h2>{hasTodayLog ? "오늘 기록 고치기" : "오늘의 운동 체크"}</h2>
+                <p>기록 + 사진/영상까지 남기고 자랑 링크를 만들어보세요.</p>
+              </div>
+              <div key={didWorkout ? "on" : "off"} className={`status-pill dg-chip dg-pop ${didWorkout ? "active" : "rest"}`}>
+                {didWorkout ? "운동 완료" : "휴식"}
+              </div>
+              {hasTodayLog && (
+                <button type="button" className="ghost-btn dg-btn dg-btn-steel" onClick={() => setEditingToday(false)}>
+                  접기
+                </button>
+              )}
+            </div>
+
+            <div className="attendance-mobile-steps" style={{ "--i": stepIndex } as CSSProperties}>
+              <span className="step-slider" aria-hidden="true" />
+              <button type="button" onClick={() => jumpTo("att-record")} className={`step-btn ${mobileStep === "record" ? "active" : ""}`}>
+                1단계 기록
+              </button>
+              <button type="button" onClick={() => jumpTo("att-media")} className={`step-btn ${mobileStep === "media" ? "active" : ""}`}>
+                2단계 미디어
+              </button>
+              <button type="button" onClick={() => jumpTo("att-share")} className={`step-btn ${mobileStep === "share" ? "active" : ""}`}>
+                3단계 공유
+              </button>
+            </div>
+
+            <div id="att-record" className={`stack-section ${mobileStep !== "record" ? "step-mobile-hidden" : ""}`}>
+            <div className="action-row">
+              <div className={`toggle-group ${didWorkout ? "" : "is-rest"}`} style={{ "--i": toggleIndex } as CSSProperties}>
+                <span className="toggle-slider" aria-hidden="true" />
+                <button onClick={() => setDidWorkout(true)} className={`toggle-btn ${didWorkout ? "selected" : ""}`} aria-pressed={didWorkout}>운동했다</button>
+                <button onClick={() => setDidWorkout(false)} className={`toggle-btn ${!didWorkout ? "selected" : ""}`} aria-pressed={!didWorkout}>쉬었다</button>
+              </div>
+              {hasTodayLog && <span className="lock-badge">오늘 기록 있음 (수정 가능)</span>}
+            </div>
+
+            <div className={`action-grid ${!didWorkout ? "disabled" : ""}`}>
+              {WORKOUT_TYPES.map((option) => {
+                const active = workoutTypes.includes(option.id);
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => toggleWorkoutType(option.id)}
+                    className={`workout-chip ${active ? "active" : ""}`}
+                    disabled={!didWorkout}
+                    aria-pressed={active}
+                  >
+                    <span className="chip-icon"><WorkoutIcon id={option.id} /></span>
+                    <span className="chip-text"><strong>{option.label}</strong><small>{option.hint}</small></span>
+                    <span className="chip-check" aria-hidden="true">{active && <CheckIcon size={14} />}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className={`intensity-row ${!didWorkout ? "disabled" : ""}`}>
+              {INTENSITIES.map((option) => {
+                const active = workoutIntensity === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => setWorkoutIntensity(option.id)}
+                    className={`intensity-chip ${active ? "active" : ""}`}
+                    disabled={!didWorkout}
+                    aria-pressed={active}
+                  >
+                    <span className="power-meter" aria-hidden="true">
+                      {[1, 2, 3].map((level) => (
+                        <i key={level} className={level <= option.power ? "on" : ""} />
+                      ))}
+                    </span>
+                    <span className="chip-text"><strong>{option.label}</strong><small>{option.tag}</small></span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="memo-block memo-board dg-whiteboard">
+              <textarea value={memo} onChange={(e) => setMemo(e.target.value)} maxLength={200} rows={3} placeholder="오늘 운동 한 줄 요약" />
+              <div className="memo-meta">
+                <span className="font-num">{memo.length}/200</span>
+                <span className="keyword-tag">
+                  보너스 키워드:{" "}
+                  {keywordMatches.length
+                    ? keywordMatches.map((keyword) => (
+                        <span key={keyword} className="keyword-chip dg-pop">{keyword}</span>
+                      ))
+                    : "-"}
+                </span>
+              </div>
+            </div>
+
+            <div className="memo-block">
+              <textarea value={shareComment} onChange={(e) => setShareComment(e.target.value)} maxLength={280} rows={2} placeholder="공유할 자랑 멘트 (선택)" />
+              <div className="memo-meta">
+                <span className="font-num">{shareComment.length}/280</span>
+                <div className="flex flex-wrap gap-2">
+                  {SHARE_COMMENT_TEMPLATES.map((template) => (
+                    <button
+                      key={template}
+                      type="button"
+                      onClick={() => setShareComment(template)}
+                      className={`template-chip ${shareComment === template ? "active" : ""}`}
+                    >
+                      {template}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            </div>
+
+            <div id="att-media" className={`stack-section ${mobileStep !== "media" ? "step-mobile-hidden" : ""}`}>
+            <div className="space-y-3">
+              <p className="text-sm text-steel-300">사진/영상 첨부 (최대 10개)</p>
+              <p className="text-xs text-emerald-300">사진 없이도 출석 기록과 공유가 가능합니다.</p>
+              <UploadDropzone
+                onUploaded={(url) => setMediaUrls((prev) => (prev.length >= 10 ? prev : [...prev, url]))}
+                accept="image/*,video/*"
+                multiple
+                folder="attendance"
+              />
+              {mediaUrls.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {mediaUrls.map((rawUrl, idx) => {
+                    const url = withBase(rawUrl);
+                    return (
+                      <div key={rawUrl} className="dg-well overflow-hidden dg-plate-in">
+                        {isVideo(url) ? <video src={url} className="w-full h-24 object-cover" controls /> : <img src={url} alt={`오늘 첨부한 사진 ${idx + 1}`} className="w-full h-24 object-cover" />}
+                        <button type="button" onClick={() => setMediaUrls((prev) => prev.filter((u) => u !== rawUrl))} className="media-remove" aria-label={`첨부 ${idx + 1} 삭제`}>
+                          삭제
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            </div>
+
+            <div id="att-share" className={`stack-section ${mobileStep !== "share" ? "step-mobile-hidden" : ""}`}>
+            <div className="action-footer">
+              <div className="att-rack">
+                <div key={`bar-${plateKey}`} className={`att-bar ${plateKey ? "landed" : ""}`} aria-hidden="true">
+                  <span className="att-bar-shaft" />
+                  <span className="att-bar-stop" />
+                  <span className="att-bar-sleeve">
+                    {hasTodayLog ? (
+                      <span
+                        className={`att-plate ${todayDidWorkout ? "red" : "steel"} ${plateKey ? "dg-plate-in" : ""}`}
+                        style={{ "--from": "64px" } as CSSProperties}
+                      >
+                        {todayDidWorkout && <b className="font-num">25</b>}
+                      </span>
+                    ) : (
+                      <span className="att-plate ghost" />
+                    )}
+                    <span className="att-bar-collar" />
+                  </span>
+                  {plateKey > 0 && hasTodayLog && (
+                    <span className="att-puff">
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <i key={i} style={{ "--a": `${i * 45}deg` } as CSSProperties} />
+                      ))}
+                    </span>
+                  )}
+                </div>
+                <div className="reward-preview">
+                  <span>예상 EXP</span>
+                  <strong className="font-num">{didWorkout ? <>+<CountUp value={estimatedExp} duration={500} /></> : "+0"}</strong>
+                  <small>스트릭 + 미디어 보너스 포함</small>
+                </div>
+              </div>
+              <button onClick={saveToday} disabled={saving} className="primary-btn dg-btn dg-btn-primary section-save-btn">
+                {saving ? "저장 중..." : hasTodayLog ? "출석 기록 수정 저장" : "출석 기록 저장"}
+              </button>
+            </div>
+
+            {todayLog && shareActions}
+            </div>
+
+            <div className={`mobile-save-bar ${mobileStep === "share" ? "show" : ""}`}>
+              <div className="mobile-save-meta">
+                <strong className="font-num">{didWorkout ? `EXP +${estimatedExp}` : "휴식 모드"}</strong>
+                <span>{hasTodayLog ? "오늘 기록 수정" : "오늘 기록 저장"}</span>
+              </div>
+              <button onClick={saveToday} disabled={saving} className="primary-btn dg-btn dg-btn-primary mobile-save-btn">
+                {saving ? "저장 중..." : "저장"}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="mobile-top-summary">
           <div className="mobile-summary-badges">
@@ -664,7 +820,8 @@ export default function Attendance() {
             {error && <div className="error-text">{error}</div>}
 
             <div className="calendar-weekdays">
-              {["월", "화", "수", "목", "금", "토", "일"].map((label) => (
+              {/* 날짜 칸은 getDay()(일요일=0) 기준으로 채우므로 머리글도 일요일부터 */}
+              {["일", "월", "화", "수", "목", "금", "토"].map((label) => (
                 <span key={label}>{label}</span>
               ))}
             </div>
@@ -841,7 +998,7 @@ export default function Attendance() {
                       {isVideo(url) ? (
                         <video src={url} className="w-full h-24 object-cover" controls />
                       ) : (
-                        <img src={url} alt="attendance archive media" className="w-full h-24 object-cover" />
+                        <img src={url} alt={`${selectedDateKey} 출석 사진 ${idx + 1}`} className="w-full h-24 object-cover" />
                       )}
                     </div>
                   );
@@ -850,216 +1007,6 @@ export default function Attendance() {
             )}
           </div>
         )}
-
-        <div className={`attendance-card dg-steel action-card ${mobileStep === "share" ? "has-mobile-save-gap" : ""}`}>
-          <div className="action-header">
-            <div>
-              <h2>오늘의 운동 체크</h2>
-              <p>기록 + 사진/영상까지 남기고 자랑 링크를 만들어보세요.</p>
-            </div>
-            <div key={didWorkout ? "on" : "off"} className={`status-pill dg-chip dg-pop ${didWorkout ? "active" : "rest"}`}>
-              {didWorkout ? "운동 완료" : "휴식"}
-            </div>
-          </div>
-
-          <div className="attendance-mobile-steps" style={{ "--i": stepIndex } as CSSProperties}>
-            <span className="step-slider" aria-hidden="true" />
-            <button type="button" onClick={() => jumpTo("att-record")} className={`step-btn ${mobileStep === "record" ? "active" : ""}`}>
-              1단계 기록
-            </button>
-            <button type="button" onClick={() => jumpTo("att-media")} className={`step-btn ${mobileStep === "media" ? "active" : ""}`}>
-              2단계 미디어
-            </button>
-            <button type="button" onClick={() => jumpTo("att-share")} className={`step-btn ${mobileStep === "share" ? "active" : ""}`}>
-              3단계 공유
-            </button>
-          </div>
-
-          <div id="att-record" className={`stack-section ${mobileStep !== "record" ? "step-mobile-hidden" : ""}`}>
-          <div className="action-row">
-            <div className={`toggle-group ${didWorkout ? "" : "is-rest"}`} style={{ "--i": toggleIndex } as CSSProperties}>
-              <span className="toggle-slider" aria-hidden="true" />
-              <button onClick={() => setDidWorkout(true)} className={`toggle-btn ${didWorkout ? "selected" : ""}`} aria-pressed={didWorkout}>운동했다</button>
-              <button onClick={() => setDidWorkout(false)} className={`toggle-btn ${!didWorkout ? "selected" : ""}`} aria-pressed={!didWorkout}>쉬었다</button>
-            </div>
-            {hasTodayLog && <span className="lock-badge">오늘 기록 있음 (수정 가능)</span>}
-          </div>
-
-          <div className={`action-grid ${!didWorkout ? "disabled" : ""}`}>
-            {WORKOUT_TYPES.map((option) => {
-              const active = workoutTypes.includes(option.id);
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => toggleWorkoutType(option.id)}
-                  className={`workout-chip ${active ? "active" : ""}`}
-                  disabled={!didWorkout}
-                  aria-pressed={active}
-                >
-                  <span className="chip-icon"><WorkoutIcon id={option.id} /></span>
-                  <span className="chip-text"><strong>{option.label}</strong><small>{option.hint}</small></span>
-                  <span className="chip-check" aria-hidden="true">{active && <CheckIcon size={14} />}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className={`intensity-row ${!didWorkout ? "disabled" : ""}`}>
-            {INTENSITIES.map((option) => {
-              const active = workoutIntensity === option.id;
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => setWorkoutIntensity(option.id)}
-                  className={`intensity-chip ${active ? "active" : ""}`}
-                  disabled={!didWorkout}
-                  aria-pressed={active}
-                >
-                  <span className="power-meter" aria-hidden="true">
-                    {[1, 2, 3].map((level) => (
-                      <i key={level} className={level <= option.power ? "on" : ""} />
-                    ))}
-                  </span>
-                  <span className="chip-text"><strong>{option.label}</strong><small>{option.tag}</small></span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="memo-block memo-board dg-whiteboard">
-            <textarea value={memo} onChange={(e) => setMemo(e.target.value)} maxLength={200} rows={3} placeholder="오늘 운동 한 줄 요약" />
-            <div className="memo-meta">
-              <span className="font-num">{memo.length}/200</span>
-              <span className="keyword-tag">
-                보너스 키워드:{" "}
-                {keywordMatches.length
-                  ? keywordMatches.map((keyword) => (
-                      <span key={keyword} className="keyword-chip dg-pop">{keyword}</span>
-                    ))
-                  : "-"}
-              </span>
-            </div>
-          </div>
-
-          <div className="memo-block">
-            <textarea value={shareComment} onChange={(e) => setShareComment(e.target.value)} maxLength={280} rows={2} placeholder="공유할 자랑 멘트 (선택)" />
-            <div className="memo-meta">
-              <span className="font-num">{shareComment.length}/280</span>
-              <div className="flex flex-wrap gap-2">
-                {SHARE_COMMENT_TEMPLATES.map((template) => (
-                  <button
-                    key={template}
-                    type="button"
-                    onClick={() => setShareComment(template)}
-                    className={`template-chip ${shareComment === template ? "active" : ""}`}
-                  >
-                    {template}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          </div>
-
-          <div id="att-media" className={`stack-section ${mobileStep !== "media" ? "step-mobile-hidden" : ""}`}>
-          <div className="space-y-3">
-            <p className="text-sm text-steel-300">사진/영상 첨부 (최대 10개)</p>
-            <p className="text-xs text-emerald-300">사진 없이도 출석 기록과 공유가 가능합니다.</p>
-            <UploadDropzone
-              onUploaded={(url) => setMediaUrls((prev) => (prev.length >= 10 ? prev : [...prev, url]))}
-              accept="image/*,video/*"
-              multiple
-              folder="attendance"
-            />
-            {mediaUrls.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {mediaUrls.map((rawUrl) => {
-                  const url = withBase(rawUrl);
-                  return (
-                    <div key={rawUrl} className="dg-well overflow-hidden dg-plate-in">
-                      {isVideo(url) ? <video src={url} className="w-full h-24 object-cover" controls /> : <img src={url} alt="attendance media" className="w-full h-24 object-cover" />}
-                      <button type="button" onClick={() => setMediaUrls((prev) => prev.filter((u) => u !== rawUrl))} className="media-remove">
-                        삭제
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          </div>
-
-          <div id="att-share" className={`stack-section ${mobileStep !== "share" ? "step-mobile-hidden" : ""}`}>
-          <div className="action-footer">
-            <div className="att-rack">
-              <div key={`bar-${plateKey}`} className={`att-bar ${plateKey ? "landed" : ""}`} aria-hidden="true">
-                <span className="att-bar-shaft" />
-                <span className="att-bar-stop" />
-                <span className="att-bar-sleeve">
-                  {hasTodayLog ? (
-                    <span
-                      className={`att-plate ${todayDidWorkout ? "red" : "steel"} ${plateKey ? "dg-plate-in" : ""}`}
-                      style={{ "--from": "64px" } as CSSProperties}
-                    >
-                      {todayDidWorkout && <b className="font-num">25</b>}
-                    </span>
-                  ) : (
-                    <span className="att-plate ghost" />
-                  )}
-                  <span className="att-bar-collar" />
-                </span>
-                {plateKey > 0 && hasTodayLog && (
-                  <span className="att-puff">
-                    {Array.from({ length: 8 }, (_, i) => (
-                      <i key={i} style={{ "--a": `${i * 45}deg` } as CSSProperties} />
-                    ))}
-                  </span>
-                )}
-              </div>
-              <div className="reward-preview">
-                <span>예상 EXP</span>
-                <strong className="font-num">{didWorkout ? <>+<CountUp value={estimatedExp} duration={500} /></> : "+0"}</strong>
-                <small>스트릭 + 미디어 보너스 포함</small>
-              </div>
-            </div>
-            <button onClick={saveToday} disabled={saving} className="primary-btn dg-btn dg-btn-primary section-save-btn">
-              {saving ? "저장 중..." : hasTodayLog ? "출석 기록 수정 저장" : "출석 기록 저장"}
-            </button>
-          </div>
-
-          {todayLog && (
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button onClick={quickShare} disabled={sharing} className="share-btn dg-btn dg-btn-primary">
-                {sharing ? "공유 중..." : "원클릭 자랑하기"}
-              </button>
-              <button onClick={copyShareLink} disabled={sharing} className="share-btn dg-btn dg-btn-steel">
-                {sharing ? "생성 중..." : todayLog.shareSlug ? "자랑 링크 복사" : "자랑 링크 만들기"}
-              </button>
-              <button onClick={saveInstaImage} className="share-btn dg-btn dg-btn-steel">
-                인스타용 이미지 저장
-              </button>
-              {todayLog.shared && (
-                <button onClick={unshareToday} disabled={sharing} className="share-btn dg-btn dg-btn-steel">
-                  공유 해제
-                </button>
-              )}
-              <span className="share-stats self-center">응원 {todayLog.cheerCount ?? 0} · 수정 {todayLog.editCount ?? 0}회</span>
-            </div>
-          )}
-          </div>
-
-          <div className={`mobile-save-bar ${mobileStep === "share" ? "show" : ""}`}>
-            <div className="mobile-save-meta">
-              <strong className="font-num">{didWorkout ? `EXP +${estimatedExp}` : "휴식 모드"}</strong>
-              <span>{hasTodayLog ? "오늘 기록 수정" : "오늘 기록 저장"}</span>
-            </div>
-            <button onClick={saveToday} disabled={saving} className="primary-btn dg-btn dg-btn-primary mobile-save-btn">
-              {saving ? "저장 중..." : "저장"}
-            </button>
-          </div>
-        </div>
       </div>
 
       {toast && (

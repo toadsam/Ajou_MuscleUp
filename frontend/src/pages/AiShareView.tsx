@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
 
 type ShareItem = {
   id: number;
@@ -11,6 +13,9 @@ type ShareItem = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+// 서버의 상담 종류 코드(CHAT 등)를 화면용 한국어로. 모르는 값은 "AI 상담".
+const TYPE_LABEL: Record<string, string> = { CHAT: "AI 상담", ANALYZE: "체성 분석", ANALYSIS: "체성 분석", PLAN: "루틴 설계" };
 
 export default function AiShareView() {
   const { slug } = useParams();
@@ -25,11 +30,11 @@ export default function AiShareView() {
       setError(null);
       try {
         const res = await fetch(`${API_BASE}/api/ai/share/${slug}`);
-        if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+        if (!res.ok) throw await httpError(res, "공유된 답변을 불러오지 못했어요.");
         const item: ShareItem = await res.json();
         setData(item);
-      } catch (e: any) {
-        setError(e?.message || "공유된 답변을 불러오지 못했습니다.");
+      } catch (e: unknown) {
+        setError(friendlyError(e, "공유된 답변을 불러오지 못했어요."));
       } finally {
         setLoading(false);
       }
@@ -63,11 +68,11 @@ export default function AiShareView() {
       <div className="mx-auto max-w-3xl space-y-5">
         <div className="dg-rise">
           <p className="text-sm text-steel-400">AI 상담 공유</p>
-          <h1 className="mt-1 text-3xl text-chalk">공유된 Q&A</h1>
+          <h1 className="mt-1 text-3xl text-chalk">공유된 질문과 답변</h1>
         </div>
         <div className="dg-steel dg-rise space-y-4 p-6" style={{ animationDelay: "60ms" }}>
           <div className="flex items-center justify-between gap-3 px-2 text-xs text-steel-300">
-            <span className="dg-chip bg-plate-yellow text-black">{data.type || "CHAT"}</span>
+            <span className="dg-chip bg-plate-yellow text-black">{TYPE_LABEL[(data.type || "CHAT").toUpperCase()] ?? "AI 상담"}</span>
             <span className="font-num text-sm font-bold">{formatDate(data.createdAt)}</span>
           </div>
           <div className="dg-well border-l-[6px] border-l-plate-blue p-4">
@@ -93,8 +98,8 @@ export default function AiShareView() {
             onClick={() => {
               const link = `${window.location.origin}/ai/share/${data.shareSlug}`;
               navigator.clipboard.writeText(link).then(
-                () => alert("링크가 클립보드에 복사되었습니다."),
-                () => alert("복사에 실패했습니다.")
+                () => toast("링크를 복사했어요.", "success"),
+                () => toast("링크를 복사하지 못했어요.", "error")
               );
             }}
           >

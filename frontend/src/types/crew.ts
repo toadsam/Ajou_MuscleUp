@@ -17,7 +17,8 @@ export interface CrewListItem {
   ownerNickname: string;
   memberCount: number;
   joined: boolean;
-  inviteCode: string;
+  // 모임원이 아니면 서버가 null 을 준다(초대 코드는 모임원에게만 보인다).
+  inviteCode: string | null;
   joinPolicy?: CrewJoinPolicy;
 }
 
@@ -41,12 +42,18 @@ export interface CrewDetail {
   name: string;
   description?: string | null;
   ownerNickname: string;
-  inviteCode: string;
+  // 모임원이 아니면 서버가 null 을 준다(초대 코드는 모임원에게만 보인다).
+  inviteCode: string | null;
   joinPolicy?: CrewJoinPolicy;
   joined: boolean;
   leader: boolean;
   month: string;
   targetDays: number;
+  // 모임원이 아니면 false — 멤버별 출석 대신 아래 합계만 보여 준다.
+  memberDetailVisible?: boolean;
+  memberCount?: number;
+  monthWorkoutTotal?: number;
+  averageAttendanceRate?: number;
   members: CrewMemberAttendance[];
   challenges: CrewChallenge[];
   kingTitles: CrewKingTitle[];

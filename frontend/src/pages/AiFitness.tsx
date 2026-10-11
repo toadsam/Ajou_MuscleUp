@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
-import { useCountUp } from "../hooks/useCountUp";
-import { useInView } from "../hooks/useInView";
+import { toast } from "../lib/toast";
+import { friendlyError, httpError } from "../lib/httpError";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -12,11 +12,16 @@ const tabs = [
   { id: "chat", label: "AI 상담", description: "운동/식단 고민을 상담하면 기록으로 남아 언제든 다시 볼 수 있습니다." },
 ];
 
-const liveTiles = [
-  { title: "AI 루틴 분석", tag: "분석", status: "92% 진행", color: "border-l-plate-green" },
-  { title: "30분 체형 교정", tag: "코칭", status: "DAY 12", color: "border-l-plate-red" },
-  { title: "목표 심박 유지", tag: "현황", status: "120 bpm", color: "border-l-plate-blue" },
+// 오른쪽 안내 칸. 예전엔 "92% 진행", "120 bpm", "3회/1건/1.8s" 같은 꾸며낸 숫자와 깜빡이는 LIVE 표시가 있었다.
+// 실제 데이터가 아니라서 지우고, 각 기능이 무엇을 하는지 안내로 바꿨다.
+const guideTiles = [
+  { tab: "analysis", title: "체성 분석", text: "키·체중·체지방률을 넣으면 지금 상태와 코칭 포인트를 정리해 줘요.", color: "border-l-plate-green" },
+  { tab: "plan", title: "루틴 설계", text: "운동 경험·가능 횟수·장비를 넣으면 4주 루틴을 짜 줘요.", color: "border-l-plate-red" },
+  { tab: "chat", title: "AI 상담", text: "운동·식단 고민을 물어보면 답과 함께 기록이 남아요. 로그인이 필요해요.", color: "border-l-plate-blue" },
 ];
+
+const UNPARSED_MESSAGE = "응답을 해석하지 못했어요. 다시 시도해 주세요.";
+const MEDICAL_NOTICE = "의료 진단이 아닌 운동·영양 코칭 참고 자료예요. 질환·통증이 있으면 전문가와 상담해 주세요.";
 
 interface ChatBubble {
   role: "user" | "assistant";
@@ -73,11 +78,11 @@ export default function AiFitness() {
         credentials: "include",
       });
       if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
+        throw await httpError(res, "AI 요청을 처리하지 못했어요.");
       }
       return await res.json();
-    } catch (err: any) {
-      setError(err?.message ?? "AI 요청 중 오류가 발생했습니다.");
+    } catch (err: unknown) {
+      setError(friendlyError(err, "AI 요청을 처리하지 못했어요. 다시 시도해 주세요."));
       throw err;
     } finally {
       setLoading(null);
@@ -95,13 +100,13 @@ export default function AiFitness() {
         credentials: "include",
       });
       if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
+        throw await httpError(res, "상담 기록을 불러오지 못했어요.");
       }
       const data: ChatHistoryItem[] = await res.json();
       setSavedHistory(data);
       setHistoryFetched(true);
-    } catch (err: any) {
-      setError(err?.message ?? "상담 기록을 불러오는 중 오류가 발생했습니다.");
+    } catch (err: unknown) {
+      setError(friendlyError(err, "상담 기록을 불러오지 못했어요."));
     } finally {
       setHistoryLoading(false);
     }
@@ -119,14 +124,17 @@ export default function AiFitness() {
 
   const handleAnalysis = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = await callAi("/api/ai/analyze", analysisForm);
-    setAnalysisResult(data.explanation ?? data.content ?? JSON.stringify(data));
+    // 실패는 callAi 가 화면 오류 문구로 보여 준다. 여기선 처리되지 않은 Promise 오류만 막는다.
+    const data = await callAi("/api/ai/analyze", analysisForm).catch(() => null);
+    if (!data) return;
+    setAnalysisResult(pickText(data.explanation, data.content) ?? UNPARSED_MESSAGE);
   };
 
   const handlePlan = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = await callAi("/api/ai/plan", planForm);
-    setPlanResult(data.plan ?? JSON.stringify(data));
+    const data = await callAi("/api/ai/plan", planForm).catch(() => null);
+    if (!data) return;
+    setPlanResult(pickText(data.plan) ?? UNPARSED_MESSAGE);
   };
 
   const handleChat = async () => {
@@ -141,8 +149,9 @@ export default function AiFitness() {
     const data = await callAi("/api/ai/chat", {
       question,
       context: newHistory.map((m) => (m.role === "user" ? `사용자: ${m.content}` : `코치: ${m.content}`)).join("\n"),
-    });
-    const answer = data.answer ?? JSON.stringify(data);
+    }).catch(() => null);
+    if (!data) return;
+    const answer = pickText(data.answer) ?? UNPARSED_MESSAGE;
     setChatHistory((prev) => [...prev, { role: "assistant", content: answer }]);
     setSavedHistory((prev) => [{ question, answer, createdAt: new Date().toISOString() }, ...prev]);
   };
@@ -155,17 +164,17 @@ export default function AiFitness() {
         headers,
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok) throw await httpError(res, "공유 링크를 만들지 못했어요.");
       const data = await res.json();
       setSavedHistory((prev) =>
         prev.map((h) => (h.id === item.id ? { ...h, shared: true, shareSlug: data.shareSlug } : h))
       );
       if (data.shareSlug) {
         await navigator.clipboard.writeText(`${window.location.origin}/ai/share/${data.shareSlug}`);
-        alert("공유 링크가 복사되었습니다.");
+        toast("공유 링크를 복사했어요.", "success");
       }
-    } catch (e: any) {
-      alert(e?.message || "공유에 실패했습니다.");
+    } catch (e: unknown) {
+      toast(friendlyError(e, "공유 링크를 만들지 못했어요."), "error");
     }
   };
 
@@ -177,10 +186,11 @@ export default function AiFitness() {
         headers,
         credentials: "include",
       });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      if (!res.ok) throw await httpError(res, "공유를 해제하지 못했어요.");
       setSavedHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, shared: false, shareSlug: null } : h)));
-    } catch (e: any) {
-      alert(e?.message || "공유 해제에 실패했습니다.");
+      toast("공유를 해제했어요.", "success");
+    } catch (e: unknown) {
+      toast(friendlyError(e, "공유를 해제하지 못했어요."), "error");
     }
   };
 
@@ -188,8 +198,8 @@ export default function AiFitness() {
     if (!slug) return;
     const link = `${window.location.origin}/ai/share/${slug}`;
     navigator.clipboard.writeText(link).then(
-      () => alert("링크가 클립보드에 복사되었습니다."),
-      () => alert("클립보드 복사에 실패했습니다.")
+      () => toast("링크를 복사했어요.", "success"),
+      () => toast("링크를 복사하지 못했어요.", "error")
     );
   };
 
@@ -207,6 +217,10 @@ export default function AiFitness() {
       </button>
       {isAnalyzing && <LoadingCard label="AI가 입력 데이터를 분석하고 있어요..." />}
       {analysisResult && <ResultCard key={analysisResult} title="AI 분석 리포트" content={analysisResult} />}
+      <p className="text-xs text-steel-400">{MEDICAL_NOTICE}</p>
+      <Link to="/ai/inbody" className="inline-block text-sm font-bold text-plate-yellow underline underline-offset-4">
+        인바디 결과지(사진·PDF)로 더 자세히 분석하기
+      </Link>
     </form>
   );
 
@@ -396,47 +410,26 @@ export default function AiFitness() {
 
         <div className="min-w-0 flex-1 space-y-6">
           <div className="dg-steel dg-rise p-6" style={{ animationDelay: "80ms" }}>
-            <div className="flex items-center justify-between px-1">
-              <div>
-                <p className="text-sm text-steel-400">실시간 AI 활용</p>
-                <p className="font-num text-3xl font-black tracking-wide">AI Lab</p>
-              </div>
-              <span className="dg-chip bg-plate-red text-white">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
-                </span>
-                LIVE
-              </span>
+            <div className="px-1">
+              <p className="text-sm text-steel-400">AI 코치 사용법</p>
+              <p className="font-display text-3xl">무엇을 할 수 있나요</p>
             </div>
             <div className="mt-6 space-y-3">
-              {liveTiles.map((tile, idx) => (
-                <div
-                  key={tile.title}
-                  className={`dg-well dg-plate-in border-l-[8px] p-4 transition-transform duration-150 hover:-translate-y-0.5 ${tile.color}`}
+              {guideTiles.map((tile, idx) => (
+                <button
+                  key={tile.tab}
+                  type="button"
+                  onClick={() => setActiveTab(tile.tab)}
+                  aria-pressed={activeTab === tile.tab}
+                  className={`dg-well dg-plate-in block w-full border-l-[8px] p-4 text-left transition-transform duration-150 hover:-translate-y-0.5 ${tile.color}`}
                   style={{ animationDelay: `${120 + idx * 60}ms`, ["--from" as string]: "48px" }}
                 >
-                  <div className="flex items-center justify-between text-xs text-steel-300">
-                    <span className="font-bold">{tile.tag}</span>
-                    <span className="font-num text-sm font-black text-chalk">{tile.status}</span>
-                  </div>
-                  <p className="mt-1 text-lg font-semibold text-chalk">{tile.title}</p>
-                </div>
+                  <p className="text-lg font-semibold text-chalk">{tile.title}</p>
+                  <p className="mt-1 text-sm text-steel-300">{tile.text}</p>
+                </button>
               ))}
             </div>
-          </div>
-          <div className="dg-steel dg-rise space-y-4 p-6" style={{ animationDelay: "140ms" }}>
-            <p className="px-1 text-sm text-steel-400">AI 수행 현황</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { label: "분석 응답", value: "3회" },
-                { label: "상담 응답", value: "1건" },
-                { label: "루틴 생성", value: "1.8s" },
-              ].map((item) => (
-                <StatTile key={item.label} label={item.label} value={item.value} />
-              ))}
-            </div>
-            <p className="px-1 text-xs text-steel-400">AI 성능은 네트워크와 서버 상태에 따라 달라질 수 있습니다.</p>
+            <p className="mt-4 px-1 text-xs text-steel-400">답변은 AI 가 만든 참고 자료예요. 응답 시간은 서버 상태에 따라 달라질 수 있어요.</p>
           </div>
         </div>
       </div>
@@ -444,21 +437,13 @@ export default function AiFitness() {
   );
 }
 
-// "3회", "1.8s" 같은 값을 숫자 부분만 0 에서 굴려 올린다(표시 전용).
-const StatTile = ({ label, value }: { label: string; value: string }) => {
-  const [ref, inView] = useInView<HTMLDivElement>();
-  const match = value.match(/^(\d+(?:\.\d+)?)(.*)$/);
-  const target = match ? Number(match[1]) : 0;
-  const decimals = match && match[1].includes(".") ? match[1].split(".")[1].length : 0;
-  const counted = useCountUp(target, { duration: 900, start: inView });
-  return (
-    <div ref={ref} className="dg-well p-4 text-center transition-transform duration-150 hover:-translate-y-0.5">
-      <p className="font-num text-3xl font-black text-plate-yellow">
-        {match ? `${counted.toFixed(decimals)}${match[2]}` : value}
-      </p>
-      <p className="text-xs text-steel-400">{label}</p>
-    </div>
-  );
+// AI 응답에서 화면에 보여 줄 글자를 고른다. 문자열이 아니면(객체 등) null → "해석하지 못했어요" 문구를 쓴다.
+// 예전엔 JSON.stringify(data) 를 그대로 화면에 띄워 {"..."} 원문이 보였다.
+const pickText = (...values: unknown[]): string | null => {
+  for (const v of values) {
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return null;
 };
 
 const RefreshIcon = ({ spinning }: { spinning?: boolean }) => (

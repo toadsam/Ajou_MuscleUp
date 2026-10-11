@@ -101,9 +101,10 @@
   color: #0e0e10;
 }
 
+/* 오래 쉰 상태. 예전엔 빨간 "탈락위기"였는데 겁주는 말 대신 노란 "다시 시작해요"로 바꿨다. */
 .avatar-risk-banner.critical {
-  background: #d9302a;
-  color: #ffffff;
+  background: #f0be2e;
+  color: #0e0e10;
 }
 
 .avatar-motion-energetic {

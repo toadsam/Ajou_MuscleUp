@@ -98,7 +98,7 @@ export default function CrewHighlights() {
         <header className="dg-steel p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-num text-sm font-bold text-plate-yellow">Crew Weekly Highlights</p>
+              <p className="text-sm font-bold text-plate-yellow">운동 모임 주간 하이라이트</p>
               <h1 className="text-2xl sm:text-3xl">{detail?.name || "모임 하이라이트"}</h1>
             </div>
             <div className="flex flex-wrap items-center gap-2">

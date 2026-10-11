@@ -150,13 +150,7 @@ export default function CrewLobby() {
         <header className="dg-steel p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-num flex items-center gap-2 text-sm font-bold text-plate-yellow">
-                <span className="relative flex h-2.5 w-2.5" aria-hidden>
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-plate-red opacity-70" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-black bg-plate-red" />
-                </span>
-                Crew Lobby Live Feed
-              </p>
+              <p className="text-sm font-bold text-plate-yellow">운동 모임 로비</p>
               <h1 className="text-2xl sm:text-3xl">{detail?.name || "모임 로비"}</h1>
             </div>
             <div className="flex flex-wrap items-center gap-2">

@@ -4,6 +4,23 @@ import type { ChangeEvent, FormEvent, RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 import Barbell from "../components/gym/Barbell";
+import { friendlyError, httpError } from "../lib/httpError";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+// 로그인한 사용자면 신청 폼의 이름·이메일을 미리 채운다(저장된 로그인 정보 기준, 직접 고칠 수 있음).
+const readLoggedInUser = (): { name: string; email: string } => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return { name: "", email: "" };
+    const user = JSON.parse(raw) as { nickname?: unknown; name?: unknown; email?: unknown };
+    const name = typeof user.name === "string" ? user.name : typeof user.nickname === "string" ? user.nickname : "";
+    const email = typeof user.email === "string" ? user.email : "";
+    return { name, email };
+  } catch {
+    return { name: "", email: "" };
+  }
+};
 
 // 신청 폼 입력칸: 철판 안쪽의 어두운 칸 + 포커스 시 노란 외곽선
 const FIELD =
@@ -398,8 +415,13 @@ export default function Programs() {
 
   const [answers, setAnswers] = useState<SurveyAnswers>(initialAnswers);
   const [selectedTrack, setSelectedTrack] = useState<TrackId>("starter");
-  const [form, setForm] = useState<ApplicationForm>(initialForm);
+  const [form, setForm] = useState<ApplicationForm>(() => {
+    const user = readLoggedInUser();
+    return { ...initialForm, name: initialForm.name || user.name, email: initialForm.email || user.email };
+  });
   const [submitted, setSubmitted] = useState(false);
+  // 제출 중에는 버튼을 막아 두 번 눌러 신청이 두 건 들어가지 않게 한다.
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -468,8 +490,10 @@ export default function Programs() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) return;
     setError(null);
     setSubmitted(false);
+    setSubmitting(true);
 
     try {
       const recommendedTrack = recommendation ? trackLookup[recommendation.trackId] : null;
@@ -481,14 +505,14 @@ export default function Programs() {
         commitment: makeCommitmentPayload(),
       };
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/programs/apply`, {
+      const response = await fetch(`${API_BASE}/api/programs/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error((await response.text()) || `HTTP ${response.status}`);
+        throw await httpError(response, "신청을 접수하지 못했어요.");
       }
 
       setSubmitted(true);
@@ -505,8 +529,9 @@ export default function Programs() {
         },
       });
     } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : "신청 중 오류가 발생했습니다.";
-      setError(message || "신청 중 오류가 발생했습니다.");
+      setError(friendlyError(submitError, "신청을 접수하지 못했어요. 잠시 뒤에 다시 시도해 주세요."));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -992,8 +1017,8 @@ export default function Programs() {
             {error && <p className="dg-pop dg-well mt-4 border-l-4 border-l-plate-red p-3 text-sm font-semibold text-red-200">{error}</p>}
             {submitted && <p className="dg-pop mt-4 text-sm font-semibold text-green-300">신청이 접수되었습니다.</p>}
 
-            <button type="submit" className="dg-btn dg-btn-primary mt-6 w-full min-h-[56px] text-base">
-              {selectedProgram.title} 신청하기
+            <button type="submit" disabled={submitting} aria-busy={submitting} className="dg-btn dg-btn-primary mt-6 w-full min-h-[56px] text-base">
+              {submitting ? "신청 보내는 중..." : `${selectedProgram.title} 신청하기`}
             </button>
           </form>
         </section>
