@@ -17,8 +17,8 @@ fail=0
 
 step() { printf '\n== %s\n' "$1"; }
 
-step "1/3 타입 검사 (tsc)"
-if npx tsc -p tsconfig.app.json --noEmit; then
+step "1/3 타입 검사 (tsc -b --force — Vercel 의 npm run build 와 같은 범위: 앱 + vite.config.ts)"
+if npx tsc -b --force; then
   echo "통과"
 else
   echo "실패"; fail=1

@@ -8,6 +8,26 @@
 
 ---
 
+## 2026-10-11 · PR #6 을 merge 했는데 사이트에 반영이 안 됨 (Vercel 빌드 실패)
+
+**불편**
+merge 뒤에도 musclehub.co.kr 은 예전 화면 그대로였다. 백엔드·실시간 서버(Railway)는 새 코드로 배포돼서, 예전 화면과 새 서버가 섞여 라운지 · 친구 채팅이 막힐 수 있는 상태가 됐다.
+
+**원인(근거)**
+- Vercel 빌드 로그: `vite.config.ts(21,5): error TS2584: Cannot find name 'console'` → `npm run build`(= `tsc -b && vite build`) 종료 코드 2.
+- 이번 점검에서 `vite.config.ts` 에 넣은 환경변수 검사의 `console.warn` 때문. `tsconfig.node.json` 은 `lib: ["ES2023"]` 뿐이라 DOM 의 `console` 타입이 없다.
+- 로컬에서는 `node_modules/.tmp` 의 증분 빌드 정보가 남아 `tsc -b` 가 다시 검사하지 않아 통과했고, `scripts/verify.sh` 는 `tsconfig.app.json` 만 검사해서 `vite.config.ts` 를 보지 않았다.
+
+**고친 방법**
+- `frontend/vite.config.ts`: `console.warn(message)` → `(globalThis as { console?: … }).console?.warn(message)`.
+- `scripts/verify.sh`: 타입 검사를 `npx tsc -b --force` 로 바꿔 Vercel 과 같은 범위(앱 + 설정 파일)를 캐시 없이 검사.
+
+**확인한 방법**
+- `node_modules/.tmp` 를 지우고 `npx tsc -b --force` 0 오류, `vite build` 통과.
+- **아직 못 한 것**: Vercel 재배포 결과(push 후 확인).
+
+---
+
 ## 2026-10-11 · 지도가 내 캐릭터 말고는 멈춰 있어 헬스장이 비어 보인다 → 직원 NPC
 
 **불편**
