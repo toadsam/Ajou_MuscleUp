@@ -13,6 +13,7 @@ import com.ajou.muscleup.repository.BragCommentRepository;
 import com.ajou.muscleup.repository.BragLikeRepository;
 import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.UserRepository;
+import com.ajou.muscleup.util.RoleUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -118,7 +119,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     }
 
     private boolean isAdmin(User user) {
-        return user != null && "ADMIN".equalsIgnoreCase(user.getRole());
+        return RoleUtils.isAdmin(user);
     }
 
     private void ensureCanView(BragPost post, User viewer) {

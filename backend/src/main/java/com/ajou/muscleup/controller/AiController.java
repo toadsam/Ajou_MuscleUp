@@ -3,7 +3,9 @@ package com.ajou.muscleup.controller;
 import com.ajou.muscleup.dto.ai.*;
 import com.ajou.muscleup.entity.AiMessageType;
 import com.ajou.muscleup.service.AiChatHistoryService;
+import com.ajou.muscleup.security.RateLimiter;
 import com.ajou.muscleup.service.AiService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
@@ -15,6 +17,7 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,7 +35,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -44,10 +50,20 @@ public class AiController {
 
     private final AiService aiService;
     private final AiChatHistoryService aiChatHistoryService;
+    private final RateLimiter rateLimiter;
+
+    private static final int MAX_CHAT_CONTEXT_CHARS = 6000;
+
+    @Value("${app.ai.rate.per-minute:5}")
+    private int aiPerMinute;
+
+    @Value("${app.ai.rate.per-day:50}")
+    private int aiPerDay;
 
     @PostMapping("/analyze")
-    public ResponseEntity<AiAnalyzeResponse> analyze(@AuthenticationPrincipal String email, @RequestBody AiAnalyzeRequest req) {
+    public ResponseEntity<AiAnalyzeResponse> analyze(@AuthenticationPrincipal String email, @Valid @RequestBody AiAnalyzeRequest req) {
         String userEmail = requireEmail(email);
+        checkAiQuota(userEmail);
         String prompt = "신체 정보 분석 요청\n" +
                 "- 키(cm): " + nz(req.getHeight()) + "\n" +
                 "- 체중(kg): " + nz(req.getWeight()) + "\n" +
@@ -60,8 +76,9 @@ public class AiController {
     }
 
     @PostMapping("/plan")
-    public ResponseEntity<AiPlanResponse> buildPlan(@AuthenticationPrincipal String email, @RequestBody AiPlanRequest req) {
+    public ResponseEntity<AiPlanResponse> buildPlan(@AuthenticationPrincipal String email, @Valid @RequestBody AiPlanRequest req) {
         String userEmail = requireEmail(email);
+        checkAiQuota(userEmail);
         String prompt = "4주 운동 계획 요청\n" +
                 "- 경험: " + nz(req.getExperienceLevel()) + "\n" +
                 "- 주간 가능 횟수: " + nz(req.getAvailableDays()) + "\n" +
@@ -75,9 +92,11 @@ public class AiController {
     }
 
     @PostMapping("/chat")
-    public ResponseEntity<AiChatResponse> chat(@AuthenticationPrincipal String email, @RequestBody AiChatRequest req) {
+    public ResponseEntity<AiChatResponse> chat(@AuthenticationPrincipal String email, @Valid @RequestBody AiChatRequest req) {
         String userEmail = requireEmail(email);
-        String prompt = (req.getContext() == null ? "" : "참고 맥락: " + req.getContext() + "\n\n") +
+        checkAiQuota(userEmail);
+        String context = tail(req.getContext(), MAX_CHAT_CONTEXT_CHARS);
+        String prompt = (context == null ? "" : "참고 맥락: " + context + "\n\n") +
                 "질문: " + req.getQuestion();
         String content = aiService.requestCompletion(systemPromptForCoach(), prompt);
         aiChatHistoryService.save(userEmail, AiMessageType.CHAT, req.getQuestion(), content);
@@ -96,6 +115,11 @@ public class AiController {
             @RequestParam(value = "heightCm", required = false) Integer heightCm
     ) {
         String userEmail = requireEmail(email);
+        if (goal != null && goal.length() > 500 || notes != null && notes.length() > 1000
+                || goalIntensity != null && goalIntensity.length() > 30 || gender != null && gender.length() > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입력이 너무 길어요. 줄여서 다시 보내 주세요.");
+        }
+        checkAiQuota(userEmail);
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일이 필요합니다.");
         }
@@ -131,12 +155,13 @@ public class AiController {
     @PostMapping("/inbody/review-consult")
     public ResponseEntity<AiInbodyConsultResponse> reviewConsult(
             @AuthenticationPrincipal String email,
-            @RequestBody AiInbodyReviewRequest req
+            @Valid @RequestBody AiInbodyReviewRequest req
     ) {
         String userEmail = requireEmail(email);
         if (req.getMetrics() == null || req.getMetrics().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "확정 수치가 필요합니다.");
         }
+        checkAiQuota(userEmail);
 
         Map<String, Object> result = aiService.requestInbodyConsultationFromMetrics(
                 req.getMetrics(),
@@ -162,9 +187,12 @@ public class AiController {
     @PostMapping("/inbody/report/pdf")
     public ResponseEntity<byte[]> buildInbodyPdf(
             @AuthenticationPrincipal String email,
-            @RequestBody AiInbodyPdfRequest req
+            @Valid @RequestBody AiInbodyPdfRequest req
     ) {
-        requireEmail(email);
+        String userEmail = requireEmail(email);
+        // AI 호출은 없지만 PDF 렌더링이 무거워 분당 횟수만 제한한다.
+        rateLimiter.check("ai-pdf:" + userEmail, 5, Duration.ofMinutes(1),
+                "PDF 요청이 너무 빨라요. 잠시 후 다시 시도해 주세요.");
         if (req == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "요청 본문이 필요합니다.");
         }
@@ -221,6 +249,24 @@ public class AiController {
 
     private String systemPromptForPlanner() {
         return "당신은 주차별 운동 루틴을 설계하는 코치입니다. 세트, 반복, 강도를 구체적으로 제시합니다.";
+    }
+
+    /**
+     * AI 호출 한도: 사람마다 분당 aiPerMinute 번, 하루(한국 날짜 기준) aiPerDay 번.
+     * 넘으면 429 와 한국어 안내를 돌려준다.
+     */
+    private void checkAiQuota(String userEmail) {
+        rateLimiter.check("ai-min:" + userEmail, aiPerMinute, Duration.ofMinutes(1),
+                "AI 요청이 너무 빨라요. 1분 뒤에 다시 시도해 주세요.");
+        String today = LocalDate.now(ZoneId.of("Asia/Seoul")).toString();
+        rateLimiter.check("ai-day:" + userEmail + ":" + today, aiPerDay, Duration.ofHours(25),
+                "오늘 AI 사용 한도(" + aiPerDay + "회)를 다 썼어요. 내일 다시 이용해 주세요.");
+    }
+
+    /** 문자열 뒤쪽 max 글자만 남긴다(대화 기록은 최근 것이 중요). */
+    private static String tail(String value, int max) {
+        if (value == null || value.isBlank()) return null;
+        return value.length() <= max ? value : value.substring(value.length() - max);
     }
 
     private String requireEmail(String email) {

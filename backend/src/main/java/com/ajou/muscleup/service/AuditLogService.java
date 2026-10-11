@@ -8,6 +8,7 @@ import com.ajou.muscleup.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,8 @@ public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
     private final UserRepository userRepository;
 
+    /** 요청 스레드를 잡지 않도록 비동기로 저장한다(AsyncConfig 의 @EnableAsync, 기본 applicationTaskExecutor). */
+    @Async
     @Transactional
     public void log(String email, String action, String resource, String summary, String metadata) {
         User user = null;

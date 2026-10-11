@@ -1,13 +1,18 @@
 package com.ajou.muscleup.controller;
 
+import com.ajou.muscleup.security.UploadFileTypes;
+import com.ajou.muscleup.util.RoleUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
@@ -23,6 +28,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.*;
 import java.time.LocalDate;
@@ -70,28 +76,39 @@ public class FileController {
 
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> upload(@RequestParam("file") MultipartFile file,
-                                                      @RequestParam(value = "folder", defaultValue = "gallery") String folder) throws IOException {
+                                                      @RequestParam(value = "folder", defaultValue = "gallery") String folder,
+                                                      Authentication authentication) throws IOException {
         if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "EMPTY_FILE"));
 
-        String safeFolder = sanitizeFolder(folder);
+        String safeFolder = resolveFolder(folder);
+        if (ADMIN_UPLOAD_FOLDERS.contains(safeFolder) && !RoleUtils.isAdmin(authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "이 폴더에는 운영진만 올릴 수 있어요.");
+        }
         LocalDate today = LocalDate.now();
 
-        String original = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        String ext = "";
-        int dot = original.lastIndexOf('.');
-        if (dot >= 0) ext = original.substring(dot);
-        String filename = UUID.randomUUID() + ext;
+        // 파일 이름 확장자·Content-Type 대신 앞부분 바이트로 형식을 판별하고, 저장 확장자도 판별 결과로 정한다.
+        UploadFileTypes.Detected detected = detectType(file);
+        if (detected == null) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                    "사진(JPG·PNG·WEBP·GIF·HEIC)이나 영상(MP4·MOV·WEBM)만 올릴 수 있어요.");
+        }
+
+        String original = StringUtils.cleanPath(Objects.requireNonNullElse(file.getOriginalFilename(), "file"));
+        String filename = UUID.randomUUID() + "." + detected.extension();
 
         String relative = safeFolder + "/" + today.getYear() + "/" + String.format("%02d", today.getMonthValue()) + "/" + filename;
         String url;
 
         if (useS3()) {
             String key = toS3Key(relative);
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+            PutObjectRequest.Builder put = PutObjectRequest.builder()
                     .bucket(s3Bucket)
                     .key(key)
-                    .contentType(file.getContentType() == null ? "application/octet-stream" : file.getContentType())
-                    .build();
+                    .contentType(detected.contentType());
+            if (!detected.isImage()) {
+                put.contentDisposition("attachment");
+            }
+            PutObjectRequest putObjectRequest = put.build();
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
             url = toPublicUrl(key);
         } else {
@@ -157,9 +174,7 @@ public class FileController {
                 if (contentType == null || contentType.isBlank()) {
                     contentType = "application/octet-stream";
                 }
-                return ResponseEntity.ok()
-                        .header("Content-Type", contentType)
-                        .body(bytes.asByteArray());
+                return proxyResponse(key, contentType, bytes.asByteArray());
             } catch (Exception e) {
                 return ResponseEntity.notFound().build();
             }
@@ -179,14 +194,24 @@ public class FileController {
         if (contentType == null || contentType.isBlank()) {
             contentType = "application/octet-stream";
         }
-        return ResponseEntity.ok()
+        return proxyResponse(relative, contentType, bytes);
+    }
+
+    /** 프록시 응답: 형식 추측 금지(nosniff) + 사진이 아니면 내려받기로만. */
+    private ResponseEntity<byte[]> proxyResponse(String path, String contentType, byte[] body) {
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                 .header("Content-Type", contentType)
-                .body(bytes);
+                .header("X-Content-Type-Options", "nosniff");
+        if (!UploadFileTypes.isImagePath(path)) {
+            builder.header("Content-Disposition", "attachment");
+        }
+        return builder.body(body);
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<String>> list(@RequestParam(value = "folder", defaultValue = "gallery") String folder) throws IOException {
-        String safeFolder = sanitizeFolder(folder);
+    public ResponseEntity<List<String>> list(@RequestParam(value = "folder", defaultValue = "gallery") String folder,
+                                             Authentication authentication) throws IOException {
+        String safeFolder = resolveListFolder(folder, authentication);
         if (useS3()) {
             String prefix = toS3Key(safeFolder) + "/";
             List<S3Object> objects = listS3Objects(prefix);
@@ -218,9 +243,10 @@ public class FileController {
     public ResponseEntity<Page<String>> listPaged(
             @RequestParam(value = "folder", defaultValue = "gallery") String folder,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            Authentication authentication
     ) throws IOException {
-        String safeFolder = sanitizeFolder(folder);
+        String safeFolder = resolveListFolder(folder, authentication);
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(size, 100));
 
@@ -256,13 +282,38 @@ public class FileController {
         return s3Enabled && !s3Bucket.isBlank() && s3Client != null;
     }
 
-    private String sanitizeFolder(String folder) {
-        String sanitized = (folder == null || folder.isBlank()) ? "gallery" : folder.trim();
-        sanitized = sanitized.replace("\\", "/");
-        sanitized = sanitized.replace("..", "");
-        while (sanitized.startsWith("/")) sanitized = sanitized.substring(1);
-        while (sanitized.endsWith("/")) sanitized = sanitized.substring(0, sanitized.length() - 1);
-        return sanitized.isBlank() ? "gallery" : sanitized;
+    /**
+     * 앱이 실제로 쓰는 업로드 폴더만 허용한다(그 외 값은 400).
+     * gallery: 갤러리·단백질 인증 사진(UploadDropzone 기본값), attendance: 출석 인증, brag: 자랑방, events: 이벤트(운영진),
+     * protein: 단백질 공구 인증(프론트가 아직 gallery 로 올림 — 옮길 자리).
+     */
+    private static final Set<String> ALLOWED_FOLDERS = Set.of("gallery", "attendance", "brag", "events", "protein");
+    /** 운영진만 올릴 수 있는 폴더. */
+    private static final Set<String> ADMIN_UPLOAD_FOLDERS = Set.of("events");
+    /** 일반 회원이 목록을 볼 수 있는 폴더(공개 갤러리 화면). 나머지 폴더 목록은 운영진만. */
+    private static final Set<String> USER_LISTABLE_FOLDERS = Set.of("gallery");
+
+    private String resolveFolder(String folder) {
+        String f = (folder == null || folder.isBlank()) ? "gallery" : folder.trim().toLowerCase(Locale.ROOT);
+        if (!ALLOWED_FOLDERS.contains(f)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "허용되지 않은 폴더예요.");
+        }
+        return f;
+    }
+
+    private String resolveListFolder(String folder, Authentication authentication) {
+        String f = resolveFolder(folder);
+        if (!USER_LISTABLE_FOLDERS.contains(f) && !RoleUtils.isAdmin(authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "이 폴더 목록은 운영진만 볼 수 있어요.");
+        }
+        return f;
+    }
+
+    private UploadFileTypes.Detected detectType(MultipartFile file) throws IOException {
+        try (InputStream in = file.getInputStream()) {
+            byte[] head = in.readNBytes(UploadFileTypes.HEADER_BYTES);
+            return UploadFileTypes.detect(head);
+        }
     }
 
     private String toS3Key(String relativePath) {

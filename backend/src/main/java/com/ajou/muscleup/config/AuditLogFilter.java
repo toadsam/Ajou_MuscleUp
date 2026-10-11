@@ -39,11 +39,22 @@ public class AuditLogFilter extends OncePerRequestFilter {
                 if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
                     email = auth.getName();
                 }
-                String resource = request.getRequestURI();
-                String summary = request.getMethod() + " " + resource + " -> " + response.getStatus();
-                String metadata = "ip=" + request.getRemoteAddr() + "; ua=" + request.getHeader("User-Agent");
-                auditLogService.log(email, request.getMethod(), resource, summary, metadata);
+                String resource = truncate(request.getRequestURI(), 255);
+                String summary = truncate(request.getMethod() + " " + resource + " -> " + response.getStatus(), 1000);
+                // server.forward-headers-strategy=framework 이면 getRemoteAddr() 가 프록시 뒤의 실제 접속 IP 다.
+                String metadata = "ip=" + request.getRemoteAddr() + "; ua=" + truncate(request.getHeader("User-Agent"), 300);
+                try {
+                    // 비동기(@Async)로 저장한다. 요청 응답 시간에 DB 쓰기가 끼지 않는다.
+                    auditLogService.log(email, request.getMethod(), resource, summary, metadata);
+                } catch (RuntimeException e) {
+                    logger.warn("Audit log enqueue failed: " + e.getClass().getSimpleName());
+                }
             }
         }
+    }
+
+    private static String truncate(String value, int max) {
+        if (value == null) return null;
+        return value.length() <= max ? value : value.substring(0, max);
     }
 }
