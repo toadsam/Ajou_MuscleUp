@@ -23,6 +23,15 @@ public class FriendController {
         return ResponseEntity.ok(friendService.sendRequest(email, request));
     }
 
+    /** 닉네임 앞부분으로 회원 찾기(2자 이상, 최대 10명, 나 제외). 이메일은 돌려주지 않는다. */
+    @GetMapping("/search")
+    public ResponseEntity<List<FriendSearchResultResponse>> search(
+            @AuthenticationPrincipal String email,
+            @RequestParam(name = "q", defaultValue = "") String query
+    ) {
+        return ResponseEntity.ok(friendService.searchByNickname(email, query));
+    }
+
     @GetMapping("/requests/incoming")
     public ResponseEntity<List<FriendRequestResponse>> incoming(@AuthenticationPrincipal String email) {
         return ResponseEntity.ok(friendService.listIncoming(email));

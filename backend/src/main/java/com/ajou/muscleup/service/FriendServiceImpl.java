@@ -21,12 +21,64 @@ public class FriendServiceImpl implements FriendService {
     private final FriendshipRepository friendshipRepository;
     private final FriendChatRoomRepository friendChatRoomRepository;
     private final FriendChatMessageRepository friendChatMessageRepository;
+    private final FriendUserSearchRepository friendUserSearchRepository;
+
+    private static final int SEARCH_MIN_LENGTH = 2;
+    private static final int SEARCH_LIMIT = 10;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FriendSearchResultResponse> searchByNickname(String email, String query) {
+        User me = requireUser(email);
+        String q = query == null ? "" : query.trim();
+        if (q.length() < SEARCH_MIN_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "닉네임을 두 글자 이상 입력해 주세요.");
+        }
+        if (q.length() > 30) q = q.substring(0, 30);
+        // LIKE 특수문자(% _)와 escape 문자(!)를 글자 그대로 찾도록 막는다
+        String escaped = q.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        List<User> users = friendUserSearchRepository.searchByNicknamePrefix(
+                escaped, me.getId(), PageRequest.of(0, SEARCH_LIMIT));
+        if (users.isEmpty()) return List.of();
+
+        Set<Long> friendIds = new HashSet<>(findFriendIds(me.getId()));
+        Set<Long> outgoingIds = new HashSet<>();
+        friendRequestRepository.findAllByRequesterAndStatusOrderByCreatedAtDesc(me, FriendRequestStatus.PENDING)
+                .forEach(req -> outgoingIds.add(req.getReceiver().getId()));
+        Set<Long> incomingIds = new HashSet<>();
+        friendRequestRepository.findAllByReceiverAndStatusOrderByCreatedAtDesc(me, FriendRequestStatus.PENDING)
+                .forEach(req -> incomingIds.add(req.getRequester().getId()));
+        Map<Long, FriendCharacterResponse> snapshots = buildCharacterSnapshotMap(users);
+
+        return users.stream()
+                .map(user -> {
+                    String relation = friendIds.contains(user.getId()) ? "FRIEND"
+                            : outgoingIds.contains(user.getId()) ? "OUTGOING"
+                            : incomingIds.contains(user.getId()) ? "INCOMING"
+                            : "NONE";
+                    return FriendSearchResultResponse.builder()
+                            .userId(user.getId())
+                            .nickname(user.getNickname())
+                            .character(snapshots.get(user.getId()))
+                            .relation(relation)
+                            .build();
+                })
+                .toList();
+    }
 
     @Override
     public FriendRequestResponse sendRequest(String email, FriendRequestCreateRequest request) {
         User me = requireUser(email);
-        User target = userRepository.findByEmail(request.getTargetEmail().trim())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "대상 유저를 찾을 수 없습니다."));
+        User target;
+        if (request.getTargetUserId() != null) {
+            target = userRepository.findById(request.getTargetUserId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "대상 유저를 찾을 수 없습니다."));
+        } else if (request.getTargetEmail() != null && !request.getTargetEmail().isBlank()) {
+            target = userRepository.findByEmail(request.getTargetEmail().trim())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "대상 유저를 찾을 수 없습니다."));
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "친구 요청을 보낼 상대를 골라 주세요.");
+        }
         if (Objects.equals(me.getId(), target.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "자기 자신에게 친구 요청을 보낼 수 없습니다.");
         }
@@ -132,7 +184,6 @@ public class FriendServiceImpl implements FriendService {
         return friendUsers.stream()
                 .map(friend -> FriendSummaryResponse.builder()
                         .userId(friend.getId())
-                        .email(friend.getEmail())
                         .nickname(friend.getNickname())
                         .character(snapshots.get(friend.getId()))
                         .build())
@@ -254,7 +305,7 @@ public class FriendServiceImpl implements FriendService {
 
     private User requireUser(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요해요."));
     }
 
     private User pickLow(User a, User b) {

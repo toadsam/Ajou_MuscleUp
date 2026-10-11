@@ -7,7 +7,6 @@ import lombok.Getter;
 @Builder
 public class FriendSummaryResponse {
     private Long userId;
-    private String email;
     private String nickname;
     private FriendCharacterResponse character;
 }

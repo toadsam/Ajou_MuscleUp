@@ -173,6 +173,14 @@ async function runStep(count) {
         });
       }
 
+      // 위치는 2026-10-11 부터 "움직인 사람만" lounge:moves 로 온다(전체 목록은 입장/퇴장 때만).
+      if (i === 0) {
+        s.on("lounge:moves", (payload) => {
+          broadcasts += 1;
+          bytes += Buffer.byteLength(JSON.stringify(payload));
+        });
+      }
+
       s.on("ping:result", (res) => {
         if (res && Number.isFinite(res.clientTs)) rtts.push(Date.now() - res.clientTs);
       });
