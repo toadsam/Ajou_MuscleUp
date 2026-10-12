@@ -105,6 +105,7 @@ export default function AvatarRenderer({
   const resolvedSkillIds = activeSkillIds.length > 0 ? activeSkillIds : persistedAppearance?.activeSkillIds ?? [];
   const resolvedSkillCount = activeSkillIds.length > 0 ? unlockedSkillCount : resolvedSkillIds.length;
   const resolvedCustomization = customization ?? persistedAppearance?.customization ?? null;
+  const resolvedTank = persistedAppearance?.tank ?? null;
   const resolvedGender = gender ?? persistedAppearance?.gender ?? "MALE";
   const resolvedResting = isResting ?? persistedAppearance?.isResting ?? false;
   const resolvedAttendanceRisk = resolvedResting
@@ -148,7 +149,8 @@ export default function AvatarRenderer({
       colors: {
         skin: tone.skin,
         hair: tone.hair,
-        tank: resolvedBranch ? BRANCH_COLOR[resolvedBranch] : tone.tank,
+        // 도감에서 고른 민소매 색이 있으면 그 색(진화 갈래 색보다 먼저)
+        tank: resolvedTank ?? (resolvedBranch ? BRANCH_COLOR[resolvedBranch] : tone.tank),
       },
       emblem: resolvedBranch && skills.has("branch") ? BRANCH_COLOR[resolvedBranch] : null,
       skills: {
@@ -169,6 +171,7 @@ export default function AvatarRenderer({
     resolvedGender,
     resolvedAttendanceRisk,
     resolvedBranch,
+    resolvedTank,
     skillKey,
   ]);
 

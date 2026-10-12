@@ -130,6 +130,14 @@ class AccountSafetyTest {
                 .startedAt(java.time.LocalDateTime.now().minusHours(1)).endedAt(java.time.LocalDateTime.now()).durationSec(3600).totalVolume(500).totalSets(1).build());
         em.persist(com.ajou.muscleup.entity.RunSession.builder().user(alice).performedOn(java.time.LocalDate.now())
                 .startedAt(java.time.LocalDateTime.now().minusHours(1)).endedAt(java.time.LocalDateTime.now()).durationSec(1800).distanceM(5000).source("GPS").build());
+        em.persist(com.ajou.muscleup.entity.UserCollection.builder().user(alice).boxes(2).equippedTitle("T_DAWN").build());
+        em.persist(com.ajou.muscleup.entity.UserCollectionItem.builder().user(alice).itemCode("T_DAWN").source("BOX")
+                .acquiredAt(java.time.LocalDateTime.now()).build());
+        em.persist(com.ajou.muscleup.entity.PushSubscription.builder().user(alice).endpoint("https://fcm.googleapis.com/fcm/send/as")
+                .endpointHash("as-endpoint-hash").p256dh("p").auth("a").build());
+        em.persist(com.ajou.muscleup.entity.PushPreference.builder().user(alice).reminder(true).build());
+        em.persist(com.ajou.muscleup.entity.PushLog.builder().user(alice).sentOn(java.time.LocalDate.now()).type("SOCIAL")
+                .sentAt(java.time.LocalDateTime.now()).build());
         em.persist(com.ajou.muscleup.entity.WeeklyGoalWeek.builder().user(alice).weekStart(java.time.LocalDate.now()).target(4).build());
         em.flush();
 
@@ -165,6 +173,11 @@ class AccountSafetyTest {
         assertThat(count("select count(l) from LiftEntry l where l.user.id = :id", id)).isZero();
         assertThat(count("select count(s) from WorkoutSession s where s.user.id = :id", id)).isZero();
         assertThat(count("select count(r) from RunSession r where r.user.id = :id", id)).isZero();
+        assertThat(count("select count(i) from UserCollectionItem i where i.user.id = :id", id)).isZero();
+        assertThat(count("select count(c) from UserCollection c where c.user.id = :id", id)).isZero();
+        assertThat(count("select count(s) from PushSubscription s where s.user.id = :id", id)).isZero();
+        assertThat(count("select count(p) from PushPreference p where p.user.id = :id", id)).isZero();
+        assertThat(count("select count(l) from PushLog l where l.user.id = :id", id)).isZero();
         // 밥의 글은 남는다
         assertThat(posts.findById(bobPost.getId())).isPresent();
 

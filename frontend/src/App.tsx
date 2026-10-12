@@ -34,6 +34,7 @@ const Diet = lazy(() => import("./pages/Diet"));
 const Workout = lazy(() => import("./pages/Workout"));
 const WorkoutSession = lazy(() => import("./pages/WorkoutSession"));
 const Running = lazy(() => import("./pages/Running"));
+const Collection = lazy(() => import("./pages/Collection"));
 const AttendanceShareView = lazy(() => import("./pages/AttendanceShareView"));
 const Rankings = lazy(() => import("./pages/Rankings"));
 const Lounge = lazy(() => import("./pages/Lounge"));
@@ -254,6 +255,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Running />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/collection"
+                element={
+                  <ProtectedRoute>
+                    <Collection />
                   </ProtectedRoute>
                 }
               />

@@ -73,7 +73,8 @@ public class RunService {
     /** type: DISTANCE(미터) · K1 · K5 · K10(초). previous 가 null 이면 첫 기록 */
     public record Record(String type, String label, Integer previous, int value) {}
 
-    public record AttendanceResult(boolean created, Integer expEarned, Integer weeklyGoalBonus) {}
+    /** rewardBox: 이 출석으로 받은 보상 상자(WEEKLY_GOAL · LUCKY · null) */
+    public record AttendanceResult(boolean created, Integer expEarned, Integer weeklyGoalBonus, String rewardBox) {}
 
     public record SaveResult(RunView run, List<Record> records, int points, AttendanceResult attendance) {}
 
@@ -156,12 +157,12 @@ public class RunService {
             characterGrowthService.applyAttendance(me, points);
         }
 
-        AttendanceResult attendance = new AttendanceResult(false, null, null);
+        AttendanceResult attendance = new AttendanceResult(false, null, null, null);
         if (Boolean.TRUE.equals(req.checkAttendance()) && date.equals(LocalDate.now(clock))
                 && attendanceLogRepository.findByUserAndDate(me, date).isEmpty()) {
             AttendanceLogResponse a = attendanceService.upsertToday(email,
                     AttendanceUpsertRequest.workout(List.of("cardio"), runMemo(run)));
-            attendance = new AttendanceResult(true, a.getExpEarned(), a.getWeeklyGoalBonus());
+            attendance = new AttendanceResult(true, a.getExpEarned(), a.getWeeklyGoalBonus(), a.getRewardBox());
         }
         return new SaveResult(RunView.from(run), records, points, attendance);
     }

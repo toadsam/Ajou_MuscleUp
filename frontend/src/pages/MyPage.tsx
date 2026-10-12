@@ -13,6 +13,7 @@ import {
 } from "../utils/avatarCustomization";
 import { resolveEvolutionBranch, resolveSkillUnlocks } from "../utils/evolutionProgress";
 import { saveAppearanceBySeed } from "../utils/avatarAppearanceState";
+import { COLLECTION_SUMMARY_PATH, syncEquippedTank, type CollectionSummary } from "../lib/collection";
 import { ChalkPuff } from "../components/avatar/TierUpAnimation";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
@@ -21,6 +22,7 @@ import { httpError } from "../lib/httpError";
 import { clearGuestCharacter, loadGuestCharacter } from "../components/gymMap/guestCharacter";
 import { displayEmail } from "../lib/displayEmail";
 import { BlockedUsersSection, WithdrawSection } from "../components/AccountSafety";
+import PushSettings from "../components/push/PushSettings";
 
 // 처음 보일 때 0 에서 값까지 굴러 올라가는 숫자(표현 전용)
 function CountNum({ value, suffix = "" }: { value: number | null | undefined; suffix?: string }) {
@@ -266,6 +268,7 @@ export default function MyPage() {
 
   const [stats, setStats] = useState<UserBodyStats | null>(null);
   const [character, setCharacter] = useState<CharacterProfile | null>(null);
+  const [collection, setCollection] = useState<CollectionSummary | null>(null);
   const [evaluation, setEvaluation] = useState<CharacterEvaluation | null>(null);
   const [change, setChange] = useState<CharacterChange | null>(null);
   const [rank, setRank] = useState<RankSummary | null>(null);
@@ -318,6 +321,14 @@ export default function MyPage() {
         setCustomization(loadAvatarCustomization(pageRes.email));
         setSkillEnabledMap(loadSkillToggles(pageRes.email));
         setIsResting(Boolean(characterRes.isResting));
+        // 도감: 장착한 칭호 · 테두리 · 민소매 색, 활동 레벨
+        try {
+          const col = await api<CollectionSummary>(COLLECTION_SUMMARY_PATH);
+          setCollection(col);
+          syncEquippedTank(characterRes.avatarSeed, col.equipped.tank);
+        } catch {
+          setCollection(null);
+        }
         try {
           const attendanceSummary = await api<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`);
           setAttendanceCount(attendanceSummary.monthWorkoutCount ?? 0);
@@ -762,6 +773,8 @@ export default function MyPage() {
                     unlockedSkills={skillUnlocks}
                     skillEnabledMap={skillEnabledMap}
                     onToggleSkill={toggleSkillEnabled}
+                    collectionTitle={collection?.equipped.title}
+                    frame={collection?.equipped.frame}
                   />
                 </div>
               </div>
@@ -1069,7 +1082,32 @@ export default function MyPage() {
                 unlockedSkills={skillUnlocks}
                 skillEnabledMap={skillEnabledMap}
                 onToggleSkill={toggleSkillEnabled}
+                collectionTitle={collection?.equipped.title}
+                frame={collection?.equipped.frame}
               />
+              {collection && (
+                <Link to="/collection" className="dg-steel flex items-center justify-between gap-3 p-4 text-sm">
+                  <span className="min-w-0 space-y-1">
+                    <span className="block">
+                      활동 <span className="font-num text-lg text-white">Lv.{collection.activity.level}</span>
+                      <span className="ml-1 text-xs text-steel-400">
+                        다음까지 {collection.activity.pointsForNext - collection.activity.pointsInLevel}점
+                      </span>
+                    </span>
+                    <span className="block h-2 w-40 max-w-full overflow-hidden rounded bg-steel-800" aria-hidden="true">
+                      <i
+                        className="block h-full bg-plate-green"
+                        style={{ width: `${Math.round((collection.activity.pointsInLevel / collection.activity.pointsForNext) * 100)}%` }}
+                      />
+                    </span>
+                    <span className="block text-xs text-steel-400">
+                      도감 {collection.owned}/{collection.total}
+                      {collection.boxes > 0 ? ` · 열지 않은 상자 ${collection.boxes}개` : ""}
+                    </span>
+                  </span>
+                  <span className="dg-btn dg-btn-steel min-h-[40px] flex-none px-3 text-sm">도감</span>
+                </Link>
+              )}
               {(typeof character.levelProgress === "number" || character.hasBodyStats === false) && (
                 <div className="dg-steel p-4 text-sm text-steel-300 space-y-2">
                   {typeof character.levelProgress === "number" && (
@@ -1310,6 +1348,7 @@ export default function MyPage() {
           </div>
         )}
 
+        {data && <PushSettings />}
         {data && <BlockedUsersSection />}
         {data && <WithdrawSection />}
       </div>

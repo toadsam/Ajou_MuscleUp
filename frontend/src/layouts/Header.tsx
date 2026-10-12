@@ -189,6 +189,7 @@ export default function Header() {
         links: [
           { to: "/attendance", label: "출석 체크" },
           { to: "/workout", label: "운동 기록" },
+          { to: "/collection", label: "도감 · 보상 상자" },
           { to: "/diet", label: "식단 기록" },
           { to: "/lounge", label: "라운지" },
           { to: "/rankings", label: "랭킹" },
