@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import UploadDropzone from "../components/UploadDropzone";
 import WeeklyGoalCard from "../components/attendance/WeeklyGoalCard";
 import "../styles/attendance.css";
@@ -576,6 +577,11 @@ export default function Attendance() {
               <button type="button" className="ghost-btn dg-btn dg-btn-steel" onClick={() => setEditingToday(true)}>
                 오늘 기록 고치기
               </button>
+              {todayLog.didWorkout && (
+                <Link to="/workout" className="ghost-btn dg-btn dg-btn-steel ml-2">
+                  무게 · 횟수 기록하기
+                </Link>
+              )}
             </div>
           </div>
         ) : (
