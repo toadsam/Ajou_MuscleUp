@@ -43,8 +43,9 @@ public class DietService {
     private final UserBodyStatsRepository bodyStatsRepository;
     private final Clock clock;
 
+    /** source: 빈칸이면 직접 입력(MANUAL), 사진 확인 화면에서 저장하면 PHOTO. 그 밖의 값은 받지 않는다 */
     public record EntryRequest(LocalDate date, MealType mealType, String name, String amount,
-                               Integer kcal, Double proteinG, Double carbG, Double fatG) {}
+                               Integer kcal, Double proteinG, Double carbG, Double fatG, DietSource source) {}
 
     public record EntryView(Long id, LocalDate date, MealType mealType, String name, String amount,
                             Integer kcal, Double proteinG, Double carbG, Double fatG, DietSource source) {
@@ -107,7 +108,7 @@ public class DietService {
 
     @Transactional
     public EntryView add(User me, EntryRequest req) {
-        return add(me, req, DietSource.MANUAL);
+        return add(me, req, req != null && req.source() == DietSource.PHOTO ? DietSource.PHOTO : DietSource.MANUAL);
     }
 
     @Transactional

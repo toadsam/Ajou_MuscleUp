@@ -4,6 +4,8 @@ import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.service.DietService;
 import com.ajou.muscleup.service.FoodCatalogService;
+import com.ajou.muscleup.service.FoodPhotoService;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
@@ -20,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
  *   GET    /api/diet/summary?from=&to=   날짜별 합계(최대 31일, 기본 최근 7일)
  *   GET    /api/diet/recent-foods        최근 적은 음식(다시 넣기)
  *   GET    /api/diet/foods?q=            음식 검색(공공 영양 DB, 100g · 100ml 기준 값, 최대 30개)
+ *   POST   /api/diet/photo (image)       음식 사진 → 후보(저장 안 함, 하루 10번) — 확인 뒤 entries 에 source=PHOTO 로 저장
  *   POST   /api/diet/entries             기록 추가 { date, mealType, name, amount, kcal, proteinG, carbG, fatG }
  *   PUT    /api/diet/entries/{id}        고치기
  *   DELETE /api/diet/entries/{id}        지우기
@@ -33,6 +37,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class DietController {
     private final DietService dietService;
     private final FoodCatalogService foodCatalogService;
+    private final FoodPhotoService foodPhotoService;
     private final UserRepository userRepository;
 
     @GetMapping("/day")
@@ -60,6 +65,12 @@ public class DietController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "검색어는 40자까지예요.");
         }
         return foodCatalogService.search(q);
+    }
+
+    @PostMapping(value = "/photo", consumes = "multipart/form-data")
+    public FoodPhotoService.PhotoResult photo(@AuthenticationPrincipal String email, @RequestPart("image") MultipartFile image)
+            throws IOException {
+        return foodPhotoService.analyze(me(email), image == null ? null : image.getBytes());
     }
 
     @PostMapping("/entries")
