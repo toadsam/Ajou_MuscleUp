@@ -1,0 +1,25 @@
+// 음식 검색(/api/diet/foods) 응답 타입과 화면 문구. 값은 100g 또는 100ml 기준.
+
+export type FoodHit = {
+  id: number;
+  source: "PROCESSED" | "DISH" | "RAW";
+  name: string;
+  maker: string | null;
+  basis: "100g" | "100ml";
+  kcal: number | null;
+  proteinG: number | null;
+  fatG: number | null;
+  carbG: number | null;
+  /** 1회 섭취참고량(제품) · 1인분(음식) */
+  servingG: number | null;
+  /** 포장 전체(제품) */
+  packageG: number | null;
+};
+
+export const FOOD_SOURCE_LABEL: Record<FoodHit["source"], string> = {
+  PROCESSED: "제품",
+  DISH: "음식",
+  RAW: "식재료",
+};
+
+export const FOOD_DATA_CREDIT = "자료: 식품의약품안전처 식품영양성분 데이터베이스 · 농촌진흥청 국가표준식품성분 DB";
