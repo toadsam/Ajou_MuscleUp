@@ -108,6 +108,9 @@ public class LiftService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "운동 기록을 적어 주세요.");
         }
         LiftExercise ex = requireExercise(req.exercise());
+        if (ex.bodyweight) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "맨몸 운동은 운동 세션에서 기록해 주세요.");
+        }
         LocalDate date = checkedDate(req.date());
         double weight = req.weightKg() == null ? 0 : req.weightKg();
         int reps = req.reps() == null ? 0 : req.reps();
@@ -124,13 +127,22 @@ public class LiftService {
         if (liftRepository.countByUser_IdAndPerformedOn(me.getId(), date) >= MAX_ENTRIES_PER_DAY) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "하루에 " + MAX_ENTRIES_PER_DAY + "개까지 기록할 수 있어요.");
         }
+        return record(me, ex, date, weight, reps, sets, null);
+    }
+
+    /**
+     * 기록 한 줄을 저장하고 개인 최고 · 3대 갱신 · 점수를 정한다. 운동 세션(WorkoutSessionService)도 종목마다 가장 좋은 세트로 이걸 부른다.
+     * 값 검사는 부르는 쪽에서 한다.
+     */
+    @Transactional
+    public SaveResult record(User me, LiftExercise ex, LocalDate date, double weight, int reps, int sets, Long sessionId) {
         weight = Math.round(weight * 4) / 4.0; // 0.25kg 단위
         double e1rm = round1(estimate1rm(weight, reps));
 
         // 이번 기록 전의 기록들로 개인 최고 판단
         List<LiftEntry> before = liftRepository.findAllByUser_IdAndExerciseOrPerformedOn(me.getId(), ex.name(), date);
         LiftEntry saved = liftRepository.save(LiftEntry.builder().user(me).performedOn(date).exercise(ex.name())
-                .weightKg(weight).reps(reps).sets(sets).e1rm(e1rm).build());
+                .weightKg(weight).reps(reps).sets(sets).e1rm(e1rm).sessionId(sessionId).build());
 
         Double prevBest = null;
         Set<String> prExercisesToday = new HashSet<>();
