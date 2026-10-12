@@ -71,6 +71,8 @@ public class AccountDeletionService {
         // 출석 · 캐릭터 · 신체 정보 · AI · 식단
         exec("delete from AttendanceShareReport r where r.attendanceLog.user.id = :id or r.user.id = :id", id);
         exec("delete from AttendanceLog a where a.user.id = :id", id);
+        exec("delete from WeeklyGoalWeek w where w.user.id = :id", id);
+        exec("delete from WeeklyGoalSetting s where s.user.id = :id", id);
         exec("delete from CharacterEvolutionHistory h where h.user.id = :id", id);
         exec("delete from CharacterProfile c where c.user.id = :id", id);
         exec("delete from UserBodyStats s where s.user.id = :id", id);

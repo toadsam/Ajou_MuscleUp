@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import UploadDropzone from "../components/UploadDropzone";
+import WeeklyGoalCard from "../components/attendance/WeeklyGoalCard";
 import "../styles/attendance.css";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
@@ -21,6 +22,9 @@ type AttendanceLog = {
   lastEditedAt?: string | null;
   expEarned?: number | null;
   updatedAt?: string | null;
+  /** 이번 출석으로 주간 목표를 처음 채웠을 때만 */
+  weeklyGoalBonus?: number | null;
+  weeklyGoalStreak?: number | null;
 };
 
 type AttendanceSummary = {
@@ -388,6 +392,9 @@ export default function Attendance() {
         message: hasTodayLog ? "오늘 기록을 수정했어요." : didWorkout ? "오늘의 기록 완료!" : "휴식도 기록했어요.",
         expEarned: res.expEarned ?? 0,
       });
+      if (res.weeklyGoalBonus) {
+        showGlobalToast(`주간 목표 달성! ${res.weeklyGoalStreak ?? 1}주 연속 · 보너스 +${res.weeklyGoalBonus}`, "success");
+      }
       await reloadMonth();
       setPlateKey((prev) => prev + 1);
       setEditingToday(false);
@@ -769,6 +776,8 @@ export default function Attendance() {
             </div>
           </div>
         )}
+
+        <WeeklyGoalCard refreshKey={plateKey} />
 
         <div className="mobile-top-summary">
           <div className="mobile-summary-badges">
