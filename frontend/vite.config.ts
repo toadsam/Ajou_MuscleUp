@@ -53,6 +53,8 @@ export default defineConfig(({ mode, command }) => {
         // 그 사이 예전 화면이 이미 지워진 파일을 찾다 깨졌다(docs/fix-log.md 2026-10-11 "배포 직후 예전 화면").
         navigateFallback: null,
         cleanupOutdatedCaches: true,
+        // 웹 푸시(알림 받기 · 누르면 열기) — public/push-sw.js
+        importScripts: ['push-sw.js'],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',

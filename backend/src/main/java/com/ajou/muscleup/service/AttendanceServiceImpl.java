@@ -10,6 +10,7 @@ import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
 import com.ajou.muscleup.dto.character.CharacterChangeResponse;
 import com.ajou.muscleup.dto.event.EventProgressResponse;
 import com.ajou.muscleup.entity.AttendanceLog;
+import com.ajou.muscleup.push.PushService;
 import com.ajou.muscleup.entity.AttendanceShareReport;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
@@ -220,6 +221,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         AttendanceLog log = findVisibleSharedOrThrow(slug);
         if (cheerGuard.tryCheer(viewerKey == null ? "unknown" : viewerKey, slug)) {
             attendanceLogRepository.incrementCheerCount(log.getId());
+            pushCheer(log, viewerKey);
             // 로그인한 사람이 다른 사람 출석을 응원했으면 오늘 할 일 "응원 1번"
             if (viewerKey != null && viewerKey.startsWith("user:") && log.getUser() != null) {
                 Long ownerId = log.getUser().getId();
@@ -231,6 +233,20 @@ public class AttendanceServiceImpl implements AttendanceService {
             log = findVisibleSharedOrThrow(slug); // update 후 영속성 컨텍스트가 비워져 다시 읽는다.
         }
         return toPublicShareResponse(log);
+    }
+
+    /** 내 출석이 응원받았다고 알림(본인이 누른 건 빼고, 커밋 뒤 따로 보냄 — 하루 2개 · 끄기 규칙은 PushService) */
+    private void pushCheer(AttendanceLog log, String viewerKey) {
+        if (log.getUser() == null) return;
+        Long ownerId = log.getUser().getId();
+        String who = "누군가";
+        if (viewerKey != null && viewerKey.startsWith("user:")) {
+            User viewer = userRepository.findByEmail(viewerKey.substring("user:".length())).orElse(null);
+            if (viewer != null && viewer.getId().equals(ownerId)) return;
+            if (viewer != null && viewer.getNickname() != null && !viewer.getNickname().isBlank()) who = viewer.getNickname() + "님이";
+        }
+        events.publishEvent(new PushService.PushEvent(ownerId, PushService.Type.SOCIAL,
+                new PushService.Message("응원을 받았어요", who + " 내 출석을 응원했어요.", "/attendance", "cheer")));
     }
 
     /**
