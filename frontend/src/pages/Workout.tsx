@@ -13,6 +13,7 @@ import {
   type SessionDetail,
   type SessionSummary,
 } from "../lib/workoutSession";
+import { loadRun } from "../lib/running";
 import {
   LIFT_EXERCISES,
   estimate1rm,
@@ -52,6 +53,7 @@ export default function Workout() {
   const [openSession, setOpenSession] = useState<SessionDetail | null>(null);
   // 진행 중인 세션이 이 기기에 있으면 "이어서 하기"
   const [active] = useState(() => loadSession());
+  const [activeRun] = useState(() => loadRun());
 
   const load = useCallback(async () => {
     try {
@@ -173,6 +175,17 @@ export default function Workout() {
             </p>
           </div>
           <span className="dg-btn dg-btn-primary min-h-[48px] px-5 text-base">{active ? "이어서" : "시작"}</span>
+        </Link>
+
+        {/* 러닝 */}
+        <Link to="/run" className="dg-steel flex items-center justify-between gap-3 p-4 md:p-5">
+          <div>
+            <h2 className="font-display text-2xl">{activeRun ? "달리는 중" : "러닝"}</h2>
+            <p className="mt-1 text-sm text-steel-400">
+              {activeRun ? "이어서 달리기" : "GPS로 거리 · 페이스 · 1km 구간을 재요"}
+            </p>
+          </div>
+          <span className="dg-btn dg-btn-steel min-h-[48px] px-5 text-base">{activeRun ? "이어서" : "달리기"}</span>
         </Link>
 
         {/* 이번 달 운동 */}
