@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class DietService {
     private final DietGoalRepository goalRepository;
     private final UserBodyStatsRepository bodyStatsRepository;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
     /** source: 빈칸이면 직접 입력(MANUAL), 사진 확인 화면에서 저장하면 PHOTO. 그 밖의 값은 받지 않는다 */
     public record EntryRequest(LocalDate date, MealType mealType, String name, String amount,
@@ -119,7 +121,9 @@ public class DietService {
         }
         MealEntry e = MealEntry.builder().user(me).eatenOn(day).source(source).build();
         apply(e, req);
-        return EntryView.from(entryRepository.save(e));
+        EntryView saved = EntryView.from(entryRepository.save(e));
+        events.publishEvent(new ActivityEvent(me.getId(), ActivityEvent.Kind.MEAL, day)); // 오늘 할 일 · 단백질 목표
+        return saved;
     }
 
     @Transactional
@@ -127,6 +131,7 @@ public class DietService {
         MealEntry e = mine(me, id);
         if (req != null && req.date() != null) e.setEatenOn(checkedDate(req.date()));
         apply(e, req);
+        events.publishEvent(new ActivityEvent(me.getId(), ActivityEvent.Kind.MEAL, e.getEatenOn()));
         return EntryView.from(e);
     }
 

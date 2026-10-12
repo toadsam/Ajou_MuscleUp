@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -66,6 +67,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final AttendanceCheerGuard cheerGuard;
     private final PlatformTransactionManager transactionManager;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
     private volatile WeeklyStreakSnapshot weeklyStreakSnapshot;
 
@@ -130,6 +132,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 ? weeklyGoalService.onWorkoutAdded(user, date)
                 : null;
         int points = result.pointsEarned + (weekly == null ? 0 : weekly.bonusPoints());
+        events.publishEvent(new ActivityEvent(user.getId(), ActivityEvent.Kind.ATTENDANCE, date)); // 오늘 할 일
         CharacterChangeResponse change = characterGrowthService.applyAttendance(user, points);
         return AttendanceLogResponse.from(result.log, eventProgress, change, points,
                 weekly == null ? null : weekly.bonusPoints(), weekly == null ? null : weekly.streakWeeks());
@@ -210,6 +213,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         AttendanceLog log = findVisibleSharedOrThrow(slug);
         if (cheerGuard.tryCheer(viewerKey == null ? "unknown" : viewerKey, slug)) {
             attendanceLogRepository.incrementCheerCount(log.getId());
+            // 로그인한 사람이 다른 사람 출석을 응원했으면 오늘 할 일 "응원 1번"
+            if (viewerKey != null && viewerKey.startsWith("user:") && log.getUser() != null) {
+                Long ownerId = log.getUser().getId();
+                userRepository.findByEmail(viewerKey.substring("user:".length()))
+                        .filter(viewer -> !viewer.getId().equals(ownerId))
+                        .ifPresent(viewer -> events.publishEvent(
+                                new ActivityEvent(viewer.getId(), ActivityEvent.Kind.CHEER, LocalDate.now(clock))));
+            }
             log = findVisibleSharedOrThrow(slug); // update 후 영속성 컨텍스트가 비워져 다시 읽는다.
         }
         return toPublicShareResponse(log);

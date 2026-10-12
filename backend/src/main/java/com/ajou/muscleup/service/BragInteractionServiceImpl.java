@@ -14,7 +14,10 @@ import com.ajou.muscleup.repository.BragLikeRepository;
 import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.util.RoleUtils;
+import java.time.Clock;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,10 +35,19 @@ public class BragInteractionServiceImpl implements BragInteractionService {
     private final UserRepository userRepository;
     private final BragAccess bragAccess;
     private final BlockService blockService;
+    private final ApplicationEventPublisher events;
+    private final Clock clock;
 
     private User requireUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
+    }
+
+    /** 다른 사람 글에 좋아요 · 댓글 = 오늘 할 일 "응원 1번" */
+    private void cheered(User user, BragPost post) {
+        if (post.getUser() != null && !post.getUser().getId().equals(user.getId())) {
+            events.publishEvent(new ActivityEvent(user.getId(), ActivityEvent.Kind.CHEER, LocalDate.now(clock)));
+        }
     }
 
     private BragPost requirePost(Long postId) {
@@ -68,6 +80,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
                 .user(user)
                 .content(req.getContent().trim())
                 .build());
+        cheered(user, post);
         return BragCommentResponse.from(saved, user.getId());
     }
 
@@ -105,6 +118,7 @@ public class BragInteractionServiceImpl implements BragInteractionService {
             likeRepository.deleteByBragPost_IdAndUser_Id(postId, user.getId());
         } else {
             likeRepository.save(BragLike.builder().bragPost(post).user(user).build());
+            cheered(user, post);
         }
         long count = likeRepository.countByPostId(postId);
         return new BragLikeResponse(count, !exists);

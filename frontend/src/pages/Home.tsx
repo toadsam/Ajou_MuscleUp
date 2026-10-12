@@ -11,6 +11,7 @@ import { REALTIME_URL } from "../lib/realtime";
 import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 import type { EventItem } from "../types/event";
 import { WEEKLY_GOAL_PATH, type WeeklyGoalStatus } from "../lib/weeklyGoal";
+import { QUEST_LINKS, QUESTS_PATH, type TodayQuests } from "../lib/quests";
 
 type AttendanceLog = {
   date: string;
@@ -160,6 +161,7 @@ export default function Home() {
   const [user, setUser] = useState<LocalUser | null>(null);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoalStatus | null>(null);
+  const [quests, setQuests] = useState<TodayQuests | null>(null);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [character, setCharacter] = useState<CharacterProfile | null>(null);
   const [mbti, setMbti] = useState<string | null>(null);
@@ -200,17 +202,19 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      const [logsRes, summaryRes, characterRes, statsRes, weeklyGoalRes] = await Promise.all([
+      const [logsRes, summaryRes, characterRes, statsRes, weeklyGoalRes, questsRes] = await Promise.all([
         safeFetchJson<AttendanceLog[]>(`/api/attendance?month=${monthKey}`),
         safeFetchJson<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`),
         safeFetchJson<CharacterProfile>("/api/character/me"),
         safeFetchJson<StatsResponse>("/api/mypage/stats"),
         // 주간 목표는 없어도 홈이 떠야 해서 실패를 삼킨다
         safeFetchJson<WeeklyGoalStatus>(WEEKLY_GOAL_PATH).catch(() => null),
+        safeFetchJson<TodayQuests>(QUESTS_PATH).catch(() => null),
       ]);
       if (logsRes) setLogs(logsRes);
       if (summaryRes) setSummary(summaryRes);
       setWeeklyGoal(weeklyGoalRes);
+      setQuests(questsRes);
       if (characterRes) setCharacter(characterRes);
       setMbti(statsRes?.mbti ?? null);
     } catch (err: any) {
@@ -571,37 +575,97 @@ export default function Home() {
               <span className={`attendance-status ${isAttendanceDone ? "done" : "pending"}`}>{todayLabel}</span>
             </div>
 
-            <div className="action-list">
-              {visibleActions.map((action, index) => {
-                const isAttendance = action.id === "attendance";
-                const done = isAttendance && isAttendanceDone;
-                return (
-                  <Link
-                    key={action.id}
-                    to={action.to}
-                    className={`action-btn ${isAttendance && !isAttendanceDone ? "urgent" : ""} ${
-                      done ? "complete" : ""
-                    } ${isAttendance && showReaction ? "burst" : ""} dg-rise`}
-                    style={{ animationDelay: `${120 + index * 70}ms` }}
-                  >
-                    <span className={`action-box ${done ? "dg-pop" : ""}`} aria-hidden="true">
-                      {done && (
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 13l5 5L21 5" />
-                        </svg>
-                      )}
+            {/* 로그인했으면 오늘 할 일 3개(서버 기준), 아니면 예전 바로 가기 */}
+            {quests ? (
+              <>
+                <div className="action-list">
+                  {quests.items.map((item, index) => {
+                    const link = QUEST_LINKS[item.id];
+                    const urgent = !item.done && index === quests.items.findIndex((q) => !q.done);
+                    return (
+                      <Link
+                        key={item.id}
+                        to={link.to}
+                        className={`action-btn ${urgent ? "urgent" : ""} ${item.done ? "complete" : ""} ${
+                          item.id === "attendance" && showReaction ? "burst" : ""
+                        } dg-rise`}
+                        style={{ animationDelay: `${120 + index * 70}ms` }}
+                      >
+                        <span className={`action-box ${item.done ? "dg-pop" : ""}`} aria-hidden="true">
+                          {item.done && (
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 13l5 5L21 5" />
+                            </svg>
+                          )}
+                        </span>
+                        <span className="action-text">
+                          <strong>{item.done ? link.doneLabel : item.label}</strong>
+                          <small>
+                            {link.desc}
+                            {item.points > 0 && ` · +${item.points}`}
+                          </small>
+                        </span>
+                        <span className="action-arrow" aria-hidden="true">
+                          →
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+                <p className={`quest-bonus ${quests.allDone ? "done" : ""}`}>
+                  {quests.allDone ? `오늘 할 일 완료! 보너스 +${quests.allPoints}` : `세 개 다 하면 보너스 +${quests.allPoints}`}
+                  {quests.protein.goalG != null && (
+                    <span>
+                      {" · "}단백질 {Math.round(quests.protein.eatenG)}/{quests.protein.goalG}g
+                      {quests.protein.done ? ` 달성 +${quests.protein.points}` : ""}
                     </span>
-                    <span className="action-text">
-                      <strong>{done ? "오늘 출석 완료" : action.label}</strong>
-                      <small>{action.desc}</small>
-                    </span>
-                    <span className="action-arrow" aria-hidden="true">
-                      →
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
+                  )}
+                </p>
+                <div className="activity-level" aria-label={`활동 레벨 ${quests.activity.level}, 다음 레벨까지 ${quests.activity.pointsForNext - quests.activity.pointsInLevel}점`}>
+                  <span className="activity-lv">
+                    활동 <span className="font-num">Lv.{quests.activity.level}</span>
+                  </span>
+                  <span className="activity-track" aria-hidden="true">
+                    <i style={{ width: `${Math.round((quests.activity.pointsInLevel / quests.activity.pointsForNext) * 100)}%` }} />
+                  </span>
+                  <span className="activity-next font-num">
+                    {quests.activity.pointsInLevel}/{quests.activity.pointsForNext}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="action-list">
+                {visibleActions.map((action, index) => {
+                  const isAttendance = action.id === "attendance";
+                  const done = isAttendance && isAttendanceDone;
+                  return (
+                    <Link
+                      key={action.id}
+                      to={action.to}
+                      className={`action-btn ${isAttendance && !isAttendanceDone ? "urgent" : ""} ${
+                        done ? "complete" : ""
+                      } ${isAttendance && showReaction ? "burst" : ""} dg-rise`}
+                      style={{ animationDelay: `${120 + index * 70}ms` }}
+                    >
+                      <span className={`action-box ${done ? "dg-pop" : ""}`} aria-hidden="true">
+                        {done && (
+                          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 13l5 5L21 5" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="action-text">
+                        <strong>{done ? "오늘 출석 완료" : action.label}</strong>
+                        <small>{action.desc}</small>
+                      </span>
+                      <span className="action-arrow" aria-hidden="true">
+                        →
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="action-stats">
               <div>

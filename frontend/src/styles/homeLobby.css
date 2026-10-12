@@ -920,3 +920,52 @@
     display: none;
   }
 }
+
+/* 오늘 할 일 보너스 · 활동 레벨(PR E) — 화이트보드 위 */
+.quest-bonus {
+  margin: 0 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #59607a;
+}
+
+.quest-bonus.done {
+  color: #237e44;
+}
+
+.activity-level {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.2rem 1.2rem 0;
+}
+
+.activity-lv {
+  flex: none;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--dg-board-ink);
+}
+
+.activity-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 12px;
+  border: 2px solid var(--dg-board-ink);
+  border-radius: 3px;
+  background: #e7e5dd;
+  overflow: hidden;
+}
+
+.activity-track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #f0be2e;
+  transition: width 0.5s ease;
+}
+
+.activity-next {
+  flex: none;
+  font-size: 0.9rem;
+  color: #59607a;
+}
