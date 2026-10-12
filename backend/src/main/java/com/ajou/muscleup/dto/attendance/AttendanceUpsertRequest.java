@@ -24,4 +24,13 @@ public class AttendanceUpsertRequest {
 
     @Size(max = 10)
     private List<String> mediaUrls;
+
+    /** 운동 세션을 끝내며 출석할 때(WorkoutSessionService) */
+    public static AttendanceUpsertRequest workout(List<String> workoutTypes, String memo) {
+        AttendanceUpsertRequest r = new AttendanceUpsertRequest();
+        r.didWorkout = true;
+        r.workoutTypes = workoutTypes;
+        r.memo = memo;
+        return r;
+    }
 }

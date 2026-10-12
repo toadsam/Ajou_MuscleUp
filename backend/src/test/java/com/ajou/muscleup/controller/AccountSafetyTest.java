@@ -126,6 +126,10 @@ class AccountSafetyTest {
         em.persist(com.ajou.muscleup.entity.WeeklyGoalSetting.builder().user(alice).target(4).build());
         em.persist(com.ajou.muscleup.entity.DailyQuest.builder().user(alice).questDate(java.time.LocalDate.now()).cheerDone(true).build());
         em.persist(com.ajou.muscleup.entity.LiftEntry.builder().user(alice).performedOn(java.time.LocalDate.now()).exercise("SQUAT").weightKg(100).reps(5).sets(3).e1rm(116.7).build());
+        em.persist(com.ajou.muscleup.entity.WorkoutSession.builder().user(alice).performedOn(java.time.LocalDate.now())
+                .startedAt(java.time.LocalDateTime.now().minusHours(1)).endedAt(java.time.LocalDateTime.now()).durationSec(3600).totalVolume(500).totalSets(1).build());
+        em.persist(com.ajou.muscleup.entity.RunSession.builder().user(alice).performedOn(java.time.LocalDate.now())
+                .startedAt(java.time.LocalDateTime.now().minusHours(1)).endedAt(java.time.LocalDateTime.now()).durationSec(1800).distanceM(5000).source("GPS").build());
         em.persist(com.ajou.muscleup.entity.WeeklyGoalWeek.builder().user(alice).weekStart(java.time.LocalDate.now()).target(4).build());
         em.flush();
 
@@ -159,6 +163,8 @@ class AccountSafetyTest {
         assertThat(count("select count(s) from WeeklyGoalSetting s where s.user.id = :id", id)).isZero();
         assertThat(count("select count(q) from DailyQuest q where q.user.id = :id", id)).isZero();
         assertThat(count("select count(l) from LiftEntry l where l.user.id = :id", id)).isZero();
+        assertThat(count("select count(s) from WorkoutSession s where s.user.id = :id", id)).isZero();
+        assertThat(count("select count(r) from RunSession r where r.user.id = :id", id)).isZero();
         // 밥의 글은 남는다
         assertThat(posts.findById(bobPost.getId())).isPresent();
 

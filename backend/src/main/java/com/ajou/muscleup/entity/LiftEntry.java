@@ -45,4 +45,8 @@ public class LiftEntry extends BaseTimeEntity {
     /** 추정 1RM(Epley) */
     @Column(nullable = false)
     private double e1rm;
+
+    /** 운동 세션에서 만든 기록이면 그 세션 id(세션을 지우면 함께 지움). 따로 적은 기록은 null */
+    @Column(name = "session_id")
+    private Long sessionId;
 }

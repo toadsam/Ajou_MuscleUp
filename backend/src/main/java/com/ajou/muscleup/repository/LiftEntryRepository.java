@@ -20,6 +20,8 @@ public interface LiftEntryRepository extends JpaRepository<LiftEntry, Long> {
 
     long countByUser_IdAndPerformedOn(Long userId, LocalDate performedOn);
 
+    void deleteBySessionId(Long sessionId);
+
     /** 종목마다 최고 추정 1RM — [exercise, max(e1rm), max(weightKg)] */
     @Query("select l.exercise, max(l.e1rm), max(l.weightKg) from LiftEntry l where l.user.id = :userId group by l.exercise")
     List<Object[]> findBestsByUserId(@Param("userId") Long userId);
