@@ -69,7 +69,8 @@ public class WorkoutSessionService {
     public record Detail(Summary summary, List<ExerciseView> exercises, String note) {}
 
     /** 출석을 새로 했으면 그 결과(점수 · 주간 목표 보너스) */
-    public record AttendanceResult(boolean created, Integer expEarned, Integer weeklyGoalBonus) {}
+    /** rewardBox: 이 출석으로 받은 보상 상자(WEEKLY_GOAL · LUCKY · null) */
+    public record AttendanceResult(boolean created, Integer expEarned, Integer weeklyGoalBonus, String rewardBox) {}
 
     public record SaveResult(Detail session, List<LiftService.Pr> prs, List<LiftService.StatUpdate> statUpdates, int points,
                              AttendanceResult attendance) {}
@@ -162,12 +163,12 @@ public class WorkoutSessionService {
             points += r.points();
         }
 
-        AttendanceResult attendance = new AttendanceResult(false, null, null);
+        AttendanceResult attendance = new AttendanceResult(false, null, null, null);
         if (Boolean.TRUE.equals(req.checkAttendance()) && date.equals(LocalDate.now(clock))
                 && attendanceLogRepository.findByUserAndDate(me, date).isEmpty()) {
             AttendanceLogResponse a = attendanceService.upsertToday(email,
                     AttendanceUpsertRequest.workout(List.of("weight"), sessionMemo(saved)));
-            attendance = new AttendanceResult(true, a.getExpEarned(), a.getWeeklyGoalBonus());
+            attendance = new AttendanceResult(true, a.getExpEarned(), a.getWeeklyGoalBonus(), a.getRewardBox());
         }
         return new SaveResult(detail(saved), prs, statUpdates, points, attendance);
     }

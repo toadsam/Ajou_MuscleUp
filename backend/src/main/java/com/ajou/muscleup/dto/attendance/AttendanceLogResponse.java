@@ -34,6 +34,17 @@ public class AttendanceLogResponse {
     private Integer weeklyGoalBonus;
     /** 위와 함께: 연속 달성 주 수 */
     private Integer weeklyGoalStreak;
+    /** 이번 출석으로 받은 보상 상자: WEEKLY_GOAL(주간 목표) · LUCKY(행운) · null */
+    private String rewardBox;
+    /** 이번 출석으로 새로 얻은 도감 업적(이름) */
+    private List<String> unlockedItems;
+
+    /** 도감 보상(CollectionService.onWorkoutDay)을 붙인다 */
+    public AttendanceLogResponse withReward(String box, List<String> unlocked) {
+        this.rewardBox = box;
+        this.unlockedItems = unlocked;
+        return this;
+    }
 
     public static AttendanceLogResponse from(AttendanceLog log) {
         return AttendanceLogResponse.builder()

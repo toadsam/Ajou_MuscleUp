@@ -39,7 +39,7 @@ export type SessionSaveResult = {
   prs: LiftPr[];
   statUpdates: LiftStatUpdate[];
   points: number;
-  attendance: { created: boolean; expEarned: number | null; weeklyGoalBonus: number | null };
+  attendance: { created: boolean; expEarned: number | null; weeklyGoalBonus: number | null; rewardBox?: string | null };
 };
 
 const KEY = "dg-workout-session-v1";
