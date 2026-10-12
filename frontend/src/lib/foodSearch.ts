@@ -23,3 +23,18 @@ export const FOOD_SOURCE_LABEL: Record<FoodHit["source"], string> = {
 };
 
 export const FOOD_DATA_CREDIT = "자료: 식품의약품안전처 식품영양성분 데이터베이스 · 농촌진흥청 국가표준식품성분 DB";
+
+/** 사진 분석(/api/diet/photo) 후보 하나. matches 가 비면 AI 추정값(ai*)을 쓴다 */
+export type PhotoCandidate = {
+  name: string;
+  searchName: string;
+  grams: number;
+  confidence: number;
+  aiKcal: number | null;
+  aiProteinG: number | null;
+  aiCarbG: number | null;
+  aiFatG: number | null;
+  matches: FoodHit[];
+};
+
+export type PhotoResult = { food: boolean; items: PhotoCandidate[]; catalogReady: boolean; dailyLimit: number };

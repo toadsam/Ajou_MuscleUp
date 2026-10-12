@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
 import FoodSearchField from "../components/diet/FoodSearchField";
+import PhotoMealDialog from "../components/diet/PhotoMealDialog";
 import { FOOD_SOURCE_LABEL, type FoodHit } from "../lib/foodSearch";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
@@ -68,6 +69,15 @@ function dateLabel(iso: string, today: string | null) {
   return `${m}월 ${d}일 (${wd})`;
 }
 
+/** 지금 시각으로 끼니 고르기(10시 전 아침, 15시 전 점심, 21시 전 저녁, 그 뒤 간식) */
+function mealForNow(): MealType {
+  const h = new Date().getHours();
+  if (h < 10) return "BREAKFAST";
+  if (h < 15) return "LUNCH";
+  if (h < 21) return "DINNER";
+  return "SNACK";
+}
+
 const fmt = (n: number | null | undefined) => (n == null ? "-" : Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 export default function Diet() {
@@ -78,6 +88,7 @@ export default function Diet() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ mealType: MealType; entry?: Entry } | null>(null);
   const [goalOpen, setGoalOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const today = day?.today ?? null;
@@ -193,6 +204,17 @@ export default function Diet() {
           <>
             <GoalBoard totals={day.totals} goal={day.goal} onEditGoal={() => setGoalOpen(true)} />
 
+            {/* 사진으로 한 끼 — 끼니는 지금 시각으로 미리 고른다(창에서 바꿀 수 있음) */}
+            <div className="dg-steel flex flex-wrap items-center justify-between gap-3 p-4 md:p-5">
+              <div>
+                <h2 className="font-display text-xl">사진으로 기록</h2>
+                <p className="mt-1 text-xs text-steel-400">음식 사진을 찍으면 음식과 양을 찾아 줘요. 저장 전에 확인할 수 있어요.</p>
+              </div>
+              <button type="button" onClick={() => setPhotoOpen(true)} className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">
+                사진으로 기록
+              </button>
+            </div>
+
             <div className="space-y-4">
               {MEALS.map((meal) => {
                 const list = byMeal.get(meal.key) ?? [];
@@ -266,6 +288,17 @@ export default function Diet() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
+            void load();
+          }}
+        />
+      )}
+      {photoOpen && day && (
+        <PhotoMealDialog
+          date={day.date}
+          defaultMeal={mealForNow()}
+          onClose={() => setPhotoOpen(false)}
+          onSaved={() => {
+            setPhotoOpen(false);
             void load();
           }}
         />

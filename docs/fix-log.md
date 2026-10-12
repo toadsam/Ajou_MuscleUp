@@ -8,6 +8,28 @@
 
 ---
 
+## 2026-10-12 · 먹은 걸 하나하나 찾아 적기 귀찮다 → 사진으로 기록(AI 인식 + DB 영양값 + 확인 화면)
+
+**불편**
+음식 검색이 생겼어도 한 끼에 여러 음식을 하나씩 찾아 넣어야 했다.
+
+**원인(근거)**
+- 사진 입력이 없었다. AI 만 쓰면 양 · 영양값이 부정확해 "확인 후 저장"과 DB 영양값이 필요했다(PR A · B 를 먼저 만든 이유).
+
+**고친 방법** — 세부: [fixes/2026-10-12-diet-photo.md](fixes/2026-10-12-diet-photo.md)
+- `POST /api/diet/photo`: 사진(JPG · PNG · WEBP, 6MB, 하루 10번) → OpenAI 이미지 모델이 음식 · 양 · 검색용 이름 → 음식 검색 DB 후보 3개(브랜드 제품 먼저). 저장 안 함, 사진도 저장 안 함.
+- 식단 화면 "사진으로 기록" 창: 사진 줄여 보내기, 음식마다 체크 · 이름 · 영양값(DB 후보 / AI 추정) · 양 → 계산, 확인한 것만 PHOTO 로 저장.
+- 처리방침 초안: 식단 사진 분석 · OpenAI 전송.
+
+**확인한 방법**
+- 새 `FoodPhotoTest` 3개, 백엔드 45개 통과(MySQL · Postgres 17). `verify.sh` 통과.
+- 로컬 화면에서 확인 화면 계산 · 저장(PHOTO), 크레딧 소진 시 안내 문구.
+
+**아직 못 한 것**
+- 실제 음식 사진 인식 품질 — 로컬 OpenAI 열쇠 계정 크레딧 소진(`credit_balance_exhausted`). 충전 뒤 확인.
+
+---
+
 ## 2026-10-12 · [장애] 음식 검색 배포 직후 사이트의 DB 기능이 1시간 30분 멈춤 → 메모리 검색으로
 
 **불편**
@@ -675,7 +697,7 @@ merge 뒤에도 musclehub.co.kr 은 예전 화면 그대로였다. 백엔드·�
 | 관리자 "일괄 처리 대기열"이 브라우저에서만 실행됨(서버 예약 아님) | `Admin.tsx` | 서버 스케줄러 필요 |
 | 운영 DB 스키마를 `ddl-auto=update` 로 자동 변경 | `application-prod.properties` | Flyway 도입 계획: docs/fixes/2026-10-11-backend-data.md |
 | 50개 넘는 공동구매 · 후기 목록의 페이지 넘김 | `Protein.tsx`, `Reviews.tsx` | 서버는 50개로 제한됨 |
-| 식단 사진 인식(PR C) — 사진 → AI → 음식 검색으로 영양값 → 확인 화면 → 기록 | `DietService.add(..., PHOTO)`, `FoodCatalogService.search`, `AiService` | 하루 횟수 제한 · 처리방침에 OpenAI 전송 명시 |
+| 식단 사진 인식 품질 확인(실제 음식 사진) | `OpenAiFoodPhotoRecognizer` 프롬프트 | OpenAI 크레딧 충전 뒤. 양 추정이 많이 틀리면 프롬프트 · 기본 양 조정 |
 | 식단: 검색에 없는 음식을 "내 음식"으로 저장 · 바코드 | `Diet.tsx`, `FoodSearchField.tsx` | 내 음식은 탈퇴 삭제 대상 |
 | 홈 지도로 바뀌며 안 쓰게 된 "이번 주 바벨" 스타일(`.hero-stage*`), 모바일 히어로 캐릭터 카드 스타일 | `styles/homeLobby.css` | 지워도 되는지 확인 후 정리 |
 
