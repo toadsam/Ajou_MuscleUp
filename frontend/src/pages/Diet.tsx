@@ -2,6 +2,8 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
+import FoodSearchField from "../components/diet/FoodSearchField";
+import { FOOD_SOURCE_LABEL, type FoodHit } from "../lib/foodSearch";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
@@ -421,10 +423,14 @@ function EntryDialog({
     fatG: entry?.fatG != null ? String(entry.fatG) : "",
   });
   const [recent, setRecent] = useState<RecentFood[]>([]);
+  // 검색에서 고른 음식(100g · 100ml 기준 값)과 먹은 양 — 양을 바꾸면 영양소를 다시 계산한다
+  const [food, setFood] = useState<FoodHit | null>(null);
+  const [portion, setPortion] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const nameId = useId();
   const amountId = useId();
+  const portionId = useId();
   const baseId = useId();
 
   useEffect(() => {
@@ -441,7 +447,31 @@ function EntryDialog({
     };
   }, [entry]);
 
+  const unitOf = (f: FoodHit) => (f.basis === "100ml" ? "ml" : "g");
+
+  const applyPortion = (f: FoodHit, value: string) => {
+    setPortion(value);
+    const g = Number(value);
+    if (!value.trim() || !Number.isFinite(g) || g <= 0) return;
+    const factor = g / 100;
+    const scaled = (v: number | null, digits: number) => (v == null ? "" : String(Math.round(v * factor * 10 ** digits) / 10 ** digits));
+    setAmount(`${Math.round(g * 10) / 10}${unitOf(f)}`);
+    setNums({ kcal: scaled(f.kcal, 0), proteinG: scaled(f.proteinG, 1), carbG: scaled(f.carbG, 1), fatG: scaled(f.fatG, 1) });
+  };
+
+  const pickFood = (f: FoodHit) => {
+    setFood(f);
+    // 제품은 "하림 닭가슴살"처럼 업체를 앞에 — 이름에 이미 업체 이름(첫 단어)이 있으면 붙이지 않는다
+    const brand = f.source === "PROCESSED" && f.maker ? f.maker.split(" ")[0] : "";
+    const flat = (s: string) => s.replace(/\s+/g, "").toLowerCase();
+    setName((brand && !flat(f.name).includes(flat(brand)) ? `${brand} ${f.name}` : f.name).slice(0, 60));
+    // 기본 양: 한 번에 먹을 만한 포장(500 이하)이면 포장 전체 → 1회 섭취참고량 · 1인분 → 100.
+    // (1회 섭취참고량은 식품 분류별 기준량이라 100g 닭가슴살 한 팩도 30g 으로 나온다 — 포장을 먼저 본다)
+    applyPortion(f, String(f.packageG && f.packageG <= 500 ? f.packageG : (f.servingG ?? 100)));
+  };
+
   const fillFrom = (food: RecentFood) => {
+    setFood(null);
     setName(food.name);
     setAmount(food.amount ?? "");
     setNums({
@@ -489,7 +519,7 @@ function EntryDialog({
       onClose={onClose}
       busy={saving}
       title={entry ? "기록 고치기" : "음식 추가"}
-      description="이름만 적어도 저장돼요. 칼로리 · 영양소는 아는 만큼만 적어 주세요."
+      description={entry ? "이름만 적어도 저장돼요. 칼로리 · 영양소는 아는 만큼만 적어 주세요." : "음식 이름을 치면 찾아서 영양소를 채워 줘요. 없으면 직접 적어도 돼요."}
     >
       <form onSubmit={submit} className="space-y-4">
         <div className="flex flex-wrap gap-2" role="group" aria-label="끼니">
@@ -521,20 +551,76 @@ function EntryDialog({
           </div>
         )}
 
+        {/* 이름 칸은 검색 목록이 붙으므로 한 줄을 다 쓴다 */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2 space-y-1">
+          <div className="col-span-3 space-y-1">
             <label htmlFor={nameId} className="text-xs font-bold text-steel-300">
               음식 이름
             </label>
-            <input id={nameId} value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="예: 닭가슴살" className={fieldClass} />
+            <FoodSearchField id={nameId} value={name} onChange={setName} onPick={pickFood} searchEnabled={!entry && !food} className={fieldClass} />
           </div>
-          <div className="space-y-1">
+          <div className={`space-y-1 ${food ? "hidden" : ""}`}>
             <label htmlFor={amountId} className="text-xs font-bold text-steel-300">
               양
             </label>
             <input id={amountId} value={amount} maxLength={30} onChange={(e) => setAmount(e.target.value)} placeholder="150g" className={fieldClass} />
           </div>
         </div>
+
+        {food && (
+          // 고른 음식: 먹은 양만 바꾸면 아래 칼로리 · 영양소가 다시 계산된다(그 뒤에 숫자를 직접 고쳐도 된다)
+          <div className="dg-well space-y-2 px-3 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="min-w-0 text-xs text-steel-300">
+                <span className="mr-1.5 rounded-sm bg-steel-800 px-1.5 font-bold">{FOOD_SOURCE_LABEL[food.source]}</span>
+                {food.basis}당 {food.kcal ?? "-"}kcal · 단백질 {food.proteinG ?? "-"}g
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setFood(null);
+                  setPortion("");
+                }}
+                className="text-xs font-semibold text-steel-400 underline underline-offset-4 hover:text-white"
+              >
+                다른 음식 찾기
+              </button>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1">
+                <label htmlFor={portionId} className="text-xs font-bold text-steel-300">
+                  먹은 양 ({unitOf(food)})
+                </label>
+                <input
+                  id={portionId}
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={5000}
+                  step="any"
+                  value={portion}
+                  onChange={(e) => applyPortion(food, e.target.value)}
+                  className={`${fieldClass} font-num w-28`}
+                />
+              </div>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="양 빠르게 고르기">
+                {[
+                  ...(food.servingG ? [{ label: `${food.source === "DISH" ? "1인분" : "1회"} ${food.servingG}${unitOf(food)}`, g: food.servingG }] : []),
+                  ...(food.packageG && food.packageG !== food.servingG ? [{ label: `1개 ${food.packageG}${unitOf(food)}`, g: food.packageG }] : []),
+                  { label: `100${unitOf(food)}`, g: 100 },
+                  ...(Number(portion) > 0 ? [{ label: "절반", g: Number(portion) / 2 }, { label: "두 배", g: Number(portion) * 2 }] : []),
+                ]
+                  // 같은 양 버튼은 하나만(1개 100g · 100g)
+                  .filter((opt, i, all) => all.findIndex((o) => o.g === opt.g) === i)
+                  .map((opt) => (
+                  <button key={opt.label} type="button" onClick={() => applyPortion(food, String(Math.round(opt.g * 10) / 10))} className="dg-chip min-h-[36px] text-xs">
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           {NUM_FIELDS.map((f) => (
