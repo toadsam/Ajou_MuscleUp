@@ -49,6 +49,7 @@ public class WorkoutSessionService {
     private final AttendanceLogRepository attendanceLogRepository;
     private final LiftService liftService;
     private final AttendanceService attendanceService;
+    private final ExerciseCatalog catalog;
     private final Clock clock;
 
     public record SetRequest(Double weightKg, Integer reps) {}
@@ -105,10 +106,10 @@ public class WorkoutSessionService {
         double totalVolume = 0;
         int totalSets = 0;
         // 종목마다 가장 좋은 세트(추정 1RM) — 운동 기록 · 개인 최고용
-        Map<LiftExercise, double[]> best = new LinkedHashMap<>(); // [무게, 횟수, 세트 수]
+        Map<ExerciseCatalog.ExerciseDef, double[]> best = new LinkedHashMap<>(); // [무게, 횟수, 세트 수]
         for (int i = 0; i < exercises.size(); i++) {
             ExerciseRequest er = exercises.get(i);
-            LiftExercise ex = LiftExercise.parse(er == null ? null : er.exercise());
+            ExerciseCatalog.ExerciseDef ex = er == null ? null : catalog.resolve(me, er.exercise(), false);
             if (ex == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "종목을 알 수 없어요.");
             }
@@ -120,17 +121,17 @@ public class WorkoutSessionService {
                 SetRequest sr = sets.get(j);
                 double w = sr == null || sr.weightKg() == null ? 0 : Math.round(sr.weightKg() * 4) / 4.0;
                 int r = sr == null || sr.reps() == null ? 0 : sr.reps();
-                if (w < 0 || w > 500 || (!ex.bodyweight && w <= 0)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.label + " 무게를 확인해 주세요(0.5~500kg).");
+                if (w < 0 || w > 500 || (!ex.bodyweight() && w <= 0)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.label() + " 무게를 확인해 주세요(0.5~500kg).");
                 }
                 if (r < 1 || r > 100) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.label + " 횟수를 확인해 주세요(1~100회).");
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.label() + " 횟수를 확인해 주세요(1~100회).");
                 }
-                session.getSets().add(WorkoutSet.builder().session(session).exercise(ex.name()).exerciseOrder(i).setOrder(j)
+                session.getSets().add(WorkoutSet.builder().session(session).exercise(ex.code()).exerciseOrder(i).setOrder(j)
                         .weightKg(w).reps(r).build());
                 totalVolume += w * r;
                 totalSets++;
-                if (!ex.bodyweight && r <= 30) {
+                if (!ex.bodyweight() && r <= 30) {
                     double[] b = best.get(ex);
                     if (b == null) {
                         best.put(ex, new double[] {w, r, 1});
@@ -154,7 +155,7 @@ public class WorkoutSessionService {
         List<LiftService.Pr> prs = new ArrayList<>();
         List<LiftService.StatUpdate> statUpdates = new ArrayList<>();
         int points = 0;
-        for (Map.Entry<LiftExercise, double[]> e : best.entrySet()) {
+        for (Map.Entry<ExerciseCatalog.ExerciseDef, double[]> e : best.entrySet()) {
             double[] b = e.getValue();
             LiftService.SaveResult r = liftService.record(me, e.getKey(), date, b[0], (int) b[1], (int) b[2], saved.getId());
             if (r.pr() != null) prs.add(r.pr());
@@ -176,7 +177,7 @@ public class WorkoutSessionService {
     public List<Summary> list(User me, YearMonth month) {
         YearMonth m = month == null ? YearMonth.now(clock) : month;
         return sessionRepository.findAllByUser_IdAndPerformedOnBetweenOrderByStartedAtDesc(me.getId(), m.atDay(1), m.atEndOfMonth())
-                .stream().map(WorkoutSessionService::summary).toList();
+                .stream().map(this::summary).toList();
     }
 
     @Transactional(readOnly = true)
@@ -194,16 +195,16 @@ public class WorkoutSessionService {
     /** 이 종목을 한 가장 최근 세션의 세트들(없으면 null) — 화면이 "지난번" 값으로 미리 채운다 */
     @Transactional(readOnly = true)
     public Previous previous(User me, String exercise) {
-        LiftExercise ex = LiftExercise.parse(exercise);
+        ExerciseCatalog.ExerciseDef ex = catalog.resolve(me, exercise, true);
         if (ex == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "종목을 알 수 없어요.");
         }
-        List<WorkoutSession> recent = sessionRepository.findRecentWithExercise(me.getId(), ex.name(), PageRequest.of(0, 1));
+        List<WorkoutSession> recent = sessionRepository.findRecentWithExercise(me.getId(), ex.code(), PageRequest.of(0, 1));
         if (recent.isEmpty()) {
             return null;
         }
         WorkoutSession s = recent.get(0);
-        List<SetView> sets = s.getSets().stream().filter(x -> x.getExercise().equals(ex.name()))
+        List<SetView> sets = s.getSets().stream().filter(x -> x.getExercise().equals(ex.code()))
                 .map(x -> new SetView(x.getWeightKg(), x.getReps())).toList();
         return new Previous(s.getPerformedOn(), sets);
     }
@@ -213,33 +214,33 @@ public class WorkoutSessionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "운동 기록을 찾을 수 없어요."));
     }
 
-    private static Summary summary(WorkoutSession s) {
+    private Summary summary(WorkoutSession s) {
+        Map<String, ExerciseCatalog.ExerciseDef> defs = catalog.describe(s.getSets().stream().map(WorkoutSet::getExercise).distinct().toList());
         Set<String> labels = new LinkedHashSet<>();
         for (WorkoutSet x : s.getSets()) {
-            LiftExercise ex = LiftExercise.parse(x.getExercise());
-            labels.add(ex == null ? x.getExercise() : ex.label);
+            labels.add(ExerciseCatalog.label(defs, x.getExercise()));
         }
         return new Summary(s.getId(), s.getPerformedOn(), s.getStartedAt(), s.getDurationSec(), s.getTotalVolume(), s.getTotalSets(),
                 List.copyOf(labels));
     }
 
-    private static Detail detail(WorkoutSession s) {
+    private Detail detail(WorkoutSession s) {
         Map<String, List<SetView>> byExercise = new LinkedHashMap<>();
         for (WorkoutSet x : s.getSets()) {
             byExercise.computeIfAbsent(x.getExercise(), k -> new ArrayList<>()).add(new SetView(x.getWeightKg(), x.getReps()));
         }
         List<ExerciseView> views = new ArrayList<>();
         for (Map.Entry<String, List<SetView>> e : byExercise.entrySet()) {
-            LiftExercise ex = LiftExercise.parse(e.getKey());
+            ExerciseCatalog.ExerciseDef ex = catalog.describe(List.of(e.getKey())).get(e.getKey());
             double volume = e.getValue().stream().mapToDouble(v -> v.weightKg() * v.reps()).sum();
-            views.add(new ExerciseView(e.getKey(), ex == null ? e.getKey() : ex.label, ex != null && ex.bodyweight, e.getValue(),
+            views.add(new ExerciseView(e.getKey(), ex == null ? e.getKey() : ex.label(), ex != null && ex.bodyweight(), e.getValue(),
                     Math.round(volume * 10) / 10.0));
         }
         return new Detail(summary(s), views, s.getNote());
     }
 
     /** 출석 메모(200자): "운동 52분 · 스쿼트, 벤치프레스 외 2" */
-    private static String sessionMemo(WorkoutSession s) {
+    private String sessionMemo(WorkoutSession s) {
         List<String> labels = summary(s).exercises();
         String names = labels.size() <= 2 ? String.join(", ", labels)
                 : String.join(", ", labels.subList(0, 2)) + " 외 " + (labels.size() - 2);

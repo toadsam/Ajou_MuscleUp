@@ -43,14 +43,14 @@ public class LiftService {
     private final UserBodyStatsRepository statsRepository;
     private final CharacterServiceImpl characterService; // evaluateAndUpdate 는 구현에만 있다(StatsServiceImpl 과 같음)
     private final CharacterGrowthService characterGrowthService;
+    private final ExerciseCatalog catalog;
     private final Clock clock;
 
     public record EntryRequest(LocalDate date, String exercise, Double weightKg, Integer reps, Integer sets) {}
 
     public record EntryView(Long id, LocalDate date, String exercise, String label, double weightKg, int reps, int sets, double e1rm) {
-        static EntryView from(LiftEntry e) {
-            LiftExercise ex = LiftExercise.parse(e.getExercise());
-            return new EntryView(e.getId(), e.getPerformedOn(), e.getExercise(), ex == null ? e.getExercise() : ex.label,
+        static EntryView from(LiftEntry e, String label) {
+            return new EntryView(e.getId(), e.getPerformedOn(), e.getExercise(), label,
                     e.getWeightKg(), e.getReps(), e.getSets(), e.getE1rm());
         }
     }
@@ -73,8 +73,10 @@ public class LiftService {
     public DayView day(User me, LocalDate date) {
         LocalDate today = LocalDate.now(clock);
         LocalDate d = date == null ? today : date;
-        return new DayView(d, today, liftRepository.findAllByUser_IdAndPerformedOnOrderByIdAsc(me.getId(), d)
-                .stream().map(EntryView::from).toList());
+        List<LiftEntry> entries = liftRepository.findAllByUser_IdAndPerformedOnOrderByIdAsc(me.getId(), d);
+        Map<String, ExerciseCatalog.ExerciseDef> defs = catalog.describe(entries.stream().map(LiftEntry::getExercise).toList());
+        return new DayView(d, today, entries.stream()
+                .map(e -> EntryView.from(e, ExerciseCatalog.label(defs, e.getExercise()))).toList());
     }
 
     @Transactional(readOnly = true)
@@ -84,20 +86,26 @@ public class LiftService {
             byExercise.put((String) row[0], row);
         }
         List<Best> out = new ArrayList<>();
+        // 기본 종목은 정해진 순서로, 직접 추가한 종목은 그 뒤에
         for (LiftExercise ex : LiftExercise.values()) {
-            Object[] row = byExercise.get(ex.name());
+            Object[] row = byExercise.remove(ex.name());
             if (row != null) {
                 out.add(new Best(ex.name(), ex.label, ex.bigThree, round1((Double) row[1]), (Double) row[2]));
             }
         }
+        Map<String, ExerciseCatalog.ExerciseDef> defs = catalog.describe(byExercise.keySet());
+        byExercise.keySet().stream().sorted().forEach(code -> {
+            Object[] row = byExercise.get(code);
+            out.add(new Best(code, ExerciseCatalog.label(defs, code), false, round1((Double) row[1]), (Double) row[2]));
+        });
         return out;
     }
 
     @Transactional(readOnly = true)
     public List<Point> history(User me, String exercise) {
-        LiftExercise ex = requireExercise(exercise);
+        ExerciseCatalog.ExerciseDef ex = requireExercise(me, exercise, true);
         LocalDate from = LocalDate.now(clock).minusDays(HISTORY_DAYS);
-        return liftRepository.findDailyBest(me.getId(), ex.name(), from).stream()
+        return liftRepository.findDailyBest(me.getId(), ex.code(), from).stream()
                 .map(row -> new Point((LocalDate) row[0], round1((Double) row[1])))
                 .toList();
     }
@@ -107,8 +115,8 @@ public class LiftService {
         if (req == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "운동 기록을 적어 주세요.");
         }
-        LiftExercise ex = requireExercise(req.exercise());
-        if (ex.bodyweight) {
+        ExerciseCatalog.ExerciseDef ex = requireExercise(me, req.exercise(), false);
+        if (ex.bodyweight()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "맨몸 운동은 운동 세션에서 기록해 주세요.");
         }
         LocalDate date = checkedDate(req.date());
@@ -135,13 +143,13 @@ public class LiftService {
      * 값 검사는 부르는 쪽에서 한다.
      */
     @Transactional
-    public SaveResult record(User me, LiftExercise ex, LocalDate date, double weight, int reps, int sets, Long sessionId) {
+    public SaveResult record(User me, ExerciseCatalog.ExerciseDef ex, LocalDate date, double weight, int reps, int sets, Long sessionId) {
         weight = Math.round(weight * 4) / 4.0; // 0.25kg 단위
         double e1rm = round1(estimate1rm(weight, reps));
 
         // 이번 기록 전의 기록들로 개인 최고 판단
-        List<LiftEntry> before = liftRepository.findAllByUser_IdAndExerciseOrPerformedOn(me.getId(), ex.name(), date);
-        LiftEntry saved = liftRepository.save(LiftEntry.builder().user(me).performedOn(date).exercise(ex.name())
+        List<LiftEntry> before = liftRepository.findAllByUser_IdAndExerciseOrPerformedOn(me.getId(), ex.code(), date);
+        LiftEntry saved = liftRepository.save(LiftEntry.builder().user(me).performedOn(date).exercise(ex.code())
                 .weightKg(weight).reps(reps).sets(sets).e1rm(e1rm).sessionId(sessionId).build());
 
         Double prevBest = null;
@@ -159,8 +167,8 @@ public class LiftService {
             Double other = bestOtherDaysByEx.get(t.getKey());
             if (other == null || t.getValue() > other) prExercisesToday.add(t.getKey());
         }
-        Double prevBestOtherDays = bestOtherDaysByEx.get(ex.name());
-        Double prevBestToday = bestTodayByEx.get(ex.name());
+        Double prevBestOtherDays = bestOtherDaysByEx.get(ex.code());
+        Double prevBestToday = bestTodayByEx.get(ex.code());
         if (prevBestOtherDays != null || prevBestToday != null) {
             prevBest = Math.max(prevBestOtherDays == null ? 0 : prevBestOtherDays, prevBestToday == null ? 0 : prevBestToday);
         }
@@ -168,8 +176,8 @@ public class LiftService {
         Pr pr = null;
         int points = 0;
         if (prevBest == null || e1rm > prevBest) {
-            pr = new Pr(ex.name(), ex.label, prevBest, e1rm, prevBest == null);
-            boolean alreadyToday = prExercisesToday.contains(ex.name());
+            pr = new Pr(ex.code(), ex.label(), prevBest, e1rm, prevBest == null);
+            boolean alreadyToday = prExercisesToday.contains(ex.code());
             if (!alreadyToday && prExercisesToday.size() < PR_POINT_EXERCISES_PER_DAY) {
                 points = PR_POINTS;
             }
@@ -177,15 +185,16 @@ public class LiftService {
 
         CharacterChangeResponse change = null;
         StatUpdate statUpdate = null;
-        if (ex.bigThree && reps <= STAT_UPDATE_MAX_REPS) {
+        LiftExercise three = ex.bigThree() ? LiftExercise.parse(ex.code()) : null;
+        if (three != null && reps <= STAT_UPDATE_MAX_REPS) {
             UserBodyStats stats = statsRepository.findByUser(me).orElse(null);
             if (stats != null) {
                 double candidate = Math.round(e1rm * 2) / 2.0; // 0.5kg 단위
-                Double current = currentStat(stats, ex);
+                Double current = currentStat(stats, three);
                 if (current == null || candidate > current) {
-                    setStat(stats, ex, candidate);
+                    setStat(stats, three, candidate);
                     statsRepository.save(stats);
-                    statUpdate = new StatUpdate(ex.name(), ex.label, current, candidate);
+                    statUpdate = new StatUpdate(ex.code(), ex.label(), current, candidate);
                     StatsCharacterResponse res = characterService.evaluateAndUpdate(me, stats, CharacterEvolutionTriggerType.STATS_UPDATED);
                     change = res == null ? null : res.getChange();
                 }
@@ -195,7 +204,7 @@ public class LiftService {
             CharacterChangeResponse fromPoints = characterGrowthService.applyAttendance(me, points);
             if (change == null) change = fromPoints;
         }
-        return new SaveResult(EntryView.from(saved), pr, statUpdate, points, change);
+        return new SaveResult(EntryView.from(saved, ex.label()), pr, statUpdate, points, change);
     }
 
     @Transactional
@@ -209,8 +218,8 @@ public class LiftService {
         return reps <= 1 ? weight : weight * (1 + reps / 30.0);
     }
 
-    private LiftExercise requireExercise(String code) {
-        LiftExercise ex = LiftExercise.parse(code);
+    private ExerciseCatalog.ExerciseDef requireExercise(User me, String code, boolean allowDeleted) {
+        ExerciseCatalog.ExerciseDef ex = catalog.resolve(me, code, allowDeleted);
         if (ex == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "종목을 골라 주세요.");
         }

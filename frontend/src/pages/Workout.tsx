@@ -15,8 +15,9 @@ import {
 } from "../lib/workoutSession";
 import { loadRun } from "../lib/running";
 import {
-  LIFT_EXERCISES,
   estimate1rm,
+  exerciseInfo,
+  useCustomExercises,
   formatKg,
   type LiftBest,
   type LiftDay,
@@ -53,6 +54,7 @@ export default function Workout() {
   const [openSession, setOpenSession] = useState<SessionDetail | null>(null);
   // 진행 중인 세션이 이 기기에 있으면 "이어서 하기"
   const [active] = useState(() => loadSession());
+  useCustomExercises(); // 직접 추가한 종목 이름도 보이게
   const [activeRun] = useState(() => loadRun());
 
   const load = useCallback(async () => {
@@ -151,7 +153,7 @@ export default function Workout() {
   };
 
   const best = bestOf(exercise);
-  const chosen = LIFT_EXERCISES.find((e) => e.code === exercise);
+  const chosen = exerciseInfo(exercise);
 
   return (
     <section className="min-h-screen px-4 pb-20 pt-28 text-white md:px-10">
@@ -165,16 +167,16 @@ export default function Workout() {
         </header>
 
         {/* 운동 세션 시작 / 이어서 */}
-        <Link to="/workout/session" className="dg-steel flex items-center justify-between gap-3 p-4 md:p-5">
+        <Link to="/workout/session" className="dg-steel flex min-h-[112px] items-center justify-between gap-3 border-l-8 border-plate-red p-5">
           <div>
-            <h2 className="font-display text-2xl">{active ? "진행 중인 운동" : "운동 시작"}</h2>
+            <h2 className="font-display text-3xl">{active ? "진행 중인 운동" : "운동 시작"}</h2>
             <p className="mt-1 text-sm text-steel-400">
               {active
                 ? `${formatClock((Date.now() - active.startedAt) / 1000)} 째 · 이어서 하기`
                 : "종목 · 세트를 체크하면 휴식 타이머가 돌아요"}
             </p>
           </div>
-          <span className="dg-btn dg-btn-primary min-h-[48px] px-5 text-base">{active ? "이어서" : "시작"}</span>
+          <span className="dg-btn dg-btn-primary min-h-[56px] px-6 text-lg">{active ? "이어서" : "시작"}</span>
         </Link>
 
         {/* 러닝 */}
@@ -252,11 +254,21 @@ export default function Workout() {
           </div>
         )}
 
-        {/* 기록하기 */}
-        <form onSubmit={submit} className="dg-steel space-y-4 p-4 md:p-5">
+        {/* 빠른 기록(세션 없이 한 줄) — 평소엔 접어 둔다 */}
+        <details className="dg-steel group">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 md:p-5">
+            <span>
+              <span className="block font-display text-xl">빠른 기록</span>
+              <span className="block text-xs text-steel-400">세션 없이 가장 무거웠던 세트 하나만 적을 때</span>
+            </span>
+            <span className="dg-btn dg-btn-steel min-h-[36px] px-3 text-xs">
+              <span className="group-open:hidden">펼치기</span>
+              <span className="hidden group-open:inline">접기</span>
+            </span>
+          </summary>
+        <form onSubmit={submit} className="space-y-4 border-t-2 border-dashed border-steel-700 p-4 md:p-5">
           <fieldset>
-            <legend className="mb-1 font-display text-xl">빠른 기록</legend>
-            <p className="mb-3 text-xs text-steel-400">세션 없이 가장 무거웠던 세트 하나만 적을 때</p>
+            <legend className="sr-only">빠른 기록 종목</legend>
             <ExercisePicker selected={exercise} onPick={(e) => setExercise(e.code)} weightedOnly />
           </fieldset>
 
@@ -326,6 +338,7 @@ export default function Workout() {
             {saving ? "기록하는 중..." : "기록하기"}
           </button>
         </form>
+        </details>
 
         {/* 오늘 기록 */}
         <div className="dg-steel p-4 md:p-5">
@@ -393,7 +406,7 @@ export default function Workout() {
 
         {shownChart && (
           <div className="dg-steel p-4 md:p-5">
-            <h2 className="font-display text-xl">{LIFT_EXERCISES.find((e) => e.code === shownChart)?.label} 성장 그래프</h2>
+            <h2 className="font-display text-xl">{exerciseInfo(shownChart)?.label ?? bests.find((b) => b.exercise === shownChart)?.label} 성장 그래프</h2>
             <p className="mt-1 text-xs text-steel-400">최근 180일, 날마다 가장 높은 추정 1RM</p>
             <div className="mt-3 h-56">
               {history === null ? (

@@ -1,5 +1,9 @@
 // 운동 기록 · 개인 최고(PR F) — 서버 LiftService 와 같은 모양
-export type LiftCategory = "LEGS" | "CHEST" | "BACK" | "SHOULDERS" | "ARMS" | "CORE";
+import { useEffect, useSyncExternalStore } from "react";
+import { api } from "./api";
+
+/** OTHER(기타)는 직접 추가한 종목에만 */
+export type LiftCategory = "LEGS" | "CHEST" | "BACK" | "SHOULDERS" | "ARMS" | "CORE" | "OTHER";
 
 export const LIFT_CATEGORY_LABEL: Record<LiftCategory, string> = {
   LEGS: "하체",
@@ -8,9 +12,18 @@ export const LIFT_CATEGORY_LABEL: Record<LiftCategory, string> = {
   SHOULDERS: "어깨",
   ARMS: "팔",
   CORE: "복근",
+  OTHER: "기타",
 };
 
-export type LiftExerciseInfo = { code: string; label: string; category: LiftCategory; bigThree: boolean; bodyweight: boolean };
+export type LiftExerciseInfo = {
+  code: string;
+  label: string;
+  category: LiftCategory;
+  bigThree: boolean;
+  bodyweight: boolean;
+  /** 내가 직접 추가한 종목(코드 "C"+번호) */
+  custom?: boolean;
+};
 
 /**
  * 서버 LiftExercise 와 같은 순서 · 이름(둘 다 고칠 것). 3대는 개인 최고가 마이페이지 3대 기록에도 반영된다.
@@ -52,7 +65,57 @@ export const LIFT_EXERCISES: LiftExerciseInfo[] = [
 
 export type LiftExerciseCode = string;
 
-export const exerciseInfo = (code: string) => LIFT_EXERCISES.find((e) => e.code === code);
+// ── 내가 직접 추가한 종목: 한 번 불러와 여러 화면이 같이 쓴다(서버 /api/lifts/custom)
+let customExercises: LiftExerciseInfo[] = [];
+let customLoaded: Promise<void> | null = null;
+const customListeners = new Set<() => void>();
+
+function setCustomExercises(list: LiftExerciseInfo[]) {
+  customExercises = list;
+  customListeners.forEach((fn) => fn());
+}
+
+/** 처음 한 번만 서버에서 가져온다(실패하면 다음에 다시) */
+export function loadCustomExercises(force = false) {
+  if (!customLoaded || force) {
+    customLoaded = api
+      .get<LiftExerciseInfo[]>("/api/lifts/custom")
+      .then((res) => setCustomExercises(res.data))
+      .catch(() => {
+        customLoaded = null;
+      });
+  }
+  return customLoaded;
+}
+
+/** 직접 추가한 종목 목록(바뀌면 다시 그린다) */
+export function useCustomExercises() {
+  useEffect(() => {
+    void loadCustomExercises();
+  }, []);
+  return useSyncExternalStore(
+    (fn) => {
+      customListeners.add(fn);
+      return () => customListeners.delete(fn);
+    },
+    () => customExercises,
+  );
+}
+
+export async function addCustomExercise(name: string, category: LiftCategory, bodyweight: boolean) {
+  const res = await api.post<LiftExerciseInfo>("/api/lifts/custom", { name, category, bodyweight });
+  setCustomExercises([...customExercises, res.data]);
+  return res.data;
+}
+
+export async function deleteCustomExercise(code: string) {
+  await api.delete(`/api/lifts/custom/${code}`);
+  setCustomExercises(customExercises.filter((e) => e.code !== code));
+}
+
+/** 기본 종목 + 직접 추가한 종목에서 찾는다 */
+export const exerciseInfo = (code: string) =>
+  LIFT_EXERCISES.find((e) => e.code === code) ?? customExercises.find((e) => e.code === code);
 
 export type LiftEntry = {
   id: number;
