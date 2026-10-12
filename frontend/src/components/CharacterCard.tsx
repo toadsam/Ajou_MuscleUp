@@ -6,6 +6,7 @@ import type { AvatarCustomization } from "../utils/avatarCustomization";
 import type { EvolutionBranch, SkillUnlock } from "../utils/evolutionProgress";
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
+import { frameClass } from "../lib/collection";
 
 type CharacterProfile = {
   level: number;
@@ -52,6 +53,9 @@ type Props = {
   unlockedSkills?: SkillUnlock[];
   skillEnabledMap?: Record<string, boolean>;
   onToggleSkill?: (skillId: string) => void;
+  /** 도감에서 장착한 칭호 · 카드 테두리 */
+  collectionTitle?: string | null;
+  frame?: string | null;
 };
 
 // 종합 점수 게이지 칸 수(칸 하나 = 5점)
@@ -117,6 +121,8 @@ export default function CharacterCard({
   unlockedSkills = [],
   skillEnabledMap,
   onToggleSkill,
+  collectionTitle,
+  frame,
 }: Props) {
   const popClass = change?.evolved || change?.leveledUp ? "dg-pop" : "";
   const tierBadgeClass = change?.tierChanged ? "dg-plate-in" : "";
@@ -139,7 +145,7 @@ export default function CharacterCard({
   const litCells = Math.round((Math.min(Math.max(totalScore, 0), 100) / 100) * GAUGE_CELLS);
 
   return (
-    <div ref={cardRef} className={`dg-steel space-y-5 p-5 md:p-6 ${popClass}`}>
+    <div ref={cardRef} className={`dg-steel space-y-5 p-5 md:p-6 ${popClass} ${frameClass(frame)}`}>
       <div className="flex flex-col items-stretch gap-5 md:flex-row">
         {/* 왼쪽: 고무 매트 위 메이플 플랫폼에 선 캐릭터 */}
         <div
@@ -186,6 +192,7 @@ export default function CharacterCard({
               </span>
             </div>
             <div className="min-w-0">
+              {collectionTitle && <p className="dg-chip mb-1 inline-block max-w-full truncate text-xs">{collectionTitle}</p>}
               <h3 className="font-display text-2xl leading-tight text-chalk">{character.title}</h3>
               <p className="mt-1 text-xs text-steel-400">
                 스타일 <span className="font-num text-sm text-steel-300">{character.stylePreset}</span>

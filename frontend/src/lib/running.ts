@@ -48,7 +48,7 @@ export type RunSaveResult = {
   run: RunView;
   records: RunRecord[];
   points: number;
-  attendance: { created: boolean; expEarned: number | null; weeklyGoalBonus: number | null };
+  attendance: { created: boolean; expEarned: number | null; weeklyGoalBonus: number | null; rewardBox?: string | null };
 };
 
 export type RunRecords = {
