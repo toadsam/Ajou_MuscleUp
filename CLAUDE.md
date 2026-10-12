@@ -92,7 +92,8 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 - **"짐(Gym)" = `WorkoutCrew`**: 동아리 · 운동 모임 · 헬스장 · PT 가 같은 테이블(`type`). 권한은 `GymPermissionService` 한 곳에서(역할 OWNER · STAFF · MEMBER). 운동 모임 화면(`/api/crew`)은 CREW 만, 짐 API 는 `/api/gyms`.
 - **서비스 워커(PWA) 시험은 Chrome 에서**: 앱 안 미리보기 브라우저는 새로고침마다 Cache Storage 를 비워 결과가 거짓으로 좋게 나온다. 빌드본은 `frontend-built`(4173)로 띄우고 Chrome 에서 `localhost:4173` 으로 본다. 화면 HTML 은 NetworkFirst(`vite.config.ts`) — `navigateFallback` 을 되살리지 않는다.
 - **사용자를 가리키는 새 테이블을 만들면 탈퇴에도 넣는다**: `AccountDeletionService` 가 개인 데이터를 일괄 삭제한다(사용자 행은 "탈퇴한 회원"으로 남김). 빠뜨리면 탈퇴 뒤에도 개인정보가 남거나 FK 때문에 탈퇴가 실패한다. `AccountSafetyTest` 에 확인을 추가한다.
-- **음식 검색 데이터(`resources/food/foods.tsv.gz`)는 손으로 고치지 않는다**: `scripts/food/build_food_catalog.py` 로 원본 엑셀에서 다시 만든다(scripts/food/README.md). 서버는 줄 수가 다르면 `food_items` 를 통째로 다시 넣는다. 화면에 출처(`FOOD_DATA_CREDIT`)를 빼지 않는다(K-FIND · 공공누리 조건). 테스트는 `food.catalog.autoload=false`.
+- **운영 DB 볼륨은 작다(Railway Postgres, 5GB — 2026-10-12 전에는 500MB)**: 바뀌지 않는 큰 참고 데이터는 DB 에 넣지 않는다. 32만 줄을 한 트랜잭션으로 넣다가 WAL 로 볼륨이 가득 차 DB 가 1시간 30분 멈췄다(docs/fixes/2026-10-12-food-search-incident.md). 대량 쓰기가 꼭 필요하면 작은 트랜잭션으로 나누고, 넣기 전에 볼륨 남은 공간을 사용자에게 확인한다. 로컬 DB 에는 한도가 없어 테스트로는 드러나지 않는다.
+- **음식 검색은 서버 메모리(`FoodCatalogService`)**: `resources/food/foods.tsv.gz` 는 손으로 고치지 않고 `scripts/food/build_food_catalog.py` 로 다시 만든다(scripts/food/README.md). 화면에 출처(`FOOD_DATA_CREDIT`)를 빼지 않는다(K-FIND · 공공누리 조건). `food_items` 표 · `FoodItem` 은 이미 배포한 V5 때문에 빈 채로 남긴 것 — 쓰지 않는다. 테스트는 `food.catalog.load-on-startup=false`.
 - **다른 사용자에게 가는 응답에 이메일을 싣지 않는다**: "내 것인가"는 서버가 `mine` 으로, 신고 · 차단 대상은 `authorId` 로(예전 자랑방 `authorEmail` 을 바꿨다). 처리방침에 "이메일은 보여 주지 않아요"라고 썼다.
 - **운영 사이트(musclehub.co.kr)를 짧은 간격으로 반복 조회하지 않는다**: 배포를 기다리며 10초마다 조회했더니 Vercel 보안 확인(봇 판정)에 걸려 같은 PC 의 브라우저까지 막혔다. 배포 확인은 백엔드 · 실시간 서버 주소로, 화면은 한두 번만.
 - **"오늘"은 한국 시간(KST)**: 백엔드는 `TimeConfig` 의 `Clock` 을 쓴다. `LocalDate.now()` 를 새로 쓰지 않는다.

@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * 음식 검색용 영양 정보(공공 데이터). 사용자 데이터가 아니다.
- * 출처: 식품의약품안전처 식품영양성분 데이터베이스(가공식품 · 음식), 농촌진흥청 국가표준식품성분 DB(원재료).
- * resources/food/foods.tsv.gz 를 FoodCatalogService 가 통째로 넣는다(다시 넣으면 id 가 바뀌므로 다른 테이블이 가리키지 않는다).
+ * <b>쓰지 않는 빈 표.</b> 음식 검색 데이터는 이제 서버 메모리에 있다(FoodCatalogService).
+ *
+ * 처음에는 이 표에 32만 줄을 넣었는데 운영 DB 볼륨이 가득 차 DB 가 멈췄다(docs/fixes/2026-10-12-food-search-incident.md).
+ * 엔티티를 남겨 두는 이유: 이미 배포한 이전 SQL V5(이 표에 trigram 인덱스)는 고칠 수 없고, 새로 만드는 DB 에서는
+ * V5 가 이 표를 찾는다. V6 이 표를 비우고 인덱스를 지운다. 여기에 데이터를 넣지 않는다.
  */
 @Entity
 @Table(name = "food_items")

@@ -25,6 +25,7 @@
 - [2026-10-11-brand-and-gym-ui.md](2026-10-11-brand-and-gym-ui.md) — 0단계 PR 6-1: 이름 "득근득근" 통일 · 모임 찾기 / 짐 페이지 · 초대 링크 규칙
 - [2026-10-11-gym-scoped-content.md](2026-10-11-gym-scoped-content.md) — 0단계 PR 6-2: 헤더 모임 고르기 · 소식 / 출석 이벤트 / 프로그램 신청 / 자랑방을 모임별로(GymScope · BragAccess · V4)
 - [2026-10-12-withdraw-report-block.md](2026-10-12-withdraw-report-block.md) — 0단계 PR 8: 회원 탈퇴(AccountDeletionService) · 신고 · 차단, 자랑방 응답 이메일 제거, 약관 · 처리방침 초안
+- [2026-10-12-food-search-incident.md](2026-10-12-food-search-incident.md) — 장애: 음식 데이터가 운영 DB 볼륨(500MB)을 채워 1시간 30분 멈춤 → 메모리 검색, V6 정리
 - [2026-10-12-food-search.md](2026-10-12-food-search.md) — 식단 PR B: 음식 검색(식약처 · 농진청 32만 건, pg_trgm), 먹은 양 자동 계산
 - [2026-10-12-diet-log.md](2026-10-12-diet-log.md) — 식단 기록 PR A: 직접 입력 · 하루/7일 합계 · 목표(인바디에서 가져오기, 체중 제안) · 탈퇴 삭제
 - [2026-10-11-gym-lounge-rooms.md](2026-10-11-gym-lounge-rooms.md) — 0단계 PR 7: 라운지 광장 + 모임 방(입장권에 방, 실시간 서버 방별 브로드캐스트)

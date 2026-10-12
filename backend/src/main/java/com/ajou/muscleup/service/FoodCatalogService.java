@@ -8,21 +8,17 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 음식 검색(식단 기록 PR B).
@@ -30,17 +26,15 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 데이터: resources/food/foods.tsv.gz — 식약처 K-FIND 가공식품 · 음식 DB, 농진청 국가표준식품성분 DB 에서 검색에 필요한 칸만 추린 것
  * (만드는 법: scripts/food/README.md). 칸: src name maker basis kcal protein fat carb serving_g package_g.
  *
- * 서버가 뜬 뒤 별도 스레드에서 표의 줄 수와 파일 줄 수를 비교해, 다르면 food_items 를 한 트랜잭션으로 지우고 다시 넣는다
- * (넣는 동안에는 이전 데이터가 그대로 검색된다). 30만 줄이라 처음 한 번은 몇 분 걸린다. 테스트는 food.catalog.autoload=false.
+ * <b>DB 에 넣지 않고 서버 메모리에 읽어 둔다.</b> 처음에는 food_items 표에 32만 줄을 넣었는데, 운영 Postgres 볼륨(500MB)이
+ * 넣는 도중의 변경 기록(WAL)과 인덱스로 가득 차 DB 가 멈췄다(2026-10-12, docs/fixes/2026-10-12-food-search-incident.md).
+ * 바뀌지 않는 참고 자료라 메모리로 충분하다 — 서버가 뜬 뒤 별도 스레드에서 몇 초 안에 읽고, 다 읽기 전에는 ready=false.
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FoodCatalogService {
     static final String RESOURCE = "food/foods.tsv.gz";
     static final int MAX_RESULTS = 30;
-    /** 한 문장에 넣는 줄 수(자리표시자 11 × 500 = 5,500 — Postgres 한도 32,767 안쪽) */
-    private static final int BATCH = 500;
 
     /**
      * 같은 음식을 다르게 부르는 말(검색어 → 데이터 속 이름). 원재료 DB 는 "달걀", "닭고기, 가슴살", "쇠고기"처럼 적혀 있다.
@@ -51,17 +45,26 @@ public class FoodCatalogService {
             "닭가슴살", "닭고기가슴살",
             "소고기", "쇠고기", "쇠고기", "소고기");
 
-    private final JdbcTemplate jdbc;
-    private final PlatformTransactionManager transactionManager;
+    @Value("${food.catalog.load-on-startup:true}")
+    private boolean loadOnStartup;
 
-    @Value("${food.catalog.autoload:true}")
-    private boolean autoload;
+    /** 읽어 둔 음식(바꿀 때는 목록을 통째로 갈아 끼운다) */
+    private volatile List<Item> items = List.of();
+    private volatile boolean ready;
+
+    /** 메모리 절약: 숫자는 float(없으면 NaN), 업체 이름은 같은 문자열을 함께 쓴다 */
+    private record Item(FoodSource source, String name, String maker, String key, boolean ml,
+                        float kcal, float protein, float fat, float carb, float serving, float pack) {}
 
     public record FoodView(Long id, FoodSource source, String name, String maker, String basis,
                            Double kcal, Double proteinG, Double fatG, Double carbG,
                            Double servingG, Double packageG) {}
 
     public record SearchResult(boolean ready, List<FoodView> items) {}
+
+    public interface IOSupplier {
+        InputStream get() throws IOException;
+    }
 
     /** 이름 · 검색어를 같은 방식으로: 소문자, 글자와 숫자만(띄어쓰기 · 괄호 · 쉼표 · 밑줄 무시) */
     public static String normalize(String s) {
@@ -71,7 +74,7 @@ public class FoodCatalogService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void loadOnStartup() {
-        if (!autoload) return;
+        if (!loadOnStartup) return;
         Thread t = new Thread(() -> {
             try {
                 ClassPathResource res = new ClassPathResource(RESOURCE);
@@ -79,38 +82,37 @@ public class FoodCatalogService {
                     log.warn("음식 검색 데이터 파일이 없습니다: {}", RESOURCE);
                     return;
                 }
-                loadIfChanged(res::getInputStream);
+                load(res::getInputStream);
             } catch (Exception e) {
-                log.error("음식 검색 데이터를 넣지 못했습니다", e);
+                log.error("음식 검색 데이터를 읽지 못했습니다", e);
             }
         }, "food-catalog-loader");
         t.setDaemon(true);
         t.start();
     }
 
-    /** 파일 줄 수가 표와 다를 때만 다시 넣는다. 넣은 줄 수(건너뛰면 -1)를 돌려준다 */
-    public int loadIfChanged(IOSupplier source) throws IOException {
-        int lines = countRows(source.get());
-        Integer have = jdbc.queryForObject("select count(*) from food_items", Integer.class);
-        if (have != null && have == lines) {
-            log.info("음식 검색 데이터: 이미 {}건 — 그대로 둡니다", have);
-            return -1;
-        }
+    /** 파일을 읽어 메모리 목록을 갈아 끼운다. 읽은 줄 수를 돌려준다 */
+    public int load(IOSupplier source) throws IOException {
         long started = System.currentTimeMillis();
-        Integer inserted = new TransactionTemplate(transactionManager).execute(status -> {
-            jdbc.update("delete from food_items");
-            try {
-                return insertAll(source.get());
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
+        List<Item> next = new ArrayList<>(330_000);
+        Map<String, String> makers = new HashMap<>();
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(new GZIPInputStream(source.get()), StandardCharsets.UTF_8))) {
+            r.readLine(); // 머리줄
+            String line;
+            while ((line = r.readLine()) != null) {
+                String[] c = line.split("\t", -1);
+                FoodSource src = parse(c);
+                if (src == null) continue;
+                String name = c[1].strip();
+                String maker = c[2].isBlank() ? null : makers.computeIfAbsent(c[2].strip(), m -> m);
+                next.add(new Item(src, name, maker, normalize(name) + " " + normalize(maker), "100ml".equals(c[3]),
+                        flt(c[4]), flt(c[5]), flt(c[6]), flt(c[7]), flt(c[8]), flt(c[9])));
             }
-        });
-        log.info("음식 검색 데이터 {}건을 넣었습니다({}초)", inserted, (System.currentTimeMillis() - started) / 1000);
-        return inserted == null ? 0 : inserted;
-    }
-
-    public interface IOSupplier {
-        InputStream get() throws IOException;
+        }
+        items = List.copyOf(next);
+        ready = true;
+        log.info("음식 검색 데이터 {}건을 메모리에 읽었습니다({}ms)", next.size(), System.currentTimeMillis() - started);
+        return next.size();
     }
 
     public SearchResult search(String q) {
@@ -120,50 +122,57 @@ public class FoodCatalogService {
             if (!t.isEmpty()) tokens.add(t);
             if (tokens.size() == 4) break;
         }
-        // 처음 넣는 몇 분 동안은 비어 있다 → 화면이 "준비 중"을 보여 준다
-        boolean ready = !jdbc.queryForList("select id from food_items where id > 0 order by id limit 1").isEmpty();
         if (tokens.isEmpty()) return new SearchResult(ready, List.of());
-
-        StringBuilder sql = new StringBuilder("select id, source, name, maker, basis, kcal, protein_g, fat_g, carb_g, serving_g, package_g "
-                + "from food_items where ");
-        List<Object> args = new ArrayList<>();
-        for (int i = 0; i < tokens.size(); i++) {
-            if (i > 0) sql.append(" and ");
-            String t = tokens.get(i);
-            String alt = SYNONYMS.get(t);
-            sql.append(alt == null ? "search_key like ?" : "(search_key like ? or search_key like ?)");
-            args.add("%" + t + "%");
-            if (alt != null) args.add("%" + alt + "%");
-        }
-        // 짧은 이름이 대체로 원하는 것(닭가슴살 → "닭가슴살, 생것" 이 "닭가슴살 스테이크 소스맛"보다 먼저)
-        sql.append(" order by length(name) limit 300");
-        List<FoodView> rows = jdbc.query(sql.toString(), (rs, i) -> new FoodView(
-                rs.getLong("id"), FoodSource.valueOf(rs.getString("source")), rs.getString("name"), rs.getString("maker"),
-                rs.getString("basis"), num(rs.getObject("kcal")), num(rs.getObject("protein_g")), num(rs.getObject("fat_g")),
-                num(rs.getObject("carb_g")), num(rs.getObject("serving_g")), num(rs.getObject("package_g"))), args.toArray());
-
-        // 순위는 쓴 말과 비슷한 말로 바꾼 것 중 더 잘 맞는 쪽으로
         List<String> alts = tokens.stream().map(t -> SYNONYMS.getOrDefault(t, t)).toList();
+
+        // 순위: 이름이 검색어와 같음 > 검색어로 시작 > 첫 낱말로 시작 > 그 밖(쓴 말 · 비슷한 말 중 더 잘 맞는 쪽),
+        // 한 낱말이면 원재료 → 음식 → 제품, 그다음 짧은 이름. 맞는 줄마다 한 번만 계산해 숫자 하나(sort key)로 묶는다
+        // ("밥"처럼 수만 줄이 맞을 때 정렬 중에 다시 계산하면 1초 가까이 걸렸다).
         String whole = String.join("", tokens);
         String first = tokens.get(0);
         String altWhole = String.join("", alts);
         String altFirst = alts.get(0);
-        rows = new ArrayList<>(rows);
-        rows.sort(Comparator
-                .comparingInt((FoodView f) -> Math.min(rankOf(f, whole, first), rankOf(f, altWhole, altFirst)))
-                .thenComparingInt(f -> tokens.size() == 1 ? sourceOrder(f.source()) : 0)
-                .thenComparingInt(f -> f.name().length()));
-        return new SearchResult(ready, rows.size() > MAX_RESULTS ? rows.subList(0, MAX_RESULTS) : rows);
+        boolean single = tokens.size() == 1;
+
+        List<Item> all = items;
+        long[] hits = new long[64];
+        int count = 0;
+        for (int i = 0; i < all.size(); i++) {
+            Item it = all.get(i);
+            String key = it.key();
+            boolean ok = true;
+            for (int k = 0; k < tokens.size() && ok; k++) {
+                ok = key.contains(tokens.get(k)) || key.contains(alts.get(k));
+            }
+            if (!ok) continue;
+            int rank = Math.min(rankOf(it, whole, first), rankOf(it, altWhole, altFirst));
+            int src = single ? sourceOrder(it.source()) : 0;
+            long sortKey = ((long) rank << 50) | ((long) src << 44) | ((long) Math.min(it.name().length(), 4095) << 32) | i;
+            if (count == hits.length) hits = Arrays.copyOf(hits, count * 2);
+            hits[count++] = sortKey;
+        }
+        Arrays.sort(hits, 0, count);
+
+        List<FoodView> out = new ArrayList<>(Math.min(MAX_RESULTS, count));
+        for (int n = 0; n < count && n < MAX_RESULTS; n++) {
+            int i = (int) (hits[n] & 0xFFFFFFFFL);
+            Item it = all.get(i);
+            out.add(new FoodView((long) i, it.source(), it.name(), it.maker(), it.ml() ? "100ml" : "100g",
+                    dbl(it.kcal()), dbl(it.protein()), dbl(it.fat()), dbl(it.carb()), dbl(it.serving()), dbl(it.pack())));
+        }
+        return new SearchResult(ready, out);
     }
 
     // ---- 내부 ----
 
     /** 원재료는 "바나나, 생것"처럼 쉼표 뒤가 상태라 쉼표 앞 이름으로도 비교한다 */
-    private static int rankOf(FoodView f, String whole, String first) {
-        int r = rank(normalize(f.name()), whole, first);
-        int comma = f.name().indexOf(',');
-        if (f.source() == FoodSource.RAW && comma > 0) {
-            r = Math.min(r, rank(normalize(f.name().substring(0, comma)), whole, first));
+    private static int rankOf(Item it, String whole, String first) {
+        // key = 정규화한 이름 + " " + 정규화한 업체 → 앞부분이 정규화한 이름(다시 정규화하지 않는다)
+        String key = it.key();
+        int r = rank(key.substring(0, key.indexOf(' ')), whole, first);
+        int comma = it.name().indexOf(',');
+        if (it.source() == FoodSource.RAW && comma > 0) {
+            r = Math.min(r, rank(normalize(it.name().substring(0, comma)), whole, first));
         }
         return r;
     }
@@ -184,63 +193,7 @@ public class FoodCatalogService {
         };
     }
 
-    private static Double num(Object o) {
-        return o == null ? null : ((Number) o).doubleValue();
-    }
-
-    private static int countRows(InputStream in) throws IOException {
-        int n = 0;
-        try (BufferedReader r = reader(in)) {
-            r.readLine(); // 머리줄
-            String line;
-            while ((line = r.readLine()) != null) {
-                if (parse(line.split("\t", -1)) != null) n++;
-            }
-        }
-        return n;
-    }
-
-    private int insertAll(InputStream in) throws IOException {
-        int total = 0;
-        List<Object[]> batch = new ArrayList<>(BATCH);
-        try (BufferedReader r = reader(in)) {
-            r.readLine();
-            String line;
-            while ((line = r.readLine()) != null) {
-                String[] c = line.split("\t", -1);
-                FoodSource src = parse(c);
-                if (src == null) continue;
-                String name = cut(c[1], 200);
-                String maker = c[2].isBlank() ? null : cut(c[2], 100);
-                String key = cut(normalize(name) + " " + normalize(maker), 320);
-                batch.add(new Object[]{src.name(), name, maker, key, c[3], dbl(c[4]), dbl(c[5]), dbl(c[6]), dbl(c[7]),
-                        dbl(c[8]), dbl(c[9])});
-                if (batch.size() == BATCH) {
-                    total += insertRows(batch);
-                    batch.clear();
-                }
-            }
-        }
-        if (!batch.isEmpty()) total += insertRows(batch);
-        return total;
-    }
-
-    /**
-     * 여러 줄을 insert 한 문장(values (...), (...), ...)으로 넣는다.
-     * 운영 접속 주소에 대량 넣기 옵션(rewriteBatchedStatements 등)이 없어도 MySQL · Postgres 모두 빠르다.
-     */
-    private int insertRows(List<Object[]> rows) {
-        StringBuilder sql = new StringBuilder("insert into food_items (source, name, maker, search_key, basis, kcal, protein_g, fat_g, carb_g, serving_g, package_g) values ");
-        List<Object> args = new ArrayList<>(rows.size() * 11);
-        for (int i = 0; i < rows.size(); i++) {
-            sql.append(i == 0 ? "" : ",").append("(?,?,?,?,?,?,?,?,?,?,?)");
-            args.addAll(Arrays.asList(rows.get(i)));
-        }
-        jdbc.update(sql.toString(), args.toArray());
-        return rows.size();
-    }
-
-    /** 넣을 수 있는 줄이면 종류, 아니면 null — 줄 수 비교와 넣기가 같은 기준을 쓴다 */
+    /** 넣을 수 있는 줄이면 종류, 아니면 null */
     private static FoodSource parse(String[] c) {
         if (c.length < 10 || c[1].isBlank()) return null;
         return switch (c[0]) {
@@ -251,20 +204,17 @@ public class FoodCatalogService {
         };
     }
 
-    private static BufferedReader reader(InputStream in) throws IOException {
-        return new BufferedReader(new InputStreamReader(new GZIPInputStream(in), StandardCharsets.UTF_8));
-    }
-
-    private static Double dbl(String s) {
-        if (s == null || s.isBlank()) return null;
+    private static float flt(String s) {
+        if (s == null || s.isBlank()) return Float.NaN;
         try {
-            return Double.valueOf(s);
+            return Float.parseFloat(s);
         } catch (NumberFormatException e) {
-            return null;
+            return Float.NaN;
         }
     }
 
-    private static String cut(String s, int max) {
-        return s.length() > max ? s.substring(0, max) : s;
+    /** float 을 소수 첫째 자리 Double 로(float 오차 105.4 → 105.40000152 를 없앤다) */
+    private static Double dbl(float f) {
+        return Float.isNaN(f) ? null : Math.round(f * 10.0) / 10.0;
     }
 }
