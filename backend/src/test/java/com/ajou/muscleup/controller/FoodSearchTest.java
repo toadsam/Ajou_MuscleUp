@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** 음식 검색(PR B): 파일 → food_items 넣기, 검색 순서, 띄어쓰기 · 업체명 검색 */
+/** 음식 검색(PR B): 파일 → 메모리 읽기, 검색 순서, 띄어쓰기 · 업체명 · 비슷한 말 */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -68,7 +68,7 @@ class FoodSearchTest {
                 .nickname("fs-alice").createdAt(LocalDateTime.now()).build());
         byte[] data = gz(TSV);
         // 알 수 없는 종류(X) 한 줄은 건너뛴다
-        assertThat(catalog.loadIfChanged(() -> new ByteArrayInputStream(data))).isEqualTo(10);
+        assertThat(catalog.load(() -> new ByteArrayInputStream(data))).isEqualTo(10);
     }
 
     private static RequestPostProcessor as(User u) {
@@ -117,11 +117,5 @@ class FoodSearchTest {
         mvc.perform(get("/api/diet/foods").param("q", "  ").with(as(alice))).andExpect(jsonPath("$.items", hasSize(0)));
         mvc.perform(get("/api/diet/foods").param("q", "가".repeat(41)).with(as(alice))).andExpect(status().isBadRequest());
         mvc.perform(get("/api/diet/foods").param("q", "닭")).andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void reloadSkipsWhenUnchanged() throws Exception {
-        byte[] data = gz(TSV);
-        assertThat(catalog.loadIfChanged(() -> new ByteArrayInputStream(data))).isEqualTo(-1);
     }
 }

@@ -1,6 +1,6 @@
 # 음식 검색 데이터 (backend/src/main/resources/food/foods.tsv.gz)
 
-식단 기록의 음식 검색(`GET /api/diet/foods`)이 쓰는 영양 정보. 서버가 뜰 때 `FoodCatalogService` 가 줄 수를 비교해 `food_items` 표에 넣는다.
+식단 기록의 음식 검색(`GET /api/diet/foods`)이 쓰는 영양 정보. 서버가 뜬 뒤 `FoodCatalogService` 가 **메모리에 읽는다**(약 2.5초 · 75MB). DB 에는 넣지 않는다 — 넣었다가 운영 DB 볼륨이 가득 찼다(docs/fixes/2026-10-12-food-search-incident.md).
 
 ## 출처 (화면에 출처 표시 필수)
 | 파일 | 출처 | 판 | 받은 곳 |
@@ -26,4 +26,4 @@ python -I scripts/food/build_food_catalog.py <엑셀 3개가 있는 폴더> back
 - 2026-10-12 기준 322,856건(가공식품 303,843 · 음식 15,647 · 원재료 3,366), 압축 7.1MB.
 
 ## 갱신
-새 판을 받아 다시 만들고 커밋하면, 배포 뒤 서버가 줄 수가 달라진 것을 보고 표를 통째로 다시 넣는다(처음 한 번 몇 분, 그동안은 이전 데이터로 검색).
+새 판을 받아 다시 만들고 커밋하면, 배포 뒤 서버가 새 파일을 메모리에 읽는다. 저장소가 판마다 7MB 씩 늘어나므로 자주 갱신하지 않는다.
