@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 회원 탈퇴(0단계 PR 8). 개인정보 처리방침(docs/legal/privacy-draft.md §2)의 "탈퇴하면 바로 지워요"를 지키는 곳.
  *
- * - 지우는 것: 로그인 연결 · 로그인 유지 토큰 · 신체 정보 · 캐릭터 · 출석 · AI 상담 · 자랑방 글/댓글/좋아요 · 친구 · 1:1 채팅방 ·
+ * - 지우는 것: 로그인 연결 · 로그인 유지 토큰 · 신체 정보 · 식단 기록/목표 · 캐릭터 · 출석 · AI 상담 · 자랑방 글/댓글/좋아요 · 친구 · 1:1 채팅방 ·
  *   모임 가입/신청 · 공동구매 참여/메시지 · 후기 · 이벤트 참여 · 화면 이용/접속 기록 · 문의 · 프로그램 신청 · 이메일 인증 기록 · 신고/차단.
  * - 남기는 것: 사용자 행 자체(다른 사람과 같이 쓰는 기록의 연결이 깨지지 않게)를 "탈퇴한 회원"으로 익명화.
  *   이메일은 내부용 주소로 바꿔 같은 이메일 · 소셜 계정으로 다시 가입하면 새 계정이 된다.
@@ -68,7 +68,7 @@ public class AccountDeletionService {
         exec("delete from BragComment c where c.user.id = :id", id);
         exec("delete from BragLike l where l.user.id = :id", id);
 
-        // 출석 · 캐릭터 · 신체 정보 · AI
+        // 출석 · 캐릭터 · 신체 정보 · AI · 식단
         exec("delete from AttendanceShareReport r where r.attendanceLog.user.id = :id or r.user.id = :id", id);
         exec("delete from AttendanceLog a where a.user.id = :id", id);
         exec("delete from CharacterEvolutionHistory h where h.user.id = :id", id);
@@ -76,6 +76,8 @@ public class AccountDeletionService {
         exec("delete from UserBodyStats s where s.user.id = :id", id);
         exec("delete from AiChatMessage m where m.user.id = :id", id);
         exec("delete from EventParticipant p where p.user.id = :id", id);
+        exec("delete from MealEntry m where m.user.id = :id", id);
+        exec("delete from DietGoal g where g.user.id = :id", id);
 
         // 친구 · 1:1 채팅(상대 쪽 대화 기록도 함께 사라진다 — 방침 §2 에 맞춤)
         exec("delete from FriendChatMessage m where m.room.userLow.id = :id or m.room.userHigh.id = :id", id);

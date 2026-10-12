@@ -120,6 +120,9 @@ class AccountSafetyTest {
         WorkoutCrew solo = gyms.save(WorkoutCrew.builder().name("혼자 모임").owner(alice).inviteCode("ASGYM002").type(GymType.CREW)
                 .slug("as-solo").status(GymStatus.ACTIVE).features(EnumSet.allOf(GymFeature.class)).build());
         members.save(WorkoutCrewMember.builder().crew(solo).user(alice).role(WorkoutCrewMemberRole.OWNER).build());
+        em.persist(com.ajou.muscleup.entity.MealEntry.builder().user(alice).eatenOn(java.time.LocalDate.now())
+                .mealType(com.ajou.muscleup.entity.MealType.LUNCH).name("닭가슴살").kcal(165).build());
+        em.persist(com.ajou.muscleup.entity.DietGoal.builder().user(alice).proteinG(120).build());
         em.flush();
 
         // 확인 문구 없으면 거절
@@ -146,6 +149,8 @@ class AccountSafetyTest {
         assertThat(count("select count(m) from FriendChatMessage m where m.sender.id = :id", id)).isZero();
         assertThat(count("select count(s) from SocialAccount s where s.user.id = :id", id)).isZero();
         assertThat(count("select count(m) from WorkoutCrewMember m where m.user.id = :id", id)).isZero();
+        assertThat(count("select count(m) from MealEntry m where m.user.id = :id", id)).isZero();
+        assertThat(count("select count(g) from DietGoal g where g.user.id = :id", id)).isZero();
         // 밥의 글은 남는다
         assertThat(posts.findById(bobPost.getId())).isPresent();
 

@@ -30,6 +30,7 @@ const AiShareView = lazy(() => import("./pages/AiShareView"));
 const InbodyConsult = lazy(() => import("./pages/InbodyConsult"));
 const AdminHistory = lazy(() => import("./pages/AdminHistory"));
 const Attendance = lazy(() => import("./pages/Attendance"));
+const Diet = lazy(() => import("./pages/Diet"));
 const AttendanceShareView = lazy(() => import("./pages/AttendanceShareView"));
 const Rankings = lazy(() => import("./pages/Rankings"));
 const Lounge = lazy(() => import("./pages/Lounge"));
@@ -218,6 +219,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Attendance />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/diet"
+                element={
+                  <ProtectedRoute>
+                    <Diet />
                   </ProtectedRoute>
                 }
               />

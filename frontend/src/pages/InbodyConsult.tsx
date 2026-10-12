@@ -20,6 +20,8 @@ import {
 import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
 import { friendlyError, httpError } from "../lib/httpError";
+import { api } from "../lib/api";
+import { toast } from "../lib/toast";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -140,6 +142,31 @@ export default function InbodyConsult() {
   const [loading, setLoading] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [goalSaving, setGoalSaving] = useState(false);
+
+  // 결과의 하루 영양 목표를 식단 기록(/diet)의 목표로 저장한다
+  const saveDietGoal = async () => {
+    if (!result || goalSaving) return;
+    const n = result.dailyNutrition;
+    const toInt = (v?: string) => {
+      const x = toNumber(v);
+      return x > 0 ? Math.round(x) : null;
+    };
+    const body = { kcal: toInt(n.calories_kcal), proteinG: toInt(n.protein_g), carbG: toInt(n.carb_g), fatG: toInt(n.fat_g), source: "INBODY" };
+    if (body.kcal == null && body.proteinG == null && body.carbG == null && body.fatG == null) {
+      toast("저장할 영양 목표가 없어요.", "error");
+      return;
+    }
+    setGoalSaving(true);
+    try {
+      await api.put("/api/diet/goal", body);
+      toast("식단 목표로 저장했어요. 식단 기록에서 비교해 볼 수 있어요.", "success");
+    } catch (err) {
+      toast(friendlyError(err, "식단 목표를 저장하지 못했어요."), "error");
+    } finally {
+      setGoalSaving(false);
+    }
+  };
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<InbodyResponse | null>(null);
   const [confirmedMetrics, setConfirmedMetrics] = useState<Record<string, string>>({});
@@ -689,6 +716,11 @@ export default function InbodyConsult() {
                   <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
                 </svg>
                 {pdfLoading ? "PDF 생성 중..." : "PDF 다운로드"}
+              </button>
+            )}
+            {result && (
+              <button type="button" onClick={() => void saveDietGoal()} disabled={goalSaving} className="dg-btn dg-btn-steel text-sm">
+                {goalSaving ? "저장 중..." : "식단 목표로 저장"}
               </button>
             )}
             {(loading || pdfLoading) && (
