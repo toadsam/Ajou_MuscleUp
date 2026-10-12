@@ -24,9 +24,11 @@
 **확인한 방법**
 - 새 `FoodPhotoTest` 3개, 백엔드 45개 통과(MySQL · Postgres 17). `verify.sh` 통과.
 - 로컬 화면에서 확인 화면 계산 · 저장(PHOTO), 크레딧 소진 시 안내 문구.
+- 머지(#20) 뒤 운영: Railway · Vercel 배포 성공, `/api/diet/photo` 로그인 없이 401. OpenAI 크레딧 충전 뒤 사용자가 휴대폰으로 실제 음식 사진을 찍어 인식이 잘 되는 것을 확인(2026-10-12).
 
 **아직 못 한 것**
-- 실제 음식 사진 인식 품질 — 로컬 OpenAI 열쇠 계정 크레딧 소진(`credit_balance_exhausted`). 충전 뒤 확인.
+- 여러 사진에 걸친 양 추정 정확도는 아직 모름 — 계속 많거나 적게 잡히는 음식이 보이면 프롬프트 · 기본 양 조정.
+- 사진 분석 횟수는 서버 메모리 기준(재시작하면 초기화).
 
 ---
 
@@ -697,7 +699,7 @@ merge 뒤에도 musclehub.co.kr 은 예전 화면 그대로였다. 백엔드·�
 | 관리자 "일괄 처리 대기열"이 브라우저에서만 실행됨(서버 예약 아님) | `Admin.tsx` | 서버 스케줄러 필요 |
 | 운영 DB 스키마를 `ddl-auto=update` 로 자동 변경 | `application-prod.properties` | Flyway 도입 계획: docs/fixes/2026-10-11-backend-data.md |
 | 50개 넘는 공동구매 · 후기 목록의 페이지 넘김 | `Protein.tsx`, `Reviews.tsx` | 서버는 50개로 제한됨 |
-| 식단 사진 인식 품질 확인(실제 음식 사진) | `OpenAiFoodPhotoRecognizer` 프롬프트 | OpenAI 크레딧 충전 뒤. 양 추정이 많이 틀리면 프롬프트 · 기본 양 조정 |
+| 식단 사진 양 추정 정확도(여러 음식 · 여러 사진) | `OpenAiFoodPhotoRecognizer` 프롬프트 | 실제 사진 인식은 확인됨. 자꾸 틀리는 음식이 보이면 프롬프트 · 기본 양 조정 |
 | 식단: 검색에 없는 음식을 "내 음식"으로 저장 · 바코드 | `Diet.tsx`, `FoodSearchField.tsx` | 내 음식은 탈퇴 삭제 대상 |
 | 홈 지도로 바뀌며 안 쓰게 된 "이번 주 바벨" 스타일(`.hero-stage*`), 모바일 히어로 캐릭터 카드 스타일 | `styles/homeLobby.css` | 지워도 되는지 확인 후 정리 |
 
