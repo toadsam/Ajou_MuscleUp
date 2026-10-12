@@ -30,6 +30,10 @@ public class AttendanceLogResponse {
     private Integer expEarned;
     private List<EventProgressResponse> eventProgress;
     private CharacterChangeResponse characterChange;
+    /** 이번 출석으로 주간 목표를 처음 채웠으면 그 보너스(expEarned 에 이미 포함), 아니면 null */
+    private Integer weeklyGoalBonus;
+    /** 위와 함께: 연속 달성 주 수 */
+    private Integer weeklyGoalStreak;
 
     public static AttendanceLogResponse from(AttendanceLog log) {
         return AttendanceLogResponse.builder()
@@ -53,7 +57,9 @@ public class AttendanceLogResponse {
             AttendanceLog log,
             List<EventProgressResponse> eventProgress,
             CharacterChangeResponse characterChange,
-            Integer expEarned
+            Integer expEarned,
+            Integer weeklyGoalBonus,
+            Integer weeklyGoalStreak
     ) {
         return AttendanceLogResponse.builder()
                 .date(log.getDate())
@@ -72,6 +78,8 @@ public class AttendanceLogResponse {
                 .expEarned(expEarned)
                 .eventProgress(eventProgress)
                 .characterChange(characterChange)
+                .weeklyGoalBonus(weeklyGoalBonus)
+                .weeklyGoalStreak(weeklyGoalStreak)
                 .build();
     }
 

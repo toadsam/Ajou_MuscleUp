@@ -10,6 +10,7 @@ import { eventApi } from "../services/eventApi";
 import { REALTIME_URL } from "../lib/realtime";
 import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 import type { EventItem } from "../types/event";
+import { WEEKLY_GOAL_PATH, type WeeklyGoalStatus } from "../lib/weeklyGoal";
 
 type AttendanceLog = {
   date: string;
@@ -158,6 +159,7 @@ async function safeFetchJson<T>(path: string): Promise<T | null> {
 export default function Home() {
   const [user, setUser] = useState<LocalUser | null>(null);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoalStatus | null>(null);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [character, setCharacter] = useState<CharacterProfile | null>(null);
   const [mbti, setMbti] = useState<string | null>(null);
@@ -198,14 +200,17 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      const [logsRes, summaryRes, characterRes, statsRes] = await Promise.all([
+      const [logsRes, summaryRes, characterRes, statsRes, weeklyGoalRes] = await Promise.all([
         safeFetchJson<AttendanceLog[]>(`/api/attendance?month=${monthKey}`),
         safeFetchJson<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`),
         safeFetchJson<CharacterProfile>("/api/character/me"),
         safeFetchJson<StatsResponse>("/api/mypage/stats"),
+        // 주간 목표는 없어도 홈이 떠야 해서 실패를 삼킨다
+        safeFetchJson<WeeklyGoalStatus>(WEEKLY_GOAL_PATH).catch(() => null),
       ]);
       if (logsRes) setLogs(logsRes);
       if (summaryRes) setSummary(summaryRes);
+      setWeeklyGoal(weeklyGoalRes);
       if (characterRes) setCharacter(characterRes);
       setMbti(statsRes?.mbti ?? null);
     } catch (err: any) {
@@ -608,8 +613,11 @@ export default function Home() {
                 <strong>{todayLog ? "완료" : "대기"}</strong>
               </div>
               <div>
-                <span>이번 주</span>
-                <strong>{weekStats.workoutDays}/7</strong>
+                <span>주간 목표</span>
+                <strong>
+                  {weeklyGoal ? `${weeklyGoal.done}/${weeklyGoal.target}` : `${weekStats.workoutDays}/7`}
+                  {weeklyGoal && weeklyGoal.streakWeeks > 0 && <small className="mt-1 block text-base">{weeklyGoal.streakWeeks}주 연속</small>}
+                </strong>
               </div>
             </div>
 

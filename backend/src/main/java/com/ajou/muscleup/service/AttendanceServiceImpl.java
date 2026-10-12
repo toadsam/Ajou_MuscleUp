@@ -61,6 +61,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final UserRepository userRepository;
     private final EventService eventService;
     private final CharacterGrowthService characterGrowthService;
+    private final WeeklyGoalService weeklyGoalService;
     private final AttendanceShareReportRepository shareReportRepository;
     private final AttendanceCheerGuard cheerGuard;
     private final PlatformTransactionManager transactionManager;
@@ -124,8 +125,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         UpsertResult result = upsert(user, date, request, allowCreate);
         List<EventProgressResponse> eventProgress =
                 eventService.updateAttendanceProgress(user, date, result.previousDidWorkout, result.currentDidWorkout);
-        CharacterChangeResponse change = characterGrowthService.applyAttendance(user, result.pointsEarned);
-        return AttendanceLogResponse.from(result.log, eventProgress, change, result.pointsEarned);
+        // 이번 출석으로 주간 목표를 처음 채웠으면 보너스를 같은 점수에 더한다(한 주에 한 번)
+        WeeklyGoalService.Reward weekly = result.currentDidWorkout && !result.previousDidWorkout
+                ? weeklyGoalService.onWorkoutAdded(user, date)
+                : null;
+        int points = result.pointsEarned + (weekly == null ? 0 : weekly.bonusPoints());
+        CharacterChangeResponse change = characterGrowthService.applyAttendance(user, points);
+        return AttendanceLogResponse.from(result.log, eventProgress, change, points,
+                weekly == null ? null : weekly.bonusPoints(), weekly == null ? null : weekly.streakWeeks());
     }
 
     @Override
