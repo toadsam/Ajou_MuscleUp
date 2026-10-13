@@ -786,16 +786,7 @@ export default function Home() {
         )}
       </div>
 
-      {isMobile && (
-        <div className="mobile-fixed-actions" aria-label="빠른 이동">
-          <Link to="/attendance" className="dg-btn dg-btn-primary">
-            출석하기
-          </Link>
-          <Link to="/crew" className="dg-btn dg-btn-steel">
-            운동 모임
-          </Link>
-        </div>
-      )}
+      {/* 휴대폰 아래 고정 바는 지도 바로 가기(출석 · 식단 · 운동 시작 · 내 기록)가 맡는다 — gymMap.css */}
     </section>
   );
 }
