@@ -515,6 +515,9 @@ export default function GymMap(props: Props) {
 
   const go = (z: ZoneId, fast: boolean) => {
     setTouched(true);
+    // 휴대폰에선 바로 가기가 화면 아래 고정이라, 지도가 화면 밖이면 지도부터 보여 준다(걸어가서 열리는 창이 보이게)
+    const box = wrapRef.current?.getBoundingClientRect();
+    if (box && (box.top < 0 || box.bottom > window.innerHeight - 90)) wrapRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     // 다른 공간에 있으면 1층으로 먼저(바로 가기 버튼)
     if (sceneRef.current !== "MAIN") changeScene("MAIN");
     mapRef.current?.goZone(z, fast);
@@ -1221,8 +1224,8 @@ export default function GymMap(props: Props) {
 
       <ReportDialog targetType="GYM_GUESTBOOK" targetId={reportId ?? 0} open={reportId !== null} onClose={() => setReportId(null)} />
 
-      <div className="gm-dock-cap" data-fab-avoid>
-        <span>바로 가기</span>
+      <div className={`gm-dock-cap ${loggedIn ? "" : "gm-dock-cap-guest"}`} data-fab-avoid>
+        <span className="gm-dock-title">바로 가기</span>
         {loggedIn ? (
           <span className="gm-cap-actions">
             {!editing && (
@@ -1240,7 +1243,7 @@ export default function GymMap(props: Props) {
           <span>자주 쓰는 곳으로 바로</span>
         )}
       </div>
-      <nav className="gm-dock" aria-label="바로 가기" data-fab-avoid>
+      <nav className="gm-dock" aria-label="바로 가기" data-fab-avoid data-bottom-dock>
         {DOCK.map((d) =>
           "to" in d ? (
             <Link

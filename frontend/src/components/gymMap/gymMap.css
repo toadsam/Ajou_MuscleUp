@@ -435,6 +435,25 @@
 .gm-dock-btn.done { background: var(--dg-green); color: var(--dg-ink); }
 .gm-dock-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
 
+/* 휴대폰: 바로 가기 줄을 화면 아래에 고정(홈의 예전 "출석하기 · 운동 모임" 고정 바 자리).
+   위 머리줄에는 방명록 · 꾸미기만 남긴다. 홈 아래 여백(.home-lobby 8rem)이 이 줄 높이를 덮는다. */
+@media (max-width: 768px) {
+  .gm-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+    background: #222327;
+    border-top: 3px solid var(--dg-ink);
+  }
+  .gm-dock-btn { padding: 12px 4px; font-size: 14px; }
+  .gm-dock-title { display: none; }
+  .gm-dock-cap { justify-content: flex-end; padding-bottom: 10px; }
+  .gm-dock-cap-guest { display: none; }
+}
+
 @keyframes gmShake {
   0%, 100% { transform: none; }
   20% { transform: translate(-3px, 2px); }

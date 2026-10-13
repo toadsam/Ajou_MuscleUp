@@ -808,20 +808,6 @@
     margin: 0.25rem 0;
   }
 
-  .mobile-fixed-actions {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 60;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.6rem;
-    padding: 0.7rem 0.75rem calc(0.9rem + env(safe-area-inset-bottom));
-    background: #222327;
-    border-top: 3px solid var(--dg-ink);
-  }
-
   .event-banner-card {
     grid-template-columns: 1fr;
   }
