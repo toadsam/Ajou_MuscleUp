@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -146,5 +147,35 @@ class CustomExerciseTest {
         mvc.perform(get("/api/workouts").with(as(alice))).andExpect(jsonPath("$[0].exercises[0]").value("케이블 풀오버"));
         // 지웠으니 같은 이름으로 다시 추가할 수 있다
         addCustom(alice, "케이블 풀오버", "BACK", false);
+    }
+
+    private ResultActions patchJson(String url, User u, String body) throws Exception {
+        return mvc.perform(patch(url).with(as(u)).contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    @Test
+    void renameKeepsRecordsAndRejectsDuplicates() throws Exception {
+        String pullover = addCustom(alice, "케이블 풀오버", "BACK", false);
+        addCustom(alice, "힙 쓰러스트", "LEGS", false);
+        postJson("/api/lifts", alice, "{\"exercise\":\"" + pullover + "\",\"weightKg\":30,\"reps\":12,\"sets\":3}")
+                .andExpect(status().isCreated());
+
+        // 이름 · 부위를 고치면 목록 · 지난 기록 · 최고 기록판이 새 이름으로(코드는 그대로)
+        patchJson("/api/lifts/custom/" + pullover, alice, "{\"name\":\" 스트레이트 암 풀다운 \",\"category\":\"BACK\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(pullover))
+                .andExpect(jsonPath("$.label").value("스트레이트 암 풀다운"));
+        mvc.perform(get("/api/lifts").with(as(alice))).andExpect(jsonPath("$.entries[0].label").value("스트레이트 암 풀다운"));
+        mvc.perform(get("/api/lifts/bests").with(as(alice))).andExpect(jsonPath("$[0].label").value("스트레이트 암 풀다운"));
+        // 자기 이름 그대로(띄어쓰기만 다름)는 되고, 부위를 안 보내면 그대로
+        patchJson("/api/lifts/custom/" + pullover, alice, "{\"name\":\"스트레이트암풀다운\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.category").value("BACK"));
+        // 다른 내 종목 · 기본 종목과 같은 이름, 빈 이름, 모르는 부위, 남의 종목은 막힘
+        patchJson("/api/lifts/custom/" + pullover, alice, "{\"name\":\"힙쓰러스트\"}").andExpect(status().isConflict());
+        patchJson("/api/lifts/custom/" + pullover, alice, "{\"name\":\"데드리프트\"}").andExpect(status().isConflict());
+        patchJson("/api/lifts/custom/" + pullover, alice, "{\"name\":\" \"}").andExpect(status().isBadRequest());
+        patchJson("/api/lifts/custom/" + pullover, alice, "{\"name\":\"등 운동\",\"category\":\"FEET\"}").andExpect(status().isBadRequest());
+        patchJson("/api/lifts/custom/" + pullover, bob, "{\"name\":\"내 거\"}").andExpect(status().isNotFound());
     }
 }

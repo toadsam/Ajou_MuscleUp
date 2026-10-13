@@ -41,6 +41,8 @@ function FriendAvatar({
         stage={character?.evolutionStage ?? 0}
         gender={character?.gender}
         isResting={character?.isResting ?? false}
+        tank={character?.tank}
+        pumped={character?.isPumped ?? false}
         size={size}
       />
     </div>

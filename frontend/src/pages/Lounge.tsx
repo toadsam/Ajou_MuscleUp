@@ -4,6 +4,7 @@ import { friendlyError, httpError } from "../lib/httpError";
 import { REALTIME_URL, realtimeAuthFor, realtimeConnectError, type LoungeRoom } from "../lib/realtime";
 import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 import { toast } from "../lib/toast";
+import LiveZone from "../components/lounge/LiveZone";
 import PlayerAvatar from "../components/PlayerAvatar";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { GrowthParams } from "../components/avatar/types";
@@ -46,6 +47,10 @@ type PlayerState = {
   mbti?: string;
   isResting?: boolean;
   growthParams?: GrowthParams;
+  /** 운동 직후 펌핑 · 장착한 민소매 색 · 칭호(입장권에서) */
+  isPumped?: boolean;
+  tank?: string;
+  title?: string;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
   activeEventProgress?: string;
@@ -2497,10 +2502,13 @@ export default function Lounge() {
                                 gender={selectedPlayer.gender}
                                 mbti={selectedPlayer.mbti}
                                 isResting={selectedPlayer.isResting ?? false}
+                                tank={selectedPlayer.tank}
+                                pumped={selectedPlayer.isPumped ?? false}
                                 size={84}
                               />
                               <div>
                                 <div className="font-semibold text-white">{selectedPlayer.nickname}</div>
+                                {selectedPlayer.title && <div className="text-xs text-plate-yellow">{selectedPlayer.title}</div>}
                                 <div className="text-xs text-gray-400">
                                   Lv.{selectedPlayer.level} {selectedPlayer.tier} 단계 {selectedPlayer.evolutionStage}
                                 </div>
@@ -2860,6 +2868,8 @@ export default function Lounge() {
                             growthParams={player.growthParams}
                             mbti={player.mbti}
                             isResting={player.isResting ?? false}
+                            tank={player.tank}
+                            isPumped={player.isPumped ?? false}
                             facing={facingMap[player.socketId] ?? "right"}
                             isMe={isMe}
                           />
@@ -3212,6 +3222,7 @@ export default function Lounge() {
           </div>
 
           {!isImmersiveFullscreen && <div className="space-y-4">
+            <LiveZone />
             <div className="dg-steel p-2">
               <div className="relative grid grid-cols-4 text-xs">
                 <span
@@ -3315,6 +3326,8 @@ export default function Lounge() {
                           gender={selectedPlayer.gender}
                           mbti={selectedPlayer.mbti}
                           isResting={selectedPlayer.isResting ?? false}
+                          tank={selectedPlayer.tank}
+                          pumped={selectedPlayer.isPumped ?? false}
                           size={90}
                         />
                       </div>
@@ -3323,6 +3336,8 @@ export default function Lounge() {
                         <div className="flex flex-wrap items-center gap-1 text-xs">
                           <span className="dg-chip bg-plate-yellow text-black">Lv.{selectedPlayer.level} {selectedPlayer.tier}</span>
                           <span className="dg-chip bg-steel-700 text-chalk">단계 {selectedPlayer.evolutionStage}</span>
+                          {selectedPlayer.title && <span className="dg-chip bg-steel-700 font-display text-plate-yellow">{selectedPlayer.title}</span>}
+                          {selectedPlayer.isPumped && <span className="dg-chip bg-plate-red text-white">펌핑 중</span>}
                         </div>
                       </div>
                     </div>

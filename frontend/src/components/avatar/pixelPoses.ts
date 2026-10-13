@@ -21,6 +21,7 @@ export const POSE_KINDS = [
   "incline",
   "skull",
   "pushdown",
+  "run",
 ] as const;
 export type PoseKind = (typeof POSE_KINDS)[number];
 
@@ -59,6 +60,26 @@ const UP: Dir = [0, -1];
 const DOWN: Dir = [0, 1];
 const LEFT: Dir = [-1, 0];
 const RIGHT: Dir = [1, 0];
+
+/** 달리기(러닝 화면): 팔다리를 번갈아 앞뒤로, 프레임 1 은 한 칸 떠오른다 */
+const runPose: PoseDef = () => {
+  const stride = (dy: number, swap: boolean): Frame => {
+    const fwdLeg = { knee: [15, 21 - dy] as P, foot: [15, 27 - dy] as P, toes: RIGHT };
+    const backLeg = { knee: [9, 22 - dy] as P, foot: [6, 24 - dy] as P, toes: DOWN };
+    const fwdArm = { elbow: [14, 14 - dy] as P, hand: [16, 11 - dy] as P };
+    const backArm = { elbow: [9, 14 - dy] as P, hand: [8, 17 - dy] as P };
+    return {
+      head: [13, 5 - dy],
+      crown: UP,
+      look: RIGHT,
+      shoulder: [12, 10 - dy],
+      hip: [11, 18 - dy],
+      legs: swap ? [fwdLeg, backLeg] : [backLeg, fwdLeg],
+      arms: swap ? [backArm, fwdArm] : [fwdArm, backArm],
+    };
+  };
+  return [stride(0, false), stride(1, true)];
+};
 
 const POSES: Record<PoseKind, PoseDef> = {
   // 레그 프레스: 비스듬히 누워 발판을 민다(머리가 왼쪽 위)
@@ -295,6 +316,7 @@ const POSES: Record<PoseKind, PoseDef> = {
       { ...base, arms: [{ elbow: [12, 15], hand: [14, 20] }] },
     ];
   },
+  run: runPose,
 };
 
 /** 네모 붓으로 a → b 를 잇는다 */

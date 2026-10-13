@@ -2,8 +2,10 @@ import { useEffect, useId, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { api } from "../../lib/api";
 import { FOOD_DATA_CREDIT, FOOD_SOURCE_LABEL, type FoodHit } from "../../lib/foodSearch";
+import { matchMyFoods, type MyFood } from "../../lib/myFoods";
 
 // 음식 이름 칸 + 검색 목록(공공 영양 DB). 글자를 치면 잠깐 뒤 /api/diet/foods 를 부르고, 고르면 onPick.
+// 내 음식(저장해 둔 음식) 중 이름이 맞는 것은 목록 맨 위에 먼저 보여 준다.
 // 목록은 칸 바로 아래에 붙는다(창 안에서 잘리지 않게 띄우지 않음). ↑ ↓ 로 고르고 Enter 로 확정, Esc 는 목록만 닫는다.
 
 const fmt = (n: number | null) => (n == null ? "-" : Number.isInteger(n) ? String(n) : n.toFixed(1));
@@ -16,9 +18,12 @@ type Props = {
   /** 고친 기록이거나 이미 고른 음식이 있으면 검색하지 않는다 */
   searchEnabled: boolean;
   className: string;
+  /** 내 음식 — 이름이 맞으면 맨 위에 */
+  mine?: MyFood[];
+  onPickMine?: (food: MyFood) => void;
 };
 
-export default function FoodSearchField({ id, value, onChange, onPick, searchEnabled, className }: Props) {
+export default function FoodSearchField({ id, value, onChange, onPick, searchEnabled, className, mine = [], onPickMine }: Props) {
   const [items, setItems] = useState<FoodHit[]>([]);
   const [ready, setReady] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -58,6 +63,7 @@ export default function FoodSearchField({ id, value, onChange, onPick, searchEna
   }, [q, searchEnabled]);
 
   const showList = searchEnabled && open && q.length > 0;
+  const mineHits = onPickMine ? matchMyFoods(mine, q) : [];
 
   const pick = (food: FoodHit) => {
     setOpen(false);
@@ -106,6 +112,30 @@ export default function FoodSearchField({ id, value, onChange, onPick, searchEna
       />
       {showList && (
         <div className="dg-well space-y-1 p-1.5">
+          {mineHits.length > 0 && (
+            <ul aria-label="내 음식" className="space-y-1 border-b-2 border-steel-700 pb-1">
+              {mineHits.map((food) => (
+                <li
+                  key={`mine-${food.id}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setOpen(false);
+                    onPickMine?.(food);
+                  }}
+                  className="cursor-pointer rounded px-2 py-1.5 hover:bg-steel-700"
+                >
+                  <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-chalk">
+                    <span className="flex-none rounded-sm bg-plate-yellow px-1.5 text-[11px] font-bold text-steel-950">내 음식</span>
+                    <span className="truncate">{food.name}</span>
+                  </p>
+                  <p className="font-num text-xs text-steel-400">
+                    {food.amount ? `${food.amount} · ` : ""}
+                    {fmt(food.kcal)}kcal · 단백질 {fmt(food.proteinG)}g · 탄수화물 {fmt(food.carbG)}g · 지방 {fmt(food.fatG)}g
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
           {loading && items.length === 0 ? (
             <p className="px-2 py-1.5 text-xs text-steel-400" role="status">
               찾는 중이에요.
@@ -115,9 +145,11 @@ export default function FoodSearchField({ id, value, onChange, onPick, searchEna
               음식 목록을 준비하고 있어요. 잠시 뒤에 다시 찾아 주세요. 지금은 직접 적어도 돼요.
             </p>
           ) : items.length === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-steel-400" role="status">
-              찾는 음식이 없어요. 이름과 영양소를 직접 적어 주세요.
-            </p>
+            mineHits.length > 0 ? null : (
+              <p className="px-2 py-1.5 text-xs text-steel-400" role="status">
+                찾는 음식이 없어요. 이름과 영양소를 직접 적고 "내 음식으로 저장"을 켜 두면 다음엔 바로 나와요.
+              </p>
+            )
           ) : (
             <ul id={listId} role="listbox" aria-label="찾은 음식" className="max-h-56 space-y-1 overflow-y-auto">
               {items.map((food, i) => (

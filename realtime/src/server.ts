@@ -144,6 +144,9 @@ const profileFromTicket = (claims: TicketClaims): VerifiedProfile => ({
   stylePreset: cleanText(claims.style, 32),
   isResting: claims.rest === true,
   growthParams: sanitizeGrowthParams(claims.gp),
+  isPumped: claims.pump === true,
+  tank: typeof claims.tank === "string" && /^#[0-9A-Fa-f]{6}$/.test(claims.tank) ? claims.tank : undefined,
+  title: cleanText(claims.ttl, 20),
 });
 
 /** dev mode only (no secret, not production): unverified guest profile from the client payload */

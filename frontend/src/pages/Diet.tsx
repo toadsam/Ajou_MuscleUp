@@ -8,6 +8,7 @@ import { FOOD_SOURCE_LABEL, type FoodHit } from "../lib/foodSearch";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
+import { deleteMyFood, saveMyFood, useMyFoods, type MyFood } from "../lib/myFoods";
 
 // 식단 기록(PR A). 하루 단위로 끼니별 음식을 적고, 하루 합계를 목표와 비교한다.
 // 사진 인식(PR B)은 같은 기록에 "사진에서 찾은 음식"을 확인 뒤 저장하는 방식으로 붙는다.
@@ -459,6 +460,10 @@ function EntryDialog({
   // 검색에서 고른 음식(100g · 100ml 기준 값)과 먹은 양 — 양을 바꾸면 영양소를 다시 계산한다
   const [food, setFood] = useState<FoodHit | null>(null);
   const [portion, setPortion] = useState("");
+  // 내 음식: 저장해 둔 음식 칩 · 이번 기록을 내 음식으로 저장
+  const myFoods = useMyFoods();
+  const [saveMine, setSaveMine] = useState(false);
+  const [editMine, setEditMine] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const nameId = useId();
@@ -503,6 +508,15 @@ function EntryDialog({
     applyPortion(f, String(f.packageG && f.packageG <= 500 ? f.packageG : (f.servingG ?? 100)));
   };
 
+  const removeMine = async (f: MyFood) => {
+    if (!window.confirm(`"${f.name}"을(를) 내 음식에서 지울까요? 지난 기록은 그대로 남아요.`)) return;
+    try {
+      await deleteMyFood(f.id);
+    } catch (e) {
+      toast(friendlyError(e, "지우지 못했어요."), "error");
+    }
+  };
+
   const fillFrom = (food: RecentFood) => {
     setFood(null);
     setName(food.name);
@@ -538,6 +552,12 @@ function EntryDialog({
     try {
       if (entry) await api.put(`/api/diet/entries/${entry.id}`, body);
       else await api.post("/api/diet/entries", body);
+      if (saveMine) {
+        // 기록은 이미 저장됐으니 내 음식 저장이 실패해도 알리기만 한다
+        await saveMyFood({ name: body.name, amount: body.amount, kcal: body.kcal, proteinG: body.proteinG, carbG: body.carbG, fatG: body.fatG }).catch((e) =>
+          toast(friendlyError(e, "내 음식으로 저장하지 못했어요."), "error"),
+        );
+      }
       toast(entry ? "고쳤어요." : "기록했어요.", "success");
       onSaved();
     } catch (e) {
@@ -584,13 +604,46 @@ function EntryDialog({
           </div>
         )}
 
+        {!entry && myFoods.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-plate-yellow">내 음식</p>
+              <button type="button" onClick={() => setEditMine((v) => !v)} aria-pressed={editMine} className="text-xs text-steel-400 underline underline-offset-4">
+                {editMine ? "다 했어요" : "지우기"}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {myFoods.map((f) =>
+                editMine ? (
+                  <button key={f.id} type="button" onClick={() => void removeMine(f)} aria-label={`${f.name} 지우기`} className="dg-chip max-w-[11rem] truncate text-xs">
+                    × {f.name}
+                  </button>
+                ) : (
+                  <button key={f.id} type="button" onClick={() => fillFrom(f)} className="dg-chip max-w-[10rem] truncate text-xs">
+                    {f.name}
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 이름 칸은 검색 목록이 붙으므로 한 줄을 다 쓴다 */}
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-3 space-y-1">
             <label htmlFor={nameId} className="text-xs font-bold text-steel-300">
               음식 이름
             </label>
-            <FoodSearchField id={nameId} value={name} onChange={setName} onPick={pickFood} searchEnabled={!entry && !food} className={fieldClass} />
+            <FoodSearchField
+              id={nameId}
+              value={name}
+              onChange={setName}
+              onPick={pickFood}
+              searchEnabled={!entry && !food}
+              className={fieldClass}
+              mine={myFoods}
+              onPickMine={fillFrom}
+            />
           </div>
           <div className={`space-y-1 ${food ? "hidden" : ""}`}>
             <label htmlFor={amountId} className="text-xs font-bold text-steel-300">
@@ -675,6 +728,11 @@ function EntryDialog({
             </div>
           ))}
         </div>
+
+        <label className="flex items-center gap-2 text-sm text-steel-200">
+          <input type="checkbox" checked={saveMine} onChange={(e) => setSaveMine(e.target.checked)} className="h-5 w-5" />
+          내 음식으로 저장(다음엔 이름만 눌러 넣어요)
+        </label>
 
         {error && (
           <p role="alert" className="text-sm font-semibold text-red-300">

@@ -99,6 +99,8 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 - **다른 사용자에게 가는 응답에 이메일을 싣지 않는다**: "내 것인가"는 서버가 `mine` 으로, 신고 · 차단 대상은 `authorId` 로(예전 자랑방 `authorEmail` 을 바꿨다). 처리방침에 "이메일은 보여 주지 않아요"라고 썼다.
 - **운영 사이트(musclehub.co.kr)를 짧은 간격으로 반복 조회하지 않는다**: 배포를 기다리며 10초마다 조회했더니 Vercel 보안 확인(봇 판정)에 걸려 같은 PC 의 브라우저까지 막혔다. 배포 확인은 백엔드 · 실시간 서버 주소로, 화면은 한두 번만.
 - **웹 푸시는 `push/PushService` 한 곳에서만 보낸다**(하루 2개 · 종류별 끄기 · 밤 10시~아침 8시 금지 규칙이 거기 있다). 운영 키는 Railway `PUSH_VAPID_PUBLIC_KEY` · `PUSH_VAPID_PRIVATE_KEY`(없으면 꺼짐, 바꾸면 모든 구독이 무효). 알림 받는 서비스 워커는 `public/push-sw.js`(vite `workbox.importScripts`). 새 알림은 요청 중에 직접 보내지 말고 `PushService.PushEvent` 를 남긴다.
+- **다른 사람에게 보이는 캐릭터 겉모습은 `AvatarLookService` 한 곳에서**(장착 민소매 · 칭호, 운동 직후 1시간 펌핑). 친구 · 모임 · 라운지 입장권 · `/api/character/me` 가 같이 쓴다. 새 화면에 다른 사람 캐릭터를 그리면 여기서 `tank` · `pumped` 를 받아 `AvatarRenderer` 에 넘긴다.
+- **"지금 운동 · 러닝 중"(`/api/live`)은 서버 메모리에만 있다**(3분, `LiveActivityService`). 백엔드를 여러 대로 늘리면 공유 저장소로 옮겨야 한다. 응답에 이메일 · 사용자 번호 · 무게를 싣지 않는다.
 - **"오늘"은 한국 시간(KST)**: 백엔드는 `TimeConfig` 의 `Clock` 을 쓴다. `LocalDate.now()` 를 새로 쓰지 않는다.
 - **오류 문구와 알림**: `alert()` 대신 `lib/toast.ts`, 오류는 `lib/httpError.ts`(`httpError`/`friendlyError`)로 한국어 문장만 보여 준다.
 - **이름**: 운동 모임 · 공동구매 · 응원 으로 통일(코드 식별자는 그대로 둬도 됨).

@@ -5,6 +5,7 @@ import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.service.DietService;
 import com.ajou.muscleup.service.FoodCatalogService;
 import com.ajou.muscleup.service.FoodPhotoService;
+import com.ajou.muscleup.service.MyFoodService;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +24,10 @@ import org.springframework.web.server.ResponseStatusException;
  *   GET    /api/diet/summary?from=&to=   날짜별 합계(최대 31일, 기본 최근 7일)
  *   GET    /api/diet/recent-foods        최근 적은 음식(다시 넣기)
  *   GET    /api/diet/foods?q=            음식 검색(공공 영양 DB, 100g · 100ml 기준 값, 최대 30개)
+ *   GET    /api/diet/my-foods            내 음식(검색에 없는 음식을 저장해 둔 것)
+ *   POST   /api/diet/my-foods            내 음식 저장(같은 이름이면 새 값으로) { name, amount, kcal, proteinG, carbG, fatG }
+ *   PUT    /api/diet/my-foods/{id}       고치기
+ *   DELETE /api/diet/my-foods/{id}       지우기
  *   POST   /api/diet/photo (image)       음식 사진 → 후보(저장 안 함, 하루 10번) — 확인 뒤 entries 에 source=PHOTO 로 저장
  *   POST   /api/diet/entries             기록 추가 { date, mealType, name, amount, kcal, proteinG, carbG, fatG }
  *   PUT    /api/diet/entries/{id}        고치기
@@ -38,6 +43,7 @@ public class DietController {
     private final DietService dietService;
     private final FoodCatalogService foodCatalogService;
     private final FoodPhotoService foodPhotoService;
+    private final MyFoodService myFoodService;
     private final UserRepository userRepository;
 
     @GetMapping("/day")
@@ -65,6 +71,28 @@ public class DietController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "검색어는 40자까지예요.");
         }
         return foodCatalogService.search(q);
+    }
+
+    @GetMapping("/my-foods")
+    public List<MyFoodService.FoodView> myFoods(@AuthenticationPrincipal String email) {
+        return myFoodService.list(me(email));
+    }
+
+    @PostMapping("/my-foods")
+    public MyFoodService.FoodView saveMyFood(@AuthenticationPrincipal String email, @RequestBody MyFoodService.FoodRequest req) {
+        return myFoodService.save(me(email), req);
+    }
+
+    @PutMapping("/my-foods/{id}")
+    public MyFoodService.FoodView updateMyFood(@AuthenticationPrincipal String email, @PathVariable Long id,
+                                               @RequestBody MyFoodService.FoodRequest req) {
+        return myFoodService.update(me(email), id, req);
+    }
+
+    @DeleteMapping("/my-foods/{id}")
+    public ResponseEntity<Void> deleteMyFood(@AuthenticationPrincipal String email, @PathVariable Long id) {
+        myFoodService.delete(me(email), id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/photo", consumes = "multipart/form-data")

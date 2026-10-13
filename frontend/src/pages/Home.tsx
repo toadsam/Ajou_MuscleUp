@@ -48,6 +48,9 @@ type CharacterProfile = {
   gender?: "MALE" | "FEMALE" | null;
   isResting?: boolean;
   growthParams?: GrowthParams | null;
+  /** 운동 직후 펌핑이 끝나는 시각(ms) · 장착한 민소매 색 */
+  pumpedUntil?: number | null;
+  tank?: string | null;
 };
 type StatsResponse = { mbti?: string | null };
 
@@ -408,6 +411,8 @@ export default function Home() {
               gender={character.gender}
               mbti={mbti}
               isResting={character.isResting ?? false}
+              pumped={(character.pumpedUntil ?? 0) > Date.now()}
+              tank={character.tank}
               size={170}
             />
           </div>
@@ -488,6 +493,8 @@ export default function Home() {
                     gender={character.gender}
                     mbti={mbti}
                     isResting={character.isResting ?? false}
+                    pumped={(character.pumpedUntil ?? 0) > Date.now()}
+                    tank={character.tank}
                     size={96}
                   />
                 ) : undefined

@@ -6,6 +6,7 @@ import com.ajou.muscleup.entity.GymStatus;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.WorkoutCrew;
 import com.ajou.muscleup.repository.UserRepository;
+import com.ajou.muscleup.service.AvatarLookService;
 import com.ajou.muscleup.service.CharacterService;
 import com.ajou.muscleup.service.FriendService;
 import com.ajou.muscleup.service.GymScope;
@@ -65,6 +66,7 @@ public class RealtimeTicketController {
     private final FriendService friendService;
     private final ObjectMapper objectMapper;
     private final GymScope gymScope;
+    private final AvatarLookService avatarLookService;
     private final byte[] secret;
 
     /** 들어갈 라운지 방. 비우면 광장 */
@@ -76,6 +78,7 @@ public class RealtimeTicketController {
             FriendService friendService,
             ObjectMapper objectMapper,
             GymScope gymScope,
+            AvatarLookService avatarLookService,
             Environment environment,
             @Value("${realtime.ticket.secret:}") String configuredSecret
     ) {
@@ -84,6 +87,7 @@ public class RealtimeTicketController {
         this.friendService = friendService;
         this.objectMapper = objectMapper;
         this.gymScope = gymScope;
+        this.avatarLookService = avatarLookService;
 
         String value = configuredSecret == null ? "" : configuredSecret.trim();
         boolean prod = environment.acceptsProfiles(Profiles.of("prod"));
@@ -135,6 +139,10 @@ public class RealtimeTicketController {
         claims.put("style", character.getStylePreset());
         claims.put("rest", character.isResting());
         claims.put("gp", character.getGrowthParams());
+        AvatarLookService.Look look = avatarLookService.look(user.getId());
+        claims.put("pump", look.pumped(System.currentTimeMillis()));
+        claims.put("tank", look.tank());
+        claims.put("ttl", look.title());
         claims.put("fr", friendIds);
         claims.put("room", roomGym == null ? "square" : "gym:" + roomGym.getId());
         claims.put("rname", roomGym == null ? "광장" : truncate(roomGym.getName(), 40));

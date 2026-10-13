@@ -108,6 +108,13 @@ export async function addCustomExercise(name: string, category: LiftCategory, bo
   return res.data;
 }
 
+/** 내 종목 이름 · 부위 고치기(코드는 그대로라 지난 기록도 새 이름으로 보인다) */
+export async function updateCustomExercise(code: string, name: string, category: LiftCategory) {
+  const res = await api.patch<LiftExerciseInfo>(`/api/lifts/custom/${code}`, { name, category });
+  setCustomExercises(customExercises.map((e) => (e.code === code ? res.data : e)));
+  return res.data;
+}
+
 export async function deleteCustomExercise(code: string) {
   await api.delete(`/api/lifts/custom/${code}`);
   setCustomExercises(customExercises.filter((e) => e.code !== code));

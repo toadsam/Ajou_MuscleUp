@@ -78,6 +78,12 @@ public class LiftController {
         return ResponseEntity.status(HttpStatus.CREATED).body(catalog.create(me(email), req));
     }
 
+    @PatchMapping("/custom/{code}")
+    public ExerciseCatalog.ExerciseDef updateCustom(@AuthenticationPrincipal String email, @PathVariable String code,
+                                                    @RequestBody ExerciseCatalog.CustomRequest req) {
+        return catalog.update(me(email), code, req);
+    }
+
     @DeleteMapping("/custom/{code}")
     public ResponseEntity<Void> deleteCustom(@AuthenticationPrincipal String email, @PathVariable String code) {
         catalog.delete(me(email), code);

@@ -12,6 +12,9 @@ type PlayerAvatarProps = {
   growthParams?: GrowthParams;
   mbti?: string;
   isResting?: boolean;
+  /** 장착한 민소매 색 · 운동 직후 펌핑(입장권에서) */
+  tank?: string;
+  isPumped?: boolean;
   facing?: "left" | "right";
   isMe?: boolean;
 };
@@ -43,6 +46,8 @@ export default function PlayerAvatar({
   growthParams,
   mbti,
   isResting = false,
+  tank,
+  isPumped = false,
   facing = "right",
   isMe = false,
 }: PlayerAvatarProps) {
@@ -61,6 +66,8 @@ export default function PlayerAvatar({
           gender={gender}
           mbti={mbti}
           isResting={isResting}
+          tank={tank}
+          pumped={isPumped}
           size={76}
         />
       </div>

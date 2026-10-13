@@ -43,6 +43,7 @@ public class CharacterServiceImpl implements CharacterService {
     private final CharacterProfileRepository profileRepository;
     private final CharacterEvolutionHistoryRepository historyRepository;
     private final CharacterGrowthCalculator growthCalculator;
+    private final AvatarLookService avatarLookService;
 
     @Override
     @Transactional
@@ -170,7 +171,11 @@ public class CharacterServiceImpl implements CharacterService {
 
     private CharacterProfileResponse toProfileResponse(CharacterProfile profile, UserBodyStats stats) {
         GrowthParamsResponse growthParams = growthCalculator.calculate(stats);
-        return CharacterProfileResponse.from(profile, growthParams, buildExpInfo(profile, stats));
+        AvatarLookService.Look look = avatarLookService.look(profile.getUser().getId());
+        return CharacterProfileResponse.from(profile, growthParams, buildExpInfo(profile, stats)).toBuilder()
+                .pumpedUntil(look.pumpedUntil())
+                .tank(look.tank())
+                .build();
     }
 
     /**

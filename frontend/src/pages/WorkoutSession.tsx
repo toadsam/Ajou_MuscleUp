@@ -4,11 +4,13 @@ import DialogFrame from "../components/DialogFrame";
 import ExercisePicker from "../components/lifts/ExercisePicker";
 import ExerciseIcon from "../components/lifts/ExerciseIcon";
 import LiftStage, { type StageCharacter, type StageCue } from "../components/workout/LiftStage";
+import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
 import { BOX_REASON } from "../lib/collection";
 import { exerciseGuide } from "../lib/exerciseGuide";
+import { useLiveHeartbeat, useLiveVisible } from "../lib/live";
 import { estimate1rm, exerciseInfo, formatKg, useCustomExercises, type LiftBest, type LiftExerciseInfo } from "../lib/lifts";
 import {
   REST_CHOICES,
@@ -127,6 +129,13 @@ export default function WorkoutSession() {
       alive = false;
     };
   }, [hasSession, character]);
+
+  // 라운지 "운동 구역"에 보이기: 마지막으로 만진 종목을 1분마다 알린다
+  const [liveVisible, toggleLive] = useLiveVisible();
+  const liveCode = session
+    ? (session.exercises[focus != null && focus < session.exercises.length ? focus : 0]?.code ?? null)
+    : null;
+  useLiveHeartbeat(Boolean(session) && liveVisible, "WORKOUT", liveCode);
 
   const toggleStage = () =>
     setStageHidden((prev) => {
@@ -323,6 +332,27 @@ export default function WorkoutSession() {
             <p className="text-sm font-bold text-plate-yellow">운동 끝</p>
             <h1 className="text-3xl">수고했어요!</h1>
           </header>
+          {character && (
+            // 펌핑: 1시간 동안 근육이 한 단계 커 보인다(서버 AvatarLookService — 친구 · 모임 · 라운지에서도)
+            <div className="dg-steel flex items-center gap-4 p-4">
+              <div className="flex h-[132px] w-[120px] flex-none items-end justify-center">
+                <AvatarRenderer
+                  avatarSeed={character.avatarSeed}
+                  tier={character.tier}
+                  stage={character.evolutionStage}
+                  growthParams={character.growthParams}
+                  gender={character.gender}
+                  mbti={mbti}
+                  pumped
+                  size={112}
+                />
+              </div>
+              <div className="space-y-1">
+                <p className="font-display text-xl text-plate-red">펌핑 완료!</p>
+                <p className="text-sm text-steel-300">1시간 동안 근육이 한 단계 커 보여요. 친구 · 모임 · 라운지에서도 보여요.</p>
+              </div>
+            </div>
+          )}
           <div className="dg-steel grid grid-cols-3 gap-2 p-4 text-center">
             <div>
               <p className="text-xs text-steel-400">운동 시간</p>
@@ -482,6 +512,10 @@ export default function WorkoutSession() {
           <label className="flex items-center gap-1.5">
             <input type="checkbox" checked={keepAwake} onChange={(e) => setKeepAwake(e.target.checked)} className="h-4 w-4" />
             화면 켜 두기
+          </label>
+          <label className="flex items-center gap-1.5">
+            <input type="checkbox" checked={liveVisible} onChange={toggleLive} className="h-4 w-4" />
+            라운지에 보이기
           </label>
         </div>
 
