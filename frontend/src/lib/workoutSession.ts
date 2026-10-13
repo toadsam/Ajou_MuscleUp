@@ -16,6 +16,8 @@ export type ActiveSession = {
   rest: { endsAt: number; seconds: number } | null;
   /** 세트를 끝내면 시작하는 휴식 길이(초) */
   restSeconds: number;
+  /** 마지막으로 세트를 체크한 시각(ms) — 끝내기를 잊었을 때 실제 끝난 시각을 짐작하는 데 쓴다 */
+  lastDoneAt?: number;
 };
 
 export type SessionSummary = {
@@ -89,6 +91,25 @@ export function formatClock(totalSec: number) {
 }
 
 /** "52분" · "1시간 5분" */
+/** 서버가 받는 운동 시간 한도(WorkoutSessionService.MAX_DURATION 과 같게) */
+export const MAX_SESSION_SEC = 6 * 3600;
+
+/**
+ * 끝내기를 잊어 한도를 넘긴 세션에서 고를 수 있는 "실제 운동 시간"(초).
+ * 마지막 세트를 체크한 시각이 있으면 그때 + 3분을 맨 앞(기본)으로.
+ */
+export function longSessionChoices(s: ActiveSession): { sec: number; label: string }[] {
+  const out: { sec: number; label: string }[] = [];
+  if (s.lastDoneAt && s.lastDoneAt > s.startedAt) {
+    const sec = Math.min(MAX_SESSION_SEC, Math.max(60, Math.round((s.lastDoneAt - s.startedAt) / 1000) + 180));
+    out.push({ sec, label: `마지막 세트까지 · ${formatDuration(sec)}` });
+  }
+  for (const min of [30, 60, 90, 120]) {
+    if (!out.some((c) => c.sec === min * 60)) out.push({ sec: min * 60, label: formatDuration(min * 60) });
+  }
+  return out;
+}
+
 export function formatDuration(totalSec: number) {
   const min = Math.max(1, Math.round(totalSec / 60));
   const h = Math.floor(min / 60);
