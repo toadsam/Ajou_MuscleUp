@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
 import ExercisePicker from "../components/lifts/ExercisePicker";
+import ExerciseIcon from "../components/lifts/ExerciseIcon";
 import LiftStage, { type StageCharacter, type StageCue } from "../components/workout/LiftStage";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
 import { BOX_REASON } from "../lib/collection";
+import { exerciseGuide } from "../lib/exerciseGuide";
 import { estimate1rm, exerciseInfo, formatKg, useCustomExercises, type LiftBest, type LiftExerciseInfo } from "../lib/lifts";
 import {
   REST_CHOICES,
@@ -101,6 +103,7 @@ export default function WorkoutSession() {
   const [focus, setFocus] = useState<number | null>(null);
   const [cue, setCue] = useState<StageCue | null>(null);
   const [stageHidden, setStageHidden] = useState(readStageHidden);
+  const [guideFor, setGuideFor] = useState<string | null>(null); // 자세 그림 · 팁을 펼친 종목
   const hasSession = Boolean(session);
 
   useEffect(() => {
@@ -491,27 +494,52 @@ export default function WorkoutSession() {
           return (
             <div key={`${ex.code}-${ei}`} className="dg-steel p-3 md:p-4">
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h2 className="font-display text-xl">{info?.label ?? ex.code}</h2>
-                  {ex.previous && (
-                    <p className="text-xs text-steel-400">
-                      지난번 {ex.previous.date.slice(5).replace("-", "/")}:{" "}
-                      {ex.previous.sets
-                        .slice(0, 5)
-                        .map((p) => (info?.bodyweight && !p.weightKg ? `${p.reps}회` : `${formatKg(p.weightKg)}×${p.reps}`))
-                        .join(" · ")}
-                    </p>
-                  )}
+                <div className="flex min-w-0 items-start gap-2">
+                  {info && <ExerciseIcon info={info} size={44} />}
+                  <div className="min-w-0">
+                    <h2 className="font-display text-xl">{info?.label ?? ex.code}</h2>
+                    {ex.previous && (
+                      <p className="text-xs text-steel-400">
+                        지난번 {ex.previous.date.slice(5).replace("-", "/")}:{" "}
+                        {ex.previous.sets
+                          .slice(0, 5)
+                          .map((p) => (info?.bodyweight && !p.weightKg ? `${p.reps}회` : `${formatKg(p.weightKg)}×${p.reps}`))
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeExercise(ei)}
-                  aria-label={`${info?.label ?? ex.code} 빼기`}
-                  className="dg-btn dg-btn-steel min-h-[32px] px-2 text-xs"
-                >
-                  빼기
-                </button>
+                <div className="flex flex-none gap-1">
+                  {info && (
+                    <button
+                      type="button"
+                      onClick={() => setGuideFor((cur) => (cur === ex.code ? null : ex.code))}
+                      aria-expanded={guideFor === ex.code}
+                      aria-label={`${info.label} 자세 보기`}
+                      className={`dg-btn min-h-[32px] px-2 text-xs ${guideFor === ex.code ? "dg-btn-primary" : "dg-btn-steel"}`}
+                    >
+                      자세
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeExercise(ei)}
+                    aria-label={`${info?.label ?? ex.code} 빼기`}
+                    className="dg-btn dg-btn-steel min-h-[32px] px-2 text-xs"
+                  >
+                    빼기
+                  </button>
+                </div>
               </div>
+              {info && guideFor === ex.code && (
+                <div className="dg-well mt-2 flex items-center gap-3 p-2">
+                  <ExerciseIcon info={info} size={88} animate />
+                  <div className="min-w-0 space-y-1 text-sm">
+                    <p className="text-xs text-plate-yellow">{exerciseGuide(info).target}</p>
+                    <p className="text-steel-200">{exerciseGuide(info).tip}</p>
+                  </div>
+                </div>
+              )}
               <table className="mt-2 w-full text-sm">
                 <thead>
                   <tr className="text-xs text-steel-400">
