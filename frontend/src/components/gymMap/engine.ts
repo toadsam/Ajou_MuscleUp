@@ -10,10 +10,22 @@
 //   tone        내 캐릭터 색(MBTI 계열 → AvatarRenderer 와 같은 규칙).
 //   decor       꾸미기 자리마다 놓은 물품(decor.ts). 바뀌면 배경을 다시 그리고, 놓인 물품 칸은 못 지나간다.
 //   decorEdit   꾸미기 중이면 자리마다 노란 점선 테두리, decorPick 은 고른 자리(깜빡임).
+//   decor.THEME 바닥 · 벽 테마(THEMES). decor 의 유니폼 · 머리색 · 새 직원 출근(staffLookOf) → 직원 NPC 모습과 인원.
 
 import { PLATE_ORDER } from "../gym/plates";
 import { temperament } from "../avatar/mbti";
-import { DEFAULT_LAYOUT, SLOTS, SLOT_IDS, paintDecor, solidTiles, type DecorLayout, type SlotId } from "./decor";
+import {
+  DEFAULT_LAYOUT,
+  SLOTS,
+  SLOT_IDS,
+  paintDecor,
+  solidTiles,
+  staffLookOf,
+  type DecorLayout,
+  type SlotId,
+  type StaffId,
+  type StaffLook,
+} from "./decor";
 
 export const TILE = 16;
 export const COLS = 16;
@@ -90,16 +102,21 @@ const GUESTS: Pal[] = [
   { h: "#7A4A2A", s: "#EDBD95", k: C.ink, r: C.green, b: "#3B3D44", w: C.chalk },
 ];
 /* ---------- 헬스장 직원 NPC ----------
-   실제 회원과 헷갈리지 않게: 모두 같은 노란 조끼 유니폼, 이름표는 역할(코치 · 관장님 · 직원)만.
-   닉네임 · 레벨은 없다. 실제 접속자는 라운지 벤치에 앉는 사람(인원 수 = 실시간 라운지 인원)뿐이다. */
-export type NpcId = "coach" | "owner" | "staff";
-export const NPC_ROLES: Record<NpcId, string> = { coach: "코치", owner: "관장님", staff: "직원" };
-const VEST = "#F0BE2E";
-const NPC_PAL: Record<NpcId, Pal> = {
-  coach: { h: "#1B1B1F", s: "#D9A577", k: C.ink, r: VEST, b: "#1C1D20", w: C.chalk },
-  owner: { h: "#8C8F96", s: "#E7B48C", k: C.ink, r: VEST, b: "#1C1D20", w: C.chalk },
-  staff: { h: "#5A3A22", s: "#F0C7A0", k: C.ink, r: VEST, b: "#1C1D20", w: C.chalk },
+   실제 회원과 헷갈리지 않게: 모두 같은 조끼 유니폼(색은 꾸미기에서 고름), 이름표는 역할(코치 · 관장님 · 직원 …)만.
+   닉네임 · 레벨은 없다. 실제 접속자는 라운지 벤치에 앉는 사람(인원 수 = 실시간 라운지 인원)뿐이다.
+   트레이너 · 청소 알바 · 수건 알바는 꾸미기에서 기록으로 얻어 "출근"시킨 사람에게만 나온다. */
+export type NpcId = StaffId;
+export const NPC_ROLES: Record<NpcId, string> = {
+  coach: "코치", owner: "관장님", staff: "직원", trainer: "트레이너", cleaner: "청소 알바", towel: "수건 알바",
 };
+/** 늘 있는 직원 */
+const BASE_NPCS: NpcId[] = ["coach", "owner", "staff"];
+const NPC_SKIN: Record<NpcId, string> = {
+  coach: "#D9A577", owner: "#E7B48C", staff: "#F0C7A0", trainer: "#E8B98F", cleaner: "#EDBD95", towel: "#F1C6AA",
+};
+const npcPal = (id: NpcId, look: StaffLook): Pal => ({
+  h: look.hair[id], s: NPC_SKIN[id], k: C.ink, r: look.uniform, b: "#1C1D20", w: C.chalk,
+});
 type NpcPlan =
   | { kind: "wander"; area: Rect; pause: [number, number] }
   | { kind: "route"; points: [number, number][]; pause: [number, number] };
@@ -110,6 +127,12 @@ const NPC_PLANS: Record<NpcId, { start: [number, number]; speed: number; plan: N
   owner: { start: [6, 22], speed: 1.8, plan: { kind: "route", points: [[6, 22], [7, 19], [6, 22], [3, 20]], pause: [4, 8] } },
   // 직원: 아래쪽 바닥을 걸레질하며 돈다
   staff: { start: [5, 15], speed: 1.4, plan: { kind: "route", points: [[5, 15], [8, 15], [8, 20], [5, 20]], pause: [0.6, 1.4] } },
+  // 트레이너: 가운데 바닥을 오가며 자세를 봐 준다
+  trainer: { start: [6, 9], speed: 2, plan: { kind: "wander", area: { c: 5, r: 7, w: 4, h: 8 }, pause: [2, 5] } },
+  // 청소 알바: 라운지 아래 · 러닝머신 앞을 닦으며 돈다
+  cleaner: { start: [9, 14], speed: 1.3, plan: { kind: "route", points: [[9, 14], [14, 14], [14, 15], [9, 15]], pause: [0.8, 1.8] } },
+  // 수건 알바: 출석 체크기 옆에서 수건을 건넨다
+  towel: { start: [11, 23], speed: 1.6, plan: { kind: "route", points: [[11, 23], [12, 22], [11, 23], [8, 22]], pause: [3, 6] } },
 };
 
 const SEATS: [number, number][] = [[166, 141], [198, 141], [212, 205]];
@@ -199,14 +222,57 @@ function nearestWalkable(c: number, r: number): [number, number] | null {
 
 /* ---------- 고정 배경 ---------- */
 
-function paintStatic(g: CanvasRenderingContext2D) {
+/** 바닥 · 벽 테마(꾸미기). 고무 매트가 원래 모습 */
+type ThemePal = {
+  floor: string;
+  seam: string;
+  specks: [string, string];
+  wall: string;
+  wallLine: string;
+  side: string;
+  pattern: "tiles" | "planks" | "slabs";
+  brick?: { face: string; mortar: string };
+};
+export const THEMES: Record<string, ThemePal> = {
+  THEME_RUBBER: { floor: C.floor, seam: C.seam, specks: [C.speck, "#1E1F22"], wall: C.wallFace, wallLine: "#2A2C31", side: "#2A2B30", pattern: "tiles" },
+  THEME_MAPLE: { floor: "#6B4A2E", seam: "#563A22", specks: ["#77543A", "#5F4128"], wall: "#3B3833", wallLine: "#2F2C28", side: "#33302B", pattern: "planks" },
+  THEME_CONCRETE: { floor: "#55575B", seam: "#46484C", specks: ["#62646A", "#4B4D51"], wall: "#43454A", wallLine: "#383A3F", side: "#3D3F44", pattern: "slabs" },
+  THEME_BRICK: {
+    floor: "#25211E", seam: "#1C1916", specks: ["#2E2925", "#1F1B18"], wall: "#7A3428", wallLine: "#4A2018", side: "#5E2A21", pattern: "tiles",
+    brick: { face: "#7A3428", mortar: "#4A2018" },
+  },
+};
+
+function paintStatic(g: CanvasRenderingContext2D, theme: ThemePal = THEMES.THEME_RUBBER) {
   const rnd = rng(11);
   const W = MAP_W;
   const H = MAP_H;
-  fill(g, 0, 0, W, H, C.floor);
-  for (let r = 2; r < 25; r += 2) fill(g, 16, r * TILE, W - 32, 1, C.seam);
-  for (let c = 1; c < 15; c += 2) fill(g, c * TILE, 32, 1, H - 48, C.seam);
-  for (let i = 0; i < 520; i++) fill(g, 16 + ((rnd() * (W - 32)) | 0), 32 + ((rnd() * (H - 48)) | 0), 1, 1, rnd() < 0.5 ? C.speck : "#1E1F22");
+  fill(g, 0, 0, W, H, theme.floor);
+  if (theme.pattern === "planks") {
+    // 나무 판자: 가로 8px 줄 + 엇갈린 이음매
+    for (let y = 32, row = 0; y < H - 16; y += 8, row++) {
+      fill(g, 16, y, W - 32, 1, theme.seam);
+      for (let x = 16 + ((row * 24) % 48); x < W - 16; x += 48) fill(g, x, y, 1, 8, theme.seam);
+    }
+  } else if (theme.pattern === "slabs") {
+    // 콘크리트 판: 64px 줄눈 + 초크 자국
+    for (let y = 32; y < H - 16; y += 64) fill(g, 16, y, W - 32, 1, theme.seam);
+    for (let x = 16; x < W - 16; x += 64) fill(g, x, 32, 1, H - 48, theme.seam);
+  } else {
+    for (let r = 2; r < 25; r += 2) fill(g, 16, r * TILE, W - 32, 1, theme.seam);
+    for (let c = 1; c < 15; c += 2) fill(g, c * TILE, 32, 1, H - 48, theme.seam);
+  }
+  for (let i = 0; i < 520; i++) fill(g, 16 + ((rnd() * (W - 32)) | 0), 32 + ((rnd() * (H - 48)) | 0), 1, 1, rnd() < 0.5 ? theme.specks[0] : theme.specks[1]);
+  if (theme.pattern === "slabs") {
+    const chalk = rng(29);
+    for (let i = 0; i < 9; i++) {
+      const x = 24 + ((chalk() * (W - 64)) | 0);
+      const y = 140 + ((chalk() * (H - 200)) | 0);
+      g.globalAlpha = 0.35;
+      fill(g, x, y, 4 + ((chalk() * 6) | 0), 2, C.chalk);
+      g.globalAlpha = 1;
+    }
+  }
   // 메이플 플랫폼
   fill(g, 16, 32, 96, 96, C.maple);
   for (let y = 38; y < 128; y += 6) fill(g, 16, y, 96, 1, C.mapleD);
@@ -230,17 +296,25 @@ function paintStatic(g: CanvasRenderingContext2D) {
   }
   // 바닥 원판 무늬 · 화분은 꾸미기 물품(decor.ts)으로 옮겼다
   // 벽
-  fill(g, 0, 0, W, 32, C.wallFace);
+  fill(g, 0, 0, W, 32, theme.wall);
   fill(g, 0, 0, W, 5, C.wallCap);
-  fill(g, 0, 18, W, 1, "#2A2C31");
-  for (let x = 0; x < W; x += 32) {
-    fill(g, x, 5, 1, 27, "#2A2C31");
-    for (const [dx, dy] of [[3, 8], [28, 8], [3, 28], [28, 28]]) fill(g, x + dx, dy, 1, 1, C.rivet);
+  if (theme.brick) {
+    // 벽돌: 6px 줄, 16px 벽돌을 엇갈리게
+    for (let y = 5, row = 0; y < 31; y += 6, row++) {
+      fill(g, 0, y, W, 1, theme.brick.mortar);
+      for (let x = row % 2 ? 8 : 0; x < W; x += 16) fill(g, x, y, 1, 6, theme.brick.mortar);
+    }
+  } else {
+    fill(g, 0, 18, W, 1, theme.wallLine);
+    for (let x = 0; x < W; x += 32) {
+      fill(g, x, 5, 1, 27, theme.wallLine);
+      for (const [dx, dy] of [[3, 8], [28, 8], [3, 28], [28, 28]]) fill(g, x + dx, dy, 1, 1, C.rivet);
+    }
   }
   fill(g, 0, 31, W, 1, C.ink);
-  fill(g, 0, 32, 16, H - 48, "#2A2B30");
+  fill(g, 0, 32, 16, H - 48, theme.side);
   fill(g, 15, 32, 1, H - 48, C.ink);
-  fill(g, W - 16, 32, 16, H - 48, "#2A2B30");
+  fill(g, W - 16, 32, 16, H - 48, theme.side);
   fill(g, W - 16, 32, 1, H - 48, C.ink);
   for (let y = 40; y < H - 16; y += 32) {
     fill(g, 6, y, 1, 1, C.rivet);
@@ -352,6 +426,21 @@ function paintStatic(g: CanvasRenderingContext2D) {
   fill(g, 153, 342, 14, 2, C.steelD);
 }
 
+/** 꾸미기 창: 테마 미리보기(벽 · 바닥 · 플랫폼 모서리가 보이는 부분) */
+export function paintThemePreview(canvas: HTMLCanvasElement, theme: string) {
+  const full = document.createElement("canvas");
+  full.width = MAP_W;
+  full.height = MAP_H;
+  const fg = full.getContext("2d");
+  const g = canvas.getContext("2d");
+  if (!fg || !g) return;
+  paintStatic(fg, THEMES[theme] ?? THEMES.THEME_RUBBER);
+  canvas.width = 64;
+  canvas.height = 54;
+  g.imageSmoothingEnabled = false;
+  g.drawImage(full, 88, 0, 64, 54, 0, 0, 64, 54);
+}
+
 /* ---------- 캐릭터 (10×16 픽셀) ---------- */
 
 const BASE = ["..hhhhhh..", ".hhhhhhhh.", ".hssssssh.", ".skssssks.", ".ssssssss.", "..ssssss..", "...ssss...", ".rrrrrrrr.", "srrrrrrrrs", "srrrrrrrrs", "ss.rrrr.ss", "..bbbbbb.."];
@@ -403,6 +492,17 @@ function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal: Pal, o
   }
 }
 
+/** 꾸미기 창: 직원 한 명(지도와 같은 10×16 그림) */
+export function paintStaffPreview(canvas: HTMLCanvasElement, id: NpcId, look: StaffLook) {
+  canvas.width = 16;
+  canvas.height = 20;
+  const g = canvas.getContext("2d");
+  if (!g) return;
+  g.imageSmoothingEnabled = false;
+  fill(g, 0, 0, 16, 20, C.floor);
+  drawChar(g, 3, 2, npcPal(id, look));
+}
+
 /* ---------- 컨트롤러 ---------- */
 
 export type MapState = {
@@ -422,7 +522,7 @@ export type MapCallbacks = {
   /** 원판이 바벨에 꽂히는 순간 */
   onPlateLanded: () => void;
   /** 매 프레임 직원 NPC 머리 위치(픽셀) — 이름표 · 말풍선 위치용 */
-  onNpcs?: (pos: Record<NpcId, [number, number]>) => void;
+  onNpcs?: (pos: Partial<Record<NpcId, [number, number]>>) => void;
   /** 직원 NPC 를 눌렀을 때 */
   onNpcTalk?: (id: NpcId) => void;
 };
@@ -454,12 +554,13 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   const bgCtx = bg.getContext("2d");
   const paintBg = (layout: DecorLayout) => {
     if (!bgCtx) return;
-    paintStatic(bgCtx);
+    paintStatic(bgCtx, THEMES[layout.THEME ?? ""] ?? THEMES.THEME_RUBBER);
     paintDecor(bgCtx, layout);
   };
 
   let state: MapState = { ...initial };
   let layout = state.decor ?? DEFAULT_LAYOUT;
+  let look = staffLookOf(layout);
   setDecorSolid(layout);
   paintBg(layout);
   let pal = palOf(state.tone);
@@ -468,11 +569,25 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   const player: Walker = { x: START[0], y: START[1], path: [], speed: WALK_SPEED, anim: 0, moving: false, back: true };
   let overUntil = 0;
   type Npc = { id: NpcId; w: Walker; wait: number; route: number; talkUntil: number };
-  const npcs: Npc[] = (Object.keys(NPC_PLANS) as NpcId[]).map((id) => {
+  const allNpcs: Npc[] = (Object.keys(NPC_PLANS) as NpcId[]).map((id) => {
     const p = NPC_PLANS[id];
     return { id, w: { x: p.start[0], y: p.start[1], path: [], speed: p.speed, anim: 0, moving: false, back: false }, wait: 1 + Math.random() * 2, route: 0, talkUntil: 0 };
   });
-  const npcPos = {} as Record<NpcId, [number, number]>;
+  /** 지금 지도에 있는 직원(늘 있는 셋 + 출근시킨 새 직원) */
+  let npcs: Npc[] = [];
+  const syncNpcs = () => {
+    const on = new Set<NpcId>([...BASE_NPCS, ...look.hired]);
+    npcs = allNpcs.filter((n) => on.has(n.id));
+    allNpcs.forEach((n) => {
+      if (on.has(n.id)) return;
+      // 쉬는 직원은 다음 출근 때 처음 자리에서
+      [n.w.x, n.w.y] = NPC_PLANS[n.id].start;
+      n.w.path = [];
+      delete npcPos[n.id];
+    });
+  };
+  const npcPos = {} as Partial<Record<NpcId, [number, number]>>;
+  syncNpcs();
   let zone: ZoneId | null = null;
   let flights: Flight[] = [];
   let particles: Particle[] = [];
@@ -589,7 +704,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     g.globalAlpha = 0.35;
     fill(g, px, py + 15, 10, 2, "#000");
     g.globalAlpha = 1;
-    drawChar(g, px, py, NPC_PAL[n.id], { frame, back: n.w.back });
+    drawChar(g, px, py, npcPal(n.id, look), { frame, back: n.w.back });
     if (n.id === "staff") {
       // 걸레: 자루 + 걸레 머리(걸을 때 좌우로 흔들림)
       const sway = n.w.moving ? (frame === 1 ? -1 : 1) : 0;
@@ -598,6 +713,26 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       fill(g, px + 10 + sway, py + 15, 3, 1, "#D9D7CF");
     }
     if (n.id === "coach") fill(g, px + 4, py + 8, 2, 1, C.red); // 호루라기
+    if (n.id === "trainer") {
+      // 클립보드
+      fill(g, px + 9, py + 7, 4, 6, C.ink);
+      fill(g, px + 10, py + 8, 2, 4, C.chalk);
+      fill(g, px + 10, py + 7, 2, 1, C.steelL);
+    }
+    if (n.id === "cleaner") {
+      // 분무기 + 걸레
+      fill(g, px - 3, py + 7, 3, 5, C.ink);
+      fill(g, px - 2, py + 8, 1, 3, C.blue);
+      fill(g, px - 3, py + 6, 2, 1, C.chalk);
+      fill(g, px + 10, py + 10, 3, 2, "#D9D7CF");
+    }
+    if (n.id === "towel") {
+      // 팔에 걸친 수건 더미
+      fill(g, px + 9, py + 7, 5, 5, C.ink);
+      fill(g, px + 10, py + 8, 3, 1, C.chalk);
+      fill(g, px + 10, py + 9, 3, 1, "#9EC1E8");
+      fill(g, px + 10, py + 10, 3, 1, C.chalk);
+    }
     npcPos[n.id] = [px + 5, py - 3];
   };
 
@@ -755,8 +890,10 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       if (next.tone) pal = palOf(state.tone);
       if (next.decor && next.decor !== layout) {
         layout = next.decor;
+        look = staffLookOf(layout);
         setDecorSolid(layout);
         paintBg(layout);
+        syncNpcs();
       }
       if (platesChanged && !flights.length) shownPlates = state.plates;
     },

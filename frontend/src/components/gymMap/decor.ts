@@ -15,7 +15,45 @@ export type SlotId =
   | "CORNER_LEFT"
   | "CORNER_RIGHT";
 
-export type DecorLayout = Partial<Record<SlotId, string | null>>;
+/** 지도 위 자리가 아닌 설정 칸: 테마 · 유니폼 · 새 직원 출근 · 직원별 머리색(서버 GymDecorItem.Slot 과 같다) */
+export type StaffId = "coach" | "owner" | "staff" | "trainer" | "cleaner" | "towel";
+export type HireSlot = "HIRE_TRAINER" | "HIRE_CLEANER" | "HIRE_TOWEL";
+export type HairSlot = "HAIR_COACH" | "HAIR_OWNER" | "HAIR_STAFF" | "HAIR_TRAINER" | "HAIR_CLEANER" | "HAIR_TOWEL";
+export type DecorSlot = SlotId | "THEME" | "UNIFORM" | HireSlot | HairSlot;
+
+export type DecorLayout = Partial<Record<DecorSlot, string | null>>;
+
+export const HAIR_SLOT: Record<StaffId, HairSlot> = {
+  coach: "HAIR_COACH", owner: "HAIR_OWNER", staff: "HAIR_STAFF",
+  trainer: "HAIR_TRAINER", cleaner: "HAIR_CLEANER", towel: "HAIR_TOWEL",
+};
+/** 새 직원: 출근 자리 · 물품 코드 */
+export const HIRES: { id: StaffId; slot: HireSlot; code: string }[] = [
+  { id: "trainer", slot: "HIRE_TRAINER", code: "TRAINER" },
+  { id: "cleaner", slot: "HIRE_CLEANER", code: "CLEANER" },
+  { id: "towel", slot: "HIRE_TOWEL", code: "TOWEL" },
+];
+
+export const UNIFORM_COLOR: Record<string, string> = {
+  UNIFORM_YELLOW: "#F0BE2E", UNIFORM_ORANGE: "#E8772E", UNIFORM_WHITE: "#E4E2DA", UNIFORM_CHARCOAL: "#3A3C42",
+};
+export const HAIR_COLOR: Record<string, string> = {
+  HAIR_BLACK: "#1B1B1F", HAIR_BROWN: "#5A3A22", HAIR_GRAY: "#8C8F96", HAIR_BLOND: "#C9A25A",
+};
+
+/** 지도에 그릴 직원 모습(레이아웃에서 뽑는다) */
+export type StaffLook = { hired: StaffId[]; uniform: string; hair: Record<StaffId, string> };
+export function staffLookOf(layout: DecorLayout): StaffLook {
+  const hair = {} as Record<StaffId, string>;
+  (Object.keys(HAIR_SLOT) as StaffId[]).forEach((id) => {
+    hair[id] = HAIR_COLOR[layout[HAIR_SLOT[id]] ?? DEFAULT_LAYOUT[HAIR_SLOT[id]] ?? ""] ?? HAIR_COLOR.HAIR_BLACK;
+  });
+  return {
+    hired: HIRES.filter((h) => layout[h.slot] === h.code).map((h) => h.id),
+    uniform: UNIFORM_COLOR[layout.UNIFORM ?? ""] ?? UNIFORM_COLOR.UNIFORM_YELLOW,
+    hair,
+  };
+}
 
 type Rect = { c: number; r: number; w: number; h: number };
 export type SlotSpec = {
@@ -40,7 +78,12 @@ export const SLOTS: Record<SlotId, SlotSpec> = {
 export const SLOT_IDS = Object.keys(SLOTS) as SlotId[];
 
 /** 서버 응답 전 · 로그인 전에 보이는 모습(지금까지의 지도와 같다) */
-export const DEFAULT_LAYOUT: DecorLayout = { CORNER_TOP: "PLANT", CORNER_LEFT: "PLANT", CORNER_RIGHT: "PLANT", CENTER: "RING_RED" };
+export const DEFAULT_LAYOUT: DecorLayout = {
+  CORNER_TOP: "PLANT", CORNER_LEFT: "PLANT", CORNER_RIGHT: "PLANT", CENTER: "RING_RED",
+  THEME: "THEME_RUBBER", UNIFORM: "UNIFORM_YELLOW",
+  HAIR_COACH: "HAIR_BLACK", HAIR_OWNER: "HAIR_GRAY", HAIR_STAFF: "HAIR_BROWN",
+  HAIR_TRAINER: "HAIR_BLACK", HAIR_CLEANER: "HAIR_BROWN", HAIR_TOWEL: "HAIR_BLOND",
+};
 
 const K = {
   ink: "#0E0E10", steel: "#4A4C53", steelD: "#2E3035", steelL: "#6B6E76", chalk: "#F3F1EA",
