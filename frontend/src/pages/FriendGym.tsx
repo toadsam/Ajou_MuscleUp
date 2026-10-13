@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent
 import { Link, useParams } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
-import { DEFAULT_LAYOUT, type DecorLayout } from "../components/gymMap/decor";
+import { DEFAULT_LAYOUT, type DecorLayout, type SceneId } from "../components/gymMap/decor";
+import { SCENES } from "../components/gymMap/scenes";
+import ReportDialog from "../components/ReportDialog";
 import { MAP_H, MAP_W, createGymMap, toneForMbti, type GymMapController } from "../components/gymMap/engine";
 import { errorStatus, friendlyError } from "../lib/httpError";
 import { GUESTBOOK_MAX, deleteGuestbook, fetchFriendGym, writeGuestbook, type FriendGym as FriendGymView } from "../lib/gymVisit";
@@ -12,6 +14,7 @@ import { logEvent } from "../utils/analytics";
 
 // 친구 헬스장 구경 — 친구가 꾸민 헬스장(물품 · 테마 · 직원)을 내 캐릭터로 걸어 다니며 보고, 방명록에 한 줄 남긴다.
 // 친구 헬스장의 장소(출석 체크기 등)는 눌러도 아무 화면도 열지 않는다(내 기록 화면으로 가면 헷갈려서).
+// 친구가 연 공간(2층 · 러닝 트랙 · 식당)은 지도 위 칸으로 오간다. 다른 공간의 출구에 서면 1층으로.
 
 /** 서버가 준 한국어 message 는 살리고, 그 밖은 우리 문장으로 */
 function apiErrorMessage(e: unknown, fallback: string) {
@@ -27,6 +30,8 @@ export default function FriendGym() {
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [scene, setScene] = useState<SceneId>("MAIN");
+  const [reportId, setReportId] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<GymMapController | null>(null);
 
@@ -63,14 +68,31 @@ export default function FriendGym() {
     const map = createGymMap(
       canvas,
       { plates: 0, checked: true, loungeCount: 0, tone: toneForMbti(null), decor: layout },
-      { onZone: () => undefined, onPlayer: () => undefined, onPlateLanded: () => undefined },
+      {
+        // 출구에 서면 1층으로(포탈 창 대신 지도 위 칸을 쓴다)
+        onZone: (z) => {
+          if (z === "exit") {
+            map.setState({ scene: "MAIN" });
+            setScene("MAIN");
+          }
+        },
+        onPlayer: () => undefined,
+        onPlateLanded: () => undefined,
+      },
     );
+    setScene("MAIN");
     mapRef.current = map;
     return () => {
       map.destroy();
       mapRef.current = null;
     };
   }, [ready, layout]);
+
+  const goScene = (next: SceneId) => {
+    mapRef.current?.setState({ scene: next });
+    setScene(next);
+    void logEvent("friends", "gym_visit_scene", { scene: next });
+  };
 
   const onPointerDown = (e: PointerEvent<HTMLCanvasElement>) => {
     const b = e.currentTarget.getBoundingClientRect();
@@ -144,6 +166,23 @@ export default function FriendGym() {
         </div>
       </section>
 
+      {gym && gym.spaces.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto" role="tablist" aria-label="공간">
+          {gym.spaces.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="tab"
+              aria-selected={scene === s}
+              onClick={() => goScene(s)}
+              className={`dg-chip flex-shrink-0 text-xs ${scene === s ? "bg-plate-yellow text-steel-950" : ""}`}
+            >
+              {s === "MAIN" ? "1층" : SCENES[s].name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-lg border-[3px] border-black bg-black">
         {gym ? (
           <canvas
@@ -191,6 +230,11 @@ export default function FriendGym() {
                 </p>
                 <p className="mt-1 break-words text-sm">{entry.message}</p>
               </div>
+              {!entry.mine && (
+                <button type="button" onClick={() => setReportId(entry.id)} className="flex-shrink-0 text-xs text-steel-400 hover:text-plate-yellow">
+                  신고
+                </button>
+              )}
               {entry.canDelete && (
                 <button type="button" onClick={() => void remove(entry.id)} className="flex-shrink-0 text-xs text-steel-400 hover:text-plate-red">
                   지우기
@@ -200,6 +244,7 @@ export default function FriendGym() {
           ))}
         </ul>
       </section>
+      <ReportDialog targetType="GYM_GUESTBOOK" targetId={reportId ?? 0} open={reportId !== null} onClose={() => setReportId(null)} />
     </div>
   );
 }

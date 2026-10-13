@@ -5,5 +5,7 @@ public enum ReportTargetType {
     BRAG_POST,
     BRAG_COMMENT,
     PROTEIN,
-    USER
+    USER,
+    /** 홈 헬스장 방명록 한 줄. DB 제약은 V7 이전 SQL 로 풀었다 */
+    GYM_GUESTBOOK
 }

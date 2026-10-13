@@ -1,7 +1,7 @@
 // 친구 헬스장 구경 · 방명록 — 서버 /api/gym-decor/friends/{id}, /api/gym-decor/guestbook.
 // 친구(서로 차단 안 함)만 볼 수 있다. 방명록은 한 줄 60자, 같은 헬스장에 하루 3개.
 import { api } from "./api";
-import type { DecorSlot } from "../components/gymMap/decor";
+import type { DecorSlot, SceneId } from "../components/gymMap/decor";
 import type { FriendCharacterSnapshot } from "../types/friend";
 
 export const GUESTBOOK_MAX = 60;
@@ -21,6 +21,8 @@ export type FriendGym = {
   nickname: string;
   character: FriendCharacterSnapshot | null;
   slots: { slot: DecorSlot; code: string | null }[];
+  /** 친구가 연 공간(MAIN · FLOOR2 · TRACK · DINER) */
+  spaces: SceneId[];
   guestbook: GuestbookEntry[];
 };
 

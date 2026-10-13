@@ -18,6 +18,7 @@ import {
   type DecorSlot,
   type SceneId,
   type SlotId,
+  type StaffId,
   type StaffLook,
 } from "./decor";
 import { LIFT_EXERCISES } from "../../lib/lifts";
@@ -26,6 +27,7 @@ import { exerciseGuide } from "../../lib/exerciseGuide";
 import { fetchDecor, layoutOf, placeDecor, readSeen, writeSeen, type DecorItem, type DecorView } from "../../lib/gymDecor";
 import { deleteGuestbook, fetchMyGuestbook, readGuestbookSeen, writeGuestbookSeen, type GuestbookEntry } from "../../lib/gymVisit";
 import { timeAgo } from "../../lib/timeAgo";
+import ReportDialog from "../ReportDialog";
 import { friendlyError } from "../../lib/httpError";
 import { toast as appToast } from "../../lib/toast";
 import {
@@ -41,6 +43,7 @@ import {
   paintThemePreview,
   toneForMbti,
   NPC_ROLES,
+  SCENE_NPCS,
   type NpcId,
   type GymMapController,
   type MapZone,
@@ -88,7 +91,21 @@ const COACH_TIPS = [
 ];
 const STAFF_LINES = ["바닥 닦는 중이에요. 미끄러우니 조심!", "덤벨은 쓰고 나서 제자리에 부탁해요.", "오늘도 매트 반짝반짝!"];
 const CLEANER_LINES = ["기구 닦는 중이에요. 쓰고 나면 한 번 닦아 주세요!", "러닝머신 손잡이까지 반짝반짝!", "라운지 벤치 소독 끝!"];
-const BASE_STAFF: NpcId[] = ["coach", "owner", "staff"];
+const BASE_STAFF: StaffId[] = ["coach", "owner", "staff"];
+const RUN_TIPS = [
+  "처음 10분은 옆 사람과 대화가 될 만큼 천천히!",
+  "보폭은 짧게, 발은 몸 바로 아래에 디뎌요.",
+  "어깨 힘 빼고 팔은 앞뒤로만 흔들어요.",
+  "숨이 차면 걷기 1분, 다시 달리기. 그것도 러닝이에요.",
+  "기록은 앱 러닝 화면에서 켜 두면 거리가 쌓여요.",
+];
+const DIET_TIPS = [
+  "단백질은 한 번에 몰지 말고 끼니마다 나눠 먹어요.",
+  "운동 끝나고 탄수화물도 같이 먹어야 회복이 빨라요.",
+  "물은 하루 1.5~2L, 운동하는 날은 더!",
+  "자주 먹는 음식은 식단의 '내 음식'에 저장해 두면 편해요.",
+  "채소 한 접시 먼저 먹으면 과식이 줄어요.",
+];
 const pickOne = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
 const pct = (x: number, y: number) => ({ left: `${(x / MAP_W) * 100}%`, top: `${(y / MAP_H) * 100}%` });
@@ -176,6 +193,7 @@ export default function GymMap(props: Props) {
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [bookOpen, setBookOpen] = useState(false);
   const [bookSeen, setBookSeen] = useState(() => readGuestbookSeen());
+  const [reportId, setReportId] = useState<number | null>(null);
   const [placing, setPlacing] = useState(false);
   const [seen, setSeen] = useState<Set<string> | null>(() => readSeen());
   const talkTimer = useRef<number | undefined>(undefined);
@@ -209,6 +227,8 @@ export default function GymMap(props: Props) {
     }
     if (id === "cleaner") return pickOne(CLEANER_LINES);
     if (id === "towel") return f.checkedToday ? "오늘 땀 좀 흘렸죠? 수건 여기요!" : "수건 챙겨 가요. 다 쓰면 바구니에!";
+    if (id === "runcoach") return pickOne(RUN_TIPS);
+    if (id === "dietitian") return pickOne(DIET_TIPS);
     return pickOne(STAFF_LINES);
   };
   const say = (id: NpcId, text: string) => {
@@ -436,8 +456,11 @@ export default function GymMap(props: Props) {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
-      if (document.hidden || talkingId.current || sceneRef.current !== "MAIN") return;
-      const who = pickOne<NpcId>(["coach", "staff", "coach", ...hiredRef.current]);
+      if (document.hidden || talkingId.current) return;
+      const here = sceneRef.current;
+      const people: NpcId[] = here === "MAIN" ? ["coach", "staff", "coach", ...hiredRef.current] : SCENE_NPCS[here];
+      if (!people.length) return;
+      const who = pickOne<NpcId>(people);
       sayRef.current(who, lineRef.current(who));
     }, 15000);
     return () => {
@@ -479,6 +502,8 @@ export default function GymMap(props: Props) {
     setScene(next);
     setZone(null);
     setPick(null);
+    talkingId.current = null;
+    setTalk(null);
     showToast(next === "MAIN" ? "1층으로 돌아왔어요" : `${SCENES[next].name}에 왔어요`);
     void logEvent("home", "map_scene", { scene: next });
   };
@@ -821,12 +846,12 @@ export default function GymMap(props: Props) {
               ref={(el) => {
                 npcTagRefs.current[id] = el;
               }}
-              className={`gm-npc ${scene === "MAIN" && (BASE_STAFF.includes(id) || look.hired.includes(id)) ? "" : "off"}`}
+              className={`gm-npc ${(scene === "MAIN" ? ([...BASE_STAFF, ...look.hired] as NpcId[]).includes(id) : SCENE_NPCS[scene].includes(id)) ? "" : "off"}`}
             >
               {NPC_ROLES[id]}
             </div>
           ))}
-          {talk && scene === "MAIN" && (
+          {talk && (
             <div key={talk.key} ref={bubbleRef} className="gm-bubble" role="status">
               <b>{NPC_ROLES[talk.id]}</b> {talk.text}
             </div>
@@ -915,9 +940,14 @@ export default function GymMap(props: Props) {
                         </small>
                         <p>{entry.message}</p>
                       </div>
-                      <button type="button" className="gm-textbtn" onClick={() => void removeEntry(entry.id)}>
-                        지우기
-                      </button>
+                      <span className="gm-book-actions">
+                        <button type="button" className="gm-textbtn" onClick={() => setReportId(entry.id)}>
+                          신고
+                        </button>
+                        <button type="button" className="gm-textbtn" onClick={() => void removeEntry(entry.id)}>
+                          지우기
+                        </button>
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -1187,6 +1217,8 @@ export default function GymMap(props: Props) {
           </section>
         )}
       </div>
+
+      <ReportDialog targetType="GYM_GUESTBOOK" targetId={reportId ?? 0} open={reportId !== null} onClose={() => setReportId(null)} />
 
       <div className="gm-dock-cap">
         <span>바로 가기</span>

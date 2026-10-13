@@ -606,6 +606,7 @@
 .gm-book small b { color: var(--dg-chalk); }
 .gm-book p { margin: 2px 0 0 !important; overflow-wrap: anywhere; color: var(--dg-chalk) !important; }
 .gm-book .gm-textbtn { flex: none; color: var(--dg-muted); }
+.gm-book-actions { display: flex; flex: none; gap: 10px; }
 
 /* ---------- 다른 공간(2층 · 러닝 트랙 · 식당) ---------- */
 

@@ -117,18 +117,30 @@ const GUESTS: Pal[] = [
 /* ---------- 헬스장 직원 NPC ----------
    실제 회원과 헷갈리지 않게: 모두 같은 조끼 유니폼(색은 꾸미기에서 고름), 이름표는 역할(코치 · 관장님 · 직원 …)만.
    닉네임 · 레벨은 없다. 실제 접속자는 라운지 벤치에 앉는 사람(인원 수 = 실시간 라운지 인원)뿐이다.
-   트레이너 · 청소 알바 · 수건 알바는 꾸미기에서 기록으로 얻어 "출근"시킨 사람에게만 나온다. */
-export type NpcId = StaffId;
+   트레이너 · 청소 알바 · 수건 알바는 꾸미기에서 기록으로 얻어 "출근"시킨 사람에게만 나온다.
+   러닝 코치(트랙) · 영양사(식당)는 그 공간에만 늘 있다. */
+export type NpcId = StaffId | "runcoach" | "dietitian";
 export const NPC_ROLES: Record<NpcId, string> = {
   coach: "코치", owner: "관장님", staff: "직원", trainer: "트레이너", cleaner: "청소 알바", towel: "수건 알바",
+  runcoach: "러닝 코치", dietitian: "영양사",
 };
+/** 1층 밖 공간에 있는 직원(1층은 늘 있는 셋 + 출근한 새 직원) */
+export const SCENE_NPCS: Record<Exclude<SceneId, "MAIN">, NpcId[]> = { FLOOR2: [], TRACK: ["runcoach"], DINER: ["dietitian"] };
+const EXTRA_HAIR: Partial<Record<NpcId, string>> = { runcoach: "#2B2420", dietitian: "#5A3A22" };
 /** 늘 있는 직원 */
 const BASE_NPCS: NpcId[] = ["coach", "owner", "staff"];
 const NPC_SKIN: Record<NpcId, string> = {
   coach: "#D9A577", owner: "#E7B48C", staff: "#F0C7A0", trainer: "#E8B98F", cleaner: "#EDBD95", towel: "#F1C6AA",
+  runcoach: "#D9A577", dietitian: "#F0C7A0",
 };
 const npcPal = (id: NpcId, look: StaffLook): Pal => ({
-  h: look.hair[id], s: NPC_SKIN[id], k: C.ink, r: look.uniform, b: "#1C1D20", w: C.chalk,
+  h: look.hair[id as StaffId] ?? EXTRA_HAIR[id] ?? "#1B1B1F",
+  s: NPC_SKIN[id],
+  k: C.ink,
+  // 영양사는 흰 가운, 나머지는 헬스장 조끼
+  r: id === "dietitian" ? "#E4E2DA" : look.uniform,
+  b: "#1C1D20",
+  w: C.chalk,
 });
 type NpcPlan =
   | { kind: "wander"; area: Rect; pause: [number, number] }
@@ -146,6 +158,14 @@ const NPC_PLANS: Record<NpcId, { start: [number, number]; speed: number; plan: N
   cleaner: { start: [9, 14], speed: 1.3, plan: { kind: "route", points: [[9, 14], [14, 14], [14, 15], [9, 15]], pause: [0.8, 1.8] } },
   // 수건 알바: 출석 체크기 옆에서 수건을 건넨다
   towel: { start: [11, 23], speed: 1.6, plan: { kind: "route", points: [[11, 23], [12, 22], [11, 23], [8, 22]], pause: [3, 6] } },
+  // 러닝 코치: 트랙을 한 바퀴씩 뛴다
+  runcoach: {
+    start: [2, 12],
+    speed: 3.6,
+    plan: { kind: "route", points: [[2, 18], [4, 22], [7, 23], [11, 22], [13, 18], [13, 8], [11, 3], [7, 2], [4, 3], [2, 8]], pause: [0.1, 0.4] },
+  },
+  // 영양사: 조리대 앞을 오가며 식단을 봐 준다
+  dietitian: { start: [5, 5], speed: 1.4, plan: { kind: "route", points: [[5, 5], [11, 5], [11, 6], [5, 6]], pause: [1.5, 3.5] } },
 };
 
 const SEATS: [number, number][] = [[166, 141], [198, 141], [212, 205]];
@@ -619,7 +639,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   /** 지금 지도에 있는 직원(늘 있는 셋 + 출근시킨 새 직원) */
   let npcs: Npc[] = [];
   const syncNpcs = () => {
-    const on = new Set<NpcId>([...BASE_NPCS, ...look.hired]);
+    const on = new Set<NpcId>(currentScene === "MAIN" ? [...BASE_NPCS, ...look.hired] : SCENE_NPCS[currentScene]);
     npcs = allNpcs.filter((n) => on.has(n.id));
     allNpcs.forEach((n) => {
       if (on.has(n.id)) return;
@@ -770,6 +790,19 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       fill(g, px - 3, py + 6, 2, 1, C.chalk);
       fill(g, px + 10, py + 10, 3, 2, "#D9D7CF");
     }
+    if (n.id === "runcoach") {
+      // 초시계 + 머리띠
+      fill(g, px + 9, py + 8, 4, 4, C.ink);
+      fill(g, px + 10, py + 9, 2, 2, C.chalk);
+      fill(g, px + 1, py + 1, 8, 1, C.red);
+    }
+    if (n.id === "dietitian") {
+      // 식단표 클립보드(초록 줄)
+      fill(g, px + 9, py + 7, 4, 6, C.ink);
+      fill(g, px + 10, py + 8, 2, 4, C.chalk);
+      fill(g, px + 10, py + 9, 2, 1, C.green);
+      fill(g, px + 10, py + 11, 2, 1, C.green);
+    }
     if (n.id === "towel") {
       // 팔에 걸친 수건 더미
       fill(g, px + 9, py + 7, 5, 5, C.ink);
@@ -857,7 +890,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
 
     const main = currentScene === "MAIN";
     const arrived = stepWalker(player, dt);
-    if (main) updateNpcs(dt, now);
+    updateNpcs(dt, now);
     const here = zoneAt(Math.round(player.x), Math.round(player.y));
     if (player.moving && zone && here !== zone) setZone(null);
     if (arrived && here) setZone(here);
@@ -878,7 +911,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       const [sx, sy] = SEATS[i];
       actors.push({ y: sy + 16, draw: () => drawChar(g, sx, sy, GUESTS[i], { sit: true }) });
     }
-    if (main) for (const n of npcs) actors.push({ y: n.w.y * TILE + 15, draw: () => drawNpc(n) });
+    for (const n of npcs) actors.push({ y: n.w.y * TILE + 15, draw: () => drawNpc(n) });
     actors.push({
       y: py + 16.5,
       draw: () => {
@@ -920,7 +953,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     });
 
     cb.onPlayer(px + 5, py - (over ? 11 : 3));
-    cb.onNpcs?.(main ? npcPos : {});
+    cb.onNpcs?.(npcPos);
     raf = requestAnimationFrame(frame);
   };
 
@@ -944,6 +977,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
         flights = [];
         setDecorSolid(layout);
         paintBg(layout);
+        syncNpcs();
       }
       if (next.decor && next.decor !== layout) {
         layout = next.decor;
@@ -960,7 +994,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       // 직원 NPC 를 눌렀으면: 그 사람 옆으로 걸어가고, 그 자리에서 말한다
       const tx = fx * MAP_W;
       const ty = fy * MAP_H;
-      const who = currentScene !== "MAIN" ? undefined : npcs.find((n) => {
+      const who = npcs.find((n) => {
         const nx = n.w.x * TILE + 3;
         const ny = n.w.y * TILE - 1;
         return tx >= nx - 3 && tx <= nx + 13 && ty >= ny - 3 && ty <= ny + 18;

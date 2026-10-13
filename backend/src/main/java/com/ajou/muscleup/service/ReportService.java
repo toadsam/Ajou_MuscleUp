@@ -3,6 +3,7 @@ package com.ajou.muscleup.service;
 import com.ajou.muscleup.entity.BragComment;
 import com.ajou.muscleup.entity.BragPost;
 import com.ajou.muscleup.entity.ContentReport;
+import com.ajou.muscleup.entity.GymGuestbookEntry;
 import com.ajou.muscleup.entity.Protein;
 import com.ajou.muscleup.entity.ReportReason;
 import com.ajou.muscleup.entity.ReportStatus;
@@ -11,6 +12,7 @@ import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.BragCommentRepository;
 import com.ajou.muscleup.repository.BragPostRepository;
 import com.ajou.muscleup.repository.ContentReportRepository;
+import com.ajou.muscleup.repository.GymGuestbookRepository;
 import com.ajou.muscleup.repository.ProteinRepository;
 import com.ajou.muscleup.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -46,6 +48,8 @@ public class ReportService {
     private final UserRepository userRepository;
     private final BragAccess bragAccess;
     private final GroupBuyAccess groupBuyAccess;
+    private final GymGuestbookRepository guestbookRepository;
+    private final FriendService friendService;
     private final Clock clock;
 
     @PersistenceContext
@@ -104,6 +108,13 @@ public class ReportService {
                 User u = userRepository.findById(id).orElseThrow(this::notFound);
                 yield new Target(u, "닉네임: " + u.getNickname());
             }
+            case GYM_GUESTBOOK -> {
+                // 볼 수 있는 사람(헬스장 주인 · 주인의 친구)만
+                GymGuestbookEntry e = guestbookRepository.findById(id).orElseThrow(this::notFound);
+                Long ownerId = e.getOwner().getId();
+                if (!ownerId.equals(reporter.getId()) && !friendService.areFriends(reporter.getId(), ownerId)) throw notFound();
+                yield new Target(e.getAuthor(), "방명록(" + e.getOwner().getNickname() + "의 헬스장): " + e.getMessage());
+            }
         };
     }
 
@@ -155,6 +166,7 @@ public class ReportService {
             case USER -> {
                 // 사용자 신고: 지울 게시물이 없다. 이용 정지는 아직 없음(남은 일)
             }
+            case GYM_GUESTBOOK -> guestbookRepository.findById(id).ifPresent(guestbookRepository::delete);
         }
     }
 

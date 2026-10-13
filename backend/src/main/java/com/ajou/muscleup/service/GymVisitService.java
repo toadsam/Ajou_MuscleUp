@@ -46,8 +46,9 @@ public class GymVisitService {
     public record EntryView(Long id, Long authorId, String nickname, String message, LocalDateTime createdAt,
                             boolean mine, boolean canDelete) {}
 
+    /** spaces: 친구가 연 공간(MAIN · FLOOR2 · TRACK · DINER) — 구경할 때 오갈 수 있다 */
     public record FriendGym(Long userId, String nickname, FriendCharacterResponse character,
-                            List<GymDecorService.SlotView> slots, List<EntryView> guestbook) {}
+                            List<GymDecorService.SlotView> slots, List<String> spaces, List<EntryView> guestbook) {}
 
     @Transactional(readOnly = true)
     public FriendGym friendGym(User me, Long ownerId) {
@@ -55,7 +56,8 @@ public class GymVisitService {
         FriendCharacterResponse character = characterProfileRepository.findByUser(owner)
                 .map(p -> FriendCharacterResponse.from(p, avatarLookService.look(owner.getId())))
                 .orElse(null);
-        return new FriendGym(owner.getId(), owner.getNickname(), character, gymDecorService.slotsOf(owner), entries(me, owner));
+        GymDecorService.OwnerView gym = gymDecorService.ownerView(owner);
+        return new FriendGym(owner.getId(), owner.getNickname(), character, gym.slots(), gym.spaces(), entries(me, owner));
     }
 
     /** 내 헬스장 방명록 */
