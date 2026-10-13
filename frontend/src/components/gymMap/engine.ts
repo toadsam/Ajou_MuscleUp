@@ -8,9 +8,12 @@
 //   checked     오늘 출석 여부. 출석 체크기 화면이 노랑(대기) / 초록(완료), 빨간 느낌표는 대기일 때만.
 //   loungeCount 라운지 실시간 인원. 라운지 벤치에 최대 3명까지 앉는다(이름은 붙이지 않는다).
 //   tone        내 캐릭터 색(MBTI 계열 → AvatarRenderer 와 같은 규칙).
+//   decor       꾸미기 자리마다 놓은 물품(decor.ts). 바뀌면 배경을 다시 그리고, 놓인 물품 칸은 못 지나간다.
+//   decorEdit   꾸미기 중이면 자리마다 노란 점선 테두리, decorPick 은 고른 자리(깜빡임).
 
 import { PLATE_ORDER } from "../gym/plates";
 import { temperament } from "../avatar/mbti";
+import { DEFAULT_LAYOUT, SLOTS, SLOT_IDS, paintDecor, solidTiles, type DecorLayout, type SlotId } from "./decor";
 
 export const TILE = 16;
 export const COLS = 16;
@@ -54,9 +57,6 @@ const OBJ: (Rect & { zone?: ZoneId })[] = [
   { c: 1, r: 16, w: 4, h: 2, zone: "community" },
   { c: 2, r: 21, w: 4, h: 1 },
   { c: 9, r: 21, w: 2, h: 1, zone: "checkin" },
-  { c: 1, r: 23, w: 1, h: 1 },
-  { c: 14, r: 23, w: 1, h: 1 },
-  { c: 14, r: 6, w: 1, h: 1 },
 ];
 
 const START: [number, number] = [7, 24];
@@ -139,7 +139,14 @@ const solid: number[][] = Array.from({ length: ROWS }, (_, r) =>
 OBJ.forEach((o) => {
   for (let r = o.r; r < o.r + o.h; r++) for (let c = o.c; c < o.c + o.w; c++) solid[r][c] = 1;
 });
-const walkable = (c: number, r: number) => c >= 0 && r >= 0 && c < COLS && r < ROWS && !solid[r][c];
+/** 꾸미기 물품이 놓여 막힌 칸(r * COLS + c). 지도는 한 화면에 하나뿐이라 모듈에 둔다 */
+let decorSolid = new Set<number>();
+const setDecorSolid = (layout: DecorLayout) => {
+  const next = new Set<number>();
+  for (const q of solidTiles(layout)) for (let r = q.r; r < q.r + q.h; r++) for (let c = q.c; c < q.c + q.w; c++) next.add(r * COLS + c);
+  decorSolid = next;
+};
+const walkable = (c: number, r: number) => c >= 0 && r >= 0 && c < COLS && r < ROWS && !solid[r][c] && !decorSolid.has(r * COLS + c);
 const inRect = (q: Rect, c: number, r: number) => c >= q.c && c < q.c + q.w && r >= q.r && r < q.r + q.h;
 export function zoneAt(c: number, r: number): ZoneId | null {
   return ZONE_IDS.find((k) => inRect(ZONES[k].trig, c, r)) ?? null;
@@ -221,19 +228,7 @@ function paintStatic(g: CanvasRenderingContext2D) {
     fill(g, x, 368, 2, 2, C.yellow);
     fill(g, x + 2, 398, 2, 2, C.yellow);
   }
-  // 바닥 원판 로고
-  g.save();
-  g.lineWidth = 4;
-  g.strokeStyle = "#3E1C19";
-  g.beginPath();
-  g.arc(120, 216, 21, 0, Math.PI * 2);
-  g.stroke();
-  g.lineWidth = 2;
-  g.strokeStyle = "#35201D";
-  g.beginPath();
-  g.arc(120, 216, 8, 0, Math.PI * 2);
-  g.stroke();
-  g.restore();
+  // 바닥 원판 무늬 · 화분은 꾸미기 물품(decor.ts)으로 옮겼다
   // 벽
   fill(g, 0, 0, W, 32, C.wallFace);
   fill(g, 0, 0, W, 5, C.wallCap);
@@ -355,17 +350,6 @@ function paintStatic(g: CanvasRenderingContext2D) {
   fill(g, 151, 322, 18, 12, "#111111");
   fill(g, 159, 320, 2, 1, "#9A9DA5");
   fill(g, 153, 342, 14, 2, C.steelD);
-  // 화분
-  for (const [c, r] of [[1, 23], [14, 23], [14, 6]]) {
-    const x = c * TILE;
-    const y = r * TILE;
-    fill(g, x + 1, y - 2, 14, 12, C.ink);
-    fill(g, x + 2, y - 1, 12, 10, "#2F6B3A");
-    fill(g, x + 4, y - 1, 6, 4, "#3E8A4B");
-    fill(g, x + 9, y + 3, 3, 3, "#56A866");
-    fill(g, x + 3, y + 9, 10, 7, C.ink);
-    fill(g, x + 4, y + 10, 8, 5, "#5B4636");
-  }
 }
 
 /* ---------- 캐릭터 (10×16 픽셀) ---------- */
@@ -421,7 +405,15 @@ function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal: Pal, o
 
 /* ---------- 컨트롤러 ---------- */
 
-export type MapState = { plates: number; checked: boolean; loungeCount: number; tone: Tone };
+export type MapState = {
+  plates: number;
+  checked: boolean;
+  loungeCount: number;
+  tone: Tone;
+  decor?: DecorLayout;
+  decorEdit?: boolean;
+  decorPick?: SlotId | null;
+};
 export type MapCallbacks = {
   /** 캐릭터가 장소에 도착(또는 떠남) */
   onZone: (zone: ZoneId | null) => void;
@@ -460,9 +452,16 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   bg.width = MAP_W;
   bg.height = MAP_H;
   const bgCtx = bg.getContext("2d");
-  if (bgCtx) paintStatic(bgCtx);
+  const paintBg = (layout: DecorLayout) => {
+    if (!bgCtx) return;
+    paintStatic(bgCtx);
+    paintDecor(bgCtx, layout);
+  };
 
   let state: MapState = { ...initial };
+  let layout = state.decor ?? DEFAULT_LAYOUT;
+  setDecorSolid(layout);
+  paintBg(layout);
   let pal = palOf(state.tone);
   /** 화면에 꽂혀 보이는 원판 수(출석 연출 중에는 state.plates 보다 하나 적다) */
   let shownPlates = state.plates;
@@ -638,6 +637,32 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     g.globalAlpha = 1;
   };
 
+  // 꾸미기 중: 자리마다 노란 점선, 고른 자리는 깜빡이는 실선
+  const drawDecorSlots = (now: number) => {
+    if (!state.decorEdit) return;
+    for (const id of SLOT_IDS) {
+      const [x, y, w, h] = SLOTS[id].box;
+      const picked = state.decorPick === id;
+      g.globalAlpha = picked ? 0.6 + 0.4 * Math.sin(now / 140) : 0.85;
+      if (picked) {
+        fill(g, x, y, w, 1, C.yellow);
+        fill(g, x, y + h - 1, w, 1, C.yellow);
+        fill(g, x, y, 1, h, C.yellow);
+        fill(g, x + w - 1, y, 1, h, C.yellow);
+      } else {
+        for (let i = 0; i < w; i += 4) {
+          fill(g, x + i, y, 2, 1, C.yellow);
+          fill(g, x + i, y + h - 1, 2, 1, C.yellow);
+        }
+        for (let i = 0; i < h; i += 4) {
+          fill(g, x, y + i, 1, 2, C.yellow);
+          fill(g, x + w - 1, y + i, 1, 2, C.yellow);
+        }
+      }
+      g.globalAlpha = 1;
+    }
+  };
+
   const marker = (x: number, y: number, col: string) => {
     fill(g, x, y, 7, 9, C.ink);
     fill(g, x + 1, y + 1, 5, 7, col);
@@ -659,6 +684,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     g.drawImage(bg, 0, 0);
     drawDynamic(now);
     drawHighlight(now);
+    drawDecorSlots(now);
     if (!state.checked) marker(156, 300 + Math.round(Math.sin(now / 220) * 1.5), C.red);
 
     const px = Math.round(player.x * TILE + 3);
@@ -727,6 +753,11 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       const platesChanged = next.plates !== undefined && next.plates !== state.plates;
       state = { ...state, ...next };
       if (next.tone) pal = palOf(state.tone);
+      if (next.decor && next.decor !== layout) {
+        layout = next.decor;
+        setDecorSolid(layout);
+        paintBg(layout);
+      }
       if (platesChanged && !flights.length) shownPlates = state.plates;
     },
     tapAt(fx, fy) {

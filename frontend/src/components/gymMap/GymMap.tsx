@@ -4,6 +4,10 @@ import { barbellWeight } from "../gym/plates";
 import { logEvent } from "../../utils/analytics";
 import AvatarRenderer from "../avatar/AvatarRenderer";
 import { loadGuestCharacter, saveGuestCharacter, type GuestCharacter } from "./guestCharacter";
+import { DEFAULT_LAYOUT, SLOTS, SLOT_IDS, paintPreview, type SlotId } from "./decor";
+import { fetchDecor, layoutOf, placeDecor, readSeen, writeSeen, type DecorItem, type DecorView } from "../../lib/gymDecor";
+import { friendlyError } from "../../lib/httpError";
+import { toast as appToast } from "../../lib/toast";
 import {
   MAP_H,
   MAP_W,
@@ -58,7 +62,7 @@ const COACH_TIPS = [
   "무게보다 자세 먼저. 거울 보면서 해 봐요.",
 ];
 const STAFF_LINES = ["바닥 닦는 중이에요. 미끄러우니 조심!", "덤벨은 쓰고 나서 제자리에 부탁해요.", "오늘도 매트 반짝반짝!"];
-const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
+const pickOne = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
 const pct = (x: number, y: number) => ({ left: `${(x / MAP_W) * 100}%`, top: `${(y / MAP_H) * 100}%` });
 
@@ -68,6 +72,15 @@ type Sheet = { title: string; body: ReactNode; to: string; cta: string; quiet?: 
 const MBTI_PAIRS: [string, string][] = [["E", "I"], ["N", "S"], ["T", "F"], ["J", "P"]];
 const randomMbti = () => MBTI_PAIRS.map((p) => p[Math.floor(Math.random() * 2)]).join("");
 const SIGNUP_CTA = "Google로 시작하기";
+
+/** 꾸미기 창: 그 자리에 놓았을 때 모습 */
+function DecorPreview({ slot, code }: { slot: SlotId; code: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (ref.current) paintPreview(ref.current, slot, code);
+  }, [slot, code]);
+  return <canvas ref={ref} className="gm-decor-preview" aria-hidden="true" />;
+}
 
 function GuestAvatar({ guest, size }: { guest: GuestCharacter; size: number }) {
   return <AvatarRenderer avatarSeed="guest" tier="BRONZE" stage={1} gender={guest.gender} mbti={guest.mbti} size={size} />;
@@ -99,6 +112,12 @@ export default function GymMap(props: Props) {
   const npcTagRefs = useRef<Partial<Record<NpcId, HTMLDivElement | null>>>({});
   const bubbleRef = useRef<HTMLDivElement>(null);
   const [talk, setTalk] = useState<{ id: NpcId; text: string; key: number } | null>(null);
+  // 꾸미기: 기록으로 얻은 물품을 자리(슬롯)에 넣고 뺀다(로그인한 사람만)
+  const [decor, setDecor] = useState<DecorView | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [pick, setPick] = useState<SlotId | null>(null);
+  const [placing, setPlacing] = useState(false);
+  const [seen, setSeen] = useState<Set<string> | null>(() => readSeen());
   const talkTimer = useRef<number | undefined>(undefined);
   const talkingId = useRef<NpcId | null>(null);
   // 직원 대사는 내 실제 기록으로 만든다(지어낸 숫자 없음)
@@ -117,14 +136,14 @@ export default function GymMap(props: Props) {
     }
     if (id === "coach") {
       if (!f.loggedIn && f.hasGuest && Math.random() < 0.5) {
-        return pick(["출석할 때마다 캐릭터가 자라요. 가입하면 그대로 이어져요.", "거울 앞에 가면 내 캐릭터를 크게 볼 수 있어요."]);
+        return pickOne(["출석할 때마다 캐릭터가 자라요. 가입하면 그대로 이어져요.", "거울 앞에 가면 내 캐릭터를 크게 볼 수 있어요."]);
       }
       if (f.loggedIn && Math.random() < 0.5) {
         return f.weekDays >= 7 ? "이번 주 원판 꽉 찼어요. 대단해요!" : `이번 주 ${7 - f.weekDays}일 더 하면 바벨이 꽉 차요.`;
       }
-      return pick(COACH_TIPS);
+      return pickOne(COACH_TIPS);
     }
-    return pick(STAFF_LINES);
+    return pickOne(STAFF_LINES);
   };
   const say = (id: NpcId, text: string) => {
     talkingId.current = id;
@@ -229,6 +248,66 @@ export default function GymMap(props: Props) {
   }, [weekDays, checkedToday, loungeCount, mbti]);
 
   useEffect(() => {
+    if (!loggedIn) {
+      setDecor(null);
+      setEditing(false);
+      return;
+    }
+    let alive = true;
+    fetchDecor()
+      .then((view) => alive && setDecor(view))
+      .catch(() => undefined); // 못 불러오면 기본 모습 그대로
+    return () => {
+      alive = false;
+    };
+  }, [loggedIn]);
+
+  const layout = useMemo(() => (decor ? layoutOf(decor) : DEFAULT_LAYOUT), [decor]);
+  useEffect(() => {
+    mapRef.current?.setState({ decor: layout });
+  }, [layout]);
+  useEffect(() => {
+    mapRef.current?.setState({ decorEdit: editing, decorPick: pick });
+  }, [editing, pick]);
+
+  const itemOf = (code: string | null | undefined) => (code ? decor?.items.find((i) => i.code === code) : undefined);
+  // 기본 물품(조건 없음)은 "새 물품"으로 세지 않는다
+  const earned = decor ? decor.items.filter((i) => i.owned && i.goal > 0).map((i) => i.code) : [];
+  const fresh = earned.filter((c) => !seen?.has(c));
+
+  const startEdit = () => {
+    mapRef.current?.clearZone();
+    setZone(null);
+    setTouched(true);
+    setEditing(true);
+    setPick(null);
+    writeSeen(earned);
+    setSeen(new Set(earned));
+    void logEvent("home", "decor_open", { fresh: fresh.length });
+  };
+  const endEdit = () => {
+    setEditing(false);
+    setPick(null);
+  };
+  const place = async (slot: SlotId, code: string | null) => {
+    if (placing) return;
+    setPlacing(true);
+    try {
+      const view = await placeDecor(slot, code);
+      setDecor(view);
+      // 창을 닫아 바로 지도에서 보이게
+      setPick(null);
+      const label = view.items.find((i) => i.code === code)?.label;
+      showToast(label ? `${label} · ${SLOTS[slot].name}에 놓았어요` : `${SLOTS[slot].name} 자리를 비웠어요`);
+      void logEvent("home", "decor_place", { slot, code: code ?? "" });
+    } catch (err) {
+      appToast(friendlyError(err, "꾸미지 못했어요. 잠시 뒤 다시 해 주세요."), "error");
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  useEffect(() => {
     if (!celebrate || celebratedRef.current || !mapRef.current) return;
     celebratedRef.current = true;
     setTouched(true);
@@ -240,7 +319,7 @@ export default function GymMap(props: Props) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       if (document.hidden || talkingId.current) return;
-      const who = pick<NpcId>(["coach", "staff", "coach"]);
+      const who = pickOne<NpcId>(["coach", "staff", "coach"]);
       sayRef.current(who, lineRef.current(who));
     }, 15000);
     return () => {
@@ -261,6 +340,9 @@ export default function GymMap(props: Props) {
       e.preventDefault();
       setTouched(true);
       mapRef.current?.step(...KEYS[key]);
+    } else if (e.key === "Escape" && editing) {
+      if (pick) setPick(null);
+      else endEdit();
     } else if (e.key === "Escape") {
       mapRef.current?.clearZone();
       setZone(null);
@@ -479,7 +561,12 @@ export default function GymMap(props: Props) {
     }
   }, [zone, loggedIn, guest, trialDone, tryCheckin, checkedToday, kg, streak, weekDays, loungeCount, props.todayLabel, props.monthCount, props.avatar, props.title, props.tier, props.level, props.events]);
 
-  const shown = building ? null : sheet;
+  const shown = building || editing ? null : sheet;
+  const pickedCode = pick ? layout[pick] ?? null : null;
+  const pickItems: DecorItem[] = pick && decor
+    ? decor.items.filter((i) => i.slots.includes(pick)).sort((a, b) => Number(b.owned) - Number(a.owned))
+    : [];
+  const placedAt = (code: string) => SLOT_IDS.find((id) => id !== pick && layout[id] === code);
   const close = () => {
     mapRef.current?.clearZone();
     setZone(null);
@@ -517,10 +604,29 @@ export default function GymMap(props: Props) {
         aria-label="헬스장 지도. 바닥을 누르거나 방향키로 걸을 수 있어요"
         onKeyDown={onKeyDown}
         onAnimationEnd={() => setShake(false)}
+        // 창 안 버튼에 초점이 남은 채 창이 내려가면 브라우저가 지도 상자를 스크롤한다 — 지도는 늘 제자리
+        onScroll={(e) => {
+          if (e.currentTarget.scrollTop) e.currentTarget.scrollTop = 0;
+        }}
       >
         <canvas ref={canvasRef} width={MAP_W} height={MAP_H} onPointerDown={onPointerDown} />
         <div className="gm-overlay">
-          {ZONE_IDS.map((id) => {
+          {editing &&
+            SLOT_IDS.map((id) => {
+              const [x, y, w, h] = SLOTS[id].box;
+              const item = itemOf(layout[id]);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={`gm-slot ${pick === id ? "on" : ""}`}
+                  style={{ ...pct(x, y), width: `${(w / MAP_W) * 100}%`, height: `${(h / MAP_H) * 100}%` }}
+                  onClick={() => setPick(id)}
+                  aria-label={`${SLOTS[id].name} 자리 · ${item ? item.label : "비어 있음"}`}
+                />
+              );
+            })}
+          {!editing && ZONE_IDS.map((id) => {
             const z = ZONES[id];
             return (
               <button
@@ -560,7 +666,77 @@ export default function GymMap(props: Props) {
           )}
         </div>
         <div className={`gm-hint ${touched || building ? "gone" : ""}`}>바닥을 눌러 걸어보세요</div>
-        {toast && <div className="gm-toast">{toast}</div>}
+        {toast && <div className={`gm-toast ${editing ? "gm-toast-low" : ""}`}>{toast}</div>}
+        {editing && !pick && (
+          <div className="gm-decor-bar" role="status">
+            <span>
+              꾸밀 자리를 눌러요 · 얻은 물품 <b className="font-num">{decor ? `${decor.owned}/${decor.total}` : "–"}</b>
+            </span>
+            <button type="button" className="dg-btn dg-btn-primary" onClick={endEdit}>
+              다 했어요
+            </button>
+          </div>
+        )}
+
+        <section className={`gm-sheet gm-decor-sheet ${editing && pick ? "open" : ""}`} aria-live="polite" aria-hidden={!(editing && pick)}>
+          {editing && pick && (
+            <>
+              <p className="gm-eyebrow">꾸미기 · {SLOTS[pick].name}</p>
+              <h2>{itemOf(pickedCode)?.label ?? "비어 있는 자리"}</h2>
+              {!decor ? (
+                <p>물품을 불러오는 중이에요.</p>
+              ) : (
+                <ul className="gm-decor-list">
+                  {pickItems.map((item) => {
+                    const here = pickedCode === item.code;
+                    const elsewhere = item.multi ? undefined : placedAt(item.code);
+                    return (
+                      <li key={item.code} className={item.owned ? "" : "locked"}>
+                        <DecorPreview slot={pick} code={item.code} />
+                        <div className="gm-decor-info">
+                          <b>{item.label}</b>
+                          {item.owned ? (
+                            <small>{elsewhere ? `${SLOTS[elsewhere].name}에서 옮겨 와요` : item.hint}</small>
+                          ) : (
+                            <>
+                              <small>{item.hint}</small>
+                              <span className="gm-decor-track" aria-hidden="true">
+                                <i style={{ width: `${Math.round((item.progress / Math.max(1, item.goal)) * 100)}%` }} />
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {item.owned ? (
+                          here ? (
+                            <span className="gm-decor-state">놓여 있음</span>
+                          ) : (
+                            <button type="button" className="dg-btn dg-btn-steel" disabled={placing} onClick={() => void place(pick, item.code)}>
+                              놓기
+                            </button>
+                          )
+                        ) : (
+                          <span className="gm-decor-state font-num" aria-label={`진행 ${item.progress} / ${item.goal}`}>
+                            {item.progress}/{item.goal}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <div className="gm-actions">
+                <button type="button" className="dg-btn dg-btn-primary" onClick={() => setPick(null)}>
+                  다른 자리 고르기
+                </button>
+                {pickedCode && (
+                  <button type="button" className="dg-btn dg-btn-steel" disabled={placing} onClick={() => void place(pick, null)}>
+                    비우기
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </section>
 
         <section className={`gm-sheet ${shown ? "open" : ""}`} aria-live="polite" aria-hidden={!shown}>
           {shown && zone && (
@@ -634,7 +810,14 @@ export default function GymMap(props: Props) {
 
       <div className="gm-dock-cap">
         <span>바로 가기</span>
-        <span>걷지 않고 바로 이동</span>
+        {loggedIn ? (
+          <button type="button" className={`gm-decor-btn ${editing ? "on" : ""}`} onClick={editing ? endEdit : startEdit} aria-pressed={editing}>
+            {editing ? "꾸미기 끝" : "헬스장 꾸미기"}
+            {!editing && fresh.length > 0 && <i className="font-num">새 물품 {fresh.length}</i>}
+          </button>
+        ) : (
+          <span>걷지 않고 바로 이동</span>
+        )}
       </div>
       <nav className="gm-dock" aria-label="바로 가기">
         {DOCK.map((d) => (
