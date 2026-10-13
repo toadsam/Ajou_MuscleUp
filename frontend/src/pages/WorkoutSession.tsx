@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
 import ExercisePicker from "../components/lifts/ExercisePicker";
+import LiftStage, { type StageCharacter, type StageCue } from "../components/workout/LiftStage";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
 import { BOX_REASON } from "../lib/collection";
-import { exerciseInfo, formatKg, useCustomExercises, type LiftExerciseInfo } from "../lib/lifts";
+import { estimate1rm, exerciseInfo, formatKg, useCustomExercises, type LiftBest, type LiftExerciseInfo } from "../lib/lifts";
 import {
   REST_CHOICES,
   clearSession,
@@ -28,6 +29,15 @@ import {
 // 휴식이 끝나면 진동 · 소리(화면이 켜져 있을 때). 화면 꺼짐 방지는 "화면 켜 두기"(Wake Lock, 지원하는 브라우저만).
 
 type WakeLockLike = { release: () => Promise<void> };
+
+const STAGE_HIDDEN_KEY = "dg.workout.stageHidden";
+const readStageHidden = () => {
+  try {
+    return window.localStorage.getItem(STAGE_HIDDEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
 
 function useNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -84,6 +94,46 @@ export default function WorkoutSession() {
   const now = useNow(Boolean(session));
   const { unlock, beep } = useBeep();
   useCustomExercises(); // 직접 추가한 종목 이름 · 맨몸 여부
+  // 같이 운동하는 캐릭터: 내 캐릭터 · MBTI(색) · 개인 최고(PR 연출)
+  const [character, setCharacter] = useState<StageCharacter | null>(null);
+  const [mbti, setMbti] = useState<string | null>(null);
+  const bestsRef = useRef<Map<string, number> | null>(null);
+  const [focus, setFocus] = useState<number | null>(null);
+  const [cue, setCue] = useState<StageCue | null>(null);
+  const [stageHidden, setStageHidden] = useState(readStageHidden);
+  const hasSession = Boolean(session);
+
+  useEffect(() => {
+    if (!hasSession || character) return;
+    let alive = true;
+    void api
+      .get<StageCharacter>("/api/character/me")
+      .then((res) => alive && setCharacter(res.data))
+      .catch(() => undefined);
+    void api
+      .get<{ mbti?: string | null }>("/api/mypage/stats")
+      .then((res) => alive && setMbti(res.data?.mbti ?? null))
+      .catch(() => undefined);
+    void api
+      .get<LiftBest[]>("/api/lifts/bests")
+      .then((res) => {
+        if (alive) bestsRef.current = new Map(res.data.map((b) => [b.exercise, b.e1rm]));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [hasSession, character]);
+
+  const toggleStage = () =>
+    setStageHidden((prev) => {
+      try {
+        window.localStorage.setItem(STAGE_HIDDEN_KEY, prev ? "0" : "1");
+      } catch {
+        // 저장 못 해도 이번 화면에서는 바뀐다
+      }
+      return !prev;
+    });
 
   // 바뀔 때마다 이 기기에 저장(새로고침 · 화면 꺼짐에도 이어서)
   useEffect(() => {
@@ -155,15 +205,18 @@ export default function WorkoutSession() {
         ? previous.sets.slice(0, 6).map((p) => ({ weight: formatKg(p.weightKg), reps: String(p.reps), done: false }))
         : [{ weight: info.bodyweight ? "0" : "", reps: "", done: false }];
     update((s) => ({ ...s, exercises: [...s.exercises, { code: info.code, sets, previous }] }));
+    setFocus(session ? session.exercises.length : 0);
   };
 
-  const setField = (ei: number, si: number, field: "weight" | "reps", value: string) =>
+  const setField = (ei: number, si: number, field: "weight" | "reps", value: string) => {
+    setFocus(ei);
     update((s) => ({
       ...s,
       exercises: s.exercises.map((e, i) =>
         i !== ei ? e : { ...e, sets: e.sets.map((x, j) => (j !== si ? x : { ...x, [field]: value })) },
       ),
     }));
+  };
 
   const toggleDone = (ei: number, si: number) => {
     unlock();
@@ -177,7 +230,20 @@ export default function WorkoutSession() {
         toast(info?.bodyweight ? "횟수를 적어 주세요." : "무게와 횟수를 적어 주세요.", "error");
         return;
       }
+      // 캐릭터 연출: 개인 최고(추정 1RM)를 넘으면 PR, 처음 하는 종목이면 첫 기록
+      const code = session!.exercises[ei].code;
+      const bests = bestsRef.current;
+      let kind: StageCue["kind"] = "set";
+      if (bests && !info?.bodyweight) {
+        const e1rm = estimate1rm(w, r);
+        const best = bests.get(code);
+        if (best == null) kind = "first";
+        else if (e1rm > best) kind = "pr";
+        if (best == null || e1rm > best) bests.set(code, e1rm);
+      }
+      setCue({ id: Date.now(), kind });
     }
+    setFocus(ei);
     update((s) => ({
       ...s,
       exercises: s.exercises.map((e, i) =>
@@ -352,28 +418,45 @@ export default function WorkoutSession() {
   const elapsed = (now - session.startedAt) / 1000;
   const usedCodes = session.exercises.map((e) => e.code);
   const sets = doneSetCount(session);
+  // 캐릭터가 따라 할 종목: 마지막으로 만진 종목(없으면 아직 남은 세트가 있는 첫 종목)
+  const fallbackIdx = Math.max(0, session.exercises.findIndex((e) => e.sets.some((x) => !x.done)));
+  const stageEx = session.exercises[focus != null && focus < session.exercises.length ? focus : fallbackIdx] ?? null;
+  const stageSet = stageEx ? (stageEx.sets.find((x) => !x.done) ?? stageEx.sets[stageEx.sets.length - 1]) : null;
   return (
     <section className="min-h-screen px-4 pb-40 pt-24 text-white md:px-10">
       <div className="mx-auto max-w-2xl space-y-4">
-        {/* 상단: 운동 시간 · 끝내기 */}
-        <div className="dg-steel sticky top-20 z-20 flex items-center justify-between gap-3 p-3">
-          <div>
-            <p className="text-xs text-steel-400">운동 시간</p>
-            <p className="font-num text-3xl leading-none" aria-live="off">
-              {formatClock(elapsed)}
-            </p>
+        {/* 상단: 운동 시간 · 끝내기 · 같이 운동하는 캐릭터 */}
+        <div className="dg-steel sticky top-20 z-20 space-y-3 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-steel-400">운동 시간</p>
+              <p className="font-num text-3xl leading-none" aria-live="off">
+                {formatClock(elapsed)}
+              </p>
+            </div>
+            <div className="text-right text-xs text-steel-400">
+              <p>
+                세트 <span className="font-num text-base text-white">{sets}</span>
+              </p>
+              <p>
+                볼륨 <span className="font-num text-base text-white">{Math.round(doneVolume(session)).toLocaleString()}</span>kg
+              </p>
+            </div>
+            <button type="button" onClick={() => setFinishOpen(true)} className="dg-btn dg-btn-primary min-h-[44px] px-4 text-sm">
+              끝내기
+            </button>
           </div>
-          <div className="text-right text-xs text-steel-400">
-            <p>
-              세트 <span className="font-num text-base text-white">{sets}</span>
-            </p>
-            <p>
-              볼륨 <span className="font-num text-base text-white">{Math.round(doneVolume(session)).toLocaleString()}</span>kg
-            </p>
-          </div>
-          <button type="button" onClick={() => setFinishOpen(true)} className="dg-btn dg-btn-primary min-h-[44px] px-4 text-sm">
-            끝내기
-          </button>
+          {!stageHidden && (
+            <LiftStage
+              character={character}
+              mbti={mbti}
+              info={stageEx ? (exerciseInfo(stageEx.code) ?? null) : null}
+              weightKg={Number(stageSet?.weight) || 0}
+              reps={Number(stageSet?.reps) || 0}
+              resting={Boolean(rest && restLeft > 0)}
+              cue={cue}
+            />
+          )}
         </div>
 
         {/* 설정: 휴식 길이 · 화면 켜 두기 */}
@@ -390,7 +473,10 @@ export default function WorkoutSession() {
               {sec < 120 ? `${sec}초` : `${sec / 60}분`}
             </button>
           ))}
-          <label className="ml-auto flex items-center gap-1.5">
+          <button type="button" onClick={toggleStage} aria-pressed={!stageHidden} className="ml-auto underline underline-offset-4">
+            {stageHidden ? "캐릭터 보기" : "캐릭터 숨기기"}
+          </button>
+          <label className="flex items-center gap-1.5">
             <input type="checkbox" checked={keepAwake} onChange={(e) => setKeepAwake(e.target.checked)} className="h-4 w-4" />
             화면 켜 두기
           </label>
