@@ -1,7 +1,24 @@
 // 개발 전용: 픽셀 아바타의 모든 변형을 한 화면에서 본다 (로그인 없이). App.tsx 에서 DEV 일 때만 라우트를 연다.
 import type { ReactNode } from "react";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
+import { barbellLoad } from "../lib/liftMotion";
 import { defaultGrowthParams, type CharacterTier, type GrowthParams } from "../components/avatar/types";
+
+const MOTIONS: [ActionKind, Equip][] = [
+  ["squat", "barbell"],
+  ["deadlift", "barbell"],
+  ["press", "barbell"],
+  ["bench", "barbell"],
+  ["curl", "dumbbell"],
+  ["raise", "dumbbell"],
+  ["fly", "dumbbell"],
+  ["pullup", "none"],
+  ["legraise", "none"],
+  ["pushup", "none"],
+  ["press", "dumbbell"],
+  ["flex", "none"],
+];
 
 const TIERS: CharacterTier[] = ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
 
@@ -100,6 +117,43 @@ export default function DevAvatars() {
           {["h0", "h1x", "h22"].map((seed) => (
             <Cell key={seed} label={`시드 ${seed}`}>
               <AvatarRenderer avatarSeed={seed} tier="BRONZE" stage={1} mbti="ISTJ" growthParams={growth(0.2)} size={120} />
+            </Cell>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-bold">운동 동작 (운동 세션 · 프레임 0 → 1, 바벨 100kg)</h2>
+        <div className="grid grid-cols-4 gap-3 md:grid-cols-8">
+          {MOTIONS.flatMap(([kind, equip]) =>
+            ([0, 1] as const).map((frame) => (
+              <Cell key={`${kind}-${equip}-${frame}`} label={`${kind} · ${equip} · ${frame}`}>
+                <AvatarRenderer
+                  avatarSeed="lift"
+                  tier="DIAMOND"
+                  stage={2}
+                  mbti="ESTP"
+                  growthParams={growth(0.5)}
+                  size={96}
+                  action={{ kind, frame, equip, plates: barbellLoad(100).pixel }}
+                />
+              </Cell>
+            )),
+          )}
+        </div>
+        <h2 className="font-bold">원판 무게별 (스쿼트 · 근육 단계 0 / 3)</h2>
+        <div className="grid grid-cols-4 gap-3 md:grid-cols-8">
+          {[20, 42.5, 60, 100, 140, 182.5, 250, 320].map((kg, i) => (
+            <Cell key={kg} label={`${kg}kg`}>
+              <AvatarRenderer
+                avatarSeed="lift"
+                tier="GOLD"
+                stage={2}
+                mbti="INTJ"
+                growthParams={growth(i % 2 ? 1 : 0)}
+                size={96}
+                action={{ kind: i % 3 === 2 ? "bench" : "squat", frame: 0, equip: "barbell", plates: barbellLoad(kg).pixel }}
+              />
             </Cell>
           ))}
         </div>

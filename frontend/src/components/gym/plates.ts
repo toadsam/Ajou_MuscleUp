@@ -25,3 +25,20 @@ export function barbellWeight(loaded: number, slots = PLATE_ORDER.length) {
   const count = Math.max(0, Math.min(loaded, slots));
   return BAR_KG + PLATE_ORDER.slice(0, count).reduce((sum, plate) => sum + plate.kg * 2, 0);
 }
+
+/**
+ * 바벨 총무게(바 20kg 포함)에 맞춰 한쪽에 끼울 원판(무거운 것부터).
+ * 가진 원판으로 딱 맞출 수 없으면 남는 무게(양쪽 합)를 rest 로 돌려준다.
+ */
+export function platesForKg(totalKg: number, maxPerSide = 16): { side: PlateSpec[]; rest: number } {
+  const side: PlateSpec[] = [];
+  let left = Math.round(((totalKg - BAR_KG) / 2) * 1000) / 1000;
+  if (!(left > 0)) return { side, rest: 0 };
+  for (const plate of PLATE_ORDER) {
+    while (left >= plate.kg - 1e-9 && side.length < maxPerSide) {
+      side.push(plate);
+      left = Math.round((left - plate.kg) * 1000) / 1000;
+    }
+  }
+  return { side, rest: Math.round(left * 2 * 100) / 100 };
+}

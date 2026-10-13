@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { resolveSeedFeatures } from "./seed";
-import { CELL, buildPixelAvatar, type Pose, type PixelAvatarSpec } from "./pixelAvatar";
+import { CELL, buildPixelAvatar, type Pose, type PixelAction, type PixelAvatarSpec } from "./pixelAvatar";
 import type { AvatarSeed, CharacterTier, GrowthParams } from "./types";
 import { defaultGrowthParams } from "./types";
 import { TIER_PRESETS } from "./tierPreset";
@@ -24,6 +24,8 @@ type Props = {
   evolutionBranch?: EvolutionBranch | null;
   unlockedSkillCount?: number;
   activeSkillIds?: string[];
+  /** 운동 세션에서 따라 하는 동작(있으면 자세 대신, 꾸미기 이미지는 덮지 않는다) */
+  action?: PixelAction | null;
 };
 
 // 피부·머리 색은 MBTI 를 따르고, 민소매 색은 원판 팔레트에서 고른다.
@@ -80,6 +82,7 @@ export default function AvatarRenderer({
   evolutionBranch,
   unlockedSkillCount = 0,
   activeSkillIds = [],
+  action = null,
 }: Props) {
   const [persistedAppearance, setPersistedAppearance] = useState(() => loadAppearanceBySeed(avatarSeed));
 
@@ -122,6 +125,7 @@ export default function AvatarRenderer({
   const svgId = useId().replace(/[:]/g, "");
 
   const skillKey = resolvedSkillIds.join(",");
+  const actionKey = action ? JSON.stringify(action) : "";
   const art = useMemo(() => {
     const seed = resolveSeedFeatures(avatarSeed || "seed");
     const tone = mbtiTone(mbti);
@@ -134,6 +138,7 @@ export default function AvatarRenderer({
     const build = Math.max(0, Math.min(3, Math.floor(buildScore + 0.3))) as PixelAvatarSpec["build"];
     const pose = resolvedResting ? "stand" : poseForStage(stage);
     const skills = new Set(skillKey ? skillKey.split(",") : []);
+    const act = actionKey ? (JSON.parse(actionKey) as PixelAction) : null;
 
     return buildPixelAvatar({
       build,
@@ -158,6 +163,7 @@ export default function AvatarRenderer({
         wave: skills.has("wave"),
         burst: skills.has("burst"),
       },
+      action: resolvedResting ? null : act,
     });
   }, [
     avatarSeed,
@@ -173,10 +179,11 @@ export default function AvatarRenderer({
     resolvedBranch,
     resolvedTank,
     skillKey,
+    actionKey,
   ]);
 
   const y = (row: number) => row * CELL;
-  const custom = resolvedCustomization;
+  const custom = action ? null : resolvedCustomization;
   const region = (r: { x: number; y: number; w: number; h: number }) => ({
     x: r.x * CELL,
     y: y(r.y),

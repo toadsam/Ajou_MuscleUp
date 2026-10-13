@@ -265,6 +265,18 @@
   100% { transform: translateY(0); }
 }
 
+/* 운동 세션 캐릭터: 개인 최고를 넘으면 바가 휘청 */
+.lift-stage-pr {
+  animation: liftStagePr 0.6s ease-in-out 2;
+}
+
+@keyframes liftStagePr {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  20% { transform: rotate(-2deg) translateY(2px); }
+  45% { transform: rotate(2deg) translateY(-2px); }
+  70% { transform: rotate(-1deg) translateY(1px); }
+}
+
 @keyframes dgRise {
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
