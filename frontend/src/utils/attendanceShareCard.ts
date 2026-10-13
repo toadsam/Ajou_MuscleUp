@@ -138,6 +138,64 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines;
 }
 
+/** 워터마크 이름표(화면의 .share-brand 와 같은 모양). u = 카드 폭의 1% */
+function drawBrandTag(ctx: CanvasRenderingContext2D, x: number, y: number, u: number, name: string) {
+  const plate = 6.8 * u;
+  const pad = 1 * u;
+  const nameSize = 4.4 * u;
+  const urlSize = 2.1 * u;
+  ctx.save();
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `${Math.round(nameSize)}px 'Black Han Sans', 'IBM Plex Sans KR', sans-serif`;
+  const nameW = ctx.measureText(name).width;
+  ctx.font = `700 ${Math.round(urlSize)}px 'Big Shoulders Display', 'IBM Plex Sans KR', sans-serif`;
+  const urlW = ctx.measureText("musclehub.co.kr").width;
+  const w = pad + plate + 1.4 * u + Math.max(nameW, urlW) + 2.4 * u;
+  const h = plate + pad * 2;
+  // 철판 + 아래 그림자
+  ctx.fillStyle = "#0E0E10";
+  drawRoundedRect(ctx, x, y + 0.5 * u, w, h, 1.4 * u);
+  ctx.fill();
+  ctx.fillStyle = "rgba(14,14,16,0.82)";
+  drawRoundedRect(ctx, x, y, w, h, 1.4 * u);
+  ctx.fill();
+  ctx.lineWidth = 0.5 * u;
+  ctx.strokeStyle = "#0E0E10";
+  ctx.stroke();
+  // 25kg 원판(앱 로고와 같은 비율: 지름 34 기준 15 · 9 · 4.5)
+  const cx = x + pad + plate / 2;
+  const cy = y + pad + plate / 2;
+  const k = plate / 34;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 15 * k, 0, Math.PI * 2);
+  ctx.fillStyle = "#D9302A";
+  ctx.fill();
+  ctx.lineWidth = 3 * k;
+  ctx.strokeStyle = "#0E0E10";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 9 * k, 0, Math.PI * 2);
+  ctx.lineWidth = 1.5 * k;
+  ctx.strokeStyle = "rgba(14,14,16,0.5)";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4.5 * k, 0, Math.PI * 2);
+  ctx.fillStyle = "#B8BBC0";
+  ctx.fill();
+  ctx.lineWidth = 2 * k;
+  ctx.strokeStyle = "#0E0E10";
+  ctx.stroke();
+  // 이름 · 주소
+  const tx = x + pad + plate + 1.4 * u;
+  ctx.fillStyle = "#F4F2EC";
+  ctx.font = `${Math.round(nameSize)}px 'Black Han Sans', 'IBM Plex Sans KR', sans-serif`;
+  ctx.fillText(name, tx, y + pad + nameSize * 0.95);
+  ctx.fillStyle = "#F0BE2E";
+  ctx.font = `700 ${Math.round(urlSize)}px 'Big Shoulders Display', 'IBM Plex Sans KR', sans-serif`;
+  ctx.fillText("musclehub.co.kr", tx, y + pad + nameSize + 0.4 * u + urlSize * 0.9);
+  ctx.restore();
+}
+
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -377,10 +435,9 @@ function renderCardCanvas(input: ShareCardInput): Promise<HTMLCanvasElement> {
         }
       }
 
-      ctx.fillStyle = "rgba(255,255,255,0.95)";
-      ctx.font = `700 ${Math.round(width * 0.033)}px 'Trebuchet MS', 'Segoe UI', sans-serif`;
+      // 워터마크: 화면 미리보기(.share-brand)와 같은 원판 + 이름 철판 이름표
+      drawBrandTag(ctx, horizontalPad, Math.round(height * 0.025), width / 100, watermarkText);
       ctx.textBaseline = "alphabetic";
-      ctx.fillText(watermarkText, horizontalPad, Math.round(height * 0.07));
 
       if (input.sticker?.trim()) {
         ctx.font = `${Math.round(width * 0.07)}px 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif`;

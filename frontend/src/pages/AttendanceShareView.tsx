@@ -13,7 +13,6 @@ import {
   type ShareCardRatio,
   type ShareCardTheme,
 } from "../utils/attendanceShareCard";
-import watermarkLogo from "../assets/images/워터마크.png";
 import "../styles/attendanceShare.css";
 import { toast } from "../lib/toast";
 import { friendlyError, httpError } from "../lib/httpError";
@@ -1261,8 +1260,19 @@ export default function AttendanceShareView() {
                 />
               )}
               <div className="share-overlay" />
-              <div className="share-logo">
-                <img src={watermarkLogo} alt="득근 워터마크" className="share-logo-image" />
+              {/* 워터마크: 앱 상단 로고와 같은 25kg 원판 + 이름, 볼트 철판 이름표(짐 플로어 v2). 이미지가 아니라 1080px 저장본도 선명하다 */}
+              <div className="share-logo" aria-label="득근득근 musclehub.co.kr">
+                <div className="share-brand">
+                  <svg viewBox="0 0 34 34" className="share-brand-plate" aria-hidden="true">
+                    <circle cx="17" cy="17" r="15" fill="#D9302A" stroke="#0E0E10" strokeWidth="3" />
+                    <circle cx="17" cy="17" r="9" fill="none" stroke="#0E0E10" strokeWidth="1.5" opacity="0.5" />
+                    <circle cx="17" cy="17" r="4.5" fill="#B8BBC0" stroke="#0E0E10" strokeWidth="2" />
+                  </svg>
+                  <span className="share-brand-text">
+                    <span className="share-brand-name">득근득근</span>
+                    <span className="share-brand-url">musclehub.co.kr</span>
+                  </span>
+                </div>
               </div>
               {showLoadingOverlay && (
                 <div className="share-loading-overlay" aria-live="polite" data-html2canvas-ignore="true">
