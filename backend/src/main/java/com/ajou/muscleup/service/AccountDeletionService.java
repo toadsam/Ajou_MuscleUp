@@ -76,6 +76,7 @@ public class AccountDeletionService {
         exec("delete from DailyQuest q where q.user.id = :id", id);
         exec("delete from LiftEntry l where l.user.id = :id", id);
         exec("delete from CustomExercise c where c.user.id = :id", id);
+        exec("delete from MyFood f where f.user.id = :id", id);
         exec("delete from WorkoutSet x where x.session.user.id = :id", id);
         exec("delete from WorkoutSession s where s.user.id = :id", id);
         exec("delete from RunSession r where r.user.id = :id", id);

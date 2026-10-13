@@ -219,13 +219,14 @@ public class DietService {
         return day;
     }
 
-    private static Integer range(Integer v, int min, int max, String label) {
+    /** MyFoodService 도 같은 범위로 검사한다 */
+    static Integer range(Integer v, int min, int max, String label) {
         if (v == null) return null;
         if (v < min || v > max) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, label + " 값을 확인해 주세요.");
         return v;
     }
 
-    private static Double grams(Double v, String label) {
+    static Double grams(Double v, String label) {
         if (v == null) return null;
         if (v.isNaN() || v < 0 || v > 500) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, label + " 값을 확인해 주세요.");
         return round1(v);
