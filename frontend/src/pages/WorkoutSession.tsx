@@ -6,7 +6,7 @@ import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
 import { BOX_REASON } from "../lib/collection";
-import { exerciseInfo, formatKg, type LiftExerciseInfo } from "../lib/lifts";
+import { exerciseInfo, formatKg, useCustomExercises, type LiftExerciseInfo } from "../lib/lifts";
 import {
   REST_CHOICES,
   clearSession,
@@ -83,6 +83,7 @@ export default function WorkoutSession() {
   const restAlertedRef = useRef<number | null>(null);
   const now = useNow(Boolean(session));
   const { unlock, beep } = useBeep();
+  useCustomExercises(); // 직접 추가한 종목 이름 · 맨몸 여부
 
   // 바뀔 때마다 이 기기에 저장(새로고침 · 화면 꺼짐에도 이어서)
   useEffect(() => {
