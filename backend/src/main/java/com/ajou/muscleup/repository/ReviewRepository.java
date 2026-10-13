@@ -21,6 +21,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("select count(r) from Review r where r.protein.id = :pid")
     long countByProteinId(@Param("pid") Long proteinId);
 
+    // 전체 후기: [평균(없으면 0), 개수] 한 줄
+    @Query("select coalesce(avg(r.rating), 0), count(r) from Review r")
+    java.util.List<Object[]> statsAll();
+
     // 목록 한 페이지의 평균 평점 · 후기 수를 쿼리 한 번으로: [proteinId, avg, count]
     @Query("select r.protein.id, avg(r.rating), count(r) from Review r where r.protein.id in :ids group by r.protein.id")
     java.util.List<Object[]> ratingStatsByProteinIds(@Param("ids") java.util.Collection<Long> ids);
