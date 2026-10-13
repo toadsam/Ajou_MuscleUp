@@ -445,3 +445,104 @@
   15% { opacity: 1; }
   100% { opacity: 0; margin-top: -34px; }
 }
+
+/* ---------- 헬스장 꾸미기 ---------- */
+
+.gm-slot {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.gm-slot:focus-visible { outline: 2px solid var(--dg-yellow); outline-offset: 1px; }
+
+.gm-decor-bar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 10px;
+  border: 2px solid var(--dg-ink);
+  border-radius: 4px;
+  background: #111214;
+  box-shadow: 0 3px 0 var(--dg-ink);
+  font-size: 12.5px;
+}
+.gm-decor-bar b { color: var(--dg-yellow); font-size: 15px; }
+/* 꾸미기 중에는 위쪽 안내 줄 아래로 */
+.gm-toast.gm-toast-low { top: 60px; z-index: 1; }
+.gm-decor-bar .dg-btn { flex: none; padding: 6px 10px; font-size: 12.5px; }
+
+.gm-decor-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gm-decor-list li {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: #1c1d20;
+}
+.gm-decor-list li.locked .gm-decor-preview { filter: grayscale(1) brightness(0.55); }
+.gm-decor-list li.locked b { color: var(--dg-muted); }
+.gm-decor-preview {
+  width: 52px;
+  height: 44px;
+  object-fit: contain;
+  border: 1px solid #000;
+  border-radius: 2px;
+  background: #232428;
+  image-rendering: pixelated;
+}
+.gm-decor-info { min-width: 0; }
+.gm-decor-info b { display: block; font-size: 14px; }
+.gm-decor-info small { display: block; margin-top: 1px; font-size: 11.5px; color: var(--dg-muted); }
+.gm-decor-track {
+  display: block;
+  height: 5px;
+  margin-top: 5px;
+  border: 1px solid #000;
+  background: #0b0b0c;
+}
+.gm-decor-track i { display: block; height: 100%; background: var(--dg-yellow); }
+.gm-decor-state { font-size: 12px; font-weight: 700; color: var(--dg-yellow); white-space: nowrap; }
+.gm-decor-list .dg-btn { padding: 6px 12px; font-size: 13px; }
+
+.gm-decor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0;
+  padding: 4px 9px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: var(--dg-steel-hi);
+  color: var(--dg-chalk);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 0 #000;
+  cursor: pointer;
+}
+.gm-decor-btn.on { background: var(--dg-yellow); color: var(--dg-ink); }
+.gm-decor-btn i {
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--dg-red);
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+}
+.gm-decor-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 #000; }
