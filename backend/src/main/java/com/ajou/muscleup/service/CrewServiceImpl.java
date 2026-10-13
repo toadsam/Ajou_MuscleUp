@@ -50,6 +50,7 @@ public class CrewServiceImpl implements CrewService {
     private final CrewChallengeRepository crewChallengeRepository;
     private final AttendanceLogRepository attendanceLogRepository;
     private final GymPermissionService gymPermissionService;
+    private final AvatarLookService avatarLookService;
     // 한국 시간 기준 "오늘"(config/TimeConfig). LocalDate.now() 는 서버 시간대를 따라가 UTC 서버에서 하루 어긋났다.
     private final Clock clock;
 
@@ -322,6 +323,8 @@ public class CrewServiceImpl implements CrewService {
 
         Map<Long, Long> workoutCountByUser = countWorkout(members, start, end);
 
+        Map<Long, AvatarLookService.Look> looks = avatarLookService.looks(members.stream().map(m -> m.getUser().getId()).toList());
+        long nowMs = clock.millis();
         List<CrewMemberAttendanceResponse> memberResponses = members.stream()
                 .map(member -> {
                     Long userId = member.getUser().getId();
@@ -341,6 +344,8 @@ public class CrewServiceImpl implements CrewService {
                             .avatarSeed(profile != null ? profile.getAvatarSeed() : null)
                             .gender(profile != null ? profile.getGender() : null)
                             .isResting(profile != null && profile.isResting())
+                            .tank(looks.containsKey(userId) ? looks.get(userId).tank() : null)
+                            .isPumped(looks.containsKey(userId) && looks.get(userId).pumped(nowMs))
                             .build();
                 })
                 .sorted(Comparator.comparing(CrewMemberAttendanceResponse::getAttendanceRate).reversed())
@@ -404,6 +409,8 @@ public class CrewServiceImpl implements CrewService {
             Map<Long, CharacterProfile> profileMap
     ) {
         Map<Long, Long> workoutCountByUser = countWorkout(members, challenge.getStartDate(), challenge.getEndDate());
+        Map<Long, AvatarLookService.Look> looks = avatarLookService.looks(members.stream().map(m -> m.getUser().getId()).toList());
+        long nowMs = clock.millis();
         List<CrewChallengeMemberProgressResponse> progress = members.stream()
                 .map(member -> {
                     Long userId = member.getUser().getId();
@@ -423,6 +430,8 @@ public class CrewServiceImpl implements CrewService {
                             .avatarSeed(profile != null ? profile.getAvatarSeed() : null)
                             .gender(profile != null ? profile.getGender() : null)
                             .isResting(profile != null && profile.isResting())
+                            .tank(looks.containsKey(userId) ? looks.get(userId).tank() : null)
+                            .isPumped(looks.containsKey(userId) && looks.get(userId).pumped(nowMs))
                             .build();
                 })
                 .sorted(Comparator.comparing(CrewChallengeMemberProgressResponse::getCompletionRate).reversed())

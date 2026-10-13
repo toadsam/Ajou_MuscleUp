@@ -26,6 +26,10 @@ type Props = {
   activeSkillIds?: string[];
   /** 운동 세션에서 따라 하는 동작(있으면 자세 대신, 꾸미기 이미지는 덮지 않는다) */
   action?: PixelAction | null;
+  /** 도감에서 장착한 민소매 색(다른 사람 캐릭터 · 서버 값). 없으면 이 기기에 저장된 값 */
+  tank?: string | null;
+  /** 운동 직후 펌핑: 근육 한 단계 + 땀 · 김 */
+  pumped?: boolean;
 };
 
 // 피부·머리 색은 MBTI 를 따르고, 민소매 색은 원판 팔레트에서 고른다.
@@ -83,6 +87,8 @@ export default function AvatarRenderer({
   unlockedSkillCount = 0,
   activeSkillIds = [],
   action = null,
+  tank = null,
+  pumped = false,
 }: Props) {
   const [persistedAppearance, setPersistedAppearance] = useState(() => loadAppearanceBySeed(avatarSeed));
 
@@ -108,7 +114,7 @@ export default function AvatarRenderer({
   const resolvedSkillIds = activeSkillIds.length > 0 ? activeSkillIds : persistedAppearance?.activeSkillIds ?? [];
   const resolvedSkillCount = activeSkillIds.length > 0 ? unlockedSkillCount : resolvedSkillIds.length;
   const resolvedCustomization = customization ?? persistedAppearance?.customization ?? null;
-  const resolvedTank = persistedAppearance?.tank ?? null;
+  const resolvedTank = (tank && /^#[0-9A-Fa-f]{6}$/.test(tank) ? tank : null) ?? persistedAppearance?.tank ?? null;
   const resolvedGender = gender ?? persistedAppearance?.gender ?? "MALE";
   const resolvedResting = isResting ?? persistedAppearance?.isResting ?? false;
   const resolvedAttendanceRisk = resolvedResting
@@ -135,7 +141,8 @@ export default function AvatarRenderer({
       clamp01(growth.shoulderGrowth) * 0.6 +
       (seed.baseBuild >= 4 ? 0.4 : 0) +
       (tierStep >= 5 ? 0.3 : 0);
-    const build = Math.max(0, Math.min(3, Math.floor(buildScore + 0.3))) as PixelAvatarSpec["build"];
+    const pumpedNow = pumped && !resolvedResting;
+    const build = Math.max(0, Math.min(3, Math.floor(buildScore + 0.3) + (pumpedNow ? 1 : 0))) as PixelAvatarSpec["build"];
     const pose = resolvedResting ? "stand" : poseForStage(stage);
     const skills = new Set(skillKey ? skillKey.split(",") : []);
     const act = actionKey ? (JSON.parse(actionKey) as PixelAction) : null;
@@ -164,6 +171,7 @@ export default function AvatarRenderer({
         burst: skills.has("burst"),
       },
       action: resolvedResting ? null : act,
+      pumped: pumpedNow,
     });
   }, [
     avatarSeed,
@@ -180,6 +188,7 @@ export default function AvatarRenderer({
     resolvedTank,
     skillKey,
     actionKey,
+    pumped,
   ]);
 
   const y = (row: number) => row * CELL;

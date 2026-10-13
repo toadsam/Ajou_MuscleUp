@@ -22,4 +22,9 @@ public class CrewChallengeMemberProgressResponse {
     private Gender gender;
     @JsonProperty("isResting")
     private boolean isResting;
+    /** 도감에서 장착한 민소매 색(없으면 null) */
+    private String tank;
+    /** 운동 직후 펌핑 중 */
+    @JsonProperty("isPumped")
+    private boolean isPumped;
 }

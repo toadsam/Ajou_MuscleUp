@@ -23,6 +23,7 @@ public class FriendServiceImpl implements FriendService {
     private final FriendChatMessageRepository friendChatMessageRepository;
     private final FriendUserSearchRepository friendUserSearchRepository;
     private final BlockService blockService;
+    private final AvatarLookService avatarLookService;
 
     private static final int SEARCH_MIN_LENGTH = 2;
     private static final int SEARCH_LIMIT = 10;
@@ -328,8 +329,9 @@ public class FriendServiceImpl implements FriendService {
             return Map.of();
         }
         Map<Long, FriendCharacterResponse> result = new HashMap<>();
+        Map<Long, AvatarLookService.Look> looks = avatarLookService.looks(users.stream().map(User::getId).toList());
         characterProfileRepository.findAllByUserIn(users).forEach(profile ->
-                result.put(profile.getUser().getId(), FriendCharacterResponse.from(profile))
+                result.put(profile.getUser().getId(), FriendCharacterResponse.from(profile, looks.get(profile.getUser().getId())))
         );
         return result;
     }
@@ -339,7 +341,7 @@ public class FriendServiceImpl implements FriendService {
             return null;
         }
         return characterProfileRepository.findByUser(user)
-                .map(FriendCharacterResponse::from)
+                .map(p -> FriendCharacterResponse.from(p, avatarLookService.look(user.getId())))
                 .orElse(null);
     }
 }

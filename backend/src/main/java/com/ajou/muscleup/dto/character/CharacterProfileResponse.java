@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class CharacterProfileResponse {
     private int level;
     private CharacterTier tier;
@@ -25,6 +25,10 @@ public class CharacterProfileResponse {
     private boolean isResting;
     private LocalDateTime lastEvaluatedAt;
     private LocalDateTime updatedAt;
+    /** 운동 세션 직후 펌핑이 끝나는 시각(epoch ms). 펌핑 중이 아니면 null — AvatarLookService */
+    private Long pumpedUntil;
+    /** 도감에서 장착한 민소매 색(#RRGGBB) 또는 null */
+    private String tank;
 
     // ── 경험치(EXP) ─────────────────────────────────────────────
     // 기존 성장 규칙을 그대로 풀어 보여 주는 값이다(경제 규칙은 바꾸지 않았다).

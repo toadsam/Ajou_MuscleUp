@@ -3,6 +3,7 @@ package com.ajou.muscleup.dto.friend;
 import com.ajou.muscleup.entity.CharacterProfile;
 import com.ajou.muscleup.entity.CharacterTier;
 import com.ajou.muscleup.entity.Gender;
+import com.ajou.muscleup.service.AvatarLookService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,8 +18,18 @@ public class FriendCharacterResponse {
     private Gender gender;
     @JsonProperty("isResting")
     private boolean isResting;
+    /** 도감에서 장착한 민소매 색 · 칭호(없으면 null) */
+    private String tank;
+    private String title;
+    /** 운동 직후 펌핑 중 */
+    @JsonProperty("isPumped")
+    private boolean isPumped;
 
     public static FriendCharacterResponse from(CharacterProfile profile) {
+        return from(profile, null);
+    }
+
+    public static FriendCharacterResponse from(CharacterProfile profile, AvatarLookService.Look look) {
         if (profile == null) {
             return null;
         }
@@ -29,6 +40,9 @@ public class FriendCharacterResponse {
                 .avatarSeed(profile.getAvatarSeed())
                 .gender(profile.getGender())
                 .isResting(profile.isResting())
+                .tank(look == null ? null : look.tank())
+                .title(look == null ? null : look.title())
+                .isPumped(look != null && look.pumped(System.currentTimeMillis()))
                 .build();
     }
 }

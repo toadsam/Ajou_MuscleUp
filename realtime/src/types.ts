@@ -69,6 +69,10 @@ export type PlayerState = {
   mbti?: string;
   isResting?: boolean;
   growthParams?: GrowthParams;
+  /** 운동 직후 펌핑 중 · 장착한 민소매 색 · 칭호 (입장권에서만) */
+  isPumped?: boolean;
+  tank?: string;
+  title?: string;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
   activeEventProgress?: string;
@@ -90,6 +94,9 @@ export type VerifiedProfile = Pick<
   | "stylePreset"
   | "isResting"
   | "growthParams"
+  | "isPumped"
+  | "tank"
+  | "title"
 >;
 
 /** Self-described, cosmetic fields the client may still send (validated + length-limited). */

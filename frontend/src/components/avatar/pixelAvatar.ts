@@ -74,6 +74,8 @@ export type PixelAvatarSpec = {
   };
   /** 진화 갈래 시그니처 마크 색 (없으면 안 그림) */
   emblem: string | null;
+  /** 운동 직후 펌핑(땀 · 김). 근육 한 단계는 AvatarRenderer 가 build 에 더한다 */
+  pumped?: boolean;
   /** 운동 동작(있으면 pose · plates 대신) */
   action?: PixelAction | null;
   skills: {
@@ -411,6 +413,17 @@ export function buildPixelAvatar(spec: PixelAvatarSpec): PixelAvatarArt {
   if (spec.emblem) {
     const mark = spec.emblem.toUpperCase() === tank.toUpperCase() ? chalk : spec.emblem;
     fx(11, 15, mark, "", 0, 2, 2);
+  }
+  if (spec.pumped && !spec.resting) {
+    // 펌핑: 양쪽 관자놀이에 땀, 어깨 위로 김
+    fx(16, 6, "#7EA7E9", "pxa-sweat", 0, 1, 2);
+    fx(7, 7, "#7EA7E9", "pxa-sweat", 700, 1, 2);
+    [
+      [3, 10],
+      [20, 9],
+      [2, 15],
+      [21, 14],
+    ].forEach(([x, y], i) => fx(x, y, chalk, "pxa-dust", i * 350));
   }
   if (spec.risk !== "normal" && !spec.resting) {
     fx(17, 4, "#7EA7E9", "pxa-sweat", 0, 1, 2);

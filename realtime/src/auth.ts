@@ -29,6 +29,11 @@ export type TicketClaims = {
   style: string | null;
   rest: boolean;
   gp: Record<string, unknown> | null;
+  /** 운동 직후 펌핑 중(백엔드 AvatarLookService) */
+  pump?: boolean;
+  /** 도감에서 장착한 민소매 색 #RRGGBB · 칭호 */
+  tank?: string | null;
+  ttl?: string | null;
   fr: number[];
   /** lounge room: "square" | "gym:{id}" (older tickets: missing = square) */
   room?: string;

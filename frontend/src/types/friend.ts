@@ -16,6 +16,10 @@ export interface FriendCharacterSnapshot {
   avatarSeed: string | null;
   gender?: "MALE" | "FEMALE" | null;
   isResting?: boolean;
+  /** 도감에서 장착한 민소매 색 · 칭호, 운동 직후 펌핑 */
+  tank?: string | null;
+  title?: string | null;
+  isPumped?: boolean;
 }
 
 export interface FriendRequestItem {

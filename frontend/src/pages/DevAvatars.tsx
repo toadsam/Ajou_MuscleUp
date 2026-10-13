@@ -4,6 +4,7 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
 import { barbellLoad } from "../lib/liftMotion";
 import ExerciseIcon from "../components/lifts/ExerciseIcon";
+import RunTrack from "../components/running/RunTrack";
 import { LIFT_EXERCISES } from "../lib/lifts";
 import { exerciseGuide } from "../lib/exerciseGuide";
 import { defaultGrowthParams, type CharacterTier, type GrowthParams } from "../components/avatar/types";
@@ -21,6 +22,7 @@ const MOTIONS: [ActionKind, Equip][] = [
   ["pushup", "none"],
   ["press", "dumbbell"],
   ["flex", "none"],
+  ["run", "none"],
 ];
 
 const TIERS: CharacterTier[] = ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
@@ -93,6 +95,12 @@ export default function DevAvatars() {
       <section className="space-y-3">
         <h2 className="font-bold">상태 · 갈래 · 스킬 · 머리 모양</h2>
         <div className="grid grid-cols-4 gap-3 md:grid-cols-8">
+          <Cell label="펌핑(운동 직후)">
+            <AvatarRenderer avatarSeed="rest" tier="PLATINUM" stage={5} pumped mbti="INFP" growthParams={growth(0.5)} size={120} />
+          </Cell>
+          <Cell label="장착 민소매(남색)">
+            <AvatarRenderer avatarSeed="rest" tier="PLATINUM" stage={5} tank="#1F3A6B" mbti="INFP" growthParams={growth(0.5)} size={120} />
+          </Cell>
           <Cell label="휴식 중">
             <AvatarRenderer avatarSeed="rest" tier="PLATINUM" stage={5} isResting mbti="INFP" growthParams={growth(0.5)} size={120} />
           </Cell>
@@ -175,6 +183,14 @@ export default function DevAvatars() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-bold">러닝 캐릭터 (5'30"/km · 1.73km / 멈춤)</h2>
+        <div className="grid max-w-md gap-3">
+          <RunTrack character={{ avatarSeed: "run", tier: "GOLD", evolutionStage: 2, growthParams: growth(0.5) }} mbti="ENFP" pace={330} paused={false} distanceM={1730} />
+          <RunTrack character={{ avatarSeed: "run", tier: "GOLD", evolutionStage: 2, growthParams: growth(0.5) }} mbti="ENFP" pace={null} paused distanceM={980} />
         </div>
       </section>
 

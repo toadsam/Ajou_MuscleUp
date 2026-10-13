@@ -265,6 +265,20 @@
   100% { transform: translateY(0); }
 }
 
+/* 러닝 캐릭터 바닥 줄: 달리는 속도만큼 왼쪽으로 흐른다(--run-dur) */
+.run-ground {
+  background: repeating-linear-gradient(90deg, #8e9197 0 18px, transparent 18px 34px);
+  border-top: 2px solid #3a3d43;
+}
+.run-ground-move {
+  animation: runGround var(--run-dur, 1s) linear infinite;
+}
+
+@keyframes runGround {
+  from { background-position: 0 0; }
+  to { background-position: -34px 0; }
+}
+
 /* 운동 세션 캐릭터: 개인 최고를 넘으면 바가 휘청 */
 .lift-stage-pr {
   animation: liftStagePr 0.6s ease-in-out 2;

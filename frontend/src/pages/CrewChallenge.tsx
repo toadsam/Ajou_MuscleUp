@@ -117,21 +117,23 @@ type AvatarRow = {
   avatarSeed?: string | null;
   gender?: "MALE" | "FEMALE" | null;
   isResting?: boolean;
+  tank?: string | null;
+  isPumped?: boolean;
 };
 
 const resolveAvatarConfig = (row: AvatarRow | null | undefined, fallbackRate = 0) => {
   const tier = (row?.characterTier ?? tierFromAttendance(row?.attendanceRate ?? fallbackRate)) as CharacterTier;
   const stage = row?.characterStage ?? Math.max(1, Math.min(9, Math.floor((row?.attendanceRate ?? fallbackRate) / 12)));
   const seed = row?.avatarSeed ?? `crew-avatar-${row?.userId ?? "x"}-${row?.nickname ?? "unknown"}`;
-  return { tier, stage, seed, gender: row?.gender, isResting: row?.isResting ?? false };
+  return { tier, stage, seed, gender: row?.gender, isResting: row?.isResting ?? false, tank: row?.tank ?? null, pumped: row?.isPumped ?? false };
 };
 
-function EnhancedAvatar({ seed, tier, stage, size, gender, isResting, rank, badge }: { seed: string; tier: CharacterTier; stage: number; size: number; gender?: "MALE" | "FEMALE" | null; isResting?: boolean; rank?: number; badge?: string }) {
+function EnhancedAvatar({ seed, tier, stage, size, gender, isResting, tank, pumped, rank, badge }: { seed: string; tier: CharacterTier; stage: number; size: number; gender?: "MALE" | "FEMALE" | null; isResting?: boolean; tank?: string | null; pumped?: boolean; rank?: number; badge?: string }) {
   return (
     <div className="relative inline-flex items-center justify-center">
       {rank && rank <= 3 && <span className={`font-num absolute -top-3 z-20 rounded-sm border-2 border-black px-1.5 py-0 text-xs font-black ${RANK_PLATE[rank]}`}>{`${rank}위`}</span>}
       <div className={`relative z-10 rounded-md border-[3px] bg-steel-900 p-1 ${tierAuraClass[tier]}`}>
-        <AvatarRenderer avatarSeed={seed} tier={tier} stage={stage} gender={gender} isResting={isResting ?? false} size={size} />
+        <AvatarRenderer avatarSeed={seed} tier={tier} stage={stage} gender={gender} isResting={isResting ?? false} tank={tank} pumped={pumped} size={size} />
       </div>
       {badge && <span className="absolute -bottom-2 z-20 rounded-sm border-2 border-black bg-steel-700 px-1.5 py-0 text-[11px] font-bold text-chalk">{badge}</span>}
     </div>
@@ -682,7 +684,7 @@ export default function CrewChallenge() {
                     </span>
                   </div>
                   <div className="mt-2 flex justify-center">
-                    <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={78} rank={row.rank} />
+                    <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} tank={avatar.tank} pumped={avatar.pumped} size={78} rank={row.rank} />
                   </div>
                   <p className="mt-2 text-center font-bold">{row.nickname}{renderRankDelta(row.userId)}</p>
                   <p className="text-center text-xs text-steel-300">출석 {row.attendanceRate}% · 주간 {row.recentWorkoutDays}회</p>
@@ -973,7 +975,7 @@ export default function CrewChallenge() {
                             style={{ animationDelay: `${Math.min(index, 10) * 45}ms` }}
                           >
                             <div className="flex items-center gap-3">
-                              <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={48} rank={index + 1} badge={member.badge} />
+                              <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} tank={avatar.tank} pumped={avatar.pumped} size={48} rank={index + 1} badge={member.badge} />
                               <div className="flex-1">
                                 <div className="flex items-center justify-between">
                                   <span className="font-semibold">{member.nickname}</span>
@@ -1055,7 +1057,7 @@ export default function CrewChallenge() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={42} />
+                    <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} tank={avatar.tank} pumped={avatar.pumped} size={42} />
                     <div>
                       <p className="text-sm font-semibold">{member.nickname}</p>
                       <p className="text-xs text-steel-400"><span className="font-num font-bold">#{memberRank}</span> · {CREW_ROLE_LABEL[member.role] ?? member.role}</p>
@@ -1084,7 +1086,7 @@ export default function CrewChallenge() {
               style={{ animationDelay: `${Math.min(idx, 12) * 40}ms` }}
             >
               <div className="flex items-center gap-3">
-                <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} size={60} />
+                <EnhancedAvatar seed={avatar.seed} tier={avatar.tier} stage={avatar.stage} gender={avatar.gender} isResting={avatar.isResting} tank={avatar.tank} pumped={avatar.pumped} size={60} />
                 <div>
                   <p className="font-semibold">{member.nickname}</p>
                   <p className="text-xs text-steel-400"><span className="font-num text-sm font-bold">#{memberRank}</span> · {CREW_ROLE_LABEL[member.role] ?? member.role}</p>
@@ -1146,7 +1148,7 @@ export default function CrewChallenge() {
             <div className="dg-well p-3">
               <p className="text-xs text-steel-400">내 캐릭터</p>
               <div className="mt-1 flex items-center gap-2">
-                <EnhancedAvatar seed={myAvatar.seed} tier={myAvatar.tier} stage={myAvatar.stage} gender={myAvatar.gender} isResting={myAvatar.isResting} size={38} />
+                <EnhancedAvatar seed={myAvatar.seed} tier={myAvatar.tier} stage={myAvatar.stage} gender={myAvatar.gender} isResting={myAvatar.isResting} tank={myAvatar.tank} pumped={myAvatar.pumped} size={38} />
                 <p className="text-sm font-semibold">{myAttendanceRow?.nickname ?? "-"}</p>
               </div>
             </div>

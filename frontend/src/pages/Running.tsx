@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Link } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
 import RouteSvg from "../components/running/RouteSvg";
+import RunTrack from "../components/running/RunTrack";
+import type { StageCharacter } from "../components/workout/LiftStage";
+import { useLiveHeartbeat, useLiveVisible } from "../lib/live";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
@@ -118,6 +121,27 @@ export default function Running() {
   const hiddenAtRef = useRef<number | null>(null);
   const wakeRef = useRef<WakeLockLike | null>(null);
   const now = useNow(Boolean(run));
+  // 같이 달리는 캐릭터 · 라운지 "운동 구역"에 러닝 중으로 보이기
+  const [character, setCharacter] = useState<StageCharacter | null>(null);
+  const [mbti, setMbti] = useState<string | null>(null);
+  const [liveVisible, toggleLive] = useLiveVisible();
+  const runActive = Boolean(run);
+  useLiveHeartbeat(runActive && run?.pausedAt == null && liveVisible, "RUN");
+  useEffect(() => {
+    if (!runActive || character) return;
+    let alive = true;
+    void api
+      .get<StageCharacter>("/api/character/me")
+      .then((res) => alive && setCharacter(res.data))
+      .catch(() => undefined);
+    void api
+      .get<{ mbti?: string | null }>("/api/mypage/stats")
+      .then((res) => alive && setMbti(res.data?.mbti ?? null))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [runActive, character]);
   const watching = acquiring || Boolean(run);
 
   const load = useCallback(async () => {
@@ -486,6 +510,8 @@ export default function Running() {
             </div>
           </div>
 
+          <RunTrack character={character} mbti={mbti} pace={pace} paused={paused} distanceM={run.distanceM} />
+
           {gapNotice && (
             <p className="dg-well p-3 text-sm text-plate-yellow" role="status">
               화면이 꺼져 있던 동안은 위치를 받지 못해 그 사이는 직선 거리로 이어졌어요. 화면을 켜 둔 채 달려 주세요.
@@ -514,6 +540,10 @@ export default function Running() {
               1km 음성 안내
             </label>
           </div>
+          <label className="flex items-center justify-end gap-1.5 text-xs text-steel-400">
+            <input type="checkbox" checked={liveVisible} onChange={toggleLive} className="h-4 w-4" />
+            라운지에 러닝 중으로 보이기
+          </label>
 
           {run.splits.length > 0 && (
             <div className="dg-steel p-4">
