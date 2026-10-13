@@ -7,6 +7,7 @@ import { useCountUp } from "../hooks/useCountUp";
 import { useInView } from "../hooks/useInView";
 import { toast as showGlobalToast } from "../lib/toast";
 import { friendlyError, httpError } from "../lib/httpError";
+import { BOX_REASON } from "../lib/collection";
 
 type AttendanceLog = {
   date: string;
@@ -26,6 +27,9 @@ type AttendanceLog = {
   /** 이번 출석으로 주간 목표를 처음 채웠을 때만 */
   weeklyGoalBonus?: number | null;
   weeklyGoalStreak?: number | null;
+  /** 이번 출석으로 받은 보상 상자(WEEKLY_GOAL · LUCKY)와 새로 모은 도감 업적 */
+  rewardBox?: string | null;
+  unlockedItems?: string[] | null;
 };
 
 type AttendanceSummary = {
@@ -395,6 +399,12 @@ export default function Attendance() {
       });
       if (res.weeklyGoalBonus) {
         showGlobalToast(`주간 목표 달성! ${res.weeklyGoalStreak ?? 1}주 연속 · 보너스 +${res.weeklyGoalBonus}`, "success");
+      }
+      if (res.rewardBox) {
+        showGlobalToast(`${BOX_REASON[res.rewardBox] ?? "보상 상자"}를 받았어요! 도감에서 열어 보세요.`, "success", 4000);
+      }
+      if (res.unlockedItems && res.unlockedItems.length > 0) {
+        showGlobalToast(`도감에 새로 모았어요: ${res.unlockedItems.join(", ")}`, "success", 4000);
       }
       await reloadMonth();
       setPlateKey((prev) => prev + 1);

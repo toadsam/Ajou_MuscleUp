@@ -12,6 +12,7 @@ import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 import type { EventItem } from "../types/event";
 import { WEEKLY_GOAL_PATH, type WeeklyGoalStatus } from "../lib/weeklyGoal";
 import { QUEST_LINKS, QUESTS_PATH, type TodayQuests } from "../lib/quests";
+import { COLLECTION_SUMMARY_PATH, syncEquippedTank, type CollectionSummary } from "../lib/collection";
 
 type AttendanceLog = {
   date: string;
@@ -162,6 +163,7 @@ export default function Home() {
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoalStatus | null>(null);
   const [quests, setQuests] = useState<TodayQuests | null>(null);
+  const [collection, setCollection] = useState<CollectionSummary | null>(null);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [character, setCharacter] = useState<CharacterProfile | null>(null);
   const [mbti, setMbti] = useState<string | null>(null);
@@ -202,7 +204,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      const [logsRes, summaryRes, characterRes, statsRes, weeklyGoalRes, questsRes] = await Promise.all([
+      const [logsRes, summaryRes, characterRes, statsRes, weeklyGoalRes, questsRes, collectionRes] = await Promise.all([
         safeFetchJson<AttendanceLog[]>(`/api/attendance?month=${monthKey}`),
         safeFetchJson<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`),
         safeFetchJson<CharacterProfile>("/api/character/me"),
@@ -210,12 +212,16 @@ export default function Home() {
         // 주간 목표는 없어도 홈이 떠야 해서 실패를 삼킨다
         safeFetchJson<WeeklyGoalStatus>(WEEKLY_GOAL_PATH).catch(() => null),
         safeFetchJson<TodayQuests>(QUESTS_PATH).catch(() => null),
+        safeFetchJson<CollectionSummary>(COLLECTION_SUMMARY_PATH).catch(() => null),
       ]);
       if (logsRes) setLogs(logsRes);
       if (summaryRes) setSummary(summaryRes);
       setWeeklyGoal(weeklyGoalRes);
       setQuests(questsRes);
       if (characterRes) setCharacter(characterRes);
+      setCollection(collectionRes);
+      // 도감에서 장착한 민소매 색을 이 기기의 내 아바타에
+      if (characterRes && collectionRes) syncEquippedTank(characterRes.avatarSeed, collectionRes.equipped.tank);
       setMbti(statsRes?.mbti ?? null);
     } catch (err: any) {
       const message = String(err?.message ?? "");
@@ -632,6 +638,15 @@ export default function Home() {
                     {quests.activity.pointsInLevel}/{quests.activity.pointsForNext}
                   </span>
                 </div>
+                {collection && collection.boxes > 0 && (
+                  <Link to="/collection" className="reward-box-link dg-rise">
+                    <span className="reward-box-mini" aria-hidden="true" />
+                    <span>
+                      열지 않은 보상 상자 <strong className="font-num">{collection.boxes}</strong>개
+                    </span>
+                    <span className="reward-box-go">열기</span>
+                  </Link>
+                )}
               </>
             ) : (
               <div className="action-list">

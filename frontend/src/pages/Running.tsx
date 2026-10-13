@@ -5,6 +5,7 @@ import RouteSvg from "../components/running/RouteSvg";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
+import { BOX_REASON } from "../lib/collection";
 import { formatClock } from "../lib/workoutSession";
 import {
   GOOD_ACCURACY,
@@ -403,6 +404,12 @@ export default function Running() {
               오늘 출석도 체크했어요{result.save.attendance.expEarned ? ` (+${result.save.attendance.expEarned})` : ""}.
               {result.save.attendance.weeklyGoalBonus ? ` 주간 목표 달성 보너스 +${result.save.attendance.weeklyGoalBonus}!` : ""}
             </p>
+          )}
+          {result.save.attendance.rewardBox && (
+            <Link to="/collection" className="dg-steel flex items-center gap-3 p-3 text-sm">
+              <span className="flex-1 font-semibold">{BOX_REASON[result.save.attendance.rewardBox] ?? "보상 상자"}를 받았어요!</span>
+              <span className="dg-btn dg-btn-primary min-h-[36px] px-3 text-xs">열러 가기</span>
+            </Link>
           )}
           {(r.splits.length > 0 || result.route) && (
             <div className="dg-steel grid gap-4 p-4 sm:grid-cols-2">

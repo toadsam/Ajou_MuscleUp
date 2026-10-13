@@ -1,5 +1,6 @@
 package com.ajou.muscleup.service;
 
+import com.ajou.muscleup.push.PushService;
 import com.ajou.muscleup.dto.brag.BragCommentCreateRequest;
 import com.ajou.muscleup.dto.brag.BragCommentResponse;
 import com.ajou.muscleup.dto.brag.BragCommentUpdateRequest;
@@ -81,6 +82,15 @@ public class BragInteractionServiceImpl implements BragInteractionService {
                 .content(req.getContent().trim())
                 .build());
         cheered(user, post);
+        // 글쓴이에게 댓글 알림(내 글 · 서로 차단한 사이는 빼고)
+        if (post.getUser() != null && !post.getUser().getId().equals(user.getId())
+                && !blockService.blockedEitherWay(post.getUser().getId(), user.getId())) {
+            String text = saved.getContent();
+            String preview = text.length() > 40 ? text.substring(0, 40) + "…" : text;
+            events.publishEvent(new PushService.PushEvent(post.getUser().getId(), PushService.Type.SOCIAL,
+                    new PushService.Message("새 댓글", (user.getNickname() == null ? "누군가" : user.getNickname()) + ": " + preview,
+                            "/brag/" + post.getId(), "brag-" + post.getId())));
+        }
         return BragCommentResponse.from(saved, user.getId());
     }
 

@@ -5,6 +5,7 @@ import ExercisePicker from "../components/lifts/ExercisePicker";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
+import { BOX_REASON } from "../lib/collection";
 import { exerciseInfo, formatKg, type LiftExerciseInfo } from "../lib/lifts";
 import {
   REST_CHOICES,
@@ -291,6 +292,12 @@ export default function WorkoutSession() {
               오늘 출석도 체크했어요{result.attendance.expEarned ? ` (+${result.attendance.expEarned})` : ""}.
               {result.attendance.weeklyGoalBonus ? ` 주간 목표 달성 보너스 +${result.attendance.weeklyGoalBonus}!` : ""}
             </p>
+          )}
+          {result.attendance.rewardBox && (
+            <Link to="/collection" className="dg-steel flex items-center gap-3 p-3 text-sm">
+              <span className="flex-1 font-semibold">{BOX_REASON[result.attendance.rewardBox] ?? "보상 상자"}를 받았어요!</span>
+              <span className="dg-btn dg-btn-primary min-h-[36px] px-3 text-xs">열러 가기</span>
+            </Link>
           )}
           <div className="dg-steel p-4">
             <ul className="space-y-2 text-sm">

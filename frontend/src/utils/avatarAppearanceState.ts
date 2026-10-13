@@ -8,6 +8,8 @@ export type AvatarAppearanceState = {
   gender?: "MALE" | "FEMALE" | null;
   isResting?: boolean;
   attendanceRisk?: "normal" | "warning" | "critical";
+  /** 도감에서 장착한 민소매 색(#RRGGBB) — 없으면 기본 색 */
+  tank?: string | null;
 };
 
 const keyBySeed = (seed: string) => `avatar-appearance-v1:${seed}`;
@@ -31,6 +33,7 @@ export const loadAppearanceBySeed = (seed: string): AvatarAppearanceState | null
           : parsed.attendanceRisk === "warning"
             ? "warning"
             : "normal",
+      tank: typeof parsed.tank === "string" && /^#[0-9a-fA-F]{6}$/.test(parsed.tank) ? parsed.tank : null,
     };
   } catch {
     return null;
@@ -39,6 +42,8 @@ export const loadAppearanceBySeed = (seed: string): AvatarAppearanceState | null
 
 export const saveAppearanceBySeed = (seed: string, state: AvatarAppearanceState) => {
   if (!seed) return;
-  localStorage.setItem(keyBySeed(seed), JSON.stringify(state));
-  window.dispatchEvent(new CustomEvent(AVATAR_APPEARANCE_EVENT, { detail: { seed, state } }));
+  // 민소매 색(도감)은 다른 화면이 tank 없이 저장해도 지우지 않는다
+  const next = state.tank === undefined ? { ...state, tank: loadAppearanceBySeed(seed)?.tank ?? null } : state;
+  localStorage.setItem(keyBySeed(seed), JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent(AVATAR_APPEARANCE_EVENT, { detail: { seed, state: next } }));
 };

@@ -20,4 +20,9 @@ public interface RunSessionRepository extends JpaRepository<RunSession, Long> {
     List<RunSession> findAllByUserExcept(@Param("userId") Long userId, @Param("exceptId") Long exceptId);
 
     List<RunSession> findAllByUser_Id(Long userId);
+
+    long countByUser_Id(Long userId);
+
+    @Query("select coalesce(sum(r.distanceM), 0) from RunSession r where r.user.id = :userId")
+    long sumDistanceByUserId(@Param("userId") Long userId);
 }

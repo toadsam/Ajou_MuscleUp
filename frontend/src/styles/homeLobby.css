@@ -969,3 +969,43 @@
   font-size: 0.9rem;
   color: #59607a;
 }
+
+/* 도감: 열지 않은 보상 상자 바로 가기 */
+.reward-box-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 3px solid #0e0e10;
+  border-radius: 8px;
+  background: #fff7dc;
+  color: #1c1d21;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+.reward-box-mini {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 24px;
+  background: #3a3d43;
+  border: 2px solid #0e0e10;
+  border-radius: 4px;
+}
+.reward-box-mini::before {
+  content: "";
+  position: absolute;
+  inset: 7px -2px auto -2px;
+  height: 5px;
+  background: #f0be2e;
+  border-block: 2px solid #0e0e10;
+}
+.reward-box-go {
+  margin-left: auto;
+  padding: 2px 10px;
+  border: 2px solid #0e0e10;
+  border-radius: 6px;
+  background: #d9302a;
+  color: #fff;
+}
