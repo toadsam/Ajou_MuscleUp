@@ -24,7 +24,7 @@ import {
 import { LIFT_EXERCISES } from "../../lib/lifts";
 import { SCENES } from "./scenes";
 import { exerciseGuide } from "../../lib/exerciseGuide";
-import { fetchDecor, layoutOf, placeDecor, readSeen, writeSeen, type DecorItem, type DecorView } from "../../lib/gymDecor";
+import { fetchDecor, layoutOf, placeDecor, readDecorTipShown, readSeen, writeDecorTipShown, writeSeen, type DecorItem, type DecorView } from "../../lib/gymDecor";
 import { deleteGuestbook, fetchMyGuestbook, readGuestbookSeen, writeGuestbookSeen, type GuestbookEntry } from "../../lib/gymVisit";
 import { timeAgo } from "../../lib/timeAgo";
 import ReportDialog from "../ReportDialog";
@@ -406,6 +406,19 @@ export default function GymMap(props: Props) {
   const earned = decor ? decor.items.filter((i) => i.owned && i.goal > 0).map((i) => i.code) : [];
   const fresh = earned.filter((c) => !seen?.has(c));
 
+  // 꾸미기 물품을 처음 얻으면 한 번만 알려 준다(관장님 말풍선 + 알림). "새 N" 표시만으로는 어디서 놓는지 몰랐다.
+  useEffect(() => {
+    if (!loggedIn || editing || !decor || readDecorTipShown()) return;
+    const first = decor.items.find((i) => i.owned && i.goal > 0 && !seen?.has(i.code));
+    if (!first) return;
+    const t = window.setTimeout(() => {
+      writeDecorTipShown();
+      sayRef.current("owner", `${first.label} 받았네요! 아래 꾸미기로 놓아 봐요.`);
+      appToast(`새 꾸미기 물품 · ${first.label}. 지도 아래 "꾸미기"를 눌러 놓아 보세요.`, "info", 5000);
+    }, 1200);
+    return () => window.clearTimeout(t);
+  }, [loggedIn, editing, decor, seen]);
+
   const startEdit = () => {
     setBookOpen(false);
     mapRef.current?.clearZone();
@@ -513,11 +526,25 @@ export default function GymMap(props: Props) {
     changeSceneRef.current = changeScene;
   });
 
+  /**
+   * 지도가 화면에서 가려져 있으면 보이게 스크롤한다. 장소 창은 지도 아래쪽에 뜨므로 아래를 먼저 맞춘다.
+   * 위는 고정 헤더, 아래는 휴대폰 고정 바로 가기(.gm-dock)만큼 뺀다.
+   */
+  const revealMap = () => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const dock = document.querySelector<HTMLElement>(".gm-dock");
+    const top = (document.querySelector("header")?.offsetHeight ?? 0) + 8;
+    const bottom = window.innerHeight - (dock && getComputedStyle(dock).position === "fixed" ? dock.offsetHeight : 0) - 8;
+    if (r.bottom > bottom) window.scrollBy({ top: r.bottom - bottom, behavior: "smooth" });
+    else if (r.top < top) window.scrollBy({ top: r.top - top, behavior: "smooth" });
+  };
+
   const go = (z: ZoneId, fast: boolean) => {
     setTouched(true);
     // 휴대폰에선 바로 가기가 화면 아래 고정이라, 지도가 화면 밖이면 지도부터 보여 준다(걸어가서 열리는 창이 보이게)
-    const box = wrapRef.current?.getBoundingClientRect();
-    if (box && (box.top < 0 || box.bottom > window.innerHeight - 90)) wrapRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    revealMap();
     // 다른 공간에 있으면 1층으로 먼저(바로 가기 버튼)
     if (sceneRef.current !== "MAIN") changeScene("MAIN");
     mapRef.current?.goZone(z, fast);
@@ -537,6 +564,8 @@ export default function GymMap(props: Props) {
     sayRef.current("owner", "반가워요! 체크기에서 출석 체험 해 봐요.");
     // 만들자마자 체크기로 걸어가 "출석 체험" 창을 연다
     mapRef.current?.goZone("checkin", false);
+    // 만들기 창이 닫히며 화면 높이가 줄어 "출석 체험" 창이 반쯤 가려졌다 — 다 그려진 뒤 지도에 맞춘다
+    window.setTimeout(revealMap, 60);
   };
 
   const skipBuilder = () => {
