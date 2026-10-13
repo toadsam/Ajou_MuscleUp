@@ -77,6 +77,9 @@ public class GymDecorService {
         GymDecorItem.Slot slot = GymDecorItem.Slot.parse(slotName);
         if (slot == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "꾸미기 자리를 알 수 없어요.");
         Progress progress = new Progress(me);
+        if (slot.space != null && slot.space.unlockItem != null && !progress.owned(GymDecorItem.parse(slot.space.unlockItem))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "아직 열리지 않은 공간이에요.");
+        }
         GymDecorItem item = null;
         if (code != null && !code.isBlank()) {
             item = GymDecorItem.parse(code);
@@ -182,6 +185,11 @@ public class GymDecorService {
                 case MY_FOODS -> (int) myFoodRepository.countByUser_Id(id);
                 case WEEKLY_STREAK -> weeklyGoalService.status(me).streakWeeks();
                 case BODY -> body() != null && body().getWeightKg() != null ? 1 : 0;
+                case RUN_COUNT -> (int) runSessionRepository.countByUser_Id(id);
+                case DECOR_COUNT -> (int) java.util.Arrays.stream(GymDecorItem.values())
+                        .filter(i -> i.kind == GymDecorItem.Kind.DECOR && !i.isDefault() && i.goal != GymDecorItem.Goal.DECOR_COUNT)
+                        .filter(this::owned)
+                        .count();
             };
         }
 

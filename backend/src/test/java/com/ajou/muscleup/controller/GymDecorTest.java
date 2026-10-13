@@ -84,7 +84,7 @@ class GymDecorTest {
                 .andExpect(jsonPath(item("CLOCK", "goal")).value(hasItem(7)))
                 .andExpect(jsonPath(item("CLOCK", "hint")).value(hasItem("운동 출석 7일")))
                 .andExpect(jsonPath("$.owned").value(3)) // 화분 · 빨간 원 · 고무 매트(직원 겉모습은 세지 않는다)
-                .andExpect(jsonPath("$.total").value(21));
+                .andExpect(jsonPath("$.total").value(33));
 
         // 아직 못 얻은 건 못 놓는다
         place(alice, "WALL", "CLOCK").andExpect(status().isBadRequest());
@@ -169,5 +169,31 @@ class GymDecorTest {
         em.flush();
         place(alice, "HIRE_CLEANER", "CLEANER").andExpect(jsonPath(slot("HIRE_CLEANER")).value(hasItem("CLEANER")));
         place(alice, "HIRE_CLEANER", null).andExpect(jsonPath(slot("HIRE_CLEANER")).value(hasItem(nullValue())));
+    }
+
+    @Test
+    void spacesUnlockFromRecords() throws Exception {
+        // 처음: 새 공간은 잠겨 있고, 그 공간 자리에는 아무것도 놓을 수 없다
+        mvc.perform(get("/api/gym-decor").with(as(alice)))
+                .andExpect(jsonPath(item("SPACE_TRACK", "owned")).value(hasItem(false)))
+                .andExpect(jsonPath(item("SPACE_TRACK", "hint")).value(hasItem("러닝 누적 30km")))
+                .andExpect(jsonPath(item("SPACE_FLOOR2", "hint")).value(hasItem("꾸미기 물품 6개 얻기")))
+                .andExpect(jsonPath(slot("DN_CORNER_L")).value(hasItem("PLANT")));
+        place(alice, "TR_FIELD_A", "PLANT").andExpect(status().isBadRequest());
+
+        // 러닝 6번 · 누적 30km → 트랙이 열리고, 콘(러닝 5번)도 얻는다
+        for (int i = 0; i < 6; i++) {
+            em.persist(com.ajou.muscleup.entity.RunSession.builder().user(alice).performedOn(LocalDate.now().minusDays(i))
+                    .startedAt(LocalDateTime.now().minusDays(i).minusHours(1)).endedAt(LocalDateTime.now().minusDays(i))
+                    .durationSec(1800).distanceM(5000).source("GPS").build());
+        }
+        em.flush();
+        place(alice, "TR_FIELD_A", "PLANT").andExpect(jsonPath(slot("TR_FIELD_A")).value(hasItem("PLANT")));
+        place(alice, "TR_LINE", "CONE").andExpect(jsonPath(slot("TR_LINE")).value(hasItem("CONE")));
+        // 결승 깃발은 100km, 트랙 전용 물품은 1층에 못 놓는다
+        place(alice, "TR_LINE", "FINISH_FLAG").andExpect(status().isBadRequest());
+        place(alice, "FLOOR_LEFT", "CONE").andExpect(status().isBadRequest());
+        // 아직 잠긴 식당 자리
+        place(alice, "DN_CORNER_L", null).andExpect(status().isBadRequest());
     }
 }

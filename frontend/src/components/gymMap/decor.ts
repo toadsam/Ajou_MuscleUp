@@ -3,6 +3,7 @@
 // 물품 목록 · 얻는 조건은 서버(GymDecorItem.java)가 정하고, 여기서는 같은 코드로 그림만 그린다(둘 다 고칠 것).
 // 기본 시설(출석 체크기 · 라운지 · 게시판 …)과 걷는 길은 건드리지 않는 빈자리만 슬롯으로 썼다.
 // 줄이 없으면 기본 물품: 구석 세 곳은 화분, 가운데 바닥은 빨간 원판 무늬(꾸미기 전 지도와 똑같다).
+// 자리는 공간(scene)마다 따로다: 1층(MAIN) · 2층 · 러닝 트랙 · 식당. 공간 그림 · 막힌 칸은 scenes.ts.
 
 export type SlotId =
   | "WALL"
@@ -13,7 +14,38 @@ export type SlotId =
   | "CHECKIN_SIDE"
   | "COUNTER"
   | "CORNER_LEFT"
-  | "CORNER_RIGHT";
+  | "CORNER_RIGHT"
+  | "F2_WALL_L"
+  | "F2_WALL_R"
+  | "F2_FLOOR_A"
+  | "F2_FLOOR_B"
+  | "F2_FLOOR_C"
+  | "F2_TALL_A"
+  | "F2_TALL_B"
+  | "F2_SIDE"
+  | "F2_CORNER_L"
+  | "F2_CORNER_R"
+  | "TR_FIELD_A"
+  | "TR_FIELD_B"
+  | "TR_FIELD_C"
+  | "TR_FIELD_D"
+  | "TR_LINE"
+  | "DN_WALL"
+  | "DN_COUNTER_A"
+  | "DN_COUNTER_B"
+  | "DN_COUNTER_C"
+  | "DN_SIDE_L"
+  | "DN_SIDE_R"
+  | "DN_CORNER_L"
+  | "DN_CORNER_R";
+
+/** 공간: 1층(처음부터) · 2층 · 야외 러닝 트랙 · 단백질 식당. 열리는 조건은 서버 SPACE_* 물품 */
+export type SceneId = "MAIN" | "FLOOR2" | "TRACK" | "DINER";
+export const SCENE_UNLOCK: Record<Exclude<SceneId, "MAIN">, string> = {
+  FLOOR2: "SPACE_FLOOR2",
+  TRACK: "SPACE_TRACK",
+  DINER: "SPACE_DINER",
+};
 
 /** 지도 위 자리가 아닌 설정 칸: 테마 · 유니폼 · 새 직원 출근 · 직원별 머리색(서버 GymDecorItem.Slot 과 같다) */
 export type StaffId = "coach" | "owner" | "staff" | "trainer" | "cleaner" | "towel";
@@ -58,6 +90,7 @@ export function staffLookOf(layout: DecorLayout): StaffLook {
 type Rect = { c: number; r: number; w: number; h: number };
 export type SlotSpec = {
   name: string;
+  scene: SceneId;
   /** 그림 · 테두리 영역(지도 픽셀) */
   box: [number, number, number, number];
   /** 물품이 놓이면 못 지나가는 칸 */
@@ -65,15 +98,41 @@ export type SlotSpec = {
 };
 
 export const SLOTS: Record<SlotId, SlotSpec> = {
-  WALL: { name: "벽 장식", box: [96, 4, 48, 28] },
-  PLATFORM_SIDE: { name: "플랫폼 옆", box: [112, 78, 32, 34], solid: { c: 7, r: 5, w: 2, h: 2 } },
-  CORNER_TOP: { name: "오른쪽 위 구석", box: [224, 92, 16, 24], solid: { c: 14, r: 6, w: 1, h: 1 } },
-  FLOOR_LEFT: { name: "왼쪽 바닥", box: [16, 204, 48, 36], solid: { c: 1, r: 13, w: 3, h: 2 } },
-  CENTER: { name: "가운데 바닥", box: [96, 192, 48, 48] },
-  CHECKIN_SIDE: { name: "출석 체크기 옆", box: [206, 312, 34, 42], solid: { c: 13, r: 21, w: 2, h: 1 } },
-  COUNTER: { name: "카운터 위", box: [34, 312, 24, 20] },
-  CORNER_LEFT: { name: "왼쪽 아래 구석", box: [16, 364, 16, 24], solid: { c: 1, r: 23, w: 1, h: 1 } },
-  CORNER_RIGHT: { name: "오른쪽 아래 구석", box: [224, 364, 16, 24], solid: { c: 14, r: 23, w: 1, h: 1 } },
+  WALL: { name: "벽 장식", scene: "MAIN", box: [96, 4, 48, 28] },
+  PLATFORM_SIDE: { name: "플랫폼 옆", scene: "MAIN", box: [112, 78, 32, 34], solid: { c: 7, r: 5, w: 2, h: 2 } },
+  CORNER_TOP: { name: "오른쪽 위 구석", scene: "MAIN", box: [224, 92, 16, 24], solid: { c: 14, r: 6, w: 1, h: 1 } },
+  FLOOR_LEFT: { name: "왼쪽 바닥", scene: "MAIN", box: [16, 204, 48, 36], solid: { c: 1, r: 13, w: 3, h: 2 } },
+  CENTER: { name: "가운데 바닥", scene: "MAIN", box: [96, 192, 48, 48] },
+  CHECKIN_SIDE: { name: "출석 체크기 옆", scene: "MAIN", box: [206, 312, 34, 42], solid: { c: 13, r: 21, w: 2, h: 1 } },
+  COUNTER: { name: "카운터 위", scene: "MAIN", box: [34, 312, 24, 20] },
+  CORNER_LEFT: { name: "왼쪽 아래 구석", scene: "MAIN", box: [16, 364, 16, 24], solid: { c: 1, r: 23, w: 1, h: 1 } },
+  CORNER_RIGHT: { name: "오른쪽 아래 구석", scene: "MAIN", box: [224, 364, 16, 24], solid: { c: 14, r: 23, w: 1, h: 1 } },
+  // 2층
+  F2_WALL_L: { name: "왼쪽 벽", scene: "FLOOR2", box: [32, 4, 48, 28] },
+  F2_WALL_R: { name: "오른쪽 벽", scene: "FLOOR2", box: [176, 4, 48, 28] },
+  F2_FLOOR_A: { name: "왼쪽 위 바닥", scene: "FLOOR2", box: [32, 92, 48, 36], solid: { c: 2, r: 6, w: 3, h: 2 } },
+  F2_FLOOR_B: { name: "오른쪽 위 바닥", scene: "FLOOR2", box: [176, 92, 48, 36], solid: { c: 11, r: 6, w: 3, h: 2 } },
+  F2_TALL_A: { name: "왼쪽 기구 자리", scene: "FLOOR2", box: [32, 186, 32, 34], solid: { c: 2, r: 12, w: 2, h: 2 } },
+  F2_TALL_B: { name: "오른쪽 기구 자리", scene: "FLOOR2", box: [192, 186, 32, 34], solid: { c: 12, r: 12, w: 2, h: 2 } },
+  F2_FLOOR_C: { name: "가운데 바닥", scene: "FLOOR2", box: [96, 268, 48, 36], solid: { c: 6, r: 17, w: 3, h: 2 } },
+  F2_SIDE: { name: "계단 옆", scene: "FLOOR2", box: [206, 296, 34, 42], solid: { c: 13, r: 20, w: 2, h: 1 } },
+  F2_CORNER_L: { name: "왼쪽 아래 구석", scene: "FLOOR2", box: [16, 364, 16, 24], solid: { c: 1, r: 23, w: 1, h: 1 } },
+  F2_CORNER_R: { name: "오른쪽 아래 구석", scene: "FLOOR2", box: [224, 364, 16, 24], solid: { c: 14, r: 23, w: 1, h: 1 } },
+  // 러닝 트랙(안쪽 잔디 넷 + 오른쪽 직선 결승선)
+  TR_FIELD_A: { name: "잔디 왼쪽 위", scene: "TRACK", box: [60, 150, 48, 36], solid: { c: 4, r: 10, w: 3, h: 2 } },
+  TR_FIELD_B: { name: "잔디 오른쪽 위", scene: "TRACK", box: [148, 150, 48, 36], solid: { c: 9, r: 10, w: 3, h: 2 } },
+  TR_FIELD_C: { name: "잔디 왼쪽 아래", scene: "TRACK", box: [60, 250, 48, 36], solid: { c: 4, r: 16, w: 3, h: 2 } },
+  TR_FIELD_D: { name: "잔디 오른쪽 아래", scene: "TRACK", box: [148, 250, 48, 36], solid: { c: 9, r: 16, w: 3, h: 2 } },
+  TR_LINE: { name: "결승선", scene: "TRACK", box: [200, 200, 32, 24] },
+  // 식당
+  DN_WALL: { name: "주방 벽", scene: "DINER", box: [104, 2, 48, 28] },
+  DN_COUNTER_A: { name: "조리대 왼쪽", scene: "DINER", box: [24, 16, 32, 28] },
+  DN_COUNTER_B: { name: "조리대 가운데", scene: "DINER", box: [64, 16, 32, 28] },
+  DN_COUNTER_C: { name: "조리대 오른쪽", scene: "DINER", box: [200, 16, 32, 28] },
+  DN_SIDE_L: { name: "왼쪽 벽 옆", scene: "DINER", box: [16, 296, 34, 42], solid: { c: 1, r: 20, w: 2, h: 1 } },
+  DN_SIDE_R: { name: "오른쪽 벽 옆", scene: "DINER", box: [206, 296, 34, 42], solid: { c: 13, r: 20, w: 2, h: 1 } },
+  DN_CORNER_L: { name: "왼쪽 아래 구석", scene: "DINER", box: [16, 364, 16, 24], solid: { c: 1, r: 23, w: 1, h: 1 } },
+  DN_CORNER_R: { name: "오른쪽 아래 구석", scene: "DINER", box: [224, 364, 16, 24], solid: { c: 14, r: 23, w: 1, h: 1 } },
 };
 export const SLOT_IDS = Object.keys(SLOTS) as SlotId[];
 
@@ -83,6 +142,7 @@ export const DEFAULT_LAYOUT: DecorLayout = {
   THEME: "THEME_RUBBER", UNIFORM: "UNIFORM_YELLOW",
   HAIR_COACH: "HAIR_BLACK", HAIR_OWNER: "HAIR_GRAY", HAIR_STAFF: "HAIR_BROWN",
   HAIR_TRAINER: "HAIR_BLACK", HAIR_CLEANER: "HAIR_BROWN", HAIR_TOWEL: "HAIR_BLOND",
+  F2_CORNER_L: "PLANT", F2_CORNER_R: "PLANT", DN_CORNER_L: "PLANT", DN_CORNER_R: "PLANT",
 };
 
 const K = {
@@ -310,6 +370,112 @@ function ring(g: G, x: number, y: number, w: number, h: number, outer: string, i
   g.restore();
 }
 
+function yogaMat(g: G, x: number, y: number, h: number) {
+  // 바닥에 깐 매트 두 장 + 폼롤러
+  const top = y + h - 22;
+  fill(g, x + 3, top, 18, 20, K.ink);
+  fill(g, x + 4, top + 1, 16, 18, "#2F8F7A");
+  fill(g, x + 4, top + 1, 16, 2, "#3FAE96");
+  fill(g, x + 23, top, 18, 20, K.ink);
+  fill(g, x + 24, top + 1, 16, 18, "#7A4FB0");
+  fill(g, x + 24, top + 1, 16, 2, "#9A72CC");
+  fill(g, x + 42, top + 6, 5, 12, K.ink);
+  fill(g, x + 43, top + 7, 3, 10, K.blue);
+}
+
+function sandbag(g: G, x: number, y: number, w: number, h: number) {
+  const cx = x + (w >> 1);
+  fill(g, cx - 1, y, 2, 6, K.steelD);
+  fill(g, cx - 6, y + 5, 12, h - 9, K.ink);
+  fill(g, cx - 5, y + 6, 10, h - 11, "#7A2A22");
+  fill(g, cx - 5, y + 6, 2, h - 11, "#9A3A30");
+  fill(g, cx - 5, y + 12, 10, 1, K.ink);
+  fill(g, cx - 5, y + h - 10, 10, 1, K.ink);
+  fill(g, cx - 4, y + h - 4, 8, 2, "#1B1C1F");
+}
+
+function pullupBar(g: G, x: number, y: number, w: number, h: number) {
+  for (const px of [x + 3, x + w - 6]) {
+    fill(g, px - 1, y + 2, 5, h - 4, K.ink);
+    fill(g, px, y + 3, 3, h - 6, K.steel);
+  }
+  fill(g, x + 1, y + 4, w - 2, 3, K.ink);
+  fill(g, x + 2, y + 5, w - 4, 1, "#C6C8CE");
+  fill(g, x + 1, y + h - 3, w - 2, 2, K.ink);
+}
+
+function cones(g: G, x: number, y: number, w: number, h: number) {
+  const n = w >= 40 ? 3 : 2;
+  const gap = Math.floor((w - 4) / n);
+  for (let i = 0; i < n; i++) {
+    const cx = x + 4 + i * gap + (gap >> 1);
+    const by = y + h - 3;
+    fill(g, cx - 5, by, 10, 2, K.ink);
+    for (let k = 0; k < 8; k++) fill(g, cx - (k >> 1) - 1, by - 8 + k, 2 + (k >> 1) * 2, 1, k === 3 || k === 4 ? K.chalk : "#F07A1E");
+  }
+}
+
+function waterStation(g: G, x: number, y: number, w: number, h: number) {
+  const sx = x + ((w - 20) >> 1);
+  const top = y + h - 30;
+  fill(g, sx, top + 8, 20, 22, K.ink);
+  fill(g, sx + 1, top + 9, 18, 20, "#D9D7CF");
+  fill(g, sx + 3, top, 14, 10, K.ink);
+  fill(g, sx + 4, top + 1, 12, 8, "#6FA8DC");
+  fill(g, sx + 5, top + 2, 2, 6, "#A9CCEA");
+  fill(g, sx + 8, top + 14, 4, 2, K.blue);
+  for (let i = 0; i < 3; i++) fill(g, sx + 3 + i * 5, top + 20, 3, 5, i === 1 ? K.yellow : K.chalk);
+}
+
+function finishFlag(g: G, x: number, y: number, w: number, h: number) {
+  // 결승 테이프 + 양쪽 기둥 + 체크 깃발
+  fill(g, x + 1, y + 2, 3, h - 2, K.ink);
+  fill(g, x + w - 4, y + 2, 3, h - 2, K.ink);
+  fill(g, x + 2, y + 3, 1, h - 4, K.chalk);
+  fill(g, x + w - 3, y + 3, 1, h - 4, K.chalk);
+  fill(g, x + 3, y + 10, w - 6, 2, K.red);
+  for (let i = 0; i < 4; i++)
+    for (let j = 0; j < 3; j++) fill(g, x + 5 + i * 2, y + 1 + j * 2, 2, 2, (i + j) % 2 ? K.ink : K.chalk);
+  fill(g, x + 2, y + h - 3, w - 4, 1, K.chalk);
+}
+
+function riceCooker(g: G, x: number, y: number, w: number, h: number) {
+  const cx = x + (w >> 1);
+  const by = y + h - 1;
+  fill(g, cx - 9, by - 14, 18, 14, K.ink);
+  fill(g, cx - 8, by - 13, 16, 12, "#E9E4D8");
+  fill(g, cx - 8, by - 13, 16, 3, "#C9C3B4");
+  fill(g, cx - 3, by - 16, 6, 3, K.ink);
+  fill(g, cx - 2, by - 15, 4, 1, K.steelL);
+  fill(g, cx - 4, by - 7, 8, 3, K.ink);
+  fill(g, cx - 3, by - 6, 2, 1, K.green);
+  fill(g, cx + 1, by - 6, 2, 1, K.red);
+}
+
+function saladBar(g: G, x: number, y: number, w: number, h: number) {
+  const bw = w - 6;
+  const bx = x + 3;
+  const top = y + h - 22;
+  fill(g, bx, top, bw, 22, K.ink);
+  fill(g, bx + 1, top + 1, bw - 2, 6, "#A9CCEA");
+  fill(g, bx + 1, top + 7, bw - 2, 14, K.steel);
+  const cols = [K.green, "#E35D3A", K.yellow, "#7FBF5A"];
+  for (let i = 0; i < 4; i++) fill(g, bx + 2 + i * Math.floor((bw - 4) / 4), top + 2, Math.floor((bw - 4) / 4) - 1, 4, cols[i]);
+  fill(g, bx + 3, top + 10, bw - 6, 1, K.steelL);
+}
+
+function menuBoard(g: G, x: number, y: number, w: number) {
+  const bx = x + 4;
+  const bw = w - 8;
+  fill(g, bx, y + 4, bw, 22, "#5A3A22");
+  fill(g, bx + 2, y + 6, bw - 4, 18, "#1F2A24");
+  const lines = [K.chalk, K.yellow, K.chalk, "#9EC1E8"];
+  lines.forEach((col, i) => {
+    fill(g, bx + 5, y + 9 + i * 4, 14 - (i % 2) * 4, 1, col);
+    fill(g, bx + bw - 12, y + 9 + i * 4, 6, 1, col);
+  });
+}
+
 /** 한 자리에 물품 하나를 그린다(모르는 코드는 그리지 않는다) */
 export function drawDecorItem(g: G, slot: SlotId, code: string) {
   const [x, y, w, h] = SLOTS[slot].box;
@@ -326,7 +492,7 @@ export function drawDecorItem(g: G, slot: SlotId, code: string) {
     case "BANNER":
       return banner(g, x, y, w);
     case "TROPHY":
-      return trophy(g, x, y, w, h, slot === "WALL");
+      return trophy(g, x, y, w, h, y < 10);
     case "KETTLEBELL":
       return kettlebells(g, x, y, w, h);
     case "SMITH":
@@ -338,7 +504,25 @@ export function drawDecorItem(g: G, slot: SlotId, code: string) {
     case "FRIDGE":
       return fridge(g, x, y, w, h);
     case "PROTEIN":
-      return protein(g, x, y, w, h, slot === "COUNTER" || corner);
+      return protein(g, x, y, w, h, slot === "COUNTER" || slot.startsWith("DN_COUNTER") || corner);
+    case "YOGA_MAT":
+      return yogaMat(g, x, y, h);
+    case "SANDBAG":
+      return sandbag(g, x, y, w, h);
+    case "PULLUP_BAR":
+      return pullupBar(g, x, y, w, h);
+    case "CONE":
+      return cones(g, x, y, w, h);
+    case "WATER_STATION":
+      return waterStation(g, x, y, w, h);
+    case "FINISH_FLAG":
+      return finishFlag(g, x, y, w, h);
+    case "RICE_COOKER":
+      return riceCooker(g, x, y, w, h);
+    case "SALAD_BAR":
+      return saladBar(g, x, y, w, h);
+    case "MENU_BOARD":
+      return menuBoard(g, x, y, w);
     case "RING_RED":
       return ring(g, x, y, w, h, "#3E1C19", "#35201D");
     case "RING_YELLOW":
@@ -346,9 +530,10 @@ export function drawDecorItem(g: G, slot: SlotId, code: string) {
   }
 }
 
-/** 놓인 물품 전부 */
-export function paintDecor(g: G, layout: DecorLayout) {
+/** 그 공간에 놓인 물품 전부 */
+export function paintDecor(g: G, layout: DecorLayout, scene: SceneId = "MAIN") {
   for (const id of SLOT_IDS) {
+    if (SLOTS[id].scene !== scene) continue;
     const code = layout[id];
     if (code) drawDecorItem(g, id, code);
   }
@@ -362,7 +547,7 @@ export function paintPreview(canvas: HTMLCanvasElement, slot: SlotId, code: stri
   const g = canvas.getContext("2d");
   if (!g) return;
   g.imageSmoothingEnabled = false;
-  g.fillStyle = slot === "WALL" ? "#34363C" : "#232428";
+  g.fillStyle = y < 10 ? "#34363C" : SLOTS[slot].scene === "TRACK" ? "#4C8C46" : SLOTS[slot].scene === "DINER" ? "#D8CDB2" : "#232428";
   g.fillRect(0, 0, w, h);
   g.save();
   g.translate(-x, -y);
@@ -370,7 +555,7 @@ export function paintPreview(canvas: HTMLCanvasElement, slot: SlotId, code: stri
   g.restore();
 }
 
-/** 물품이 놓여 막힌 칸들 */
-export function solidTiles(layout: DecorLayout): Rect[] {
-  return SLOT_IDS.filter((id) => layout[id] && SLOTS[id].solid).map((id) => SLOTS[id].solid as Rect);
+/** 그 공간에서 물품이 놓여 막힌 칸들 */
+export function solidTiles(layout: DecorLayout, scene: SceneId = "MAIN"): Rect[] {
+  return SLOT_IDS.filter((id) => SLOTS[id].scene === scene && layout[id] && SLOTS[id].solid).map((id) => SLOTS[id].solid as Rect);
 }
