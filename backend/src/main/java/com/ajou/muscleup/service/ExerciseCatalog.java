@@ -125,6 +125,34 @@ public class ExerciseCatalog {
         c.setDeleted(true); // 지난 기록의 이름은 남긴다
     }
 
+    /**
+     * 내 종목 이름 · 부위 고치기. 지난 기록도 같은 코드를 쓰므로 새 이름으로 보인다.
+     * 맨몸 여부는 바꾸지 않는다(지난 기록의 무게 0 세트가 맞지 않게 될 수 있어서).
+     */
+    @Transactional
+    public ExerciseDef update(User me, String code, CustomRequest req) {
+        Long id = customId(code);
+        CustomExercise c = id == null ? null : customRepository.findByIdAndUser_Id(id, me.getId()).orElse(null);
+        if (c == null || c.isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "종목을 찾을 수 없어요.");
+        }
+        String name = cleanName(req == null ? null : req.name());
+        String category = req == null || req.category() == null ? c.getCategory() : req.category().trim().toUpperCase(Locale.ROOT);
+        if (!CATEGORIES.contains(category)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "부위를 골라 주세요.");
+        }
+        String key = key(name);
+        boolean taken = LiftExercise.all().stream().anyMatch(e -> key(e.label()).equals(key))
+                || customRepository.findAllByUser_IdAndDeletedFalseOrderByIdAsc(me.getId()).stream()
+                .anyMatch(o -> !o.getId().equals(c.getId()) && key(o.getName()).equals(key));
+        if (taken) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 있는 종목 이름이에요.");
+        }
+        c.setName(name);
+        c.setCategory(category);
+        return ExerciseDef.of(c);
+    }
+
     /** 최근에 한 종목(세션 세트 · 빠른 기록에서), 새것부터 8개. 지운 내 종목은 뺀다 */
     @Transactional(readOnly = true)
     public List<ExerciseDef> recent(User me) {

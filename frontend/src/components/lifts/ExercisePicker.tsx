@@ -8,6 +8,7 @@ import {
   LIFT_EXERCISES,
   addCustomExercise,
   deleteCustomExercise,
+  updateCustomExercise,
   useCustomExercises,
   type LiftCategory,
   type LiftExerciseInfo,
@@ -26,6 +27,7 @@ type Props = {
 type Tab = "RECENT" | "ALL" | "MINE" | LiftCategory;
 
 const BODY_PARTS: LiftCategory[] = ["LEGS", "CHEST", "BACK", "SHOULDERS", "ARMS", "CORE"];
+const CATEGORY_CHOICES: LiftCategory[] = [...BODY_PARTS, "OTHER"];
 const norm = (s: string) => s.replace(/\s+/g, "").toLowerCase();
 
 /**
@@ -109,6 +111,32 @@ export default function ExercisePicker({ selected, onPick, weightedOnly = false,
     }
   };
 
+  // 내 종목 이름 · 부위 고치기(한 번에 하나)
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPart, setEditPart] = useState<LiftCategory>("OTHER");
+
+  const startEdit = (ex: LiftExerciseInfo) => {
+    setEditing(ex.code);
+    setEditName(ex.label);
+    setEditPart(ex.category);
+  };
+
+  const submitEdit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editing || !editName.trim() || saving) return;
+    setSaving(true);
+    try {
+      const updated = await updateCustomExercise(editing, editName.trim(), editPart);
+      toast(`"${updated.label}"(으)로 고쳤어요. 지난 기록도 새 이름으로 보여요.`, "success");
+      setEditing(null);
+    } catch (err: unknown) {
+      toast(friendlyError(err, "고치지 못했어요."), "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const remove = async (ex: LiftExerciseInfo) => {
     if (!window.confirm(`"${ex.label}"을(를) 내 종목에서 지울까요? 지난 기록은 그대로 남아요.`)) return;
     try {
@@ -182,16 +210,57 @@ export default function ExercisePicker({ selected, onPick, weightedOnly = false,
 
       {tab === "MINE" && !query && customs.length > 0 && (
         <ul className="space-y-1 text-sm">
-          {customs.map((e) => (
-            <li key={e.code} className="flex items-center justify-between gap-2 text-steel-300">
-              <span className="truncate">
-                {e.label} <span className="text-xs text-steel-500">{LIFT_CATEGORY_LABEL[e.category]}</span>
-              </span>
-              <button type="button" onClick={() => void remove(e)} className="flex-none text-xs text-steel-400 underline underline-offset-4">
-                지우기
-              </button>
-            </li>
-          ))}
+          {customs.map((e) =>
+            editing === e.code ? (
+              <li key={e.code}>
+                <form onSubmit={submitEdit} className="dg-well space-y-2 p-2">
+                  <input
+                    value={editName}
+                    onChange={(ev) => setEditName(ev.target.value)}
+                    maxLength={30}
+                    aria-label="새 종목 이름"
+                    className="dg-well w-full px-3 py-2 text-white"
+                    autoFocus
+                  />
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORY_CHOICES.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        aria-pressed={editPart === c}
+                        onClick={() => setEditPart(c)}
+                        className={`dg-btn min-h-[32px] px-2.5 text-xs ${editPart === c ? "dg-btn-primary" : "dg-btn-steel"}`}
+                      >
+                        {LIFT_CATEGORY_LABEL[c]}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setEditing(null)} className="dg-btn dg-btn-steel min-h-[40px] flex-1 text-sm">
+                      취소
+                    </button>
+                    <button type="submit" disabled={saving || !editName.trim()} className="dg-btn dg-btn-primary min-h-[40px] flex-1 text-sm">
+                      {saving ? "고치는 중..." : "저장"}
+                    </button>
+                  </div>
+                </form>
+              </li>
+            ) : (
+              <li key={e.code} className="flex items-center justify-between gap-2 text-steel-300">
+                <span className="truncate">
+                  {e.label} <span className="text-xs text-steel-500">{LIFT_CATEGORY_LABEL[e.category]}</span>
+                </span>
+                <span className="flex flex-none gap-3">
+                  <button type="button" onClick={() => startEdit(e)} className="text-xs text-steel-300 underline underline-offset-4">
+                    고치기
+                  </button>
+                  <button type="button" onClick={() => void remove(e)} className="text-xs text-steel-400 underline underline-offset-4">
+                    지우기
+                  </button>
+                </span>
+              </li>
+            ),
+          )}
         </ul>
       )}
 
@@ -208,7 +277,7 @@ export default function ExercisePicker({ selected, onPick, weightedOnly = false,
             className="dg-well w-full px-3 py-2 text-base text-white"
           />
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="부위 고르기">
-            {[...BODY_PARTS, "OTHER" as LiftCategory].map((c) => (
+            {CATEGORY_CHOICES.map((c) => (
               <button
                 key={c}
                 type="button"
