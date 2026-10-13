@@ -50,3 +50,22 @@ export function writeSeen(codes: string[]) {
     // 저장 못 해도 동작에는 상관없다
   }
 }
+
+// 첫 꾸미기 물품 안내를 이미 보여 줬는지(이 기기 기준, 한 번만)
+const TIP_KEY = "dg.decor.tipShown";
+
+export function readDecorTipShown(): boolean {
+  try {
+    return window.localStorage.getItem(TIP_KEY) === "1";
+  } catch {
+    return true; // 저장소를 못 쓰면 매번 뜨지 않게 이미 본 것으로
+  }
+}
+
+export function writeDecorTipShown() {
+  try {
+    window.localStorage.setItem(TIP_KEY, "1");
+  } catch {
+    // 저장 못 해도 동작에는 상관없다
+  }
+}

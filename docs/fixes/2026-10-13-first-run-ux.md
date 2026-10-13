@@ -44,3 +44,10 @@
 - #1 베타 안내: 화면을 덮는 창 → 헤더 아래 한 줄 띠(`BetaNoticeModal.tsx`, `App.tsx` 의 `pt-[var(--beta-h,0px)]`).
 - #3 문의 "?": `SupportWidget.tsx` 가 `[data-fab-avoid]` 와 겹치면 숨는다(스크롤 · 크기 바뀜 · 1초마다 확인). `GymMap.tsx` 의 `.gm-dock-cap` · `.gm-dock` 에 `data-fab-avoid`.
 - #5 러닝: `Header.tsx` "오늘 운동"에 `{ to: "/run", label: "러닝" }`.
+
+## 마무리 (같은 날, 3 · 4번째 PR)
+- #2 휴대폰 홈: 아래 고정 바를 바로 가기(출석 · 식단 · 운동 시작 · 내 기록)로 합쳐 화면 아래 고정(`gymMap.css` 768px 이하).
+- #4 메뉴: 오늘 운동 · 라운지 · 커뮤니티 · AI · 동아리 · 소식(휴대폰에서 접힘) · 내 정보(`Header.tsx` `NavGroup.folded`).
+- #6 `GymMap.tsx` `revealMap`: 지도 아래쪽이 헤더 · 고정 바에 가리지 않게 스크롤(만들기 직후 · 바로 가기).
+- #7 첫 꾸미기 물품 안내: 말풍선 + 알림, 기기당 한 번(`lib/gymDecor.ts` `readDecorTipShown` · `writeDecorTipShown`).
+- 이로써 점검 7가지를 모두 손댔다.

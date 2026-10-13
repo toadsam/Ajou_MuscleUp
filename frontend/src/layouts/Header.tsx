@@ -22,6 +22,8 @@ interface NavLinkItem {
 interface NavGroup {
   label: string;
   links: NavLinkItem[];
+  /** 휴대폰 메뉴에서 처음에 접어 둔다(지금 보는 화면이 안에 있으면 펼침) */
+  folded?: boolean;
 }
 
 function readLocalUser(): UserState | null {
@@ -54,6 +56,8 @@ export default function Header() {
   const [user, setUser] = useState<UserState | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // 휴대폰 메뉴에서 펼친 접힌 묶음(folded)
+  const [unfolded, setUnfolded] = useState<string[]>([]);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const role = (user?.role || "").toUpperCase();
@@ -183,16 +187,22 @@ export default function Header() {
 
   const navGroups = useMemo<NavGroup[]>(
     () => [
-      // 핵심 루프(출석 → 캐릭터 → 라운지)를 맨 앞에 둔다. 글쓰기 같은 행동 버튼은 각 화면 안에 있다.
+      // 매일 쓰는 것(홈 바로 가기와 같은 순서)을 맨 위에. 동아리 소개 · 소식은 한 묶음으로 모아 휴대폰에서 접어 둔다.
+      // (처음 온 사람 점검 #4 — docs/fixes/2026-10-13-first-run-ux.md) 글쓰기 같은 행동 버튼은 각 화면 안에 있다.
       {
         label: "오늘 운동",
         links: [
           { to: "/attendance", label: "출석 체크" },
+          { to: "/diet", label: "식단 기록" },
           { to: "/workout", label: "운동 기록" },
           { to: "/run", label: "러닝" },
-          { to: "/collection", label: "도감 · 보상 상자" },
-          { to: "/diet", label: "식단 기록" },
+        ],
+      },
+      {
+        label: "라운지",
+        links: [
           { to: "/lounge", label: "라운지" },
+          { to: "/collection", label: "도감 · 보상 상자" },
           { to: "/rankings", label: "랭킹" },
         ],
       },
@@ -200,27 +210,11 @@ export default function Header() {
         label: "커뮤니티",
         links: [
           { to: "/brag", label: "자랑방" },
-          { to: "/gyms", label: "모임 찾기" },
           { to: "/crew", label: "운동 모임" },
+          { to: "/gyms", label: "모임 찾기" },
           { to: "/friends", label: "친구/채팅" },
           { to: "/protein", label: "단백질 공동구매" },
           { to: "/reviews", label: "단백질 리뷰" },
-          { to: "/programs", label: "반 추천/신청" },
-        ],
-      },
-      {
-        label: "멤버",
-        links: [
-          { to: "/executives", label: "운영진 소개" },
-          { to: "/members", label: "멤버 소개" },
-        ],
-      },
-      {
-        label: "소식",
-        links: [
-          { to: "/events", label: "이벤트" },
-          { to: "/gallery", label: "갤러리" },
-          { to: "/about", label: "득근득근 소개" },
         ],
       },
       {
@@ -228,6 +222,18 @@ export default function Header() {
         links: [
           { to: "/ai", label: "AI 플래너" },
           { to: "/ai/inbody", label: "인바디 분석" },
+        ],
+      },
+      {
+        label: "동아리 · 소식",
+        folded: true,
+        links: [
+          { to: "/events", label: "이벤트" },
+          { to: "/programs", label: "반 추천/신청" },
+          { to: "/about", label: "득근득근 소개" },
+          { to: "/executives", label: "운영진 소개" },
+          { to: "/members", label: "멤버 소개" },
+          { to: "/gallery", label: "갤러리" },
         ],
       },
       {
@@ -385,9 +391,24 @@ export default function Header() {
               {renderGymSwitcher("gym-switcher-mobile", "mt-2 min-h-[44px] w-full px-3 text-[15px]")}
             </div>
           )}
-          {navGroups.map((group) => (
+          {navGroups.map((group) => {
+            const shut = group.folded && !unfolded.includes(group.label) && !isActiveGroup(group);
+            return (
             <div key={group.label} className="border-b-2 border-black/60 py-3 last:border-b-0">
-              <p className="font-num text-sm tracking-wide text-steel-400">{group.label}</p>
+              {group.folded ? (
+                <button
+                  type="button"
+                  aria-expanded={!shut}
+                  onClick={() => setUnfolded((u) => (shut ? [...u, group.label] : u.filter((l) => l !== group.label)))}
+                  className="flex min-h-[36px] w-full items-center justify-between text-sm font-semibold text-steel-400"
+                >
+                  <span>{group.label}</span>
+                  <span aria-hidden="true">{shut ? "펼치기 ▾" : "접기 ▴"}</span>
+                </button>
+              ) : (
+                <p className="font-num text-sm tracking-wide text-steel-400">{group.label}</p>
+              )}
+              {!shut && (
               <div className="mt-2 space-y-1">
                 {group.links.map(({ to, label }) => {
                   const active = location.pathname.startsWith(to);
@@ -414,8 +435,10 @@ export default function Header() {
                   </Link>
                 )}
               </div>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </header>
