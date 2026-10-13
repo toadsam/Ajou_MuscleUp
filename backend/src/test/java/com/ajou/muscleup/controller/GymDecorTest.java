@@ -83,7 +83,8 @@ class GymDecorTest {
                 .andExpect(jsonPath(item("CLOCK", "owned")).value(hasItem(false)))
                 .andExpect(jsonPath(item("CLOCK", "goal")).value(hasItem(7)))
                 .andExpect(jsonPath(item("CLOCK", "hint")).value(hasItem("운동 출석 7일")))
-                .andExpect(jsonPath("$.owned").value(2));
+                .andExpect(jsonPath("$.owned").value(3)) // 화분 · 빨간 원 · 고무 매트(직원 겉모습은 세지 않는다)
+                .andExpect(jsonPath("$.total").value(21));
 
         // 아직 못 얻은 건 못 놓는다
         place(alice, "WALL", "CLOCK").andExpect(status().isBadRequest());
@@ -128,5 +129,45 @@ class GymDecorTest {
 
         // 로그인 없이는 못 본다
         mvc.perform(get("/api/gym-decor")).andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void themeStaffAndLooks() throws Exception {
+        // 처음: 고무 매트 · 노란 조끼 · 직원마다 기본 머리색, 새 직원은 아직 없음
+        mvc.perform(get("/api/gym-decor").with(as(alice)))
+                .andExpect(jsonPath(slot("THEME")).value(hasItem("THEME_RUBBER")))
+                .andExpect(jsonPath(slot("UNIFORM")).value(hasItem("UNIFORM_YELLOW")))
+                .andExpect(jsonPath(slot("HAIR_OWNER")).value(hasItem("HAIR_GRAY")))
+                .andExpect(jsonPath(slot("HIRE_TRAINER")).value(hasItem(nullValue())))
+                .andExpect(jsonPath(item("TRAINER", "kind")).value(hasItem("STAFF")))
+                .andExpect(jsonPath(item("TRAINER", "hint")).value(hasItem("운동 세션 20번")));
+
+        // 겉모습은 처음부터. 머리색은 여러 직원이 같이 쓸 수 있다
+        place(alice, "UNIFORM", "UNIFORM_ORANGE").andExpect(jsonPath(slot("UNIFORM")).value(hasItem("UNIFORM_ORANGE")));
+        place(alice, "HAIR_COACH", "HAIR_BLOND").andExpect(status().isOk());
+        place(alice, "HAIR_OWNER", "HAIR_BLOND")
+                .andExpect(jsonPath(slot("HAIR_COACH")).value(hasItem("HAIR_BLOND")))
+                .andExpect(jsonPath(slot("HAIR_OWNER")).value(hasItem("HAIR_BLOND")));
+        place(alice, "UNIFORM", "HAIR_BLACK").andExpect(status().isBadRequest());
+
+        // 새 직원 · 테마는 기록이 있어야
+        place(alice, "HIRE_TRAINER", "TRAINER").andExpect(status().isBadRequest());
+        place(alice, "THEME", "THEME_BRICK").andExpect(status().isBadRequest());
+
+        // 3대 합계: 종목마다 운동 기록 최고와 예전 입력 중 큰 값 → 140 + 60 + 110 = 310kg
+        em.persist(LiftEntry.builder().user(alice).performedOn(LocalDate.now()).exercise("SQUAT").weightKg(140).reps(1).sets(1).e1rm(140).build());
+        em.persist(UserBodyStats.builder().user(alice).gender(Gender.MALE).weightKg(80.0).squatKg(100.0).benchKg(60.0).deadliftKg(110.0).build());
+        em.flush();
+        place(alice, "THEME", "THEME_BRICK")
+                .andExpect(jsonPath(slot("THEME")).value(hasItem("THEME_BRICK")))
+                .andExpect(jsonPath(item("THEME_BRICK", "progress")).value(hasItem(300)));
+
+        // 운동 출석 14일 → 청소 알바 출근, 비우면 쉰다
+        for (int i = 0; i < 14; i++) {
+            em.persist(AttendanceLog.builder().user(alice).date(LocalDate.now().minusDays(i)).didWorkout(true).build());
+        }
+        em.flush();
+        place(alice, "HIRE_CLEANER", "CLEANER").andExpect(jsonPath(slot("HIRE_CLEANER")).value(hasItem("CLEANER")));
+        place(alice, "HIRE_CLEANER", null).andExpect(jsonPath(slot("HIRE_CLEANER")).value(hasItem(nullValue())));
     }
 }

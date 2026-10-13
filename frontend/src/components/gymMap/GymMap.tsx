@@ -4,7 +4,22 @@ import { barbellWeight } from "../gym/plates";
 import { logEvent } from "../../utils/analytics";
 import AvatarRenderer from "../avatar/AvatarRenderer";
 import { loadGuestCharacter, saveGuestCharacter, type GuestCharacter } from "./guestCharacter";
-import { DEFAULT_LAYOUT, SLOTS, SLOT_IDS, paintPreview, type SlotId } from "./decor";
+import {
+  DEFAULT_LAYOUT,
+  HAIR_COLOR,
+  HAIR_SLOT,
+  HIRES,
+  SLOTS,
+  SLOT_IDS,
+  UNIFORM_COLOR,
+  paintPreview,
+  staffLookOf,
+  type DecorSlot,
+  type SlotId,
+  type StaffLook,
+} from "./decor";
+import { LIFT_EXERCISES } from "../../lib/lifts";
+import { exerciseGuide } from "../../lib/exerciseGuide";
 import { fetchDecor, layoutOf, placeDecor, readSeen, writeSeen, type DecorItem, type DecorView } from "../../lib/gymDecor";
 import { friendlyError } from "../../lib/httpError";
 import { toast as appToast } from "../../lib/toast";
@@ -15,6 +30,8 @@ import {
   ZONES,
   ZONE_IDS,
   createGymMap,
+  paintStaffPreview,
+  paintThemePreview,
   toneForMbti,
   NPC_ROLES,
   type NpcId,
@@ -62,6 +79,8 @@ const COACH_TIPS = [
   "무게보다 자세 먼저. 거울 보면서 해 봐요.",
 ];
 const STAFF_LINES = ["바닥 닦는 중이에요. 미끄러우니 조심!", "덤벨은 쓰고 나서 제자리에 부탁해요.", "오늘도 매트 반짝반짝!"];
+const CLEANER_LINES = ["기구 닦는 중이에요. 쓰고 나면 한 번 닦아 주세요!", "러닝머신 손잡이까지 반짝반짝!", "라운지 벤치 소독 끝!"];
+const BASE_STAFF: NpcId[] = ["coach", "owner", "staff"];
 const pickOne = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
 const pct = (x: number, y: number) => ({ left: `${(x / MAP_W) * 100}%`, top: `${(y / MAP_H) * 100}%` });
@@ -80,6 +99,22 @@ function DecorPreview({ slot, code }: { slot: SlotId; code: string }) {
     if (ref.current) paintPreview(ref.current, slot, code);
   }, [slot, code]);
   return <canvas ref={ref} className="gm-decor-preview" aria-hidden="true" />;
+}
+
+function ThemePreview({ code }: { code: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (ref.current) paintThemePreview(ref.current, code);
+  }, [code]);
+  return <canvas ref={ref} className="gm-decor-preview" aria-hidden="true" />;
+}
+
+function StaffPreview({ id, look }: { id: NpcId; look: StaffLook }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (ref.current) paintStaffPreview(ref.current, id, look);
+  }, [id, look]);
+  return <canvas ref={ref} className="gm-decor-preview gm-staff-preview" aria-hidden="true" />;
 }
 
 function GuestAvatar({ guest, size }: { guest: GuestCharacter; size: number }) {
@@ -116,6 +151,8 @@ export default function GymMap(props: Props) {
   const [decor, setDecor] = useState<DecorView | null>(null);
   const [editing, setEditing] = useState(false);
   const [pick, setPick] = useState<SlotId | null>(null);
+  /** 꾸미기 중 테마 · 직원 창 */
+  const [panel, setPanel] = useState<"theme" | "staff" | null>(null);
   const [placing, setPlacing] = useState(false);
   const [seen, setSeen] = useState<Set<string> | null>(() => readSeen());
   const talkTimer = useRef<number | undefined>(undefined);
@@ -143,6 +180,12 @@ export default function GymMap(props: Props) {
       }
       return pickOne(COACH_TIPS);
     }
+    if (id === "trainer") {
+      const ex = pickOne(LIFT_EXERCISES);
+      return `${ex.label} — ${exerciseGuide(ex).tip}`;
+    }
+    if (id === "cleaner") return pickOne(CLEANER_LINES);
+    if (id === "towel") return f.checkedToday ? "오늘 땀 좀 흘렸죠? 수건 여기요!" : "수건 챙겨 가요. 다 쓰면 바구니에!";
     return pickOne(STAFF_LINES);
   };
   const say = (id: NpcId, text: string) => {
@@ -263,6 +306,11 @@ export default function GymMap(props: Props) {
   }, [loggedIn]);
 
   const layout = useMemo(() => (decor ? layoutOf(decor) : DEFAULT_LAYOUT), [decor]);
+  const look = useMemo(() => staffLookOf(layout), [layout]);
+  const hiredRef = useRef<NpcId[]>([]);
+  useEffect(() => {
+    hiredRef.current = look.hired;
+  }, [look]);
   useEffect(() => {
     mapRef.current?.setState({ decor: layout });
   }, [layout]);
@@ -281,6 +329,7 @@ export default function GymMap(props: Props) {
     setTouched(true);
     setEditing(true);
     setPick(null);
+    setPanel(null);
     writeSeen(earned);
     setSeen(new Set(earned));
     void logEvent("home", "decor_open", { fresh: fresh.length });
@@ -288,17 +337,23 @@ export default function GymMap(props: Props) {
   const endEdit = () => {
     setEditing(false);
     setPick(null);
+    setPanel(null);
   };
-  const place = async (slot: SlotId, code: string | null) => {
+  /** 지도 자리면 창을 닫아 바로 보이게, 테마 · 직원 창은 열어 둔 채로 */
+  const place = async (slot: DecorSlot, code: string | null, done?: string) => {
     if (placing) return;
     setPlacing(true);
     try {
       const view = await placeDecor(slot, code);
       setDecor(view);
-      // 창을 닫아 바로 지도에서 보이게
-      setPick(null);
       const label = view.items.find((i) => i.code === code)?.label;
-      showToast(label ? `${label} · ${SLOTS[slot].name}에 놓았어요` : `${SLOTS[slot].name} 자리를 비웠어요`);
+      if (slot in SLOTS) {
+        setPick(null);
+        const name = SLOTS[slot as SlotId].name;
+        showToast(label ? `${label} · ${name}에 놓았어요` : `${name} 자리를 비웠어요`);
+      } else if (done) {
+        showToast(done);
+      }
       void logEvent("home", "decor_place", { slot, code: code ?? "" });
     } catch (err) {
       appToast(friendlyError(err, "꾸미지 못했어요. 잠시 뒤 다시 해 주세요."), "error");
@@ -319,7 +374,7 @@ export default function GymMap(props: Props) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       if (document.hidden || talkingId.current) return;
-      const who = pickOne<NpcId>(["coach", "staff", "coach"]);
+      const who = pickOne<NpcId>(["coach", "staff", "coach", ...hiredRef.current]);
       sayRef.current(who, lineRef.current(who));
     }, 15000);
     return () => {
@@ -341,8 +396,10 @@ export default function GymMap(props: Props) {
       setTouched(true);
       mapRef.current?.step(...KEYS[key]);
     } else if (e.key === "Escape" && editing) {
-      if (pick) setPick(null);
-      else endEdit();
+      if (pick || panel) {
+        setPick(null);
+        setPanel(null);
+      } else endEdit();
     } else if (e.key === "Escape") {
       mapRef.current?.clearZone();
       setZone(null);
@@ -649,7 +706,7 @@ export default function GymMap(props: Props) {
               ref={(el) => {
                 npcTagRefs.current[id] = el;
               }}
-              className="gm-npc"
+              className={`gm-npc ${BASE_STAFF.includes(id) || look.hired.includes(id) ? "" : "off"}`}
             >
               {NPC_ROLES[id]}
             </div>
@@ -667,16 +724,148 @@ export default function GymMap(props: Props) {
         </div>
         <div className={`gm-hint ${touched || building ? "gone" : ""}`}>바닥을 눌러 걸어보세요</div>
         {toast && <div className={`gm-toast ${editing ? "gm-toast-low" : ""}`}>{toast}</div>}
-        {editing && !pick && (
+        {editing && !pick && !panel && (
           <div className="gm-decor-bar" role="status">
             <span>
-              꾸밀 자리를 눌러요 · 얻은 물품 <b className="font-num">{decor ? `${decor.owned}/${decor.total}` : "–"}</b>
+              꾸밀 자리를 눌러요 · 얻은 것 <b className="font-num">{decor ? `${decor.owned}/${decor.total}` : "–"}</b>
             </span>
-            <button type="button" className="dg-btn dg-btn-primary" onClick={endEdit}>
-              다 했어요
-            </button>
+            <div className="gm-decor-bar-actions">
+              <button type="button" className="dg-btn dg-btn-steel" onClick={() => setPanel("theme")}>
+                테마
+              </button>
+              <button type="button" className="dg-btn dg-btn-steel" onClick={() => setPanel("staff")}>
+                직원
+              </button>
+              <button type="button" className="dg-btn dg-btn-primary" onClick={endEdit}>
+                다 했어요
+              </button>
+            </div>
           </div>
         )}
+
+        <section className={`gm-sheet gm-decor-sheet ${editing && panel ? "open" : ""}`} aria-live="polite" aria-hidden={!(editing && panel)}>
+          {editing && panel === "theme" && (
+            <>
+              <p className="gm-eyebrow">꾸미기 · 테마</p>
+              <h2>{itemOf(layout.THEME)?.label ?? "고무 매트"}</h2>
+              <p>바닥과 벽이 바뀌어요. 기구 · 물품은 그대로예요.</p>
+              <ul className="gm-decor-list">
+                {(decor?.items ?? []).filter((i) => i.kind === "THEME").map((item) => (
+                  <li key={item.code} className={item.owned ? "" : "locked"}>
+                    <ThemePreview code={item.code} />
+                    <div className="gm-decor-info">
+                      <b>{item.label}</b>
+                      <small>{item.hint}</small>
+                      {!item.owned && (
+                        <span className="gm-decor-track" aria-hidden="true">
+                          <i style={{ width: `${Math.round((item.progress / Math.max(1, item.goal)) * 100)}%` }} />
+                        </span>
+                      )}
+                    </div>
+                    {!item.owned ? (
+                      <span className="gm-decor-state font-num" aria-label={`진행 ${item.progress} / ${item.goal}`}>
+                        {item.progress}/{item.goal}
+                      </span>
+                    ) : layout.THEME === item.code ? (
+                      <span className="gm-decor-state">쓰는 중</span>
+                    ) : (
+                      <button type="button" className="dg-btn dg-btn-steel" disabled={placing} onClick={() => void place("THEME", item.code, `${item.label} 테마로 바꿨어요`)}>
+                        바꾸기
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {editing && panel === "staff" && (
+            <>
+              <p className="gm-eyebrow">꾸미기 · 직원</p>
+              <h2>직원 꾸미기</h2>
+              <p className="gm-decor-sub">유니폼(모두 같이)</p>
+              <div className="gm-swatches" role="group" aria-label="유니폼 색">
+                {(decor?.items ?? []).filter((i) => i.slots.includes("UNIFORM")).map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    aria-pressed={layout.UNIFORM === item.code}
+                    disabled={placing}
+                    onClick={() => void place("UNIFORM", item.code, `${item.label}로 갈아입었어요`)}
+                  >
+                    <i style={{ background: UNIFORM_COLOR[item.code] }} />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <p className="gm-decor-sub">머리색</p>
+              <ul className="gm-decor-list">
+                {[...BASE_STAFF, ...look.hired].map((id) => (
+                  <li key={id} className="gm-staff-row">
+                    <StaffPreview id={id} look={look} />
+                    <div className="gm-decor-info">
+                      <b>{NPC_ROLES[id]}</b>
+                      <div className="gm-hair" role="group" aria-label={`${NPC_ROLES[id]} 머리색`}>
+                        {Object.keys(HAIR_COLOR).map((code) => (
+                          <button
+                            key={code}
+                            type="button"
+                            aria-pressed={(layout[HAIR_SLOT[id]] ?? DEFAULT_LAYOUT[HAIR_SLOT[id]]) === code}
+                            aria-label={itemOf(code)?.label ?? code}
+                            disabled={placing}
+                            style={{ background: HAIR_COLOR[code] }}
+                            onClick={() => void place(HAIR_SLOT[id], code, `${NPC_ROLES[id]} 머리색을 바꿨어요`)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="gm-decor-sub">새 직원</p>
+              <ul className="gm-decor-list">
+                {HIRES.map((hire) => {
+                  const item = itemOf(hire.code);
+                  if (!item) return null;
+                  const working = layout[hire.slot] === hire.code;
+                  return (
+                    <li key={hire.code} className={item.owned ? "" : "locked"}>
+                      <StaffPreview id={hire.id} look={look} />
+                      <div className="gm-decor-info">
+                        <b>{item.label}</b>
+                        <small>{working ? "출근 중" : item.hint}</small>
+                        {!item.owned && (
+                          <span className="gm-decor-track" aria-hidden="true">
+                            <i style={{ width: `${Math.round((item.progress / Math.max(1, item.goal)) * 100)}%` }} />
+                          </span>
+                        )}
+                      </div>
+                      {!item.owned ? (
+                        <span className="gm-decor-state font-num" aria-label={`진행 ${item.progress} / ${item.goal}`}>
+                          {item.progress}/{item.goal}
+                        </span>
+                      ) : working ? (
+                        <button type="button" className="dg-btn dg-btn-steel" disabled={placing} onClick={() => void place(hire.slot, null, `${item.label} 쉬는 날`)}>
+                          쉬게 하기
+                        </button>
+                      ) : (
+                        <button type="button" className="dg-btn dg-btn-steel" disabled={placing} onClick={() => void place(hire.slot, hire.code, `${item.label} 출근!`)}>
+                          출근
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+          {editing && panel && (
+            <div className="gm-actions">
+              <button type="button" className="dg-btn dg-btn-primary" onClick={() => setPanel(null)}>
+                닫기
+              </button>
+            </div>
+          )}
+        </section>
 
         <section className={`gm-sheet gm-decor-sheet ${editing && pick ? "open" : ""}`} aria-live="polite" aria-hidden={!(editing && pick)}>
           {editing && pick && (

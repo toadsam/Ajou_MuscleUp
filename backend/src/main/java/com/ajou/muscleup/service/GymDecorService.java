@@ -16,7 +16,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,8 +53,10 @@ public class GymDecorService {
 
     public record SlotView(String slot, String code) {}
 
-    public record ItemView(String code, String label, List<String> slots, boolean multi, boolean owned,
+    public record ItemView(String code, String kind, String label, List<String> slots, boolean multi, boolean owned,
                            int progress, int goal, String hint) {}
+
+    /** owned · total 은 직원 겉모습(LOOK, 처음부터 다 있음)을 빼고 센다 */
 
     public record View(List<SlotView> slots, List<ItemView> items, int owned, int total) {}
 
@@ -103,13 +105,14 @@ public class GymDecorService {
         int owned = 0;
         for (GymDecorItem item : GymDecorItem.values()) {
             boolean has = progress.owned(item);
-            if (has) owned++;
+            if (has && item.kind != GymDecorItem.Kind.LOOK) owned++;
             int goal = item.isDefault() ? 0 : item.target;
             int value = item.isDefault() ? 0 : Math.min(goal, progress.of(item.goal));
-            items.add(new ItemView(item.name(), item.label, item.slots.stream().map(Enum::name).toList(), item.multi, has,
+            items.add(new ItemView(item.name(), item.kind.name(), item.label, item.slots.stream().map(Enum::name).toList(), item.multi, has,
                     value, goal, item.isDefault() ? "처음부터 있어요" : item.goal.hint(item.target)));
         }
-        return new View(slots, items, owned, GymDecorItem.values().length);
+        int total = (int) java.util.Arrays.stream(GymDecorItem.values()).filter(i -> i.kind != GymDecorItem.Kind.LOOK).count();
+        return new View(slots, items, owned, total);
     }
 
     private Map<GymDecorItem.Slot, GymDecorSlot> rows(User me) {
@@ -141,7 +144,8 @@ public class GymDecorService {
     private final class Progress {
         private final User me;
         private final Map<GymDecorItem.Goal, Integer> cache = new EnumMap<>(GymDecorItem.Goal.class);
-        private Set<String> lifts;
+        /** 운동 기록 종목 → 최고 무게(kg) */
+        private Map<String, Double> lifts;
         private UserBodyStats body;
         private boolean bodyLoaded;
 
@@ -163,6 +167,7 @@ public class GymDecorService {
                 case ATTENDANCE -> (int) attendanceLogRepository.countByUserAndDidWorkoutTrueAndDateBetween(me, EPOCH, LocalDate.now(clock));
                 case CREW -> crewMemberRepository.findCrewIdsByUserId(id).size();
                 case BIG_THREE -> bigThree();
+                case BIG_THREE_KG -> bigThreeKg();
                 case SESSIONS -> (int) workoutSessionRepository.countByUser_Id(id);
                 case EXERCISES -> lifts().size();
                 case BENCH -> lifted("BENCH", body() == null ? null : body().getBenchKg()) ? 1 : 0;
@@ -184,16 +189,32 @@ public class GymDecorService {
             return n;
         }
 
+        /** 3대 합계(종목마다 운동 기록 최고 무게와 예전 3대 입력 중 큰 값) */
+        private int bigThreeKg() {
+            UserBodyStats b = body();
+            double sum = best("SQUAT", b == null ? null : b.getSquatKg())
+                    + best("BENCH", b == null ? null : b.getBenchKg())
+                    + best("DEADLIFT", b == null ? null : b.getDeadliftKg());
+            return (int) Math.floor(sum);
+        }
+
+        private double best(String exercise, Double typedKg) {
+            double logged = lifts().getOrDefault(exercise, 0.0);
+            return Math.max(logged, typedKg == null ? 0 : typedKg);
+        }
+
         private boolean lifted(String exercise, Double typedKg) {
-            return lifts().contains(exercise) || (BIG_THREE.contains(exercise) && typedKg != null && typedKg > 0);
+            return lifts().containsKey(exercise) || (BIG_THREE.contains(exercise) && typedKg != null && typedKg > 0);
         }
 
         /** 운동 기록에 남은 종목들 */
-        private Set<String> lifts() {
+        private Map<String, Double> lifts() {
             if (lifts == null) {
-                lifts = new HashSet<>();
+                lifts = new HashMap<>();
                 for (Object[] row : liftEntryRepository.findBestsByUserId(me.getId())) {
-                    if (row[0] instanceof String code) lifts.add(code);
+                    if (row[0] instanceof String code) {
+                        lifts.put(code, row[2] instanceof Number kg ? kg.doubleValue() : 0.0);
+                    }
                 }
             }
             return lifts;
