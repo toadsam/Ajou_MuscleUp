@@ -13,6 +13,7 @@ import { exerciseGuide } from "../lib/exerciseGuide";
 import { useLiveHeartbeat, useLiveVisible } from "../lib/live";
 import { estimate1rm, exerciseInfo, formatKg, useCustomExercises, type LiftBest, type LiftExerciseInfo } from "../lib/lifts";
 import {
+  MAX_SESSION_SEC,
   REST_CHOICES,
   clearSession,
   doneSetCount,
@@ -20,6 +21,7 @@ import {
   formatClock,
   formatDuration,
   loadSession,
+  longSessionChoices,
   newSession,
   saveSession,
   type ActiveExercise,
@@ -91,6 +93,8 @@ export default function WorkoutSession() {
   const [checkAttendance, setCheckAttendance] = useState(true);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  // 끝내기를 잊어 6시간을 넘겼을 때 고른 실제 운동 시간(초). null 이면 첫 선택지
+  const [longSec, setLongSec] = useState<number | null>(null);
   const [result, setResult] = useState<SessionSaveResult | null>(null);
   const [keepAwake, setKeepAwake] = useState(false);
   const wakeRef = useRef<WakeLockLike | null>(null);
@@ -263,6 +267,7 @@ export default function WorkoutSession() {
       ),
       // 세트를 끝내면 휴식 시작
       rest: !set.done ? { endsAt: Date.now() + s.restSeconds * 1000, seconds: s.restSeconds } : s.rest,
+      lastDoneAt: !set.done ? Date.now() : s.lastDoneAt,
     }));
   };
 
@@ -295,11 +300,14 @@ export default function WorkoutSession() {
         sets: e.sets.filter((x) => x.done).map((x) => ({ weightKg: Number(x.weight) || 0, reps: Number(x.reps) })),
       }))
       .filter((e) => e.sets.length > 0);
+    // 6시간을 넘겼으면(끝내기를 잊음) 지금이 아니라 고른 운동 시간으로 끝난 시각을 정한다 — 서버 한도 1분 ~ 6시간
+    const tooLong = (Date.now() - session.startedAt) / 1000 > MAX_SESSION_SEC;
+    const endedAt = tooLong ? session.startedAt + (longSec ?? longSessionChoices(session)[0].sec) * 1000 : Date.now();
     setSaving(true);
     try {
       const res = await api.post<SessionSaveResult>("/api/workouts", {
         startedAt: new Date(session.startedAt).toISOString(),
-        endedAt: new Date().toISOString(),
+        endedAt: new Date(endedAt).toISOString(),
         exercises,
         checkAttendance,
         note: note.trim() || null,
@@ -449,6 +457,7 @@ export default function WorkoutSession() {
 
   // ── 운동 중
   const elapsed = (now - session.startedAt) / 1000;
+  const longChoices = longSessionChoices(session);
   const usedCodes = session.exercises.map((e) => e.code);
   const sets = doneSetCount(session);
   // 캐릭터가 따라 할 종목: 마지막으로 만진 종목(없으면 아직 남은 세트가 있는 첫 종목)
@@ -697,6 +706,29 @@ export default function WorkoutSession() {
           <p className="text-steel-300">
             {formatDuration(elapsed)} · 끝낸 세트 {sets}개 · 볼륨 {Math.round(doneVolume(session)).toLocaleString()}kg
           </p>
+          {elapsed > MAX_SESSION_SEC && (
+            <div className="dg-well space-y-2 p-3">
+              <p className="font-semibold text-plate-yellow">끝내기를 잊으셨나요?</p>
+              <p className="text-steel-300">운동 시간은 6시간까지 저장돼요. 실제로 운동한 시간을 골라 주세요.</p>
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="실제 운동 시간">
+                {longChoices.map((c, i) => {
+                  const on = (longSec ?? longChoices[0].sec) === c.sec;
+                  return (
+                    <button
+                      key={c.sec}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => setLongSec(c.sec)}
+                      className={`dg-btn min-h-[36px] px-3 text-xs ${on ? "dg-btn-primary" : "dg-btn-steel"} ${i === 0 && c.label.startsWith("마지막") ? "w-full" : ""}`}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {sets === 0 && <p className="text-red-300">체크한 세트가 없어요. 세트 옆 체크를 눌러 주세요.</p>}
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={checkAttendance} onChange={(e) => setCheckAttendance(e.target.checked)} className="h-5 w-5" />
@@ -719,6 +751,17 @@ export default function WorkoutSession() {
               {saving ? "저장 중..." : "저장하고 끝내기"}
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setFinishOpen(false);
+              setDiscardOpen(true);
+            }}
+            disabled={saving}
+            className="block w-full text-center text-xs text-steel-500 underline underline-offset-4"
+          >
+            기록하지 않고 그만두기
+          </button>
         </div>
       </DialogFrame>
 
