@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { logEvent } from "../utils/analytics";
 import { useCountUp } from "../hooks/useCountUp";
@@ -22,7 +22,15 @@ type Review = {
 
 type PageResponse<T> = {
   content?: T[];
+  last?: boolean;
+  totalElements?: number;
 };
+
+/** 후기는 20개씩, 더 있으면 "더 보기" */
+const REVIEW_PAGE = 20;
+/** 제품 고르기 목록은 50개씩 끝까지(최대 20번 = 1,000개) */
+const PROTEIN_PAGE = 50;
+const PROTEIN_MAX_PAGES = 20;
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -97,11 +105,21 @@ export default function Reviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [proteins, setProteins] = useState<Protein[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // 평균 · 개수는 서버 합계(불러온 페이지만으로 계산하면 50개 넘을 때 틀린다)
+  const [summary, setSummary] = useState({ avg: 0, count: 0 });
   const [searchParams, setSearchParams] = useSearchParams();
 
   // 고른 공동구매는 주소(?proteinId=)에서만 읽는다. 없으면 전체 후기.
   const pidParam = Number(searchParams.get("proteinId"));
   const selectedProtein = Number.isInteger(pidParam) && pidParam > 0 ? pidParam : null;
+  // "더 보기" 도중 제품을 바꾸면 늦게 온 응답을 버린다
+  const selectedRef = useRef(selectedProtein);
+  useEffect(() => {
+    selectedRef.current = selectedProtein;
+  }, [selectedProtein]);
 
   const userRaw = localStorage.getItem("user");
   const user = useMemo(() => {
@@ -122,9 +140,16 @@ export default function Reviews() {
         setLoading(true);
         setError(null);
         const query = selectedProtein ? `&proteinId=${selectedProtein}` : "";
-        const data = await api<PageResponse<Review>>(`/api/reviews?size=50${query}`);
+        const [data, sum] = await Promise.all([
+          api<PageResponse<Review>>(`/api/reviews?size=${REVIEW_PAGE}&page=0${query}`),
+          api<{ avg: number; count: number }>(`/api/reviews/summary${selectedProtein ? `?proteinId=${selectedProtein}` : ""}`).catch(() => null),
+        ]);
         if (cancelled) return;
-        setItems(Array.isArray(data) ? data : data?.content ?? []);
+        const list = Array.isArray(data) ? data : data?.content ?? [];
+        setItems(list);
+        setPage(0);
+        setHasMore(Array.isArray(data) ? false : !(data?.last ?? list.length < REVIEW_PAGE));
+        setSummary(sum ?? { avg: list.length ? list.reduce((a, r) => a + r.rating, 0) / list.length : 0, count: list.length });
       } catch (e) {
         if (!cancelled) setError(friendlyError(e, "후기를 불러오지 못했어요."));
       } finally {
@@ -138,12 +163,19 @@ export default function Reviews() {
 
   useEffect(() => {
     const loadProteins = async () => {
+      // 고르기 목록은 끝까지(예전엔 처음 50개만 → 오래된 공동구매는 고를 수 없었다)
+      const all: Protein[] = [];
       try {
-        const data = await api<PageResponse<Protein>>("/api/proteins?size=50");
-        setProteins(Array.isArray(data) ? data : data?.content ?? []);
+        for (let p = 0; p < PROTEIN_MAX_PAGES; p++) {
+          const data = await api<PageResponse<Protein>>(`/api/proteins?size=${PROTEIN_PAGE}&page=${p}`);
+          const list = Array.isArray(data) ? data : data?.content ?? [];
+          all.push(...list);
+          if (Array.isArray(data) || data?.last !== false || list.length === 0) break;
+        }
       } catch {
         // 고르기 목록이 없어도 전체 후기는 볼 수 있다
       }
+      setProteins(all);
     };
     void loadProteins();
   }, []);
@@ -161,12 +193,27 @@ export default function Reviews() {
     setSearchParams(next, { replace: true });
   };
 
-  // 실제로 있는 값만: 평균 만족도와 후기 수
-  const summary = useMemo(() => {
-    if (!items.length) return { avg: 0, count: 0 };
-    const avg = items.reduce((sum, r) => sum + r.rating, 0) / items.length;
-    return { avg, count: items.length };
-  }, [items]);
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const pid = selectedProtein;
+    try {
+      const query = pid ? `&proteinId=${pid}` : "";
+      const data = await api<PageResponse<Review>>(`/api/reviews?size=${REVIEW_PAGE}&page=${page + 1}${query}`);
+      if (pid !== selectedRef.current) return;
+      const list = Array.isArray(data) ? data : data?.content ?? [];
+      setItems((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        return [...prev, ...list.filter((r) => !seen.has(r.id))];
+      });
+      setPage((n) => n + 1);
+      setHasMore(Array.isArray(data) ? false : !(data?.last ?? list.length < REVIEW_PAGE));
+    } catch (e) {
+      toast(friendlyError(e, "더 불러오지 못했어요. 잠시 뒤 다시 해 주세요."), "error");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const selectedInfo = proteins.find((p) => p.id === selectedProtein);
   const { region, gym } = parseLocation(selectedInfo?.category);
@@ -260,7 +307,7 @@ export default function Reviews() {
                   <span className="ml-1 text-lg text-steel-400">개</span>
                 </p>
                 <p className="mt-2 text-xs text-steel-400">
-                  {selectedProtein ? "이 공동구매에 달린 후기" : "모든 공동구매 후기(최근 50개)"}
+                  {selectedProtein ? "이 공동구매에 달린 후기" : "모든 공동구매 후기"}
                 </p>
               </div>
             </div>
@@ -371,6 +418,10 @@ export default function Reviews() {
                         try {
                           await api(`/api/reviews/${r.id}`, { method: "DELETE" });
                           setItems((prev) => prev.filter((x) => x.id !== r.id));
+                          setSummary((s) => {
+                            const count = Math.max(0, s.count - 1);
+                            return { count, avg: count ? (s.avg * s.count - r.rating) / count : 0 };
+                          });
                           toast("후기를 삭제했어요.", "success");
                         } catch (e) {
                           toast(friendlyError(e, "후기를 삭제하지 못했어요."), "error");
@@ -385,6 +436,19 @@ export default function Reviews() {
             );
           })}
         </div>
+
+        {!loading && !error && items.length > 0 && (
+          <div className="flex flex-col items-center gap-2">
+            <p className="font-num text-xs text-steel-400">
+              {items.length} / {summary.count}개 불러옴
+            </p>
+            {hasMore && (
+              <button type="button" onClick={() => void loadMore()} disabled={loadingMore} className="dg-btn dg-btn-steel min-h-[44px] px-6 text-sm">
+                {loadingMore ? "불러오는 중…" : "후기 더 보기"}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

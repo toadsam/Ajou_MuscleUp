@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "../lib/toast";
 import { friendlyError, httpError } from "../lib/httpError";
@@ -75,10 +75,32 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-async function fetchProteins(scope: Scope): Promise<Protein[]> {
-  const data = await api<{ content?: Protein[] } | Protein[]>(`/api/proteins?scope=${scope}&size=50`);
-  return Array.isArray(data) ? data : (data.content ?? []);
+/** 한 번에 불러오는 글 수(서버 최대 50). 더 있으면 "더 보기"로 다음 묶음 */
+const PAGE_SIZE = 24;
+
+type ProteinPage = { items: Protein[]; last: boolean; total: number };
+
+async function fetchProteins(scope: Scope, page: number): Promise<ProteinPage> {
+  const data = await api<{ content?: Protein[]; last?: boolean; totalElements?: number } | Protein[]>(
+    `/api/proteins?scope=${scope}&size=${PAGE_SIZE}&page=${page}`,
+  );
+  if (Array.isArray(data)) return { items: data, last: true, total: data.length };
+  const items = data.content ?? [];
+  return { items, last: data.last ?? items.length < PAGE_SIZE, total: data.totalElements ?? items.length };
 }
+
+type SortMode = "latest" | "days" | "perPerson" | "price";
+
+/** 정렬은 불러온 글 전체에 적용한다(더 불러와도 그대로 유지) */
+const sortProducts = (list: Protein[], mode: SortMode) => {
+  if (mode === "latest") return list;
+  const copy = [...list];
+  if (mode === "perPerson") return copy.sort((a, b) => (perPersonOf(a) ?? 9e15) - (perPersonOf(b) ?? 9e15));
+  if (mode === "price") return copy.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  // 남은 날이 적은 순. 마감일 없는 글, 마감된 글 순으로 뒤에.
+  const key = (x: Protein) => (typeof x.daysLeft === "number" && x.daysLeft >= 0 ? x.daysLeft : x.closed ? 9e9 + 1 : 9e9);
+  return copy.sort((a, b) => key(a) - key(b));
+};
 
 /** 1인 부담금 = 총 금액 ÷ 목표 인원(둘 중 하나라도 없으면 null) */
 const perPersonOf = (p: Protein) =>
@@ -132,6 +154,17 @@ export default function Protein() {
   const [statusFilter, setStatusFilter] = useState("전체");
   const [distributionFilter, setDistributionFilter] = useState("전체");
   const [scope, setScope] = useState<Scope>(readSavedScope);
+  const [sortMode, setSortMode] = useState<SortMode>("latest");
+  // 페이지 넘김: 지금까지 불러온 페이지, 더 있는지, 전체 개수
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // "더 보기" 도중 탭을 바꾸면 늦게 온 응답을 버린다
+  const scopeRef = useRef(scope);
+  useEffect(() => {
+    scopeRef.current = scope;
+  }, [scope]);
 
   useEffect(() => {
     // 탭을 빨리 바꾸면 늦게 온 이전 응답이 덮어쓰지 않게 막는다
@@ -140,11 +173,17 @@ export default function Protein() {
       try {
         setLoading(true);
         setErr(null);
-        const list = await fetchProteins(scope);
-        if (!cancelled) setProducts(list);
+        const first = await fetchProteins(scope, 0);
+        if (!cancelled) {
+          setProducts(first.items);
+          setPage(0);
+          setHasMore(!first.last);
+          setTotal(first.total);
+        }
       } catch (e) {
         if (!cancelled) {
           setProducts([]);
+          setHasMore(false);
           setErr(friendlyError(e, "공동구매 목록을 불러오지 못했어요."));
         }
       } finally {
@@ -165,20 +204,27 @@ export default function Protein() {
     }
   };
 
-  // 1인 부담 = 총 금액 ÷ 목표 인원 기준(예전엔 총 금액으로 정렬했다). 값이 없는 글은 뒤로.
-  const sortByPerPersonAsc = () =>
-    setProducts((p) => [...p].sort((a, b) => (perPersonOf(a) ?? 9e15) - (perPersonOf(b) ?? 9e15)));
-  const sortByPriceDesc = () =>
-    setProducts((p) => [...p].sort((a, b) => (b.price ?? 0) - (a.price ?? 0)));
-  // 남은 날이 적은 순. 마감일 없는 글, 마감된 글 순으로 뒤에.
-  const sortByDays = () =>
-    setProducts((p) =>
-      [...p].sort((a, b) => {
-        const key = (x: Protein) =>
-          typeof x.daysLeft === "number" && x.daysLeft >= 0 ? x.daysLeft : x.closed ? 9e9 + 1 : 9e9;
-        return key(a) - key(b);
-      })
-    );
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const requested = scope;
+    try {
+      const next = await fetchProteins(requested, page + 1);
+      if (requested !== scopeRef.current) return;
+      // 그사이 새 글이 올라와 밀린 글이 겹칠 수 있어 번호로 한 번 거른다
+      setProducts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...next.items.filter((p) => !seen.has(p.id))];
+      });
+      setPage((n) => n + 1);
+      setHasMore(!next.last);
+      setTotal(next.total);
+    } catch (e) {
+      toast(friendlyError(e, "더 불러오지 못했어요. 잠시 뒤 다시 해 주세요."), "error");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const locationOptions = useMemo(() => {
     const regions = new Set<string>();
@@ -200,7 +246,7 @@ export default function Protein() {
   }, [locationOptions, selectedGym, selectedRegion]);
 
   const filtered = useMemo(() => {
-    return products.filter((p) => {
+    return sortProducts(products, sortMode).filter((p) => {
       const { region, gym } = parseLocation(p.category);
       const status = getStatus(p);
       const distributionType = distributionOf(p) ?? "정보 없음";
@@ -211,7 +257,7 @@ export default function Protein() {
       const distributionOk = distributionFilter === "전체" || distributionType === distributionFilter;
       return locationOk && statusOk && distributionOk;
     });
-  }, [distributionFilter, locationMode, products, selectedGym, selectedRegion, statusFilter]);
+  }, [distributionFilter, locationMode, products, selectedGym, selectedRegion, sortMode, statusFilter]);
 
   // 위 세 칸은 아직 모집 중인 글만
   const highlights = filtered.filter((p) => !isClosed(p)).slice(0, 3);
@@ -379,15 +425,24 @@ export default function Protein() {
               </select>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button onClick={sortByDays} className={SORT_CHIP}>
-                마감 임박순
-              </button>
-              <button onClick={sortByPerPersonAsc} className={SORT_CHIP}>
-                1인 부담 낮은 순
-              </button>
-              <button onClick={sortByPriceDesc} className={SORT_CHIP}>
-                총 금액 높은 순
-              </button>
+              {(
+                [
+                  ["latest", "최신순"],
+                  ["days", "마감 임박순"],
+                  ["perPerson", "1인 부담 낮은 순"],
+                  ["price", "총 금액 높은 순"],
+                ] as [SortMode, string][]
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={sortMode === mode}
+                  onClick={() => setSortMode(mode)}
+                  className={`${SORT_CHIP} ${sortMode === mode ? "!bg-plate-yellow !text-black" : ""}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -536,6 +591,20 @@ export default function Protein() {
             );
           })}
         </div>
+
+        {!loading && !err && products.length > 0 && (
+          <div className="flex flex-col items-center gap-2">
+            <p className="font-num text-xs text-steel-400">
+              {products.length} / {total}개 불러옴
+              {hasMore && " · 지역 · 상태 · 정렬은 불러온 글 안에서 적용돼요"}
+            </p>
+            {hasMore && (
+              <button type="button" onClick={() => void loadMore()} disabled={loadingMore} className="dg-btn dg-btn-steel min-h-[44px] px-6 text-sm">
+                {loadingMore ? "불러오는 중…" : "더 보기"}
+              </button>
+            )}
+          </div>
+        )}
 
         {!loading && !err && filtered.length === 0 && (
           <div className="dg-well space-y-4 p-8 text-center text-steel-400">

@@ -41,6 +41,14 @@ public class ReviewController {
         return ResponseEntity.ok(result);
     }
 
+    /** 평균 만족도 · 후기 수 — 목록은 페이지로 나눠 받으므로 합계는 따로 */
+    @GetMapping("/summary")
+    public ResponseEntity<ReviewService.ReviewSummary> summary(@AuthenticationPrincipal String email,
+                                                               @RequestParam(value = "proteinId", required = false) Long proteinId) {
+        requireEmail(email);
+        return ResponseEntity.ok(reviewService.summary(proteinId));
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<ReviewResponse> update(@AuthenticationPrincipal String email,
                                                  @PathVariable("id") Long id,

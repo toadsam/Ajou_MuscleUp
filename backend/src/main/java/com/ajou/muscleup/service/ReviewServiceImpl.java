@@ -51,6 +51,16 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ReviewSummary summary(Long proteinId) {
+        if (proteinId != null) {
+            return new ReviewSummary(reviewRepository.avgRatingByProteinId(proteinId), reviewRepository.countByProteinId(proteinId));
+        }
+        Object[] row = reviewRepository.statsAll().get(0);
+        return new ReviewSummary(((Number) row[0]).doubleValue(), ((Number) row[1]).longValue());
+    }
+
+    @Override
     public ReviewResponse update(Long reviewId, String userEmail, ReviewUpdateRequest req) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."));
