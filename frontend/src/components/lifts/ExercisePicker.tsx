@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../../lib/api";
 import { toast } from "../../lib/toast";
 import { friendlyError } from "../../lib/httpError";
+import ExerciseIcon from "./ExerciseIcon";
 import {
   LIFT_CATEGORY_LABEL,
   LIFT_EXERCISES,
@@ -156,11 +157,12 @@ export default function ExercisePicker({ selected, onPick, weightedOnly = false,
               aria-pressed={selected === e.code}
               disabled={used}
               onClick={() => onPick(e)}
-              className={`dg-btn min-h-[52px] px-2 text-[15px] leading-tight disabled:opacity-40 ${
+              className={`dg-btn min-h-[52px] justify-start gap-2 px-2 text-left text-[15px] leading-tight disabled:opacity-40 ${
                 selected === e.code ? "dg-btn-primary" : "dg-btn-steel"
               }`}
             >
-              <span>
+              <ExerciseIcon info={e} size={36} />
+              <span className="min-w-0">
                 {e.label}
                 {(e.bodyweight || e.custom) && (
                   <span className="block text-[11px] font-normal text-steel-400">

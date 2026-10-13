@@ -72,6 +72,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 - **아바타**: `components/avatar/pixelAvatar.ts` 가 24×32 픽셀 리프터를 그린다. 데이터→그림 규칙은
   파일 머리 주석과 fix-log 참고. 바꾸면 `/dev/avatars` 로 확인.
   운동 세션의 동작(스쿼트 · 벤치 등 2프레임)과 실제 무게 원판은 `spec.action` · `lib/liftMotion.ts` — `/dev/avatars` "운동 동작" 줄.
+  기구 · 옆모습 동작은 `pixelPoses.ts` 관절 좌표 데이터, 종목 그림은 `lifts/ExerciseIcon` · 팁은 `lib/exerciseGuide.ts` — "종목 그림" 줄.
 
 ---
 

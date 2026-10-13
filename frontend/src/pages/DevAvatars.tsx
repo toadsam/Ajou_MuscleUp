@@ -3,6 +3,9 @@ import type { ReactNode } from "react";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
 import { barbellLoad } from "../lib/liftMotion";
+import ExerciseIcon from "../components/lifts/ExerciseIcon";
+import { LIFT_EXERCISES } from "../lib/lifts";
+import { exerciseGuide } from "../lib/exerciseGuide";
 import { defaultGrowthParams, type CharacterTier, type GrowthParams } from "../components/avatar/types";
 
 const MOTIONS: [ActionKind, Equip][] = [
@@ -155,6 +158,22 @@ export default function DevAvatars() {
                 action={{ kind: i % 3 === 2 ? "bench" : "squat", frame: 0, equip: "barbell", plates: barbellLoad(kg).pixel }}
               />
             </Cell>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-bold">종목 그림 (31종목 · 두 장면 반복 · 팁)</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {LIFT_EXERCISES.map((e) => (
+            <div key={e.code} className="dg-well flex items-center gap-3 p-2">
+              <ExerciseIcon info={e} size={72} animate />
+              <div className="min-w-0 text-xs">
+                <p className="font-bold">{e.label}</p>
+                <p className="text-steel-400">{exerciseGuide(e).target}</p>
+                <p className="text-steel-300">{exerciseGuide(e).tip}</p>
+              </div>
+            </div>
           ))}
         </div>
       </section>
