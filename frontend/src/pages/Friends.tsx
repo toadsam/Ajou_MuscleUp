@@ -1,5 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import type { CharacterTier } from "../components/avatar/types";
@@ -424,9 +425,14 @@ export default function Friends() {
                       )}
                     </div>
                   </div>
-                  <button onClick={() => void onRemoveFriend(selectedFriend.userId)} className="dg-btn min-h-[32px] flex-shrink-0 bg-steel-900 px-3 text-xs text-red-300 hover:bg-plate-red hover:text-white">
-                    친구 삭제
-                  </button>
+                  <div className="flex flex-shrink-0 flex-col gap-2">
+                    <Link to={`/friends/${selectedFriend.userId}/gym`} className="dg-btn dg-btn-primary min-h-[32px] px-3 text-xs">
+                      헬스장 구경
+                    </Link>
+                    <button onClick={() => void onRemoveFriend(selectedFriend.userId)} className="dg-btn min-h-[32px] bg-steel-900 px-3 text-xs text-red-300 hover:bg-plate-red hover:text-white">
+                      친구 삭제
+                    </button>
+                  </div>
                 </div>
                 <div className="dg-well flex-1 space-y-2 overflow-y-auto p-3">
                   {messages.length === 0 && <p className="text-xs text-steel-400">아직 메시지가 없습니다.</p>}

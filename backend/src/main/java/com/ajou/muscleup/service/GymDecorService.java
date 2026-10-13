@@ -65,6 +65,12 @@ public class GymDecorService {
         return build(me, new Progress(me));
     }
 
+    /** 다른 사람(친구) 헬스장 모습 — 자리마다 놓인 것만(진행도 · 조건은 주지 않는다) */
+    @Transactional(readOnly = true)
+    public List<SlotView> slotsOf(User owner) {
+        return build(owner, new Progress(owner)).slots();
+    }
+
     /** slot 자리에 code 를 놓는다. code 가 null 이면 비운다 */
     @Transactional
     public View place(User me, String slotName, String code) {

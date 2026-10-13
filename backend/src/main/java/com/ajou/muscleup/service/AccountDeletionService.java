@@ -83,6 +83,7 @@ public class AccountDeletionService {
         exec("delete from UserCollectionItem i where i.user.id = :id", id);
         exec("delete from UserCollection c where c.user.id = :id", id);
         exec("delete from GymDecorSlot s where s.user.id = :id", id);
+        exec("delete from GymGuestbookEntry g where g.owner.id = :id or g.author.id = :id", id);
         exec("delete from PushLog l where l.user.id = :id", id);
         exec("delete from PushSubscription s where s.user.id = :id", id);
         exec("delete from PushPreference p where p.user.id = :id", id);
