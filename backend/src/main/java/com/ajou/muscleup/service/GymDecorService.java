@@ -65,10 +65,17 @@ public class GymDecorService {
         return build(me, new Progress(me));
     }
 
-    /** 다른 사람(친구) 헬스장 모습 — 자리마다 놓인 것만(진행도 · 조건은 주지 않는다) */
+    /** 다른 사람(친구)에게 보여 주는 헬스장: 자리마다 놓인 것 + 열린 공간(진행도 · 조건은 주지 않는다) */
+    public record OwnerView(List<SlotView> slots, List<String> spaces) {}
+
     @Transactional(readOnly = true)
-    public List<SlotView> slotsOf(User owner) {
-        return build(owner, new Progress(owner)).slots();
+    public OwnerView ownerView(User owner) {
+        Progress progress = new Progress(owner);
+        List<String> spaces = new ArrayList<>();
+        for (GymDecorItem.Space space : GymDecorItem.Space.values()) {
+            if (space.unlockItem == null || progress.owned(GymDecorItem.parse(space.unlockItem))) spaces.add(space.name());
+        }
+        return new OwnerView(build(owner, progress).slots(), spaces);
     }
 
     /** slot 자리에 code 를 놓는다. code 가 null 이면 비운다 */

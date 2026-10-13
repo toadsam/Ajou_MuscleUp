@@ -5,7 +5,7 @@ import { toast } from "../lib/toast";
 import { errorStatus, friendlyError } from "../lib/httpError";
 import { REPORT_DETAIL_MAX, REPORT_REASONS, type ReportReason, type ReportTargetType } from "../lib/reportLabels";
 
-// 글 · 댓글 · 공동구매 · 사용자 신고 창. 운영진이 관리자 화면 "신고" 탭에서 확인한다.
+// 글 · 댓글 · 공동구매 · 사용자 · 헬스장 방명록 신고 창. 운영진이 관리자 화면 "신고" 탭에서 확인한다.
 
 type Props = {
   targetType: ReportTargetType;
@@ -21,6 +21,7 @@ const DEFAULT_SUBJECT: Record<ReportTargetType, string> = {
   BRAG_COMMENT: "이 댓글",
   PROTEIN: "이 공동구매",
   USER: "이 사람",
+  GYM_GUESTBOOK: "이 방명록 글",
 };
 
 export default function ReportDialog(props: Props) {

@@ -81,6 +81,8 @@ class GymVisitTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nickname").value("alice"))
                 .andExpect(jsonPath("$.slots[?(@.slot=='CENTER')].code").value(hasItem("RING_RED")))
+                .andExpect(jsonPath("$.spaces.length()").value(1))
+                .andExpect(jsonPath("$.spaces[0]").value("MAIN"))
                 .andExpect(jsonPath("$.guestbook.length()").value(0));
 
         // 한 줄: 공백 정리 · 빈 글 · 60자 넘으면 거절
@@ -120,5 +122,24 @@ class GymVisitTest {
         mvc.perform(get("/api/gym-decor/friends/" + alice.getId()).with(as(bob))).andExpect(status().isNotFound());
         write(bob, alice, "또 왔어요").andExpect(status().isNotFound());
         mvc.perform(get("/api/gym-decor/guestbook").with(as(alice))).andExpect(jsonPath("$.length()").value(0));
+    }
+
+    private ResultActions report(User me, Object entryId) throws Exception {
+        return mvc.perform(post("/api/reports").with(as(me)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"targetType\":\"GYM_GUESTBOOK\",\"targetId\":" + entryId + ",\"reason\":\"ABUSE\"}"));
+    }
+
+    @Test
+    void guestbookCanBeReportedByOwnerAndFriends() throws Exception {
+        String body = write(bob, alice, "나쁜 말").andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        Integer id = JsonPath.read(body, "$.id");
+        // 쓴 사람은 자기 글 신고 못 함, 친구가 아니면 대상이 없다고 한다
+        report(bob, id).andExpect(status().isBadRequest());
+        report(carol, id).andExpect(status().isNotFound());
+        // 주인은 신고할 수 있고, 같은 글은 한 번만
+        report(alice, id).andExpect(status().isCreated());
+        report(alice, id).andExpect(status().isConflict());
+        assertThat(em.createQuery("select r.snapshot from ContentReport r where r.targetType = com.ajou.muscleup.entity.ReportTargetType.GYM_GUESTBOOK", String.class)
+                .getSingleResult()).contains("나쁜 말");
     }
 }

@@ -1,6 +1,6 @@
 // 신고(콘텐츠 · 사용자) 관련 값과 화면 이름. 서버 값(영문)은 그대로 보내고 화면에는 한국어만 보여 준다.
 
-export type ReportTargetType = "BRAG_POST" | "BRAG_COMMENT" | "PROTEIN" | "USER";
+export type ReportTargetType = "BRAG_POST" | "BRAG_COMMENT" | "PROTEIN" | "USER" | "GYM_GUESTBOOK";
 export type ReportReason = "SPAM" | "ABUSE" | "SEXUAL" | "ILLEGAL" | "FRAUD" | "PRIVACY" | "OTHER";
 export type ReportStatus = "OPEN" | "ACTIONED" | "DISMISSED";
 
@@ -22,6 +22,7 @@ export const REPORT_TARGET_LABEL: Record<ReportTargetType, string> = {
   BRAG_COMMENT: "자랑방 댓글",
   PROTEIN: "공동구매",
   USER: "사용자",
+  GYM_GUESTBOOK: "헬스장 방명록",
 };
 
 export const REPORT_STATUS_LABEL: Record<ReportStatus, string> = {
