@@ -176,6 +176,37 @@ export default function SupportWidget() {
     };
   }, []);
 
+  // 버튼이 `data-fab-avoid` 요소(홈 지도 바로 가기 등) 위에 겹치면 잠깐 숨긴다 — 스크롤하면 다시 보인다
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const [dodge, setDodge] = useState(false);
+  useEffect(() => {
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const fab = fabRef.current?.getBoundingClientRect();
+      if (!fab) return;
+      const hit = Array.from(document.querySelectorAll<HTMLElement>("[data-fab-avoid]")).some((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.left < fab.right && r.right > fab.left && r.top < fab.bottom && r.bottom > fab.top;
+      });
+      setDodge(hit);
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    const timer = window.setInterval(schedule, 1000); // 화면이 바뀌어 스크롤 없이 겹치는 경우
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      window.clearInterval(timer);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [fabBottom]);
+  const hideFab = dodge && !open;
+
   const greeting = useMemo<Msg>(
     () => ({
       id: "greet",
@@ -271,7 +302,10 @@ export default function SupportWidget() {
         aria-label={open ? "문의창 닫기" : "문의하기"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="fixed right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-black bg-steel-700 text-chalk shadow-md transition hover:-translate-y-0.5 hover:bg-steel-600 active:translate-y-1 active:shadow-none sm:right-6"
+        ref={fabRef}
+        tabIndex={hideFab ? -1 : undefined}
+        aria-hidden={hideFab || undefined}
+        className={`fixed right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-black bg-steel-700 text-chalk shadow-md transition hover:-translate-y-0.5 hover:bg-steel-600 active:translate-y-1 active:shadow-none sm:right-6 ${hideFab ? "pointer-events-none scale-75 opacity-0" : ""}`}
         style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${fabBottom}px)` }}
         data-support-widget="true"
       >

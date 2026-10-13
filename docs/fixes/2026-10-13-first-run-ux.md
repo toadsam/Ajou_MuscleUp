@@ -39,3 +39,8 @@
  ];
 ```
 - `gymMap.css` `.gm-dock-btn`: 링크도 버튼처럼 보이게 `text-align: center; text-decoration: none`.
+
+## 이어서 고친 것 (같은 날, 2번째 PR)
+- #1 베타 안내: 화면을 덮는 창 → 헤더 아래 한 줄 띠(`BetaNoticeModal.tsx`, `App.tsx` 의 `pt-[var(--beta-h,0px)]`).
+- #3 문의 "?": `SupportWidget.tsx` 가 `[data-fab-avoid]` 와 겹치면 숨는다(스크롤 · 크기 바뀜 · 1초마다 확인). `GymMap.tsx` 의 `.gm-dock-cap` · `.gm-dock` 에 `data-fab-avoid`.
+- #5 러닝: `Header.tsx` "오늘 운동"에 `{ to: "/run", label: "러닝" }`.

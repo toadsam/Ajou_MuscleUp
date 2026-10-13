@@ -833,7 +833,7 @@ export default function GymMap(props: Props) {
                 className={`gm-label ${zone === id ? "on" : ""}`}
                 style={pct(z.label[0] * TILE, z.label[1] * TILE + 8)}
                 onClick={() => go(id, false)}
-                aria-label={`${z.name}로 가기 · ${z.page}`}
+                aria-label={`${z.name} 앞으로 가기 · ${z.page}`}
               >
                 {z.name}
                 {z.page !== z.name && <span>{z.page}</span>}
@@ -1221,7 +1221,7 @@ export default function GymMap(props: Props) {
 
       <ReportDialog targetType="GYM_GUESTBOOK" targetId={reportId ?? 0} open={reportId !== null} onClose={() => setReportId(null)} />
 
-      <div className="gm-dock-cap">
+      <div className="gm-dock-cap" data-fab-avoid>
         <span>바로 가기</span>
         {loggedIn ? (
           <span className="gm-cap-actions">
@@ -1240,7 +1240,7 @@ export default function GymMap(props: Props) {
           <span>자주 쓰는 곳으로 바로</span>
         )}
       </div>
-      <nav className="gm-dock" aria-label="바로 가기">
+      <nav className="gm-dock" aria-label="바로 가기" data-fab-avoid>
         {DOCK.map((d) =>
           "to" in d ? (
             <Link
