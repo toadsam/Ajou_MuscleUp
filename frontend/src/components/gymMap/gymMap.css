@@ -606,3 +606,19 @@
 .gm-book small b { color: var(--dg-chalk); }
 .gm-book p { margin: 2px 0 0 !important; overflow-wrap: anywhere; color: var(--dg-chalk) !important; }
 .gm-book .gm-textbtn { flex: none; color: var(--dg-muted); }
+
+/* ---------- 다른 공간(2층 · 러닝 트랙 · 식당) ---------- */
+
+.gm-scene-chip {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  padding: 3px 8px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: var(--dg-yellow);
+  color: var(--dg-ink);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 2px 0 #000;
+}

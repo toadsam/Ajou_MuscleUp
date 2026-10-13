@@ -10,7 +10,9 @@
 //   tone        내 캐릭터 색(MBTI 계열 → AvatarRenderer 와 같은 규칙).
 //   decor       꾸미기 자리마다 놓은 물품(decor.ts). 바뀌면 배경을 다시 그리고, 놓인 물품 칸은 못 지나간다.
 //   decorEdit   꾸미기 중이면 자리마다 노란 점선 테두리, decorPick 은 고른 자리(깜빡임).
-//   decor.THEME 바닥 · 벽 테마(THEMES). decor 의 유니폼 · 머리색 · 새 직원 출근(staffLookOf) → 직원 NPC 모습과 인원.
+//   scene       지금 공간(1층 MAIN · 2층 · 러닝 트랙 · 식당 — scenes.ts). 1층 입구 매트(portal)에 서면 고르는 창, 다른 공간 출구(exit)에 서면 1층으로.
+//               직원 · 라운지 손님 · 원판 · 출석 표시는 1층에만 그린다.
+//   decor.THEME 바닥 · 벽 테마(THEMES, 1층 · 2층). decor 의 유니폼 · 머리색 · 새 직원 출근(staffLookOf) → 직원 NPC 모습과 인원.
 
 import { PLATE_ORDER } from "../gym/plates";
 import { temperament } from "../avatar/mbti";
@@ -22,10 +24,12 @@ import {
   solidTiles,
   staffLookOf,
   type DecorLayout,
+  type SceneId,
   type SlotId,
   type StaffId,
   type StaffLook,
 } from "./decor";
+import { SCENES } from "./scenes";
 
 export const TILE = 16;
 export const COLS = 16;
@@ -34,6 +38,13 @@ export const MAP_W = COLS * TILE;
 export const MAP_H = ROWS * TILE;
 
 export type ZoneId = "checkin" | "rack" | "mirror" | "board" | "lounge" | "crew" | "community";
+/** 장소 + 1층 입구 포탈 · 다른 공간 출구 */
+export type MapZone = ZoneId | "portal" | "exit";
+/** 1층 입구 매트: 여기 서면 다른 공간으로 가는 창 */
+export const PORTAL: { trig: { c: number; r: number; w: number; h: number }; label: [number, number] } = {
+  trig: { c: 6, r: 23, w: 3, h: 2 },
+  label: [8, 23.2],
+};
 type Rect = { c: number; r: number; w: number; h: number };
 export type ZoneSpec = {
   name: string;
@@ -72,6 +83,8 @@ const OBJ: (Rect & { zone?: ZoneId })[] = [
 ];
 
 const START: [number, number] = [7, 24];
+/** 다른 공간에서 돌아오면 입구 매트 바로 위(매트 위면 다시 창이 뜬다) */
+const PORTAL_RETURN: [number, number] = [7, 21];
 /** 걷는 속도(칸/초). 바로 가기는 FAST_SPEED */
 const WALK_SPEED = 13;
 const FAST_SPEED = 44;
@@ -156,23 +169,34 @@ function rng(seed: number) {
 
 /* ---------- 칸 · 길찾기 ---------- */
 
-const solid: number[][] = Array.from({ length: ROWS }, (_, r) =>
-  Array.from({ length: COLS }, (_, c) => (r < 2 || r === ROWS - 1 || c === 0 || c === COLS - 1 ? 1 : 0)),
-);
-OBJ.forEach((o) => {
-  for (let r = o.r; r < o.r + o.h; r++) for (let c = o.c; c < o.c + o.w; c++) solid[r][c] = 1;
-});
+const buildSolid = (objs: Rect[]) => {
+  const grid = Array.from({ length: ROWS }, (_, r) =>
+    Array.from({ length: COLS }, (_, c) => (r < 2 || r === ROWS - 1 || c === 0 || c === COLS - 1 ? 1 : 0)),
+  );
+  objs.forEach((o) => {
+    for (let r = o.r; r < o.r + o.h; r++) for (let c = o.c; c < o.c + o.w; c++) grid[r][c] = 1;
+  });
+  return grid;
+};
+/** 지금 공간의 막힌 칸 · 공간. 지도는 한 화면에 하나뿐이라 모듈에 둔다 */
+let solid = buildSolid(OBJ);
+let currentScene: SceneId = "MAIN";
+const setScene = (scene: SceneId) => {
+  currentScene = scene;
+  solid = buildSolid(scene === "MAIN" ? OBJ : SCENES[scene].objs);
+};
 /** 꾸미기 물품이 놓여 막힌 칸(r * COLS + c). 지도는 한 화면에 하나뿐이라 모듈에 둔다 */
 let decorSolid = new Set<number>();
 const setDecorSolid = (layout: DecorLayout) => {
   const next = new Set<number>();
-  for (const q of solidTiles(layout)) for (let r = q.r; r < q.r + q.h; r++) for (let c = q.c; c < q.c + q.w; c++) next.add(r * COLS + c);
+  for (const q of solidTiles(layout, currentScene)) for (let r = q.r; r < q.r + q.h; r++) for (let c = q.c; c < q.c + q.w; c++) next.add(r * COLS + c);
   decorSolid = next;
 };
 const walkable = (c: number, r: number) => c >= 0 && r >= 0 && c < COLS && r < ROWS && !solid[r][c] && !decorSolid.has(r * COLS + c);
 const inRect = (q: Rect, c: number, r: number) => c >= q.c && c < q.c + q.w && r >= q.r && r < q.r + q.h;
-export function zoneAt(c: number, r: number): ZoneId | null {
-  return ZONE_IDS.find((k) => inRect(ZONES[k].trig, c, r)) ?? null;
+export function zoneAt(c: number, r: number): MapZone | null {
+  if (currentScene !== "MAIN") return inRect(SCENES[currentScene].exit, c, r) ? "exit" : null;
+  return ZONE_IDS.find((k) => inRect(ZONES[k].trig, c, r)) ?? (inRect(PORTAL.trig, c, r) ? "portal" : null);
 }
 
 function findPath(sc: number, sr: number, tc: number, tr: number): [number, number][] | null {
@@ -223,7 +247,7 @@ function nearestWalkable(c: number, r: number): [number, number] | null {
 /* ---------- 고정 배경 ---------- */
 
 /** 바닥 · 벽 테마(꾸미기). 고무 매트가 원래 모습 */
-type ThemePal = {
+export type ThemePal = {
   floor: string;
   seam: string;
   specks: [string, string];
@@ -441,6 +465,21 @@ export function paintThemePreview(canvas: HTMLCanvasElement, theme: string) {
   g.drawImage(full, 88, 0, 64, 54, 0, 0, 64, 54);
 }
 
+/** 포탈 창: 공간 미리보기(그 공간 지도 가운데를 잘라서) */
+export function paintScenePreview(canvas: HTMLCanvasElement, scene: Exclude<SceneId, "MAIN">, themeCode?: string | null) {
+  const full = document.createElement("canvas");
+  full.width = MAP_W;
+  full.height = MAP_H;
+  const fg = full.getContext("2d");
+  const g = canvas.getContext("2d");
+  if (!fg || !g) return;
+  SCENES[scene].paint(fg, THEMES[themeCode ?? ""] ?? THEMES.THEME_RUBBER);
+  canvas.width = 104;
+  canvas.height = 88;
+  g.imageSmoothingEnabled = false;
+  g.drawImage(full, 76, scene === "DINER" ? 120 : 0, 104, 88, 0, 0, 104, 88);
+}
+
 /* ---------- 캐릭터 (10×16 픽셀) ---------- */
 
 const BASE = ["..hhhhhh..", ".hhhhhhhh.", ".hssssssh.", ".skssssks.", ".ssssssss.", "..ssssss..", "...ssss...", ".rrrrrrrr.", "srrrrrrrrs", "srrrrrrrrs", "ss.rrrr.ss", "..bbbbbb.."];
@@ -513,10 +552,11 @@ export type MapState = {
   decor?: DecorLayout;
   decorEdit?: boolean;
   decorPick?: SlotId | null;
+  scene?: SceneId;
 };
 export type MapCallbacks = {
   /** 캐릭터가 장소에 도착(또는 떠남) */
-  onZone: (zone: ZoneId | null) => void;
+  onZone: (zone: MapZone | null) => void;
   /** 매 프레임 캐릭터 머리 위치(픽셀, 지도 좌표) — 이름표 위치용 */
   onPlayer: (x: number, y: number) => void;
   /** 원판이 바벨에 꽂히는 순간 */
@@ -554,11 +594,14 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   const bgCtx = bg.getContext("2d");
   const paintBg = (layout: DecorLayout) => {
     if (!bgCtx) return;
-    paintStatic(bgCtx, THEMES[layout.THEME ?? ""] ?? THEMES.THEME_RUBBER);
-    paintDecor(bgCtx, layout);
+    const theme = THEMES[layout.THEME ?? ""] ?? THEMES.THEME_RUBBER;
+    if (currentScene === "MAIN") paintStatic(bgCtx, theme);
+    else SCENES[currentScene].paint(bgCtx, theme);
+    paintDecor(bgCtx, layout, currentScene);
   };
 
   let state: MapState = { ...initial };
+  setScene(state.scene ?? "MAIN");
   let layout = state.decor ?? DEFAULT_LAYOUT;
   let look = staffLookOf(layout);
   setDecorSolid(layout);
@@ -588,7 +631,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   };
   const npcPos = {} as Partial<Record<NpcId, [number, number]>>;
   syncNpcs();
-  let zone: ZoneId | null = null;
+  let zone: MapZone | null = null;
   let flights: Flight[] = [];
   let particles: Particle[] = [];
   let raf = 0;
@@ -600,7 +643,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       particles.push({ x, y, vx: (Math.random() - 0.5) * 70, vy: -Math.random() * 55 - 8, life: 0.5 + Math.random() * 0.5, age: 0 });
   };
 
-  const setZone = (next: ZoneId | null) => {
+  const setZone = (next: MapZone | null) => {
     if (next === zone) return;
     zone = next;
     cb.onZone(next);
@@ -617,6 +660,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   };
 
   const goZone = (k: ZoneId, fast = false) => {
+    if (currentScene !== "MAIN") return;
     if (zoneAt(Math.round(player.x), Math.round(player.y)) === k && !player.path.length) {
       zone = null;
       setZone(k);
@@ -763,7 +807,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   };
 
   const drawHighlight = (now: number) => {
-    if (!zone) return;
+    if (!zone || zone === "portal" || zone === "exit") return;
     const [x, y, w, h] = ZONES[zone].box;
     const L = 5;
     g.globalAlpha = 0.55 + 0.45 * Math.sin(now / 160);
@@ -776,6 +820,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   const drawDecorSlots = (now: number) => {
     if (!state.decorEdit) return;
     for (const id of SLOT_IDS) {
+      if (SLOTS[id].scene !== currentScene) continue;
       const [x, y, w, h] = SLOTS[id].box;
       const picked = state.decorPick === id;
       g.globalAlpha = picked ? 0.6 + 0.4 * Math.sin(now / 140) : 0.85;
@@ -810,29 +855,30 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
 
+    const main = currentScene === "MAIN";
     const arrived = stepWalker(player, dt);
-    updateNpcs(dt, now);
+    if (main) updateNpcs(dt, now);
     const here = zoneAt(Math.round(player.x), Math.round(player.y));
     if (player.moving && zone && here !== zone) setZone(null);
     if (arrived && here) setZone(here);
 
     g.drawImage(bg, 0, 0);
-    drawDynamic(now);
+    if (main) drawDynamic(now);
     drawHighlight(now);
     drawDecorSlots(now);
-    if (!state.checked) marker(156, 300 + Math.round(Math.sin(now / 220) * 1.5), C.red);
+    if (main && !state.checked) marker(156, 300 + Math.round(Math.sin(now / 220) * 1.5), C.red);
 
     const px = Math.round(player.x * TILE + 3);
     const py = Math.round(player.y * TILE) - 1;
     const over = now < overUntil;
     const walkFrame = player.moving ? 1 + (Math.floor(player.anim * 12) % 2) : 0;
-    const sitters = Math.min(3, Math.max(0, state.loungeCount));
+    const sitters = main ? Math.min(3, Math.max(0, state.loungeCount)) : 0;
     const actors: { y: number; draw: () => void }[] = [];
     for (let i = 0; i < sitters; i++) {
       const [sx, sy] = SEATS[i];
       actors.push({ y: sy + 16, draw: () => drawChar(g, sx, sy, GUESTS[i], { sit: true }) });
     }
-    for (const n of npcs) actors.push({ y: n.w.y * TILE + 15, draw: () => drawNpc(n) });
+    if (main) for (const n of npcs) actors.push({ y: n.w.y * TILE + 15, draw: () => drawNpc(n) });
     actors.push({
       y: py + 16.5,
       draw: () => {
@@ -874,7 +920,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     });
 
     cb.onPlayer(px + 5, py - (over ? 11 : 3));
-    cb.onNpcs?.(npcPos);
+    cb.onNpcs?.(main ? npcPos : {});
     raf = requestAnimationFrame(frame);
   };
 
@@ -888,6 +934,17 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       const platesChanged = next.plates !== undefined && next.plates !== state.plates;
       state = { ...state, ...next };
       if (next.tone) pal = palOf(state.tone);
+      if (next.scene && next.scene !== currentScene) {
+        // 다른 공간으로: 막힌 칸 · 배경을 바꾸고 그 공간 입구에 선다
+        setScene(next.scene);
+        player.path = [];
+        [player.x, player.y] = next.scene === "MAIN" ? PORTAL_RETURN : SCENES[next.scene].start;
+        player.back = true;
+        zone = null;
+        flights = [];
+        setDecorSolid(layout);
+        paintBg(layout);
+      }
       if (next.decor && next.decor !== layout) {
         layout = next.decor;
         look = staffLookOf(layout);
@@ -903,7 +960,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       // 직원 NPC 를 눌렀으면: 그 사람 옆으로 걸어가고, 그 자리에서 말한다
       const tx = fx * MAP_W;
       const ty = fy * MAP_H;
-      const who = npcs.find((n) => {
+      const who = currentScene !== "MAIN" ? undefined : npcs.find((n) => {
         const nx = n.w.x * TILE + 3;
         const ny = n.w.y * TILE - 1;
         return tx >= nx - 3 && tx <= nx + 13 && ty >= ny - 3 && ty <= ny + 18;
@@ -918,9 +975,11 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
         if (spot) goTile(spot[0], spot[1]);
         return;
       }
-      const hit = OBJ.find((o) => o.zone && inRect(o, c, r));
-      if (hit?.zone) return goZone(hit.zone);
-      if (r < 2 && c >= 9 && c <= 14) return goZone("mirror");
+      if (currentScene === "MAIN") {
+        const hit = OBJ.find((o) => o.zone && inRect(o, c, r));
+        if (hit?.zone) return goZone(hit.zone);
+        if (r < 2 && c >= 9 && c <= 14) return goZone("mirror");
+      }
       if (!walkable(c, r)) {
         const n = nearestWalkable(c, r);
         if (!n) return;
@@ -939,7 +998,8 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       }
     },
     celebrate() {
-      // 출석 체크기 앞에서 원판이 날아가 바벨에 꽂히고, 캐릭터가 바벨을 든다
+      // 출석 체크기 앞에서 원판이 날아가 바벨에 꽂히고, 캐릭터가 바벨을 든다(1층에서만)
+      if (currentScene !== "MAIN") return;
       shownPlates = Math.max(0, state.plates - 1);
       player.path = [];
       [player.x, player.y] = ZONES.checkin.anchor;

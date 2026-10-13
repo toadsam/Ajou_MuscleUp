@@ -14,11 +14,14 @@ import {
   UNIFORM_COLOR,
   paintPreview,
   staffLookOf,
+  SCENE_UNLOCK,
   type DecorSlot,
+  type SceneId,
   type SlotId,
   type StaffLook,
 } from "./decor";
 import { LIFT_EXERCISES } from "../../lib/lifts";
+import { SCENES } from "./scenes";
 import { exerciseGuide } from "../../lib/exerciseGuide";
 import { fetchDecor, layoutOf, placeDecor, readSeen, writeSeen, type DecorItem, type DecorView } from "../../lib/gymDecor";
 import { deleteGuestbook, fetchMyGuestbook, readGuestbookSeen, writeGuestbookSeen, type GuestbookEntry } from "../../lib/gymVisit";
@@ -31,13 +34,16 @@ import {
   TILE,
   ZONES,
   ZONE_IDS,
+  PORTAL,
   createGymMap,
   paintStaffPreview,
+  paintScenePreview,
   paintThemePreview,
   toneForMbti,
   NPC_ROLES,
   type NpcId,
   type GymMapController,
+  type MapZone,
   type ZoneId,
 } from "./engine";
 import "./gymMap.css";
@@ -111,6 +117,14 @@ function ThemePreview({ code }: { code: string }) {
   return <canvas ref={ref} className="gm-decor-preview" aria-hidden="true" />;
 }
 
+function ScenePreview({ scene, theme }: { scene: Exclude<SceneId, "MAIN">; theme?: string | null }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (ref.current) paintScenePreview(ref.current, scene, theme);
+  }, [scene, theme]);
+  return <canvas ref={ref} className="gm-decor-preview" aria-hidden="true" />;
+}
+
 function StaffPreview({ id, look }: { id: NpcId; look: StaffLook }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -140,7 +154,10 @@ export default function GymMap(props: Props) {
   const meRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GymMapController | null>(null);
   const celebratedRef = useRef(false);
-  const [zone, setZone] = useState<ZoneId | null>(null);
+  const [zone, setZone] = useState<MapZone | null>(null);
+  // 지금 공간(1층 · 2층 · 러닝 트랙 · 식당). 1층 입구 매트에서 고르고, 다른 공간 출구에 서면 1층으로
+  const [scene, setScene] = useState<SceneId>("MAIN");
+  const sceneRef = useRef<SceneId>("MAIN");
   const [touched, setTouched] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [floatKey, setFloatKey] = useState(0);
@@ -230,6 +247,10 @@ export default function GymMap(props: Props) {
       { plates: weekDays, checked: checkedToday, loungeCount: loungeCount ?? 0, tone: toneForMbti(mbti) },
       {
         onZone: (z) => {
+          if (z === "exit") {
+            changeSceneRef.current("MAIN");
+            return;
+          }
           setZone(z);
           if (z) {
             try {
@@ -415,7 +436,7 @@ export default function GymMap(props: Props) {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
-      if (document.hidden || talkingId.current) return;
+      if (document.hidden || talkingId.current || sceneRef.current !== "MAIN") return;
       const who = pickOne<NpcId>(["coach", "staff", "coach", ...hiredRef.current]);
       sayRef.current(who, lineRef.current(who));
     }, 15000);
@@ -450,9 +471,32 @@ export default function GymMap(props: Props) {
     }
   };
 
+  const changeScene = (next: SceneId) => {
+    if (next === sceneRef.current) return;
+    sceneRef.current = next;
+    mapRef.current?.clearZone();
+    mapRef.current?.setState({ scene: next });
+    setScene(next);
+    setZone(null);
+    setPick(null);
+    showToast(next === "MAIN" ? "1층으로 돌아왔어요" : `${SCENES[next].name}에 왔어요`);
+    void logEvent("home", "map_scene", { scene: next });
+  };
+  const changeSceneRef = useRef(changeScene);
+  useEffect(() => {
+    changeSceneRef.current = changeScene;
+  });
+
   const go = (z: ZoneId, fast: boolean) => {
     setTouched(true);
+    // 다른 공간에 있으면 1층으로 먼저(바로 가기 버튼)
+    if (sceneRef.current !== "MAIN") changeScene("MAIN");
     mapRef.current?.goZone(z, fast);
+  };
+  /** 지도 칸(타일)으로 걸어가기 — 포탈 · 출구 이름표 */
+  const walkTo = (c: number, r: number) => {
+    setTouched(true);
+    mapRef.current?.tapAt((c * TILE + 8) / MAP_W, (r * TILE + 8) / MAP_H);
   };
 
   const createGuest = () => {
@@ -659,10 +703,14 @@ export default function GymMap(props: Props) {
           to: "/brag",
           cta: "자랑방 가기",
         };
+      default:
+        return null; // 포탈 · 출구는 따로
     }
   }, [zone, loggedIn, guest, trialDone, tryCheckin, checkedToday, kg, streak, weekDays, loungeCount, props.todayLabel, props.monthCount, props.avatar, props.title, props.tier, props.level, props.events]);
 
   const shown = building || editing || bookOpen ? null : sheet;
+  const portalOpen = zone === "portal" && !building && !editing && !bookOpen;
+  const spaces = (Object.keys(SCENE_UNLOCK) as Exclude<SceneId, "MAIN">[]).map((id) => ({ id, item: itemOf(SCENE_UNLOCK[id]) }));
   const pickedCode = pick ? layout[pick] ?? null : null;
   const pickItems: DecorItem[] = pick && decor
     ? decor.items.filter((i) => i.slots.includes(pick)).sort((a, b) => Number(b.owned) - Number(a.owned))
@@ -713,7 +761,7 @@ export default function GymMap(props: Props) {
         <canvas ref={canvasRef} width={MAP_W} height={MAP_H} onPointerDown={onPointerDown} />
         <div className="gm-overlay">
           {editing &&
-            SLOT_IDS.map((id) => {
+            SLOT_IDS.filter((id) => SLOTS[id].scene === scene).map((id) => {
               const [x, y, w, h] = SLOTS[id].box;
               const item = itemOf(layout[id]);
               return (
@@ -727,7 +775,30 @@ export default function GymMap(props: Props) {
                 />
               );
             })}
-          {!editing && ZONE_IDS.map((id) => {
+          {!editing && scene === "MAIN" && (
+            <button
+              type="button"
+              className={`gm-label ${zone === "portal" ? "on" : ""}`}
+              style={pct(PORTAL.label[0] * TILE, PORTAL.label[1] * TILE + 8)}
+              onClick={() => walkTo(7, 24)}
+              aria-label="입구로 가기 · 다른 공간"
+            >
+              입구<span>다른 공간</span>
+            </button>
+          )}
+          {!editing && scene !== "MAIN" && (
+            <button
+              type="button"
+              className="gm-label"
+              style={pct(8 * TILE, 24 * TILE - 4)}
+              onClick={() => walkTo(7, 24)}
+              aria-label={`${SCENES[scene].exitName}`}
+            >
+              {SCENES[scene].exitName}
+            </button>
+          )}
+          {scene !== "MAIN" && <div className="gm-scene-chip">{SCENES[scene].name}</div>}
+          {!editing && scene === "MAIN" && ZONE_IDS.map((id) => {
             const z = ZONES[id];
             return (
               <button
@@ -750,12 +821,12 @@ export default function GymMap(props: Props) {
               ref={(el) => {
                 npcTagRefs.current[id] = el;
               }}
-              className={`gm-npc ${BASE_STAFF.includes(id) || look.hired.includes(id) ? "" : "off"}`}
+              className={`gm-npc ${scene === "MAIN" && (BASE_STAFF.includes(id) || look.hired.includes(id)) ? "" : "off"}`}
             >
               {NPC_ROLES[id]}
             </div>
           ))}
-          {talk && (
+          {talk && scene === "MAIN" && (
             <div key={talk.key} ref={bubbleRef} className="gm-bubble" role="status">
               <b>{NPC_ROLES[talk.id]}</b> {talk.text}
             </div>
@@ -786,6 +857,46 @@ export default function GymMap(props: Props) {
             </div>
           </div>
         )}
+
+        <section className={`gm-sheet ${portalOpen ? "open" : ""}`} aria-live="polite" aria-hidden={!portalOpen}>
+          {portalOpen && (
+            <>
+              <p className="gm-eyebrow">입구 · 다른 공간</p>
+              <h2>어디로 갈까요?</h2>
+              <ul className="gm-decor-list">
+                {spaces.map(({ id, item }) => {
+                  const open = Boolean(item?.owned);
+                  return (
+                    <li key={id} className={open ? "" : "locked"}>
+                      <ScenePreview scene={id} theme={layout.THEME} />
+                      <div className="gm-decor-info">
+                        <b>{SCENES[id].name}</b>
+                        <small>{!loggedIn ? "로그인하면 기록으로 열 수 있어요" : open ? "열렸어요" : item?.hint ?? "불러오는 중"}</small>
+                        {loggedIn && item && !open && (
+                          <span className="gm-decor-track" aria-hidden="true">
+                            <i style={{ width: `${Math.round((item.progress / Math.max(1, item.goal)) * 100)}%` }} />
+                          </span>
+                        )}
+                      </div>
+                      {open ? (
+                        <button type="button" className="dg-btn dg-btn-primary" onClick={() => changeScene(id)}>
+                          가기
+                        </button>
+                      ) : (
+                        <span className="gm-decor-state font-num">{loggedIn && item ? `${item.progress}/${item.goal}` : "잠김"}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="gm-actions">
+                <button type="button" className="dg-btn dg-btn-steel" onClick={close}>
+                  닫기
+                </button>
+              </div>
+            </>
+          )}
+        </section>
 
         <section className={`gm-sheet gm-decor-sheet ${bookOpen ? "open" : ""}`} aria-live="polite" aria-hidden={!bookOpen}>
           {bookOpen && (
@@ -1008,7 +1119,7 @@ export default function GymMap(props: Props) {
         </section>
 
         <section className={`gm-sheet ${shown ? "open" : ""}`} aria-live="polite" aria-hidden={!shown}>
-          {shown && zone && (
+          {shown && zone && zone !== "portal" && zone !== "exit" && (
             <>
               <p className="gm-eyebrow">
                 {ZONES[zone].name === ZONES[zone].page ? ZONES[zone].name : `${ZONES[zone].name} · ${ZONES[zone].page}`}
