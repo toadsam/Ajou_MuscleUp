@@ -21,6 +21,8 @@ import {
 import { LIFT_EXERCISES } from "../../lib/lifts";
 import { exerciseGuide } from "../../lib/exerciseGuide";
 import { fetchDecor, layoutOf, placeDecor, readSeen, writeSeen, type DecorItem, type DecorView } from "../../lib/gymDecor";
+import { deleteGuestbook, fetchMyGuestbook, readGuestbookSeen, writeGuestbookSeen, type GuestbookEntry } from "../../lib/gymVisit";
+import { timeAgo } from "../../lib/timeAgo";
 import { friendlyError } from "../../lib/httpError";
 import { toast as appToast } from "../../lib/toast";
 import {
@@ -153,6 +155,10 @@ export default function GymMap(props: Props) {
   const [pick, setPick] = useState<SlotId | null>(null);
   /** 꾸미기 중 테마 · 직원 창 */
   const [panel, setPanel] = useState<"theme" | "staff" | null>(null);
+  // 내 헬스장 방명록(친구가 놀러 와 남긴 한 줄)
+  const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
+  const [bookOpen, setBookOpen] = useState(false);
+  const [bookSeen, setBookSeen] = useState(() => readGuestbookSeen());
   const [placing, setPlacing] = useState(false);
   const [seen, setSeen] = useState<Set<string> | null>(() => readSeen());
   const talkTimer = useRef<number | undefined>(undefined);
@@ -305,6 +311,41 @@ export default function GymMap(props: Props) {
     };
   }, [loggedIn]);
 
+  useEffect(() => {
+    if (!loggedIn) {
+      setGuestbook([]);
+      setBookOpen(false);
+      return;
+    }
+    let alive = true;
+    fetchMyGuestbook()
+      .then((list) => alive && setGuestbook(Array.isArray(list) ? list : []))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [loggedIn]);
+  const newEntries = guestbook.filter((e) => e.id > bookSeen).length;
+  const openBook = () => {
+    mapRef.current?.clearZone();
+    setZone(null);
+    setBookOpen(true);
+    const top = guestbook[0]?.id ?? 0;
+    if (top > bookSeen) {
+      writeGuestbookSeen(top);
+      setBookSeen(top);
+    }
+    void logEvent("home", "guestbook_open", { count: guestbook.length });
+  };
+  const removeEntry = async (id: number) => {
+    try {
+      await deleteGuestbook(id);
+      setGuestbook((list) => list.filter((e) => e.id !== id));
+    } catch (err) {
+      appToast(friendlyError(err, "지우지 못했어요."), "error");
+    }
+  };
+
   const layout = useMemo(() => (decor ? layoutOf(decor) : DEFAULT_LAYOUT), [decor]);
   const look = useMemo(() => staffLookOf(layout), [layout]);
   const hiredRef = useRef<NpcId[]>([]);
@@ -324,6 +365,7 @@ export default function GymMap(props: Props) {
   const fresh = earned.filter((c) => !seen?.has(c));
 
   const startEdit = () => {
+    setBookOpen(false);
     mapRef.current?.clearZone();
     setZone(null);
     setTouched(true);
@@ -395,6 +437,8 @@ export default function GymMap(props: Props) {
       e.preventDefault();
       setTouched(true);
       mapRef.current?.step(...KEYS[key]);
+    } else if (e.key === "Escape" && bookOpen) {
+      setBookOpen(false);
     } else if (e.key === "Escape" && editing) {
       if (pick || panel) {
         setPick(null);
@@ -618,7 +662,7 @@ export default function GymMap(props: Props) {
     }
   }, [zone, loggedIn, guest, trialDone, tryCheckin, checkedToday, kg, streak, weekDays, loungeCount, props.todayLabel, props.monthCount, props.avatar, props.title, props.tier, props.level, props.events]);
 
-  const shown = building || editing ? null : sheet;
+  const shown = building || editing || bookOpen ? null : sheet;
   const pickedCode = pick ? layout[pick] ?? null : null;
   const pickItems: DecorItem[] = pick && decor
     ? decor.items.filter((i) => i.slots.includes(pick)).sort((a, b) => Number(b.owned) - Number(a.owned))
@@ -742,6 +786,42 @@ export default function GymMap(props: Props) {
             </div>
           </div>
         )}
+
+        <section className={`gm-sheet gm-decor-sheet ${bookOpen ? "open" : ""}`} aria-live="polite" aria-hidden={!bookOpen}>
+          {bookOpen && (
+            <>
+              <p className="gm-eyebrow">내 헬스장</p>
+              <h2>방명록</h2>
+              {guestbook.length === 0 ? (
+                <p>아직 다녀간 친구가 없어요. 친구 목록에서 친구 헬스장에 놀러 가 한 줄 남겨 봐요.</p>
+              ) : (
+                <ul className="gm-book">
+                  {guestbook.map((entry) => (
+                    <li key={entry.id}>
+                      <div>
+                        <small>
+                          <b>{entry.nickname}</b> · {timeAgo(entry.createdAt)}
+                        </small>
+                        <p>{entry.message}</p>
+                      </div>
+                      <button type="button" className="gm-textbtn" onClick={() => void removeEntry(entry.id)}>
+                        지우기
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="gm-actions">
+                <Link to="/friends" className="dg-btn dg-btn-primary">
+                  친구 헬스장 놀러 가기
+                </Link>
+                <button type="button" className="dg-btn dg-btn-steel" onClick={() => setBookOpen(false)}>
+                  닫기
+                </button>
+              </div>
+            </>
+          )}
+        </section>
 
         <section className={`gm-sheet gm-decor-sheet ${editing && panel ? "open" : ""}`} aria-live="polite" aria-hidden={!(editing && panel)}>
           {editing && panel === "theme" && (
@@ -1000,10 +1080,18 @@ export default function GymMap(props: Props) {
       <div className="gm-dock-cap">
         <span>바로 가기</span>
         {loggedIn ? (
-          <button type="button" className={`gm-decor-btn ${editing ? "on" : ""}`} onClick={editing ? endEdit : startEdit} aria-pressed={editing}>
-            {editing ? "꾸미기 끝" : "헬스장 꾸미기"}
-            {!editing && fresh.length > 0 && <i className="font-num">새 물품 {fresh.length}</i>}
-          </button>
+          <span className="gm-cap-actions">
+            {!editing && (
+              <button type="button" className={`gm-decor-btn ${bookOpen ? "on" : ""}`} onClick={bookOpen ? () => setBookOpen(false) : openBook} aria-pressed={bookOpen}>
+                방명록
+                {newEntries > 0 && <i className="font-num">{newEntries}</i>}
+              </button>
+            )}
+            <button type="button" className={`gm-decor-btn ${editing ? "on" : ""}`} onClick={editing ? endEdit : startEdit} aria-pressed={editing}>
+              {editing ? "꾸미기 끝" : "꾸미기"}
+              {!editing && fresh.length > 0 && <i className="font-num">새 {fresh.length}</i>}
+            </button>
+          </span>
         ) : (
           <span>걷지 않고 바로 이동</span>
         )}

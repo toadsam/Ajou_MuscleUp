@@ -49,6 +49,7 @@ const CrewChallenge = lazy(() => import("./pages/CrewChallenge"));
 const CrewLobby = lazy(() => import("./pages/CrewLobby"));
 const CrewHighlights = lazy(() => import("./pages/CrewHighlights"));
 const Friends = lazy(() => import("./pages/Friends"));
+const FriendGym = lazy(() => import("./pages/FriendGym"));
 const Forbidden = lazy(() => import("./pages/Forbidden"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 // 개발 서버에서만 여는 픽셀 아바타 갤러리
@@ -319,6 +320,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Friends />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/friends/:userId/gym"
+                element={
+                  <ProtectedRoute>
+                    <FriendGym />
                   </ProtectedRoute>
                 }
               />

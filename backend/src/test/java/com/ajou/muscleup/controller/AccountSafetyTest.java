@@ -136,6 +136,8 @@ class AccountSafetyTest {
         em.persist(com.ajou.muscleup.entity.UserCollectionItem.builder().user(alice).itemCode("T_DAWN").source("BOX")
                 .acquiredAt(java.time.LocalDateTime.now()).build());
         em.persist(com.ajou.muscleup.entity.GymDecorSlot.builder().user(alice).slot("CENTER").itemCode(null).build());
+        em.persist(com.ajou.muscleup.entity.GymGuestbookEntry.builder().owner(alice).author(bob).message("놀러 왔어요").build());
+        em.persist(com.ajou.muscleup.entity.GymGuestbookEntry.builder().owner(bob).author(alice).message("헬스장 멋져요").build());
         em.persist(com.ajou.muscleup.entity.PushSubscription.builder().user(alice).endpoint("https://fcm.googleapis.com/fcm/send/as")
                 .endpointHash("as-endpoint-hash").p256dh("p").auth("a").build());
         em.persist(com.ajou.muscleup.entity.PushPreference.builder().user(alice).reminder(true).build());
@@ -181,6 +183,7 @@ class AccountSafetyTest {
         assertThat(count("select count(i) from UserCollectionItem i where i.user.id = :id", id)).isZero();
         assertThat(count("select count(c) from UserCollection c where c.user.id = :id", id)).isZero();
         assertThat(count("select count(s) from GymDecorSlot s where s.user.id = :id", id)).isZero();
+        assertThat(count("select count(g) from GymGuestbookEntry g where g.owner.id = :id or g.author.id = :id", id)).isZero();
         assertThat(count("select count(s) from PushSubscription s where s.user.id = :id", id)).isZero();
         assertThat(count("select count(p) from PushPreference p where p.user.id = :id", id)).isZero();
         assertThat(count("select count(l) from PushLog l where l.user.id = :id", id)).isZero();

@@ -586,3 +586,23 @@
 }
 .gm-hair button[aria-pressed="true"] { outline: 2px solid var(--dg-yellow); outline-offset: 1px; }
 .gm-swatches button:disabled, .gm-hair button:disabled { opacity: 0.6; cursor: default; }
+
+/* ---------- 방명록 ---------- */
+
+.gm-cap-actions { display: inline-flex; gap: 6px; }
+.gm-book { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gm-book li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: #1c1d20;
+}
+.gm-book li > div { min-width: 0; }
+.gm-book small { font-size: 11.5px; color: var(--dg-muted); }
+.gm-book small b { color: var(--dg-chalk); }
+.gm-book p { margin: 2px 0 0 !important; overflow-wrap: anywhere; color: var(--dg-chalk) !important; }
+.gm-book .gm-textbtn { flex: none; color: var(--dg-muted); }
