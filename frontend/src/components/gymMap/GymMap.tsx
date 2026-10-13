@@ -70,11 +70,12 @@ type Props = {
   celebrate: boolean;
 };
 
-const DOCK: { zone: ZoneId; label: string }[] = [
+/** 바로 가기: 지도 장소(zone)는 걸어가서 창을 열고, 지도에 없는 화면(to)은 바로 넘어간다 */
+const DOCK: ({ zone: ZoneId; label: string } | { to: string; label: string })[] = [
   { zone: "checkin", label: "출석" },
-  { zone: "lounge", label: "라운지" },
+  { to: "/diet", label: "식단" },
+  { to: "/workout/session", label: "운동 시작" },
   { zone: "rack", label: "내 기록" },
-  { zone: "mirror", label: "캐릭터" },
 ];
 
 const KEYS: Record<string, [number, number]> = {
@@ -1236,20 +1237,31 @@ export default function GymMap(props: Props) {
             </button>
           </span>
         ) : (
-          <span>걷지 않고 바로 이동</span>
+          <span>자주 쓰는 곳으로 바로</span>
         )}
       </div>
       <nav className="gm-dock" aria-label="바로 가기">
-        {DOCK.map((d) => (
-          <button
-            key={d.zone}
-            type="button"
-            className={`gm-dock-btn ${d.zone === "checkin" ? (checkedToday ? "done" : "primary") : ""}`}
-            onClick={() => go(d.zone, true)}
-          >
-            {d.zone === "checkin" ? (checkedToday ? (isGuest ? "체험 완료" : "출석 완료") : isGuest ? "출석 체험" : d.label) : d.label}
-          </button>
-        ))}
+        {DOCK.map((d) =>
+          "to" in d ? (
+            <Link
+              key={d.to}
+              to={loggedIn ? d.to : "/login"}
+              className="gm-dock-btn"
+              onClick={() => (loggedIn ? void logEvent("home", "dock_link", { to: d.to }) : signupClick(`dock:${d.to}`))}
+            >
+              {d.label}
+            </Link>
+          ) : (
+            <button
+              key={d.zone}
+              type="button"
+              className={`gm-dock-btn ${d.zone === "checkin" ? (checkedToday ? "done" : "primary") : ""}`}
+              onClick={() => go(d.zone, true)}
+            >
+              {d.zone === "checkin" ? (checkedToday ? (isGuest ? "체험 완료" : "출석 완료") : isGuest ? "출석 체험" : d.label) : d.label}
+            </button>
+          ),
+        )}
       </nav>
     </div>
   );

@@ -428,6 +428,8 @@
   white-space: nowrap;
   box-shadow: 0 3px 0 #000;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
 }
 .gm-dock-btn.primary { background: var(--dg-red); }
 .gm-dock-btn.done { background: var(--dg-green); color: var(--dg-ink); }
