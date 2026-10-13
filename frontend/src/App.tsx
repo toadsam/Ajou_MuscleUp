@@ -74,7 +74,8 @@ function App() {
     <Router>
       <div className="flex min-h-screen flex-col">
         <Header />
-        <main className="flex-grow">
+        <BetaNoticeModal />
+        <main className="flex-grow pt-[var(--beta-h,0px)]">
           <Suspense fallback={<RouteLoading />}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -345,7 +346,6 @@ function App() {
         </main>
         <Footer />
         <SupportWidget />
-        <BetaNoticeModal />
       </div>
     </Router>
   );
