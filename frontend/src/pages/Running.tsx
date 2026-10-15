@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
 import RouteSvg from "../components/running/RouteSvg";
 import RunTrack from "../components/running/RunTrack";
+import RunShareEditor from "../components/running/RunShareEditor";
+import type { RunShareData } from "../lib/runShareCard";
 import type { StageCharacter } from "../components/workout/LiftStage";
 import { useLiveHeartbeat, useLiveVisible } from "../lib/live";
 import { api } from "../lib/api";
@@ -110,6 +112,8 @@ export default function Running() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ save: RunSaveResult; route: LatLng[] | null } | null>(null);
+  // 공유 카드 만들기(사진 + 거리 · 페이스 · 코스)
+  const [shareData, setShareData] = useState<RunShareData | null>(null);
   const [records, setRecords] = useState<RunRecords | null>(null);
   const [runs, setRuns] = useState<RunView[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
@@ -383,6 +387,8 @@ export default function Running() {
     }
   };
 
+  if (shareData) return <RunShareEditor data={shareData} onClose={() => setShareData(null)} />;
+
   // ── 끝난 뒤 결과
   if (result) {
     const r = result.save.run;
@@ -409,6 +415,13 @@ export default function Running() {
               </div>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setShareData({ distanceM: r.distanceM, durationSec: r.durationSec, paceSec: r.paceSec, startedAt: r.startedAt, route: result.route })}
+            className="dg-btn dg-btn-primary min-h-[56px] w-full text-lg"
+          >
+            사진으로 공유하기
+          </button>
           {result.save.records.length > 0 && (
             <div className="dg-steel space-y-2 p-4">
               <h2 className="font-display text-xl text-plate-yellow">새 기록 {result.save.records.length}개!</h2>
@@ -725,9 +738,18 @@ export default function Running() {
                         <SplitBars splits={r.splits} />
                         {r.splits.length === 0 && r.source === "GPS" && <p className="text-steel-400">1km를 다 채운 구간이 없어요.</p>}
                         {r.note && <p className="text-steel-300">"{r.note}"</p>}
-                        <button type="button" onClick={() => void removeRun(r.id)} className="dg-btn dg-btn-steel min-h-[32px] px-3 text-xs">
-                          이 러닝 지우기
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShareData({ distanceM: r.distanceM, durationSec: r.durationSec, paceSec: r.paceSec, startedAt: r.startedAt, route })}
+                            className="dg-btn dg-btn-primary min-h-[32px] px-3 text-xs"
+                          >
+                            공유 카드
+                          </button>
+                          <button type="button" onClick={() => void removeRun(r.id)} className="dg-btn dg-btn-steel min-h-[32px] px-3 text-xs">
+                            이 러닝 지우기
+                          </button>
+                        </div>
                       </div>
                     )}
                   </li>
