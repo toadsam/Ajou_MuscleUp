@@ -56,6 +56,7 @@ const Forbidden = lazy(() => import("./pages/Forbidden"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 // 개발 서버에서만 여는 픽셀 아바타 갤러리
 const DevAvatars = import.meta.env.DEV ? lazy(() => import("./pages/DevAvatars")) : null;
+const DevLounge = import.meta.env.DEV ? lazy(() => import("./pages/DevLounge")) : null;
 
 function RouteLoading() {
   return (
@@ -88,6 +89,7 @@ function App() {
               <Route path="/attendance/share/:slug" element={<AttendanceShareView />} />
               <Route path="/forbidden" element={<Forbidden />} />
               {DevAvatars && <Route path="/dev/avatars" element={<DevAvatars />} />}
+              {DevLounge && <Route path="/dev/lounge" element={<DevLounge />} />}
 
               <Route path="/proteins/:id" element={<ProteinDetail />} />
               <Route

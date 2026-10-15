@@ -95,7 +95,7 @@ const joinPayload = (i) => ({
 });
 
 // rooms.ts 의 MAP_WIDTH / MAP_HEIGHT 와 같은 값
-const MAP = { width: 2000, height: 1200 };
+const MAP = { width: 448, height: 640 };
 
 const percentile = (sorted, p) =>
   sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))] : NaN;

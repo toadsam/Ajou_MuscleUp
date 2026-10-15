@@ -107,8 +107,8 @@ export function toneForMbti(mbti?: string | null): Tone {
   return { skin: "#E8B98F", tank: "#D9302A", hair: "#2B2420" };
 }
 
-type Pal = Record<"h" | "s" | "k" | "r" | "b" | "w", string>;
-const palOf = (t: Tone): Pal => ({ h: t.hair, s: t.skin, k: C.ink, r: t.tank, b: "#2C2D31", w: C.chalk });
+export type Pal = Record<"h" | "s" | "k" | "r" | "b" | "w", string>;
+export const palOf = (t: Tone): Pal => ({ h: t.hair, s: t.skin, k: C.ink, r: t.tank, b: "#2C2D31", w: C.chalk });
 const GUESTS: Pal[] = [
   { h: "#5A3A22", s: "#F0C7A0", k: C.ink, r: C.blue, b: "#2C2D31", w: C.chalk },
   { h: "#16161A", s: "#D9A577", k: C.ink, r: C.yellow, b: "#2C2D31", w: C.chalk },
@@ -508,9 +508,10 @@ const LEGS = [
   ["..bb..bb..", "..ss..ss..", "..ww..ss..", "......ww.."],
   ["..bb..bb..", "..ss..ss..", "..ss..ww..", "..ww......"],
 ];
-type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean };
+export type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean };
 
-function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal: Pal, o: CharOpts = {}) {
+/** 10×16 픽셀 리프터(라운지 광장도 같은 그림) */
+export function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal: Pal, o: CharOpts = {}) {
   let rows = o.sit ? BASE.slice() : BASE.concat(LEGS[o.frame ?? 0]);
   if (o.back) {
     rows = rows.slice();
