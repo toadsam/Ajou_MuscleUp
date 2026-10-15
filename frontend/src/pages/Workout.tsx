@@ -14,6 +14,7 @@ import {
   type SessionSummary,
 } from "../lib/workoutSession";
 import { loadRun } from "../lib/running";
+import { deleteActivityLog, fetchActivityLogs, type ActivityLogView } from "../lib/activities";
 import {
   estimate1rm,
   exerciseInfo,
@@ -26,7 +27,8 @@ import {
   type LiftSaveResult,
 } from "../lib/lifts";
 
-// 운동 기록. 맨 위 "운동 시작"(운동 세션, /workout/session) → 이번 달 운동 목록 → 빠른 기록(한 줄) → 최고 기록 · 그래프.
+// 운동 기록. 맨 위 "운동 시작"(운동 세션, /workout/session) → 러닝 → 이번 달 운동 목록 → 내가 추가한 운동(필라테스 등) 기록
+// → 빠른 기록(한 줄) → 최고 기록 · 그래프.
 // 빠른 기록은 종목 · 무게 · 횟수 · 세트를 적으면 추정 1RM 으로 개인 최고를 판단하고, 3대는 마이페이지 기록까지 올린다.
 
 const shiftDate = (iso: string, days: number) => {
@@ -56,6 +58,8 @@ export default function Workout() {
   const [active] = useState(() => loadSession());
   useCustomExercises(); // 직접 추가한 종목 이름도 보이게
   const [activeRun] = useState(() => loadRun());
+  // 내가 추가한 운동(시간 + 메모) 이번 달 기록 — 못 불러와도 나머지 화면은 보여 준다
+  const [activityLogs, setActivityLogs] = useState<ActivityLogView[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -76,6 +80,21 @@ export default function Workout() {
   useEffect(() => {
     void load();
   }, [load]);
+  useEffect(() => {
+    fetchActivityLogs()
+      .then(setActivityLogs)
+      .catch(() => setActivityLogs([]));
+  }, []);
+
+  const removeActivityLog = async (id: number) => {
+    if (!window.confirm("이 기록을 지울까요?")) return;
+    try {
+      await deleteActivityLog(id);
+      setActivityLogs((list) => list.filter((l) => l.id !== id));
+    } catch (e: unknown) {
+      toast(friendlyError(e, "지우지 못했어요."), "error");
+    }
+  };
 
   // 그래프 종목: 고른 게 없으면 기록이 있는 첫 종목
   const shownChart = chartExercise ?? bests[0]?.exercise ?? null;
@@ -242,6 +261,43 @@ export default function Workout() {
             </ul>
           </div>
         )}
+
+        {/* 내가 추가한 운동(필라테스 · 수영 등) — 시간 + 메모 */}
+        <div className="dg-steel p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-xl">내 운동{activityLogs.length > 0 ? ` 이번 달 ${activityLogs.length}번` : ""}</h2>
+            <Link to="/workout/start" className="text-xs text-steel-300 underline underline-offset-4">
+              필라테스 · 수영 등 기록하기
+            </Link>
+          </div>
+          {activityLogs.length === 0 ? (
+            <p className="mt-1 text-sm text-steel-400">운동 시작에서 "+ 운동 추가"로 내 운동을 넣으면 시간 + 메모로 기록할 수 있어요.</p>
+          ) : (
+            <ul className="mt-2 divide-y-2 divide-dashed divide-steel-700">
+              {activityLogs.map((l) => (
+                <li key={l.id} className="flex items-start justify-between gap-3 py-2">
+                  <span className="min-w-0">
+                    <span className="block font-semibold">
+                      {l.date.slice(5).replace("-", "/")} · {l.name}
+                    </span>
+                    {l.note && <span className="block truncate text-sm text-steel-400">{l.note}</span>}
+                  </span>
+                  <span className="flex flex-none items-center gap-2 text-sm">
+                    <span className="font-num text-lg">{formatDuration(l.durationSec)}</span>
+                    <button
+                      type="button"
+                      onClick={() => void removeActivityLog(l.id)}
+                      className="text-xs text-steel-500 underline underline-offset-4"
+                      aria-label={`${l.date} ${l.name} 기록 지우기`}
+                    >
+                      지우기
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         {error && (
           <div className="dg-steel flex flex-wrap items-center gap-3 p-5">

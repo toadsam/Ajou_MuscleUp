@@ -74,7 +74,7 @@ type Props = {
 const DOCK: ({ zone: ZoneId; label: string } | { to: string; label: string })[] = [
   { zone: "checkin", label: "출석" },
   { to: "/diet", label: "식단" },
-  { to: "/workout/session", label: "운동 시작" },
+  { to: "/workout/start", label: "운동 시작" },
   { zone: "rack", label: "내 기록" },
 ];
 
