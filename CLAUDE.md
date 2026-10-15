@@ -107,12 +107,12 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ping
 - **오류 문구와 알림**: `alert()` 대신 `lib/toast.ts`, 오류는 `lib/httpError.ts`(`httpError`/`friendlyError`)로 한국어 문장만 보여 준다.
 - **이름**: 운동 모임 · 공동구매 · 응원 으로 통일(코드 식별자는 그대로 둬도 됨).
 
-- **html2canvas 는 CSS `filter`, `backdrop-filter` 를 그리지 않는다.** 출석 카드 캡처는 사진에
-  필터를 미리 입힌 이미지로 바꿔 끼운다(`bakeMediaFilter`). 새 효과를 넣을 땐 저장본에 나오는지 확인.
+- **공유 카드(러닝 · 출석)는 캔버스에 직접 그린다**(`lib/photoCard.ts` + `components/share/PhotoShareEditor.tsx`).
+  html2canvas 는 CSS `filter` 등을 못 그려 저장본이 달라졌다 — 공유 이미지에 다시 쓰지 않는다.
+  사진 위 워터마크(왼쪽 위)는 하나만, 꾸밈 상자 · 스티커 없이(사용자 결정). 다른 주소 사진은 캔버스를 막으므로
+  내려받아 `blob:` 주소로 그린다(출석 사진은 `/api/files/proxy`). 캔버스용 글꼴은 `loadCardFonts()` 로 먼저 받는다.
 - **Web Share(`navigator.share`)는 사용자가 방금 누른 직후에만 열린다.** 버튼 핸들러에서 공유 전에
   `await` 를 하지 않는다. 필요한 파일은 미리 만들어 둔다. 페이지 로드 시 자동 공유는 항상 실패한다.
-- **캡처되는 카드는 px 고정 크기를 쓰지 않는다.** `.share-preview` 는 컨테이너이고 안쪽은 `cqw` 단위.
-  (미리보기 폭과 저장 폭 1080px 이 달라 px 이면 비율이 깨진다)
 - **`AttendanceShareView.tsx` 의 `ShareData` 는 출석 공유 데이터 타입**이라 DOM 의 Web Share 타입과
   이름이 겹친다. Web Share 쪽은 별도 타입을 쓴다.
 - **줄바꿈이 파일마다 다르다(CRLF/LF/섞임, 일부 BOM).** 편집할 때 원래 줄바꿈과 BOM 을 유지한다.
