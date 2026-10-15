@@ -34,6 +34,8 @@ const Diet = lazy(() => import("./pages/Diet"));
 const Workout = lazy(() => import("./pages/Workout"));
 const WorkoutSession = lazy(() => import("./pages/WorkoutSession"));
 const Running = lazy(() => import("./pages/Running"));
+const WorkoutStart = lazy(() => import("./pages/WorkoutStart"));
+const ActivitySession = lazy(() => import("./pages/ActivitySession"));
 const Collection = lazy(() => import("./pages/Collection"));
 const AttendanceShareView = lazy(() => import("./pages/AttendanceShareView"));
 const Rankings = lazy(() => import("./pages/Rankings"));
@@ -249,6 +251,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <WorkoutSession />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/workout/start"
+                element={
+                  <ProtectedRoute>
+                    <WorkoutStart />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/activity/:id"
+                element={
+                  <ProtectedRoute>
+                    <ActivitySession />
                   </ProtectedRoute>
                 }
               />

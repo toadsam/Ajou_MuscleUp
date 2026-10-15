@@ -132,6 +132,10 @@ class AccountSafetyTest {
                 .startedAt(java.time.LocalDateTime.now().minusHours(1)).endedAt(java.time.LocalDateTime.now()).durationSec(3600).totalVolume(500).totalSets(1).build());
         em.persist(com.ajou.muscleup.entity.RunSession.builder().user(alice).performedOn(java.time.LocalDate.now())
                 .startedAt(java.time.LocalDateTime.now().minusHours(1)).endedAt(java.time.LocalDateTime.now()).durationSec(1800).distanceM(5000).source("GPS").build());
+        com.ajou.muscleup.entity.CustomActivity pilates = com.ajou.muscleup.entity.CustomActivity.builder().user(alice).name("필라테스").category("STRETCH").build();
+        em.persist(pilates);
+        em.persist(com.ajou.muscleup.entity.ActivityLog.builder().user(alice).activity(pilates).performedOn(java.time.LocalDate.now())
+                .startedAt(java.time.LocalDateTime.now().minusHours(1)).durationSec(3000).note("코어").build());
         em.persist(com.ajou.muscleup.entity.UserCollection.builder().user(alice).boxes(2).equippedTitle("T_DAWN").build());
         em.persist(com.ajou.muscleup.entity.UserCollectionItem.builder().user(alice).itemCode("T_DAWN").source("BOX")
                 .acquiredAt(java.time.LocalDateTime.now()).build());
@@ -180,6 +184,8 @@ class AccountSafetyTest {
         assertThat(count("select count(f) from MyFood f where f.user.id = :id", id)).isZero();
         assertThat(count("select count(s) from WorkoutSession s where s.user.id = :id", id)).isZero();
         assertThat(count("select count(r) from RunSession r where r.user.id = :id", id)).isZero();
+        assertThat(count("select count(l) from ActivityLog l where l.user.id = :id", id)).isZero();
+        assertThat(count("select count(c) from CustomActivity c where c.user.id = :id", id)).isZero();
         assertThat(count("select count(i) from UserCollectionItem i where i.user.id = :id", id)).isZero();
         assertThat(count("select count(c) from UserCollection c where c.user.id = :id", id)).isZero();
         assertThat(count("select count(s) from GymDecorSlot s where s.user.id = :id", id)).isZero();
