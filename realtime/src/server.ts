@@ -299,6 +299,8 @@ io.on("connection", (socket) => {
     const message = cleanText(payload?.message, 200);
     if (!message) return;
     io.to(roomName).emit("chat:message", {
+      // who said it — the plaza shows a speech bubble over that player
+      fromSocketId: socket.id,
       nickname: nicknameOf(socket),
       message,
       ts: new Date().toISOString(),

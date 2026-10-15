@@ -8,8 +8,9 @@ import type { ClientExtras, PlayerState, VerifiedProfile } from "./types.js";
 export const SQUARE_ROOM = "square";
 const ROOM_KEY_PATTERN = /^(square|gym:\d{1,18})$/;
 
-const MAP_WIDTH = 2000;
-const MAP_HEIGHT = 1200;
+// The client "deukgeun plaza" is 28 x 40 tiles of 16px (frontend/src/components/lounge/plaza.ts).
+const MAP_WIDTH = 448;
+const MAP_HEIGHT = 640;
 
 const players = new Map<string, PlayerState>();
 /** socket id -> room key */
@@ -22,9 +23,10 @@ const clamp = (value: number, min: number, max: number) =>
 
 const nowIso = () => new Date().toISOString();
 
+// New players appear just inside the south gate (tiles 12..15, row 35); the client then sends its own position.
 const randomPosition = () => ({
-  x: Math.random() * (MAP_WIDTH - 80) + 40,
-  y: Math.random() * (MAP_HEIGHT - 80) + 40,
+  x: Math.round(12 * 16 + 8 + Math.random() * 48),
+  y: 35 * 16 + 12,
 });
 
 /** unknown / malformed keys fall back to the square */
