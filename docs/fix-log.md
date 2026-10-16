@@ -8,6 +8,35 @@
 
 ---
 
+## 2026-10-17 · 득근 광장으로 바꾼 뒤 남은 예전 라운지 코드 정리
+
+**불편**
+- 라운지를 "득근 광장"으로 바꾸면서(PR #49) 예전 옆 보기 라운지에서만 쓰던 코드가 남았다. 특히 `styles/lounge.css`(1,934줄)는 `index.css` 가 모든 화면에 불러와 쓸데없이 무거웠다.
+
+**원인(근거)**
+- `styles/lounge.css`: 클래스 151개 중 어느 화면에서도 쓰는 것이 없었다(`.on` 은 다른 파일의 이름과 겹칠 뿐). 키프레임 10개도 다른 곳에서 안 씀(스크립트로 전부 찾아봄).
+- `components/PlayerAvatar.tsx`: 예전 라운지만 불러 썼다(지금 0곳).
+- 실시간 서버: 새 화면이 안 보내는 신호를 받는 코드가 남아 있었다 — 입력 중 표시(`chat:typing`) · 스티커(`social:sticker`) · 근처 보이스(`voice:listen` · `voice:chunk`) · 따라가기 · 순간이동(`party:*`).
+
+**고친 방법**
+- 삭제: `frontend/src/styles/lounge.css`(+ `index.css` 의 불러오기 한 줄), `frontend/src/components/PlayerAvatar.tsx`.
+- 실시간 서버
+  - `server.ts`: 위 신호 처리 · 보이스 상수 · 스티커 목록 · 대상 고르기 도우미를 지웠다.
+  - `rateLimit.ts`: typing · party · voice · voiceListen 한도를 지웠다.
+  - `rooms.ts`: 이제 안 쓰는 `sameRoom` 을 지웠다.
+  - `types.ts`: `TypingPayload` 를 지웠다.
+  - `ping:check` 는 부하 측정 도구(`bench/lounge-ramp.mjs`)가 써서 남겼다.
+
+**확인한 방법**
+- `verify.sh` 통과, 실시간 서버 `npm run build` 통과.
+- `npm run check:rooms`(개발 모드 임시 서버 4011): 방 나누기 9개 모두 통과(입장 · 명단 · 채팅 · 이모트 · 나가기).
+- 브라우저 375px: `/dev/lounge` 광장 · 홈 화면이 CSS 를 지운 뒤에도 그대로.
+
+**아직 못 한 것**
+- 로컬 MySQL 이 꺼져 있어 로그인한 실제 `/lounge` 연결은 이번에 다시 보지 않았다(서버 쪽은 방 나누기 검사로 확인).
+
+---
+
 ## 2026-10-16 · 라운지를 위에서 보는 "득근 광장"으로 — 누르면 걸어가기, 세로 화면, 실시간 연결
 
 **불편** (사용자 요청)

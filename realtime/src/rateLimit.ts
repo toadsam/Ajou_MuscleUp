@@ -8,11 +8,7 @@ export type LimitCategory =
   | "join"
   | "move"
   | "chat"
-  | "typing"
   | "social"
-  | "party"
-  | "voice"
-  | "voiceListen"
   | "ping"
   | "friend";
 
@@ -20,11 +16,7 @@ const LIMITS: Record<LimitCategory, { capacity: number; refillPerSec: number }> 
   join: { capacity: 3, refillPerSec: 0.1 },
   move: { capacity: 40, refillPerSec: 25 }, // client sends every 80ms (12.5/s)
   chat: { capacity: 5, refillPerSec: 0.5 },
-  typing: { capacity: 6, refillPerSec: 2 },
   social: { capacity: 4, refillPerSec: 1 },
-  party: { capacity: 4, refillPerSec: 0.5 },
-  voice: { capacity: 12, refillPerSec: 5 }, // client sends every 280ms (~3.6/s)
-  voiceListen: { capacity: 4, refillPerSec: 0.5 },
   ping: { capacity: 4, refillPerSec: 2 },
   friend: { capacity: 5, refillPerSec: 1 },
 };

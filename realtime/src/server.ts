@@ -10,7 +10,6 @@ import {
   listPlayers,
   normalizeRoomKey,
   removePlayer,
-  sameRoom,
   socketRoomOf,
   SQUARE_ROOM,
   takeMovesByRoom,
@@ -23,7 +22,6 @@ import {
   type Gender,
   type GrowthParams,
   type PingPayload,
-  type TypingPayload,
   type VerifiedProfile,
 } from "./types.js";
 
@@ -33,11 +31,8 @@ const ALLOWED_ORIGINS = ORIGIN.split(",").map((origin) => origin.trim()).filter(
 
 /** max size of one incoming socket.io message (default is 1MB). Voice chunks are ~2KB. */
 const MAX_HTTP_BUFFER_SIZE = 48 * 1024;
-const MAX_VOICE_BASE64 = 32_000;
-const VOICE_RANGE = 260;
 /** positions are batched and only changed players are sent */
 const MOVES_BROADCAST_MS = 100;
-const VOICE_LISTENERS_ROOM = "voice-listeners";
 
 const mapSize = getMapSize();
 
@@ -98,7 +93,6 @@ const TIER_VALUES: CharacterTier[] = [
 ];
 const GENDER_VALUES: Gender[] = ["MALE", "FEMALE"];
 const EMOTE_VALUES = ["wave", "cheer", "gg", "clap"];
-const STICKER_VALUES = ["🔥", "💪", "👏", "🚀"];
 
 // eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\u0000-\u001f\u007f​-‏‪-‮⁦-⁩]/g;
@@ -247,15 +241,6 @@ io.on("connection", (socket) => {
 
   const joined = () => socket.rooms.has(roomName) && Boolean(getPlayer(socket.id));
 
-  /** party/voice targets must be players currently in the same lounge room */
-  const targetSocketId = (payload: any) => {
-    if (!payload || typeof payload.toSocketId !== "string") return null;
-    const toSocketId = payload.toSocketId.trim();
-    if (!toSocketId || toSocketId === socket.id || !getPlayer(toSocketId)) return null;
-    if (!sameRoom(socket.id, toSocketId)) return null;
-    return toSocketId;
-  };
-
   if (identity) {
     socket.join(`user:${identity.uid}`);
   }
@@ -307,15 +292,6 @@ io.on("connection", (socket) => {
     });
   });
 
-  on("chat:typing", "typing", (payload: TypingPayload) => {
-    if (!joined()) return;
-    if (!payload || typeof payload.isTyping !== "boolean") return;
-    socket.to(roomName).emit("chat:typing", {
-      nickname: nicknameOf(socket),
-      isTyping: payload.isTyping,
-    });
-  });
-
   on("social:emote", "social", (payload) => {
     if (!joined()) return;
     const emote = typeof payload?.emote === "string" ? payload.emote.trim() : "";
@@ -324,102 +300,6 @@ io.on("connection", (socket) => {
       fromSocketId: socket.id,
       nickname: nicknameOf(socket),
       emote,
-      ts: Date.now(),
-    });
-  });
-
-  on("social:sticker", "social", (payload) => {
-    if (!joined()) return;
-    const sticker = typeof payload?.sticker === "string" ? payload.sticker.trim() : "";
-    if (!STICKER_VALUES.includes(sticker)) return;
-    io.to(roomName).emit("social:sticker", {
-      fromSocketId: socket.id,
-      nickname: nicknameOf(socket),
-      sticker,
-      ts: Date.now(),
-    });
-  });
-
-  // ── proximity voice: only to listeners who turned voice on, within range ──
-  on("voice:listen", "voiceListen", (payload) => {
-    if (payload?.enabled === true) socket.join(VOICE_LISTENERS_ROOM);
-    else socket.leave(VOICE_LISTENERS_ROOM);
-  });
-
-  on("voice:chunk", "voice", (payload) => {
-    if (!joined()) return;
-    if (!payload || typeof payload.audioBase64 !== "string") return;
-    if (payload.audioBase64.length === 0 || payload.audioBase64.length > MAX_VOICE_BASE64) return;
-    const mimeType =
-      typeof payload.mimeType === "string" && /^audio\/[a-z0-9.+-]+(;\s*codecs=[a-z0-9.,-]+)?$/i.test(payload.mimeType)
-        ? payload.mimeType.slice(0, 60)
-        : "audio/webm";
-    const me = getPlayer(socket.id);
-    if (!me) return;
-    const listeners = io.sockets.adapter.rooms.get(VOICE_LISTENERS_ROOM);
-    if (!listeners) return;
-    const message = {
-      fromSocketId: socket.id,
-      nickname: me.nickname,
-      audioBase64: payload.audioBase64,
-      mimeType,
-      ts: Date.now(),
-    };
-    for (const listenerId of listeners) {
-      if (listenerId === socket.id) continue;
-      const other = getPlayer(listenerId);
-      if (!other || !sameRoom(socket.id, listenerId)) continue;
-      if (Math.hypot(other.x - me.x, other.y - me.y) > VOICE_RANGE) continue;
-      io.to(listenerId).emit("voice:chunk", message);
-    }
-  });
-
-  // ── party ───────────────────────────────────────────────────────────────
-  on("party:follow-request", "party", (payload) => {
-    if (!joined()) return;
-    const toSocketId = targetSocketId(payload);
-    if (!toSocketId) return;
-    io.to(toSocketId).emit("party:follow-request", {
-      fromSocketId: socket.id,
-      nickname: nicknameOf(socket),
-      ts: Date.now(),
-    });
-  });
-
-  on("party:follow-response", "party", (payload) => {
-    if (!joined()) return;
-    const toSocketId = targetSocketId(payload);
-    if (!toSocketId) return;
-    io.to(toSocketId).emit("party:follow-response", {
-      fromSocketId: socket.id,
-      accepted: payload.accepted === true,
-      ts: Date.now(),
-    });
-  });
-
-  on("party:teleport-request", "party", (payload) => {
-    if (!joined()) return;
-    const toSocketId = targetSocketId(payload);
-    if (!toSocketId) return;
-    io.to(toSocketId).emit("party:teleport-request", {
-      fromSocketId: socket.id,
-      nickname: nicknameOf(socket),
-      ts: Date.now(),
-    });
-  });
-
-  on("party:teleport-response", "party", (payload) => {
-    if (!joined()) return;
-    const toSocketId = targetSocketId(payload);
-    if (!toSocketId) return;
-    // the destination is the responder's own position as the server knows it, not a client value
-    const me = getPlayer(socket.id);
-    const accepted = payload.accepted === true;
-    io.to(toSocketId).emit("party:teleport-response", {
-      fromSocketId: socket.id,
-      accepted,
-      x: accepted ? me?.x : undefined,
-      y: accepted ? me?.y : undefined,
       ts: Date.now(),
     });
   });

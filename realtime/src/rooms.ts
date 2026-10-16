@@ -3,7 +3,7 @@ import type { ClientExtras, PlayerState, VerifiedProfile } from "./types.js";
 /**
  * Lounge rooms (stage 0 PR 7): "square" (everyone) and "gym:{id}" (members of one gym).
  * The room key comes only from the verified ticket (backend checks membership); clients cannot pick it.
- * Every player is in exactly one room. Lists, moves, chat, emotes, voice and party stay inside the room.
+ * Every player is in exactly one room. Lists, moves, chat and emotes stay inside the room.
  */
 export const SQUARE_ROOM = "square";
 const ROOM_KEY_PATTERN = /^(square|gym:\d{1,18})$/;
@@ -103,10 +103,4 @@ export const countPlayers = (roomKey?: string) => {
   let n = 0;
   for (const key of roomOfSocket.values()) if (key === roomKey) n += 1;
   return n;
-};
-
-/** both sockets are in the lounge and in the same room */
-export const sameRoom = (a: string, b: string) => {
-  const ra = roomOfSocket.get(a);
-  return ra !== undefined && ra === roomOfSocket.get(b);
 };
