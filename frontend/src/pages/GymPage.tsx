@@ -14,6 +14,8 @@ import {
   GYM_VISIBILITY_LABEL,
 } from "../types/gym";
 import type { GymJoinPolicy, GymJoinRequest, GymJoinResult, GymMember, GymSummary, GymVisibility } from "../types/gym";
+import PlazaThemePicker from "../components/lounge/PlazaThemePicker";
+import { plazaThemeOf, type PlazaThemeId } from "../components/lounge/plaza";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -90,6 +92,8 @@ export default function GymPage() {
   const [editDescription, setEditDescription] = useState("");
   const [editVisibility, setEditVisibility] = useState<GymVisibility>("PUBLIC");
   const [editJoinPolicy, setEditJoinPolicy] = useState<GymJoinPolicy>("AUTO_APPROVE");
+  // 라운지 모습(모임 방 광장) — 비어 있으면 기본 광장
+  const [editMapTheme, setEditMapTheme] = useState<PlazaThemeId>("PLAZA");
   const [saving, setSaving] = useState(false);
 
   const codeQuery = code ? `?code=${encodeURIComponent(code)}` : "";
@@ -112,6 +116,7 @@ export default function GymPage() {
       setEditDescription(data.description ?? "");
       setEditVisibility(data.visibility);
       setEditJoinPolicy(data.joinPolicy);
+      setEditMapTheme(plazaThemeOf(data.mapTheme));
 
       const staffQuery = code ? `?role=STAFF&code=${encodeURIComponent(code)}` : "?role=STAFF";
       const staffRes = await fetch(`${base}/members${staffQuery}`, { credentials: "include" });
@@ -239,6 +244,7 @@ export default function GymPage() {
         description: editDescription.trim(),
         visibility: editVisibility,
         joinPolicy: editJoinPolicy,
+        mapTheme: editMapTheme,
       });
       toast("설정을 저장했어요.", "success");
       await load();
@@ -479,6 +485,13 @@ export default function GymPage() {
                     </select>
                   </label>
                 </div>
+                {gym.features.includes("LOUNGE") && (
+                  <div className="space-y-1">
+                    <span className="text-sm font-bold">라운지 모습</span>
+                    <p className="text-xs text-steel-400">모임 방 라운지에 들어온 사람들이 보는 광장이에요. 건물 간판에 모임 이름이 걸려요.</p>
+                    <PlazaThemePicker value={editMapTheme} onChange={setEditMapTheme} />
+                  </div>
+                )}
                 <button type="submit" className="dg-btn dg-btn-primary min-h-[44px] w-full text-sm sm:w-auto sm:px-6" disabled={saving}>
                   {saving ? "저장 중…" : "설정 저장"}
                 </button>

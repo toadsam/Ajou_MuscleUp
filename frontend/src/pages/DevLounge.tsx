@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import PlazaView, { type EmoteKind, type PlazaEmote, type PlazaMessage, type PlazaPlayerInfo } from "../components/lounge/PlazaView";
-import { EMOTES, TILE, walkable } from "../components/lounge/plaza";
+import { EMOTES, TILE, plazaThemeOf, walkable } from "../components/lounge/plaza";
 
 // 개발 서버 전용(/dev/lounge): 득근 광장 시안 — 실시간 서버 없이 가짜 사람들이 걸어 다니고 말한다.
 
@@ -21,6 +21,8 @@ export default function DevLounge() {
     const m = new URLSearchParams(window.location.search).get("at")?.match(/^(\d+),(\d+)$/);
     return m ? [Number(m[1]) * TILE + 8, Number(m[2]) * TILE + 12] : undefined;
   });
+  // ?theme=GYM · TRACK · NIGHT · BLOSSOM, ?title=모임 이름 — 모임 방 모습 시안
+  const [query] = useState(() => new URLSearchParams(window.location.search));
   const [players, setPlayers] = useState<PlazaPlayerInfo[]>(BOTS);
   const [messages, setMessages] = useState<PlazaMessage[]>([
     { id: "m0", playerId: null, name: "알림", text: "득근 광장에 오신 걸 환영해요." },
@@ -54,6 +56,8 @@ export default function DevLounge() {
     <PlazaView
       roomName="득근 광장"
       start={start}
+      theme={plazaThemeOf(query.get("theme"))}
+      title={query.get("title")}
       me={ME}
       players={players}
       messages={messages}

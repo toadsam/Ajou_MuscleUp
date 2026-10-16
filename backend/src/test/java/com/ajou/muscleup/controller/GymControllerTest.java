@@ -114,6 +114,15 @@ class GymControllerTest {
         mvc.perform(patch("/api/gyms/test-run-crew/members/" + owner.getId()).with(as(owner.getEmail(), "ROLE_USER"))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"MEMBER\"}"))
                 .andExpect(status().isBadRequest());
+
+        // 라운지 모습: 새 모임은 실내 체육관(GYM), 모임장만 바꾸고, 정해진 값만
+        mvc.perform(get("/api/gyms/test-run-crew").with(as(owner.getEmail(), "ROLE_USER"))).andExpect(jsonPath("$.mapTheme").value("GYM"));
+        mvc.perform(patch("/api/gyms/test-run-crew").with(as(owner.getEmail(), "ROLE_USER")).contentType(MediaType.APPLICATION_JSON).content("{\"mapTheme\":\"NIGHT\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.mapTheme").value("NIGHT")).andExpect(jsonPath("$.name").value("테스트 러닝크루"));
+        mvc.perform(patch("/api/gyms/test-run-crew").with(as(owner.getEmail(), "ROLE_USER")).contentType(MediaType.APPLICATION_JSON).content("{\"mapTheme\":\"LAVA\"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(patch("/api/gyms/test-run-crew").with(as(staff.getEmail(), "ROLE_USER")).contentType(MediaType.APPLICATION_JSON).content("{\"mapTheme\":\"PLAZA\"}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
