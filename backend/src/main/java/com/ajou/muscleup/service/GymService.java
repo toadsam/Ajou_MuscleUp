@@ -154,6 +154,7 @@ public class GymService {
         if (req.joinPolicy() != null) gym.setJoinPolicy(req.joinPolicy());
         if (req.region() != null) gym.setRegion(blankToNull(req.region()));
         if (req.logoUrl() != null) gym.setLogoUrl(blankToNull(req.logoUrl()));
+        if (req.mapTheme() != null) gym.setMapTheme(req.mapTheme());
         if (req.features() != null) {
             gym.getFeatures().clear();
             gym.getFeatures().addAll(req.features());

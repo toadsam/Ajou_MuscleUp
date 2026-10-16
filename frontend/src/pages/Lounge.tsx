@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import LiveZone from "../components/lounge/LiveZone";
+import { plazaThemeOf } from "../components/lounge/plaza";
 import PlazaView, { type EmoteKind, type PlazaEmote, type PlazaMessage, type PlazaPlayerInfo } from "../components/lounge/PlazaView";
 import { REALTIME_URL, realtimeAuthFor, realtimeConnectError, type LoungeRoom } from "../lib/realtime";
 import { useCurrentGym, useMyGyms } from "../lib/currentGym";
@@ -66,6 +67,8 @@ export default function Lounge() {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [roomName, setRoomName] = useState("득근 광장");
+  // 실제로 들어간 방이 모임 방인가(입장권이 광장으로 대신 붙었을 수도 있어서 서버 답으로 정한다)
+  const [inGymRoom, setInGymRoom] = useState(false);
   const [myId, setMyId] = useState<string | null>(null);
   const [players, setPlayers] = useState<ServerPlayer[]>([]);
   const [messages, setMessages] = useState<(PlazaMessage & { ts: string })[]>([]);
@@ -108,7 +111,9 @@ export default function Lounge() {
     socket.on("connect_error", (err) => setError(realtimeConnectError(err)));
     socket.on("disconnect", () => setConnected(false));
     socket.on("lounge:welcome", (payload: { roomName?: string; room?: string }) => {
-      setRoomName(payload?.room && payload.room !== "square" ? (payload.roomName ?? "모임 방") : "득근 광장");
+      const gymRoom = Boolean(payload?.room && payload.room !== "square");
+      setInGymRoom(gymRoom);
+      setRoomName(gymRoom ? (payload?.roomName ?? "모임 방") : "득근 광장");
       setMyId(socket.id ?? null);
       // 다시 붙었으면 있던 자리를 알려 준다(서버는 새로 들어온 사람을 입구에 세운다)
       if (lastPos.current) socket.emit("player:move", lastPos.current);
@@ -253,6 +258,14 @@ export default function Lounge() {
     <PlazaView
       key={me.socketId}
       roomName={roomName}
+      // 모임 방: 모임장이 고른 라운지 모습 · 건물 간판에 모임 이름 · 게시판은 모임 페이지로
+      theme={inGymRoom ? plazaThemeOf(loungeGym?.mapTheme) : "PLAZA"}
+      title={inGymRoom ? (loungeGym?.name ?? roomName) : null}
+      zoneCards={
+        inGymRoom && loungeGym
+          ? { board: { body: "우리 모임 공지 · 일정 · 멤버는 모임 페이지에 있어요.", to: `/g/${loungeGym.slug}`, cta: "모임 페이지" } }
+          : undefined
+      }
       me={{ id: me.socketId, name: me.nickname, level: me.level, mbti: me.mbti ?? null, tank: me.tank ?? null }}
       start={lastPos.current ? [lastPos.current.x, lastPos.current.y] : undefined}
       players={others}

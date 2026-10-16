@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { createPlaza, EMOTES, PLAZA_ZONES, type EmoteKind, type PlazaController, type PlazaPlayer, type PlazaZone } from "./plaza";
+import { createPlaza, EMOTES, PLAZA_ZONES, type EmoteKind, type PlazaController, type PlazaPlayer, type PlazaThemeId, type PlazaZone } from "./plaza";
 
 export type { EmoteKind };
 
@@ -29,6 +29,11 @@ type Props = {
   status?: ReactNode;
   /** 처음 설 자리(월드 픽셀) */
   start?: [number, number];
+  /** 광장 모습 · 건물 간판(모임 방) */
+  theme?: PlazaThemeId;
+  title?: string | null;
+  /** 장소 카드 문구 · 이동을 바꿀 때(모임 방의 게시판 → 모임 페이지 등) */
+  zoneCards?: Partial<Record<PlazaZone, { body: string; to?: string; cta?: string }>>;
   onMove: (x: number, y: number) => void;
   onSend: (text: string) => void;
   onEmote: (kind: EmoteKind) => void;
@@ -66,7 +71,7 @@ export default function PlazaView(p: Props) {
         setZone(z);
         if (z) setPicked(null);
       },
-    }, p.start);
+    }, { start: p.start, theme: p.theme, title: p.title });
     return () => ctl.current?.destroy();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.me.id]);
@@ -101,7 +106,7 @@ export default function PlazaView(p: Props) {
 
   const pickedPlayer = picked ? p.players.find((x) => x.id === picked) ?? null : null;
   const recent = p.messages.slice(logOpen ? -30 : -3);
-  const card = zone ? ZONE_CARD[zone] : null;
+  const card = zone ? (p.zoneCards?.[zone] ?? ZONE_CARD[zone]) : null;
 
   return (
     <section className="flex h-[100dvh] flex-col bg-steel-950 pt-[68px] text-white">

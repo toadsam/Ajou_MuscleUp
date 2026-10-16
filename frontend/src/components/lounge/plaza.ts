@@ -146,7 +146,69 @@ function circle(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, 
   g.fill();
 }
 
-function tree(g: CanvasRenderingContext2D, c: number, r: number) {
+/* ---------- 광장 모습(모임 방마다 고른다 — 모임 설정 "라운지 모습", 백엔드 WorkoutCrew.mapTheme) ---------- */
+
+export type PlazaThemeId = "PLAZA" | "GYM" | "TRACK" | "NIGHT" | "BLOSSOM";
+
+type PlazaTheme = {
+  label: string;
+  /** 바닥: 보도블록 · 메이플 마루 */
+  floor: "pavers" | "planks";
+  /** 분수 둘레: 돌 포장 · 빨간 트랙 · 고무 매트 */
+  ring: "stone" | "track" | "mat";
+  /** 아래 양옆: 잔디 · 고무 매트 */
+  edge: "lawn" | "mat";
+  pave: string; paveL: string; seam: string; plaza: string; plazaS: string;
+  lawn: string; lawnL: string; lawnD: string; hedge: string; hedgeL: string;
+  wall: string; win: string; winD: string;
+  canopy: string; canopyL: string; canopyHi: string;
+  flowers: string[];
+  /** 가로등(밤) · 꽃잎(벚꽃) */
+  lamps?: boolean;
+  petals?: boolean;
+};
+
+const BASE_THEME: PlazaTheme = {
+  label: "기본 광장", floor: "pavers", ring: "stone", edge: "lawn",
+  pave: "#2A2C31", paveL: "#33363C", seam: "#212226", plaza: "#383A41", plazaS: "#2E3036",
+  lawn: "#2C5531", lawnL: "#376A3C", lawnD: "#244629", hedge: "#21412A", hedgeL: "#2F5A38",
+  wall: "#34363C", win: "#F0D58A", winD: "#B89B4E",
+  canopy: "#21412A", canopyL: "#2F5A38", canopyHi: "#4C8550",
+  flowers: ["#D9302A", "#F0BE2E", "#F3F1EA"],
+};
+
+export const PLAZA_THEMES: Record<PlazaThemeId, PlazaTheme> = {
+  PLAZA: BASE_THEME,
+  // 실내 체육관: 메이플 마루 + 고무 매트, 울타리 대신 벽
+  GYM: {
+    ...BASE_THEME, label: "실내 체육관", floor: "planks", ring: "mat", edge: "mat",
+    pave: "#9C6B3B", paveL: "#B07B45", seam: "#7E532D", plaza: "#26282C", plazaS: "#1C1D20",
+    lawn: "#222428", lawnL: "#2A2C31", lawnD: "#1B1C1F", hedge: "#34363C", hedgeL: "#3F424A",
+  },
+  // 트랙 광장: 분수 둘레를 빨간 러닝 트랙이 돈다
+  TRACK: { ...BASE_THEME, label: "트랙 광장", ring: "track", lawn: "#3D7A3A", lawnL: "#4A8A45", lawnD: "#357034" },
+  // 밤 광장: 어두운 바닥, 불 켜진 창문, 가로등
+  NIGHT: {
+    ...BASE_THEME, label: "밤 광장", lamps: true,
+    pave: "#1C1D22", paveL: "#24262C", seam: "#15161A", plaza: "#272930", plazaS: "#1F2026",
+    lawn: "#1B3520", lawnL: "#234228", lawnD: "#162B1A", hedge: "#152B1B", hedgeL: "#1E3A25",
+    wall: "#23252A", win: "#FFD978", winD: "#E0A93C",
+    canopy: "#152B1B", canopyL: "#1E3A25", canopyHi: "#2E5236",
+  },
+  // 벚꽃 광장: 분홍 나무 · 바닥에 꽃잎
+  BLOSSOM: {
+    ...BASE_THEME, label: "벚꽃 광장", petals: true,
+    canopy: "#C9677F", canopyL: "#E48DA3", canopyHi: "#F7C2CF", flowers: ["#E48DA3", "#F7C2CF", "#F3F1EA"],
+  },
+};
+
+export const PLAZA_THEME_IDS = Object.keys(PLAZA_THEMES) as PlazaThemeId[];
+
+/** 모임 설정값 → 광장 모습(모르는 값 · 비어 있으면 기본 광장) */
+export const plazaThemeOf = (v: string | null | undefined): PlazaThemeId =>
+  v && (PLAZA_THEME_IDS as string[]).includes(v) ? (v as PlazaThemeId) : "PLAZA";
+
+function tree(g: CanvasRenderingContext2D, c: number, r: number, T: PlazaTheme) {
   const x = c * TILE + 8;
   const y = r * TILE + 8;
   g.fillStyle = "rgba(0,0,0,0.25)";
@@ -155,45 +217,74 @@ function tree(g: CanvasRenderingContext2D, c: number, r: number) {
   g.fill();
   fill(g, x - 2, y - 2, 4, 9, "#5A3A22");
   circle(g, x, y - 8, 13, C.ink);
-  circle(g, x, y - 8, 12, C.hedge);
-  circle(g, x - 3, y - 11, 8, C.hedgeL);
-  circle(g, x - 5, y - 13, 3, "#4C8550");
+  circle(g, x, y - 8, 12, T.canopy);
+  circle(g, x - 3, y - 11, 8, T.canopyL);
+  circle(g, x - 5, y - 13, 3, T.canopyHi);
 }
 
-function paintPlaza(g: CanvasRenderingContext2D) {
+function paintPlaza(g: CanvasRenderingContext2D, T: PlazaTheme = BASE_THEME) {
   const rnd = rng(77);
-  // 보도블록
-  fill(g, 0, 0, WORLD_W, WORLD_H, C.pave);
+  // 바닥: 보도블록 · 메이플 마루
+  fill(g, 0, 0, WORLD_W, WORLD_H, T.pave);
   for (let r = 3; r < 38; r++)
     for (let c = 1; c < COLS - 1; c++) {
       const x = c * TILE;
       const y = r * TILE;
-      fill(g, x, y, TILE, 1, C.seam);
-      fill(g, x + ((r % 2) * 8), y, 1, TILE, C.seam);
-      if ((c + r) % 5 === 0) fill(g, x + 2, y + 3, 5, 4, C.paveL);
+      if (T.floor === "planks") {
+        // 마루: 가로 널판 두 줄, 이음새 엇갈리게
+        fill(g, x, y, TILE, 1, T.seam);
+        fill(g, x, y + 8, TILE, 1, T.seam);
+        if ((c + r) % 3 === 0) fill(g, x + ((r % 2) * 8), y, 1, 8, T.seam);
+        if ((c * 7 + r) % 5 === 0) fill(g, x + 3, y + 3, 6, 2, T.paveL);
+      } else {
+        fill(g, x, y, TILE, 1, T.seam);
+        fill(g, x + ((r % 2) * 8), y, 1, TILE, T.seam);
+        if ((c + r) % 5 === 0) fill(g, x + 2, y + 3, 5, 4, T.paveL);
+      }
     }
-  // 잔디(아래쪽 양옆) — 가운데는 입구로 가는 길
+  // 아래 양옆 — 잔디 또는 고무 매트. 가운데는 입구로 가는 길
   for (const [c0, c1] of [[1, 10], [18, 27]] as const) {
-    fill(g, c0 * TILE, 24 * TILE, (c1 - c0) * TILE, 14 * TILE, C.lawn);
-    for (let i = 0; i < 260; i++) fill(g, c0 * TILE + ((rnd() * (c1 - c0) * TILE) | 0), 24 * TILE + ((rnd() * 14 * TILE) | 0), 1, 2, rnd() < 0.5 ? C.lawnL : C.lawnD);
+    fill(g, c0 * TILE, 24 * TILE, (c1 - c0) * TILE, 14 * TILE, T.lawn);
+    if (T.edge === "mat") {
+      for (let y = 24 * TILE; y < 38 * TILE; y += 32) fill(g, c0 * TILE, y, (c1 - c0) * TILE, 1, T.lawnD);
+      for (let x = c0 * TILE; x < c1 * TILE; x += 32) fill(g, x, 24 * TILE, 1, 14 * TILE, T.lawnD);
+      for (let i = 0; i < 200; i++) fill(g, c0 * TILE + ((rnd() * (c1 - c0) * TILE) | 0), 24 * TILE + ((rnd() * 14 * TILE) | 0), 1, 1, T.lawnL);
+    } else {
+      for (let i = 0; i < 260; i++) fill(g, c0 * TILE + ((rnd() * (c1 - c0) * TILE) | 0), 24 * TILE + ((rnd() * 14 * TILE) | 0), 1, 2, rnd() < 0.5 ? T.lawnL : T.lawnD);
+    }
     fill(g, c0 * TILE, 24 * TILE, (c1 - c0) * TILE, 2, C.ink);
   }
-  // 가운데 광장(분수 둘레) 원형 포장
-  circle(g, 14 * TILE, 18 * TILE, 92, C.plazaS);
-  circle(g, 14 * TILE, 18 * TILE, 88, C.plaza);
-  for (let a = 0; a < 24; a++) {
-    const t = (a / 24) * Math.PI * 2;
-    fill(g, 14 * TILE + Math.cos(t) * 70, 18 * TILE + Math.sin(t) * 70, 2, 2, C.seam);
+  // 가운데(분수 둘레): 돌 포장 · 빨간 트랙 · 고무 매트
+  const cx = 14 * TILE;
+  const cy = 18 * TILE;
+  if (T.ring === "track") {
+    circle(g, cx, cy, 94, C.ink);
+    circle(g, cx, cy, 92, "#B04A36");
+    g.strokeStyle = C.chalk;
+    g.lineWidth = 1;
+    for (const rr of [80, 68]) {
+      g.beginPath();
+      g.arc(cx, cy, rr, 0, Math.PI * 2);
+      g.stroke();
+    }
+    circle(g, cx, cy, 56, T.plaza);
+  } else {
+    circle(g, cx, cy, 92, T.plazaS);
+    circle(g, cx, cy, 88, T.plaza);
+    for (let a = 0; a < 24; a++) {
+      const t = (a / 24) * Math.PI * 2;
+      fill(g, cx + Math.cos(t) * 70, cy + Math.sin(t) * 70, 2, 2, T.ring === "mat" ? "#33353B" : T.seam);
+    }
   }
 
   // 건물(득근 헬스장)
-  fill(g, 0, 0, WORLD_W, 3 * TILE, C.wall);
+  fill(g, 0, 0, WORLD_W, 3 * TILE, T.wall);
   fill(g, 0, 0, WORLD_W, 6, C.wallCap);
-  for (let x = 0; x < WORLD_W; x += 16) fill(g, x, 6, 1, 3 * TILE - 6, "#2C2E33");
+  for (let x = 0; x < WORLD_W; x += 16) fill(g, x, 6, 1, 3 * TILE - 6, "rgba(0,0,0,0.18)");
   for (const wx of [24, 72, 120, 296, 344, 392]) {
     fill(g, wx - 1, 13, 26, 22, C.ink);
-    fill(g, wx, 14, 24, 20, C.win);
-    fill(g, wx, 26, 24, 8, C.winD);
+    fill(g, wx, 14, 24, 20, T.win);
+    fill(g, wx, 26, 24, 8, T.winD);
     fill(g, wx + 11, 14, 2, 20, C.ink);
   }
   // 입구 문 + 원판 간판
@@ -205,13 +296,14 @@ function paintPlaza(g: CanvasRenderingContext2D) {
   circle(g, 14 * TILE, 10, 2, C.silver);
   fill(g, 0, 3 * TILE - 2, WORLD_W, 2, C.ink);
 
-  // 울타리(동서) · 담(남)
+  // 울타리(동서) · 담(남) — 체육관은 벽
   for (const x of [0, WORLD_W - TILE]) {
-    fill(g, x, 3 * TILE, TILE, 35 * TILE, C.hedge);
-    for (let y = 3 * TILE; y < 38 * TILE; y += 8) fill(g, x + 3 + ((y / 8) % 2) * 5, y + 2, 6, 4, C.hedgeL);
+    fill(g, x, 3 * TILE, TILE, 35 * TILE, T.hedge);
+    if (T.edge === "mat") for (let y = 3 * TILE; y < 38 * TILE; y += 16) fill(g, x, y, TILE, 1, "rgba(0,0,0,0.3)");
+    else for (let y = 3 * TILE; y < 38 * TILE; y += 8) fill(g, x + 3 + ((y / 8) % 2) * 5, y + 2, 6, 4, T.hedgeL);
   }
   for (const [x0, w] of [[0, 11 * TILE], [17 * TILE, 11 * TILE]]) {
-    fill(g, x0, 38 * TILE, w, 2 * TILE, C.wall);
+    fill(g, x0, 38 * TILE, w, 2 * TILE, T.wall);
     fill(g, x0, 38 * TILE, w, 3, C.ink);
   }
   // 남쪽 입구 기둥(노랑 · 검정 줄)
@@ -280,7 +372,7 @@ function paintPlaza(g: CanvasRenderingContext2D) {
     fill(g, x + 3 * TILE - 7, y + 14, 3, 2, C.ink);
   }
 
-  // 야외 운동기구: 철봉 · 평행봉
+  // 운동기구: 철봉 · 평행봉
   const post = (x: number, y: number, h: number) => {
     fill(g, x - 1, y - 1, 5, h + 2, C.ink);
     fill(g, x, y, 3, h, C.steelL);
@@ -296,16 +388,51 @@ function paintPlaza(g: CanvasRenderingContext2D) {
     fill(g, 21 * TILE + 5, y + 1, 5 * TILE - 10, 1, C.yellow);
   }
   // 고무 매트(운동기구 아래)
-  for (let y = 12 * TILE; y < 21 * TILE; y += 4) fill(g, 20 * TILE + 8, y, 6 * TILE - 8, 1, "#25272C");
+  for (let y = 12 * TILE; y < 21 * TILE; y += 4) fill(g, 20 * TILE + 8, y, 6 * TILE - 8, 1, "rgba(0,0,0,0.22)");
 
   // 꽃밭
   for (const [c, r] of [[3, 26], [21, 25]]) {
     fill(g, c * TILE, r * TILE + 2, 4 * TILE, 12, C.mapleD);
     fill(g, c * TILE + 2, r * TILE + 4, 4 * TILE - 4, 8, "#3B2A1E");
-    for (let i = 0; i < 10; i++) fill(g, c * TILE + 5 + i * 6, r * TILE + 5 + (i % 2) * 3, 3, 3, [C.red, C.yellow, C.chalk][i % 3]);
+    for (let i = 0; i < 10; i++) fill(g, c * TILE + 5 + i * 6, r * TILE + 5 + (i % 2) * 3, 3, 3, T.flowers[i % 3]);
+  }
+  // 벚꽃: 바닥에 꽃잎
+  if (T.petals) {
+    for (let i = 0; i < 160; i++) fill(g, 16 + ((rnd() * (WORLD_W - 32)) | 0), 3 * TILE + ((rnd() * 35 * TILE) | 0), 2, 1, rnd() < 0.5 ? "#F7C2CF" : "#E48DA3");
   }
   // 나무
-  for (const [c, r] of [[2, 9], [25, 9], [4, 28], [8, 31], [20, 29], [24, 32]]) tree(g, c, r);
+  for (const [c, r] of [[2, 9], [25, 9], [4, 28], [8, 31], [20, 29], [24, 32]]) tree(g, c, r, T);
+  // 밤: 가로등(기둥 + 등 + 바닥에 둥근 불빛)
+  if (T.lamps) {
+    for (const [c, r] of [[9, 10], [18, 10], [9, 25], [18, 25], [11, 33], [16, 33]]) {
+      const x = c * TILE + 8;
+      const y = r * TILE + 12;
+      g.fillStyle = "rgba(255,217,120,0.12)";
+      g.beginPath();
+      g.ellipse(x, y + 2, 26, 12, 0, 0, Math.PI * 2);
+      g.fill();
+      fill(g, x - 1, y - 18, 3, 20, C.ink);
+      fill(g, x, y - 17, 1, 18, C.steelL);
+      fill(g, x - 4, y - 22, 9, 5, C.ink);
+      fill(g, x - 3, y - 21, 7, 3, "#FFD978");
+    }
+  }
+}
+
+/** 모임 설정의 작은 미리보기: 분수 둘레 한가운데를 w×h 로 잘라 그린다 */
+export function paintPlazaPreview(canvas: HTMLCanvasElement, theme: PlazaThemeId, w = 128, h = 96) {
+  const full = document.createElement("canvas");
+  full.width = WORLD_W;
+  full.height = WORLD_H;
+  paintPlaza(full.getContext("2d")!, PLAZA_THEMES[theme]);
+  canvas.width = w;
+  canvas.height = h;
+  const g = canvas.getContext("2d");
+  if (!g) return;
+  g.imageSmoothingEnabled = false;
+  const x = Math.max(0, Math.min(WORLD_W - w, 14 * TILE - w / 2));
+  const y = Math.max(0, Math.min(WORLD_H - h, 18 * TILE - h * 0.42));
+  g.drawImage(full, x, y, w, h, 0, 0, w, h);
 }
 
 /* ---------- 엔진 ---------- */
@@ -351,13 +478,22 @@ const toPal = (p: Pick<PlazaPlayer, "mbti" | "tank">): Pal => {
 
 const inWorld = (x: number, y: number) => x > 0 && y > 0 && x < WORLD_W && y < WORLD_H && walkable(Math.floor(x / TILE), Math.floor(y / TILE));
 
-/** start: 처음 설 자리(월드 픽셀, 없거나 못 서는 곳이면 남쪽 입구) */
-export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x" | "y">, cb: PlazaCallbacks, start?: [number, number]): PlazaController {
+export type PlazaOptions = {
+  /** 처음 설 자리(월드 픽셀, 없거나 못 서는 곳이면 남쪽 입구) */
+  start?: [number, number];
+  /** 광장 모습(모임 방은 모임 설정값) */
+  theme?: PlazaThemeId;
+  /** 건물 간판에 쓸 이름(모임 방 이름). 없으면 원판 간판만 */
+  title?: string | null;
+};
+
+export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x" | "y">, cb: PlazaCallbacks, opts: PlazaOptions = {}): PlazaController {
+  const { start, title } = opts;
   const g = canvas.getContext("2d")!;
   const bg = document.createElement("canvas");
   bg.width = WORLD_W;
   bg.height = WORLD_H;
-  paintPlaza(bg.getContext("2d")!);
+  paintPlaza(bg.getContext("2d")!, PLAZA_THEMES[opts.theme ?? "PLAZA"]);
 
   // 입구 네 칸 중 한 곳(여럿이 같은 자리에 겹쳐 서지 않게)
   const gate: [number, number] = [(12 + Math.floor(Math.random() * 4)) * TILE + 8, SPAWN[1]];
@@ -584,6 +720,8 @@ export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x"
       label(a.level ? `${a.name} Lv.${a.level}` : a.name, a.x, a.y - 19, isMe ? C.yellow : "#1F2024", isMe ? C.ink : C.chalk);
       bubble(a, now);
     }
+    // 건물 간판(모임 이름)
+    if (title) label(title, 14 * TILE, 14, C.yellow, C.ink, 8);
     // 장소 이름표
     for (const [k2, z] of Object.entries(PLAZA_ZONES) as [PlazaZone, (typeof PLAZA_ZONES)[PlazaZone]][]) {
       label(z.name, z.label[0] * TILE, z.label[1] * TILE, zone === k2 ? C.yellow : "#1F2024", zone === k2 ? C.ink : C.chalk, 6.5);

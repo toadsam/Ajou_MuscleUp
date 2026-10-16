@@ -3,6 +3,7 @@ package com.ajou.muscleup.dto.gym;
 import com.ajou.muscleup.entity.CrewJoinPolicy;
 import com.ajou.muscleup.entity.GymFeature;
 import com.ajou.muscleup.entity.GymVisibility;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
 
@@ -14,5 +15,7 @@ public record GymUpdateRequest(
         CrewJoinPolicy joinPolicy,
         @Size(max = 40) String region,
         @Size(max = 500) String logoUrl,
-        Set<GymFeature> features
+        Set<GymFeature> features,
+        /** 라운지 모습(모임 방 광장): 기본 광장 · 실내 체육관 · 트랙 광장 · 밤 광장 · 벚꽃 광장 — 화면 components/lounge/plaza.ts PLAZA_THEMES */
+        @Pattern(regexp = "PLAZA|GYM|TRACK|NIGHT|BLOSSOM", message = "라운지 모습을 다시 골라 주세요.") String mapTheme
 ) {}
