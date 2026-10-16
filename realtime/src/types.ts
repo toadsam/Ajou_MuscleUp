@@ -105,10 +105,6 @@ export type ClientExtras = Pick<
   "mbti" | "recentAttendanceCount" | "activeEventTitle" | "activeEventProgress"
 >;
 
-export type TypingPayload = {
-  isTyping: boolean;
-};
-
 export type PingPayload = {
   clientTs: number;
 };
