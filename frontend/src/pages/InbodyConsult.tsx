@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -22,6 +22,15 @@ import { useInView } from "../hooks/useInView";
 import { friendlyError, httpError } from "../lib/httpError";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
+import InbodyVerdict from "../components/inbody/InbodyVerdict";
+import type { StageCharacter } from "../components/workout/LiftStage";
+import {
+  buildInbodyVerdict,
+  getBmiThreshold,
+  getBodyFatThreshold,
+  getSkeletalMuscleThreshold,
+  getVisceralFatThreshold,
+} from "../lib/inbodyVerdict";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -169,10 +178,53 @@ export default function InbodyConsult() {
   };
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<InbodyResponse | null>(null);
+  const [character, setCharacter] = useState<StageCharacter | null>(null);
+  const [mbti, setMbti] = useState<string | null>(null);
+  const [verdictKey, setVerdictKey] = useState(0);
+  const recheckRef = useRef<HTMLDivElement | null>(null);
+
+  // 판정 장면에 세울 내 캐릭터(못 불러와도 장면은 돈다)
+  useEffect(() => {
+    let alive = true;
+    void Promise.all([
+      api.get<StageCharacter>("/api/character/me").catch(() => null),
+      api.get<{ mbti?: string | null }>("/api/mypage/stats").catch(() => null),
+    ]).then(([c, st]) => {
+      if (!alive) return;
+      setCharacter(c?.data ?? null);
+      setMbti(st?.data?.mbti ?? null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 결과가 새로 올 때마다 판정 장면을 처음부터
+  useEffect(() => {
+    if (result) setVerdictKey((k) => k + 1);
+  }, [result]);
   const [confirmedMetrics, setConfirmedMetrics] = useState<Record<string, string>>({});
   const [reviewGoal, setReviewGoal] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
   const captureRef = useRef<HTMLDivElement | null>(null);
+
+  // 결과 맨 위 판정 장면 — 핵심 4칸 + 인바디 점수로 '오늘 올린 원판'. 키는 입력칸 → 결과의 키 순
+  const verdict = useMemo(
+    () =>
+      result
+        ? buildInbodyVerdict({
+            metrics: result.metrics,
+            confidence: result.confidence,
+            reviewRequired: result.reviewRequired,
+            context: {
+              gender: profileGender,
+              age: toNumber(profileAge),
+              heightCm: toNumber(profileHeightCm) || toNumber(result.metrics.height_cm),
+            },
+          })
+        : null,
+    [result, profileGender, profileAge, profileHeightCm]
+  );
 
   const compositionData = useMemo(() => {
     if (!result) return [];
@@ -779,6 +831,17 @@ export default function InbodyConsult() {
 
         {result && (
           <div className="space-y-5">
+            {/* PDF 에는 넣지 않는다(움직이는 장면). 보류의 "숫자 확인하기"는 아래 입력값 재확인 칸으로 */}
+            {verdict && (
+              <InbodyVerdict
+                verdict={verdict}
+                confidence={result.confidence}
+                character={character}
+                mbti={mbti}
+                replayKey={verdictKey}
+                onConfirm={() => recheckRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              />
+            )}
             <div data-pdf-block="1" className="flex flex-wrap items-center gap-3">
               <Badge label={`신뢰도 ${result.confidence}%`} />
               <Badge label={`입력 형식: ${result.sourceType}`} />
@@ -934,7 +997,7 @@ export default function InbodyConsult() {
               </div>
             )}
 
-            <div data-pdf-block="1" className="dg-whiteboard p-5">
+            <div ref={recheckRef} data-pdf-block="1" className="dg-whiteboard scroll-mt-28 p-5">
               <h3 className="font-pen text-3xl leading-none text-board-red">입력값 재확인 (핵심 4개)</h3>
               <p className="mt-1 text-xs text-steel-600">오인식이 의심되면 수정 후 재상담을 눌러 주세요.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1914,42 +1977,6 @@ function buildPersonalMetricSummaries(metrics: Record<string, string>, context: 
     lines.push(`내장지방 레벨 ${visceralFat}: ${insight.headline} ${insight.description}`);
   }
   return lines;
-}
-
-function getBodyFatThreshold(gender: PersonalContext["gender"], age: number) {
-  let good = gender === "FEMALE" ? 28 : 20;
-  let caution = gender === "FEMALE" ? 33 : 25;
-  if (age >= 40 && age < 60) {
-    good += 1;
-    caution += 1;
-  } else if (age >= 60) {
-    good += 2;
-    caution += 2;
-  }
-  return { good, caution };
-}
-
-function getBmiThreshold(age: number) {
-  const normalHigh = age >= 60 ? 24 : 23;
-  const cautionHigh = age >= 60 ? 26 : 25;
-  return { normalLow: 18.5, normalHigh, cautionHigh };
-}
-
-function getVisceralFatThreshold(gender: PersonalContext["gender"], age: number) {
-  let stableMax = gender === "FEMALE" ? 8 : 9;
-  let cautionMax = gender === "FEMALE" ? 11 : 12;
-  if (age >= 60) {
-    stableMax += 1;
-    cautionMax += 1;
-  }
-  return { stableMax, cautionMax };
-}
-
-function getSkeletalMuscleThreshold(gender: PersonalContext["gender"], age: number) {
-  const isFemale = gender === "FEMALE";
-  const low = isFemale ? (age >= 60 ? 6 : 6.4) : age >= 60 ? 7.3 : 7.8;
-  const good = isFemale ? (age >= 60 ? 7.1 : 7.6) : age >= 60 ? 8.6 : 9.2;
-  return { low, good };
 }
 
 function interpretSkeletalMuscleWithContext(value: number, context: PersonalContext): MetricInsight {
