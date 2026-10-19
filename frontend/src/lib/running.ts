@@ -2,6 +2,8 @@
 // 진행 중 상태는 이 기기(localStorage)에만 두고, 끝낼 때 거리 · 시간 · 구간만 서버에 보낸다.
 // 지나간 경로(위치)는 서버로 보내지 않는다 — 이 기기에만 최근 30번까지 남긴다(사용자 결정).
 
+import type { ShadowHit } from "./shadow";
+
 export type LatLng = [number, number];
 
 export type ActiveRun = {
@@ -49,6 +51,8 @@ export type RunSaveResult = {
   records: RunRecord[];
   points: number;
   attendance: { created: boolean; expEarned: number | null; weeklyGoalBonus: number | null; rewardBox?: string | null };
+  /** 이 러닝이 주간 보스 그림자에게 한 공격(힘 1 미만이면 null) */
+  shadow: ShadowHit | null;
 };
 
 export type RunRecords = {

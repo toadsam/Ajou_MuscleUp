@@ -7,6 +7,7 @@ import com.ajou.muscleup.entity.UserCollectionItem;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.RunSessionRepository;
+import com.ajou.muscleup.repository.ShadowWeekRepository;
 import com.ajou.muscleup.repository.UserCollectionItemRepository;
 import com.ajou.muscleup.repository.UserCollectionRepository;
 import com.ajou.muscleup.repository.WorkoutSessionRepository;
@@ -26,7 +27,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * 도감(모으는 재미) + 보상 상자(의외의 보상).
- * - 상자: 주간 목표를 채우면 하나(확정), 그 밖의 운동 출석 날엔 20% 확률로 "행운 상자"(하루 한 번 굴림), 도감에 처음 오면 하나.
+ * - 상자: 주간 목표를 채우면 하나(확정), 그 밖의 운동 출석 날엔 20% 확률로 "행운 상자"(하루 한 번 굴림), 도감에 처음 오면 하나,
+ *   주간 보스 그림자를 처치하면 하나(grantBox, 출처 SHADOW — ShadowBossService).
  * - 상자를 열면 등급(보통 60 · 희귀 28 · 영웅 10 · 전설 2)을 고르고 그 등급의 상자 아이템 하나. 이미 있으면 조각.
  * - 조각을 모아 아직 없는 상자 아이템을 만들 수 있다.
  * - 업적 아이템(칭호)은 조건을 채우면 생긴다 — 출석할 때와 도감을 열 때 확인한다.
@@ -43,6 +45,7 @@ public class CollectionService {
     private final AttendanceLogRepository attendanceLogRepository;
     private final WorkoutSessionRepository workoutSessionRepository;
     private final RunSessionRepository runSessionRepository;
+    private final ShadowWeekRepository shadowWeekRepository;
     private final CharacterProfileRepository characterProfileRepository;
     private final WeeklyGoalService weeklyGoalService;
     private final RewardRandom random;
@@ -202,6 +205,19 @@ public class CollectionService {
         return new AttendanceReward(box, unlockAchievements(me, new Counters(me)));
     }
 
+    /** 상자 하나를 지갑에 넣는다(출석 밖의 보상 — 그림자 처치 등). source 는 기록 · 로그용 이름(SHADOW) */
+    @Transactional
+    public void grantBox(User me, String source) {
+        UserCollection wallet = lockedWallet(me);
+        wallet.setBoxes(wallet.getBoxes() + 1);
+    }
+
+    /** 조건을 채운 업적 아이템을 새로 준다 → 새로 얻은 이름들(그림자 처치 뒤처럼 출석 밖에서 확인할 때) */
+    @Transactional
+    public List<String> unlockAchievements(User me) {
+        return unlockAchievements(me, new Counters(me));
+    }
+
     private CollectionItem.Rarity rollRarity() {
         int r = random.nextInt(100);
         int acc = 0;
@@ -278,6 +294,8 @@ public class CollectionService {
                 case RUN_1 -> (int) runSessionRepository.countByUser_Id(me.getId());
                 case RUN_42K -> (int) runSessionRepository.sumDistanceByUserId(me.getId());
                 case ACTIVITY_10, ACTIVITY_25 -> activity().level();
+                case SHADOW_1 -> (int) shadowWeekRepository.countByUser_IdAndKilledAtIsNotNull(me.getId());
+                case SHADOW_STREAK_4 -> shadowStreak();
             };
         }
 
@@ -291,6 +309,13 @@ public class CollectionService {
         private int streak() {
             if (streak == null) streak = weeklyGoalService.status(me).streakWeeks();
             return streak;
+        }
+
+        /** 그림자 연속 처치 주 수(ShadowRules.streakWeeks 와 같은 계산) */
+        private int shadowStreak() {
+            LocalDate ws = WeeklyGoalService.weekStart(LocalDate.now(clock));
+            return ShadowRules.streakWeeks(shadowWeekRepository.findAllByUser_IdAndWeekStartBetween(me.getId(),
+                    ws.minusWeeks(ShadowRules.STREAK_LOOKBACK_WEEKS), ws), ws);
         }
 
         ActivityLevel activity() {

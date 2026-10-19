@@ -405,7 +405,7 @@ export function buildPoseArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palet
     }
   }
   g.set(cx + fr.look[0] * 3, cy + fr.look[1] * 3, pal.skin); // 코
-  g.set(cx + fr.look[0] + fr.crown[0], cy + fr.look[1] + fr.crown[1], spec.resting ? pal.skin : INK); // 눈
+  g.set(cx + fr.look[0] + fr.crown[0], cy + fr.look[1] + fr.crown[1], spec.resting ? pal.skin : (spec.eyeColor ?? INK)); // 눈
 
   // 손에 든 것 — 옆에서 보면 가까운 원판이 몸을 다 가려서, 조금 작게 몸통 앞 · 가까운 팔다리 뒤에 그린다
   const hand = arms[arms.length - 1].hand;

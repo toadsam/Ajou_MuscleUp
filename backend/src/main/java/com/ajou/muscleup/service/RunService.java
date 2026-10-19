@@ -2,7 +2,9 @@ package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
+import com.ajou.muscleup.dto.shadow.ShadowHitResponse;
 import com.ajou.muscleup.entity.RunSession;
+import com.ajou.muscleup.entity.ShadowHit;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
 import com.ajou.muscleup.repository.RunSessionRepository;
@@ -31,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
  * - 러닝머신 등 직접 입력(MANUAL)은 구간이 없어 속도 기록은 비교하지 않고 거리 기록만.
  * - 원하면 오늘 출석도 함께(아직 안 했을 때만, 유산소로).
  * - 차 · 자전거로 잰 기록을 막으려고 평균 페이스가 1km 2분 30초보다 빠르면 거절한다(세계 기록도 2분 40초대).
+ * - 저장 끝에 주간 보스 "그림자"를 공격한다(ShadowBossService.onRun, 기록을 깼으면 치명타) → 응답 shadow. 지우면 그 공격도 지운다.
  */
 @Service
 @RequiredArgsConstructor
@@ -54,6 +57,7 @@ public class RunService {
     private final AttendanceLogRepository attendanceLogRepository;
     private final AttendanceService attendanceService;
     private final CharacterGrowthService characterGrowthService;
+    private final ShadowBossService shadowBossService;
     private final Clock clock;
 
     /** startedAt · endedAt: 시간대가 붙은 시각. durationSec: 멈춘 시간을 뺀 달린 시간. splits: 1km 마다 걸린 초(GPS 만) */
@@ -76,7 +80,8 @@ public class RunService {
     /** rewardBox: 이 출석으로 받은 보상 상자(WEEKLY_GOAL · LUCKY · null) */
     public record AttendanceResult(boolean created, Integer expEarned, Integer weeklyGoalBonus, String rewardBox) {}
 
-    public record SaveResult(RunView run, List<Record> records, int points, AttendanceResult attendance) {}
+    /** shadow: 이 러닝이 그림자에게 한 공격(힘 1 미만이면 null) */
+    public record SaveResult(RunView run, List<Record> records, int points, AttendanceResult attendance, ShadowHitResponse shadow) {}
 
     public record Records(Integer longestM, Integer best1kSec, Integer best5kSec, Integer best10kSec,
                           int weekDistanceM, int weekRuns, int monthDistanceM, int monthRuns, int totalDistanceM) {}
@@ -164,7 +169,8 @@ public class RunService {
                     AttendanceUpsertRequest.workout(List.of("cardio"), runMemo(run)));
             attendance = new AttendanceResult(true, a.getExpEarned(), a.getWeeklyGoalBonus(), a.getRewardBox());
         }
-        return new SaveResult(RunView.from(run), records, points, attendance);
+        ShadowHitResponse shadow = shadowBossService.onRun(me, run, !records.isEmpty());
+        return new SaveResult(RunView.from(run), records, points, attendance, shadow);
     }
 
     @Transactional(readOnly = true)
@@ -181,7 +187,9 @@ public class RunService {
 
     @Transactional
     public void delete(User me, Long id) {
-        runRepository.delete(mine(me, id));
+        RunSession run = mine(me, id);
+        shadowBossService.onDeleted(ShadowHit.RUN, run.getId());
+        runRepository.delete(run);
     }
 
     @Transactional(readOnly = true)

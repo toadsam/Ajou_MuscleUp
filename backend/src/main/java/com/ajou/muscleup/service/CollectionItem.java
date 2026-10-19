@@ -21,6 +21,8 @@ public enum CollectionItem {
     T_IRON_HABIT(Category.TITLE, Rarity.EPIC, "쇠질 습관", "쇠질 습관", Achievement.ATTENDANCE_100),
     T_STREAK_12(Category.TITLE, Rarity.LEGENDARY, "석 달 개근", "석 달 개근", Achievement.WEEKLY_STREAK_12),
     T_ACTIVITY_25(Category.TITLE, Rarity.LEGENDARY, "득근 중독", "득근 중독", Achievement.ACTIVITY_25),
+    T_SHADOW_1(Category.TITLE, Rarity.RARE, "그림자를 넘은 자", "그림자를 넘은 자", Achievement.SHADOW_1),
+    T_SHADOW_STREAK_4(Category.TITLE, Rarity.EPIC, "그림자 사냥꾼", "그림자 사냥꾼", Achievement.SHADOW_STREAK_4),
     // ── 칭호: 상자
     T_DAWN(Category.TITLE, Rarity.COMMON, "새벽 헬스러", "새벽 헬스러", null),
     T_PROTEIN(Category.TITLE, Rarity.COMMON, "단백질 수집가", "단백질 수집가", null),
@@ -83,7 +85,9 @@ public enum CollectionItem {
         RUN_1("러닝 1번", 1),
         RUN_42K("러닝 누적 42.195km", 42195),
         ACTIVITY_10("활동 레벨 10", 10),
-        ACTIVITY_25("활동 레벨 25", 25);
+        ACTIVITY_25("활동 레벨 25", 25),
+        SHADOW_1("주간 보스 그림자 처치 1번", 1),
+        SHADOW_STREAK_4("그림자 4주 연속 처치", 4);
 
         public final String hint;
         public final int goal;

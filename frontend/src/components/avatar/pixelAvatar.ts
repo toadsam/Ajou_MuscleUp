@@ -74,6 +74,8 @@ export type PixelAvatarSpec = {
   };
   /** 진화 갈래 시그니처 마크 색 (없으면 안 그림) */
   emblem: string | null;
+  /** 눈 색(기본 검정). 그림자(ShadowSprite)만 빨간 원판 색을 쓴다 */
+  eyeColor?: string;
   /** 운동 직후 펌핑(땀 · 김). 근육 한 단계는 AvatarRenderer 가 build 에 더한다 */
   pumped?: boolean;
   /** 운동 동작(있으면 pose · plates 대신) */
@@ -373,19 +375,20 @@ export function buildPixelAvatar(spec: PixelAvatarSpec): PixelAvatarArt {
   if (tier >= 4) g.rect(8, 15, 5, 5, headband);
 
   // 얼굴
+  const eye = spec.eyeColor ?? INK;
   if (spec.resting) {
     g.rect(9, 10, 7, 7, INK);
     g.rect(13, 14, 7, 7, INK);
   } else {
-    g.set(10, 7, INK);
-    g.set(13, 7, INK);
+    g.set(10, 7, eye);
+    g.set(13, 7, eye);
     if (spec.eyeStyle === 1) {
-      g.set(10, 8, INK);
-      g.set(13, 8, INK);
+      g.set(10, 8, eye);
+      g.set(13, 8, eye);
     }
     if (spec.eyeStyle === 2 || spec.risk !== "normal") {
-      g.set(spec.risk !== "normal" ? 9 : 10, 6, INK);
-      g.set(spec.risk !== "normal" ? 14 : 13, 6, INK);
+      g.set(spec.risk !== "normal" ? 9 : 10, 6, eye);
+      g.set(spec.risk !== "normal" ? 14 : 13, 6, eye);
     }
   }
   if (spec.risk !== "normal" && !spec.resting) {
@@ -500,7 +503,7 @@ function buildSideArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palette): Pi
     g.rect(1, 5, 20, 20, hair);
     g.set(5, 15, null);
     g.set(3, 14, skin); // 코
-    g.set(4, 16, spec.resting ? skin : INK); // 눈
+    g.set(4, 16, spec.resting ? skin : (spec.eyeColor ?? INK)); // 눈
     // 팔 · 바벨(프레임 1 은 팔을 다 편 자세)
     const hy = f === 1 ? 7 : 13;
     g.rect(10, 11, hy + 2, 17, skin);
@@ -534,7 +537,7 @@ function buildSideArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palette): Pi
     g.rect(1, 5, sy - 4, sy - 4, hair);
     g.rect(5, 5, sy - 4, sy - 2, hair);
     g.set(1, sy, null);
-    g.set(2, sy - 2, spec.resting ? skin : INK); // 눈
+    g.set(2, sy - 2, spec.resting ? skin : (spec.eyeColor ?? INK)); // 눈
     face = { x: 1, y: sy - 4, w: 5, h: 5 };
   }
 

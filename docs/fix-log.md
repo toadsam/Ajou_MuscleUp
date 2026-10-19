@@ -8,6 +8,64 @@
 
 ---
 
+## 2026-10-19 · 주간 보스 "그림자" PR 2 — 화면(전투 장면 · 홈 카드 · /shadow · /dev/boss)
+
+**불편** (사용자: "화면까지 만들자, 역동적으로")
+- PR 1 로 서버는 그림자를 공격하고 있었지만 화면이 없어 사용자는 아무것도 못 봤다(응답의 `shadow` 가 버려짐).
+
+**원인(근거)**
+- `WorkoutSession.tsx:334-` · `Running.tsx:425-` 결과 화면이 `shadow` 를 읽지 않았고, 응답 타입(`lib/workoutSession.ts` · `lib/running.ts`)에도 칸이 없었다. 홈 · 라우트에도 없음.
+
+**고친 방법** — 세부: [docs/fixes/2026-10-19-shadow-boss-screens.md](fixes/2026-10-19-shadow-boss-screens.md)
+- **전투 장면** `components/boss/BossFight.tsx`(사용자 피드백 "진짜 공격하는 느낌으로" 뒤 격투 게임 문법으로): 내 캐릭터가 움츠렸다 그림자까지 **돌진** → 닿는 순간 멈칫(히트스톱) + 타격 자국 + 그림자 색 반전 · 넉백 + 무대 흔들림 + 체력 바 즉시 깎임(초크 잔상이 뒤따름) + "+조각" 숫자 → 힘이 클수록 2~3연타, 마지막 타는 세게 → 합계 "+N" 이 쾅 찍힘 · 치명타(초크 가루 + 큰 흔들림 + 도장) · 처치(4단계 무너짐 → 원판 조각 10개 + "DOWN" 도장 → 전리품 카드 → 알통). 건너뛰기 상시. 상한 · 이미 쓰러짐 · 보상 없음 문구.
+- **그림자** `components/boss/ShadowSprite.tsx`: 내 픽셀 리프터를 어두운 색 + 빨간 눈으로(새 그림 0장). `pixelAvatar.ts` 에 `eyeColor` 선택 칸(기본 그대로). 옆모습 동작은 svg 를 뒤집어 마주 본다.
+- **체력 바** `components/boss/HpBar.tsx`(고무 매트 홈, 빨강은 바로 깎이고 초크 잔상이 0.5초 뒤따름, 눈금, 숫자 트윈) · CSS 15개(`.dg-dash` `.dg-hit` `.dg-hit-hard` `.dg-impact` `.dg-float` `.dg-slam` `.dg-stamp` `.dg-quake(-hard)` `.dg-collapse` `.dg-shard` `.dg-hp-ghost` …).
+- **결과 화면**: 운동 · 러닝 결과 맨 위에 전투 장면(운동은 첫 종목 동작 + 원판, 러닝은 달리기). 응답 타입에 `shadow`.
+- **홈**: 주간 목표 화이트보드 카드 안에 한 줄 "그림자 ████░░ 228 남음 →"(`ShadowHomeRow`, 새 카드 없음) → `/shadow`.
+- **그림자 화면** `/shadow`(`pages/ShadowBoss.tsx`): 마지막 공격 다시 보기 · 이번 주 공격 목록 · 최근 8주 원판 줄 · 규칙 한 문단. 휴식 주 · 빈 상태 따로.
+- **개발 확인** `/dev/boss`(`pages/DevBoss.tsx`): 가짜 공격 6종.
+- 서버 `ShadowHitResponse` 에 `hp` · `hitOn` 두 칸(바 길이 · 요일에 필요).
+
+**확인한 방법**
+- `tsc` 0 오류, `verify.sh` 통과. `ShadowBossServiceTest` 12개 통과(응답 칸 추가 뒤).
+- `/dev/boss` 6종 데스크톱 · 375px(`docs/screenshots/2026-10-19-shadow-dev-boss-*.jpg`), 처치 장면을 0.6초 간격으로 찍어 순서 확인.
+- 시험용 로컬 계정으로 로그인해 홈 한 줄("100 남음" → 처치 뒤 "처치! 오버킬 36%") · `/shadow` 빈 상태 · 공격 2번 · 8주 전적 · 375px(`docs/screenshots/2026-10-19-shadow-page-*.jpg`, `…-home-row.jpg`). 계정 · 행은 SQL 로 지움.
+
+**아직 못 한 것**
+- 운동 · 러닝 결과 화면 자체는 실제 세션 흐름(시작 → 세트 → 끝내기)을 돌리지 않았다 — `/dev/boss` 와 삽입 위치로만 확인. 사용자가 세션 한 번 저장해 보면 된다.
+- 돌진 · 연타로 바꾼 뒤의 장면은 앱 창이 화면에 없어 미리보기가 그림을 새로 그리지 않았다 — 타이머를 손으로 돌려 접촉 순간의 계산된 스타일(돌진 226px · 넉백 14px · 반전 · 타격 자국 · 잔상)로만 확인했고 **눈으로는 못 봤다**. `/dev/boss` 에서 직접 보고 세기를 정해 주면 된다.
+- PR 3 처치 공유 카드는 2차 던전 안으로 옮김. **2차 "그림자 던전" 설계** [docs/design/shadow-dungeon.md](design/shadow-dungeon.md) — 저장은 공격이 아니라 "힘 모으기", 전체 화면 던전에서 종목별 기술 5개 · 타이밍 · 패시브로 쏜다(조이스틱 실시간 조작은 안 함). PR A 백엔드 · B 화면 · C 입구, 1차 머지 뒤 main 기준.
+
+---
+
+## 2026-10-19 · 주간 보스 "그림자" PR 1 — 백엔드(표 · 규칙 · API · 저장 응답 · 칭호 · 탈퇴)
+
+**불편** (사용자와 정한 방향, [설계](design/shadow-boss.md))
+- 캐릭터 레벨 · 티어 · 칭호가 쌓여도 쓰이는 곳이 "보여 주는 데"뿐이라 성장이 곧 결말이었다. 성장 → 더 센 상대 → 보상의 고리가 없었다.
+
+**원인(근거)**
+- 점수는 `CharacterGrowthService.applyAttendance` 로만 오르고(`CharacterGrowthService.java:23`), 레벨을 읽어 무언가를 바꾸는 코드가 없었다(랭킹 · 카드 · 광장 표시만).
+- 운동 세션(`WorkoutSessionService.save`) · 러닝(`RunService.save`)은 PR · 기록 갱신까지 판정해 두고 거기서 끝났다.
+
+**고친 방법** — 세부: [docs/fixes/2026-10-19-shadow-boss-backend.md](fixes/2026-10-19-shadow-boss-backend.md)
+- **표 2개** `shadow_weeks`(한 사람의 한 주: hp · damage · hits · crits · killed_at · rewarded · level_at_start · rest) · `shadow_hits`(공격 한 번: source SESSION|RUN 문자열 · source_id · hit_on · raw · damage · crit · hp_after). `ddl-auto` 로 생김, 이전 SQL 없음. 설계 표에 `hit_on`(공격한 날, KST) 한 칸을 더했다 — 하루 상한을 `created_at`(서버 시계)으로 세면 고정 시계 테스트 · 시간대 경계에서 틀린다.
+- **규칙** `ShadowRules`(상수 · 순수 함수): 힘 = 볼륨 ÷ 100(맨몸 세트는 횟수 × 20kg 더함) · 러닝 거리 ÷ 100, 하루 상한 300, 힘 1 미만은 공격 아님, 체력 = max(100, round(최근 4주 힘 > 0 인 주 평균 × 1.05)), 치명타(PR · 기록 갱신, 세션당 한 번) × (1.5 + 레벨 × 0.01). 8절 결정은 기본값(이름 그림자 · 20kg/회 · 상한 300 · 상자 1개).
+- **서비스** `ShadowBossService`: `status` · `history` · `onSession` · `onRun` · `onDeleted`. 주 경계는 `WeeklyGoalService.weekStart`(public static 으로 열었다), 시간은 `Clock`. 휴식 주(`WeeklyGoalWeek.rest`)는 힘은 쌓이되 처치 안 됨 · 연속 안 끊김. 처치 보상은 한 주 한 번: 점수 +10(`applyAttendance`) · 상자 1(`CollectionService.grantBox`, 출처 SHADOW) · 칭호 "그림자를 넘은 자"(RARE, 업적 SHADOW_1) · "그림자 사냥꾼"(EPIC, 4주 연속 SHADOW_STREAK_4). 세션 · 러닝을 지우면 공격을 지우고 합계를 다시 더하되 `killed_at` 은 둔다.
+- **API** `GET /api/shadow`(이번 주 상태 · 공격 목록 · 연속 · 지난주) · `GET /api/shadow/history?weeks=8`, `POST /api/workouts` · `/api/runs` 응답에 `shadow: Hit | null`. (PR 2 에서 `Hit` 에 `hp` · `hitOn` 추가) `SecurityConfig` 인증 경로. 응답에 이메일 · 사용자 번호 없음.
+- **탈퇴** `AccountDeletionService` 에 두 표 삭제, `AccountSafetyTest` 확인.
+
+**확인한 방법**
+- 새 `ShadowBossServiceTest` 12개(7절 "PR 1 테스트" 전부: HP 100 · 420, 힘 60 · 5, 상한 150+150+0, Lv20 ×1.7, PR 3개도 치명타 한 번, 처치 보상 1회 · 오버킬, 삭제 재계산 · killed_at 유지, 휴식 주 · 연속, 4주 연속 칭호, API 모양 · 이메일 없음 · 로그인 필요). 백엔드 전체 95개 통과(로컬 MySQL, `test` 프로필 — 작업 폴더가 git worktree 라 gitignore 된 `application-local.properties` 가 없어 같은 DB 를 가리키는 `test` 로 돌렸다).
+- `verify.sh`: 통과(타입 검사 0 오류 · 바뀐 TS 파일 없음 · 빌드 통과). 화면 코드는 바꾸지 않았다.
+- 로컬 서버(`local` 프로필, MySQL): 미리보기 서버로 띄우고 시험용 계정(가입 → 확인 뒤 SQL 로 계정 · 관련 행 삭제)으로 실제 호출 — `GET /api/shadow` 첫 호출 `hp 100 · remaining 100 · hits []`(이번 주 2026-10-19~25), `POST /api/workouts`(스쿼트 100×5 ×3 + 턱걸이 8회 ×2) 응답 `shadow { raw 18, crit true(첫 PR), damage 27, hpBefore 100, hpAfter 73 }`, 다시 `GET /api/shadow` → `damage 27 · hits 1`, `/history?weeks=8` 1주, 로그인 없이 401, `DELETE /api/workouts/{id}` 뒤 `damage 0 · hits []`. MySQL 에 `shadow_weeks`(UNIQUE user_id+week_start) · `shadow_hits`(INDEX source+source_id) 가 `ddl-auto` 로 생겼다.
+
+**아직 못 한 것**
+- 화면은 PR 2(전투 장면 · 홈 카드 · `/dev/boss`) · PR 3(`/shadow` · 공유 카드). 지금은 응답의 `shadow` 를 화면이 쓰지 않는다(무시됨).
+- Postgres 17 에서는 돌리지 못했다(이 PC 에 임시 Postgres 없음) — 새 표는 enum · 제약 없는 평범한 칸이라 `ddl-auto` 로 생기지만 배포 뒤 첫 `GET /api/shadow` 응답은 확인해야 한다.
+- 2차: 일요일 푸시 · 꾸미기 `SHADOW_KILLS` · 홈 지도 NPC.
+
+---
+
 ## 2026-10-17 · 모임 방 라운지 꾸미기 — 모임장이 고르는 광장 모습 5가지 + 건물 간판에 모임 이름
 
 **불편** (사용자 요청, 득근 광장 PR #49 의 남은 일)
