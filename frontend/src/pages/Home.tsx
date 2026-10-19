@@ -11,6 +11,8 @@ import { REALTIME_URL } from "../lib/realtime";
 import { useCurrentGym, useMyGyms } from "../lib/currentGym";
 import type { EventItem } from "../types/event";
 import { WEEKLY_GOAL_PATH, type WeeklyGoalStatus } from "../lib/weeklyGoal";
+import { SHADOW_PATH, type ShadowStatus } from "../lib/shadow";
+import ShadowHomeRow from "../components/boss/ShadowHomeRow";
 import { QUEST_LINKS, QUESTS_PATH, type TodayQuests } from "../lib/quests";
 import { COLLECTION_SUMMARY_PATH, syncEquippedTank, type CollectionSummary } from "../lib/collection";
 
@@ -165,6 +167,7 @@ export default function Home() {
   const [user, setUser] = useState<LocalUser | null>(null);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoalStatus | null>(null);
+  const [shadow, setShadow] = useState<ShadowStatus | null>(null);
   const [quests, setQuests] = useState<TodayQuests | null>(null);
   const [collection, setCollection] = useState<CollectionSummary | null>(null);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
@@ -207,7 +210,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      const [logsRes, summaryRes, characterRes, statsRes, weeklyGoalRes, questsRes, collectionRes] = await Promise.all([
+      const [logsRes, summaryRes, characterRes, statsRes, weeklyGoalRes, questsRes, collectionRes, shadowRes] = await Promise.all([
         safeFetchJson<AttendanceLog[]>(`/api/attendance?month=${monthKey}`),
         safeFetchJson<AttendanceSummary>(`/api/attendance/summary?month=${monthKey}`),
         safeFetchJson<CharacterProfile>("/api/character/me"),
@@ -216,10 +219,12 @@ export default function Home() {
         safeFetchJson<WeeklyGoalStatus>(WEEKLY_GOAL_PATH).catch(() => null),
         safeFetchJson<TodayQuests>(QUESTS_PATH).catch(() => null),
         safeFetchJson<CollectionSummary>(COLLECTION_SUMMARY_PATH).catch(() => null),
+        safeFetchJson<ShadowStatus>(SHADOW_PATH).catch(() => null),
       ]);
       if (logsRes) setLogs(logsRes);
       if (summaryRes) setSummary(summaryRes);
       setWeeklyGoal(weeklyGoalRes);
+      setShadow(shadowRes);
       setQuests(questsRes);
       if (characterRes) setCharacter(characterRes);
       setCollection(collectionRes);
@@ -706,6 +711,8 @@ export default function Home() {
                 </strong>
               </div>
             </div>
+
+            <ShadowHomeRow status={shadow} />
 
             {loading && <div className="hub-note">불러오는 중...</div>}
             {error && <div className="hub-error">{error}</div>}

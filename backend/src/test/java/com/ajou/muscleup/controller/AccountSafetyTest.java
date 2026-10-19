@@ -148,6 +148,11 @@ class AccountSafetyTest {
         em.persist(com.ajou.muscleup.entity.PushLog.builder().user(alice).sentOn(java.time.LocalDate.now()).type("SOCIAL")
                 .sentAt(java.time.LocalDateTime.now()).build());
         em.persist(com.ajou.muscleup.entity.WeeklyGoalWeek.builder().user(alice).weekStart(java.time.LocalDate.now()).target(4).build());
+        com.ajou.muscleup.entity.ShadowWeek shadowWeek = com.ajou.muscleup.entity.ShadowWeek.builder().user(alice)
+                .weekStart(java.time.LocalDate.now()).hp(100).damage(60).hits(1).levelAtStart(1).build();
+        em.persist(shadowWeek);
+        em.persist(com.ajou.muscleup.entity.ShadowHit.builder().week(shadowWeek).user(alice).source("SESSION").sourceId(1L)
+                .hitOn(java.time.LocalDate.now()).raw(60).damage(60).hpAfter(40).build());
         em.flush();
 
         // 확인 문구 없으면 거절
@@ -177,6 +182,8 @@ class AccountSafetyTest {
         assertThat(count("select count(m) from MealEntry m where m.user.id = :id", id)).isZero();
         assertThat(count("select count(g) from DietGoal g where g.user.id = :id", id)).isZero();
         assertThat(count("select count(w) from WeeklyGoalWeek w where w.user.id = :id", id)).isZero();
+        assertThat(count("select count(w) from ShadowWeek w where w.user.id = :id", id)).isZero();
+        assertThat(count("select count(h) from ShadowHit h where h.user.id = :id", id)).isZero();
         assertThat(count("select count(s) from WeeklyGoalSetting s where s.user.id = :id", id)).isZero();
         assertThat(count("select count(q) from DailyQuest q where q.user.id = :id", id)).isZero();
         assertThat(count("select count(l) from LiftEntry l where l.user.id = :id", id)).isZero();

@@ -136,7 +136,8 @@ public class WeeklyGoalService {
         return 8 + 2 * Math.max(1, Math.min(streakWeeks, 6));
     }
 
-    static LocalDate weekStart(LocalDate date) {
+    /** 그 날이 든 주의 월요일 — 주간 목표 · 그림자(ShadowBossService)가 같은 주 경계를 쓴다 */
+    public static LocalDate weekStart(LocalDate date) {
         return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     }
 
