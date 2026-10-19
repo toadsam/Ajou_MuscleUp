@@ -392,6 +392,10 @@
   border: 7px solid #f0be2e;
   border-image: repeating-linear-gradient(45deg, #f0be2e 0 9px, #0e0e10 9px 18px) 7;
 }
+/* 그림자 사냥 테두리(그림자 8주 연속): 먹색 두 줄 사이에 빨간 눈 같은 점선 */
+.dg-frame-shadow {
+  box-shadow: 0 0 0 3px #0e0e10, 0 0 0 7px #26272b, 0 0 0 9px #d9302a, 0 0 0 12px #0e0e10;
+}
 /* 테두리 미리보기(도감 칸) */
 .dg-frame-swatch { width: 100%; aspect-ratio: 4 / 3; background: var(--dg-steel); border-radius: 6px; }
 
@@ -593,4 +597,170 @@
 @keyframes dgShatter {
   from { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
   to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.6); opacity: 0; }
+}
+
+/* ---------- 그림자 던전 (components/boss/DungeonStage · TimingGauge · SkillPlates) ---------- */
+
+/* 들어올 때: 그림자가 오른쪽 어둠에서 4단계로 걸어 나온다 */
+.dg-enter {
+  animation: dgEnter 0.6s steps(4, end) both;
+}
+
+/* 지진: 움츠림 → 점프(그림자 위까지) → 착지(눌림) → 제자리. --dash 는 무대가 준다 */
+.dg-jump {
+  animation: dgJump 0.76s cubic-bezier(0.3, 0, 0.2, 1) both;
+  will-change: transform;
+}
+/* 지진 피격: 떠올랐다 떨어짐(색 반전 1프레임) */
+.dg-launch {
+  animation: dgLaunch 0.5s steps(1, end);
+}
+/* 밀어내기 피격: 멀리 밀려나 벽에 닿음 */
+.dg-knock-far {
+  animation: dgKnockFar 0.52s steps(1, end);
+}
+/* 들어 던지기 1타: 들려 올라가 떠 있음(다음 타까지) · 2타: 내려찍힘 */
+.dg-lift-up {
+  animation: dgLiftUp 0.5s steps(1, end) forwards;
+}
+.dg-slam-down {
+  animation: dgSlamDown 0.46s steps(1, end);
+}
+/* 연타: 짧은 잽(300ms) */
+.dg-dash-jab {
+  animation-duration: 0.3s;
+  animation-name: dgDashJab;
+}
+/* 돌진: 그림자를 뚫고 무대 밖으로 → 왼쪽에서 다시 나타남 */
+.dg-through {
+  animation: dgThrough 0.72s linear both;
+  will-change: transform, opacity;
+}
+.dg-ghost {
+  opacity: 0.45;
+  animation: dgGhost 0.5s steps(3, end) forwards;
+}
+/* 바닥 균열 · 벽 먼지 */
+.dg-crack {
+  animation: dgCrack 0.5s steps(3, end) forwards;
+  transform-origin: center;
+}
+.dg-dust {
+  animation: dgDust 0.45s steps(3, end) forwards;
+}
+/* 타이밍 게이지 원판: 왼쪽 끝 → 오른쪽 끝 */
+.dg-gauge-slide {
+  animation-name: dgGaugeSlide;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+/* 기술 원판 버튼: 누르면 원판이 살짝 눌린다 */
+.dg-plate-btn:active > span:first-child {
+  transform: translateY(2px);
+}
+.dg-plate-btn:disabled {
+  cursor: default;
+}
+
+@keyframes dgEnter {
+  from { transform: translateX(48px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes dgJump {
+  0% { transform: translate(0, 0); }
+  18% { transform: translate(-8px, 4px) scaleY(0.92); }
+  48% { transform: translate(calc(var(--dash, 60px) * 0.55), -58px) scaleY(1.04); }
+  50% { transform: translate(var(--dash, 60px), -10px); }
+  58% { transform: translate(var(--dash, 60px), 2px) scaleY(0.92); }
+  70% { transform: translate(var(--dash, 60px), 0); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes dgLaunch {
+  0% { filter: invert(1); transform: translateY(-18px) rotate(6deg); }
+  30% { filter: none; transform: translateY(-34px) rotate(10deg); }
+  60% { transform: translateY(-10px) rotate(4deg); }
+  80% { transform: translateY(3px) scaleY(0.94); }
+  100% { transform: translateY(0) rotate(0); }
+}
+
+@keyframes dgKnockFar {
+  0% { filter: invert(1); transform: translateX(16px) rotate(6deg); }
+  25% { filter: invert(1); transform: translateX(48px) rotate(12deg); }
+  50% { filter: none; transform: translateX(60px) rotate(14deg); }
+  70% { transform: translateX(56px) rotate(10deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@keyframes dgLiftUp {
+  0% { filter: invert(1); transform: translateY(-8px); }
+  30% { filter: none; transform: translateY(-30px) rotate(-8deg); }
+  100% { transform: translateY(-40px) rotate(-10deg); }
+}
+
+@keyframes dgSlamDown {
+  0% { filter: invert(1); transform: translateY(-40px) rotate(-10deg); }
+  30% { filter: invert(1); transform: translateY(6px) scaleY(0.82); }
+  55% { filter: none; transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes dgDashJab {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(var(--dash, 60px)) scaleX(1.04); }
+  66% { transform: translateX(var(--dash, 60px)); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes dgThrough {
+  0% { transform: translateX(0); opacity: 1; }
+  28% { transform: translateX(calc(var(--dash, 60px) * 0.6)); }
+  47% { transform: translateX(var(--dash, 60px)); }
+  52% { transform: translateX(var(--dash, 60px)); }
+  70% { transform: translateX(var(--through, 220px)); opacity: 1; }
+  71% { transform: translateX(-90px); opacity: 0; }
+  80% { transform: translateX(-40px); opacity: 1; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes dgGhost {
+  0% { transform: translateX(0); opacity: 0.45; }
+  100% { transform: translateX(var(--dash, 60px)); opacity: 0; }
+}
+
+@keyframes dgCrack {
+  0% { transform: translateX(-50%) scaleX(0.2); opacity: 1; }
+  60% { transform: translateX(-50%) scaleX(1); opacity: 1; }
+  100% { transform: translateX(-50%) scaleX(1); opacity: 0; }
+}
+
+@keyframes dgDust {
+  0% { transform: translate(0, 0); opacity: 1; }
+  100% { transform: translate(-26px, -12px); opacity: 0; }
+}
+
+@keyframes dgGaugeSlide {
+  from { left: -10px; }
+  to { left: calc(100% - 10px); }
+}
+
+/* 충전 연출(ChargeScene): 원판이 내 캐릭터에서 던전 문(--fly)으로 포물선처럼 날아간다 */
+.dg-fly {
+  animation: dgFly 0.36s cubic-bezier(0.2, 0.6, 0.4, 1) both;
+}
+/* 던전 문의 빨간 눈: 가끔 깜빡 */
+.dg-door-eye {
+  animation: dgDoorEye 3.2s steps(1, end) infinite;
+}
+
+@keyframes dgFly {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  45% { transform: translate(calc(var(--fly, 160px) * 0.5), -34px) rotate(180deg); }
+  100% { transform: translate(var(--fly, 160px), 6px) rotate(360deg); opacity: 1; }
+}
+
+@keyframes dgDoorEye {
+  0%, 88%, 100% { opacity: 1; }
+  90%, 94% { opacity: 0; }
 }

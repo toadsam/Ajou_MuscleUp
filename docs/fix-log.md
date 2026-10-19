@@ -8,6 +8,137 @@
 
 ---
 
+## 2026-10-20 · 그림자 던전 지도판 D3 — 꾸미기 보상(헬스장 물품 4 · 그림자 테두리 · 몬스터 도감 · 처치 공유 카드)
+
+**불편** (사용자: "몬스터를 잡으면 캐릭터를 꾸밀 수 있는 거나 그런 것들을 받을 수 있게")
+- 던전에서 잡몹 · 보스를 잡아도 조각 · 점수 · 상자 말고 눈에 보이는 꾸미기 보상이 없었다.
+
+**원인(근거)**
+- `GymDecorItem.Goal` · `CollectionItem.Achievement` 에 그림자 · 잡몹 처치 조건이 없었고, 도감에 몬스터 칸이 없었다. 공유 카드도 그림자 처치용이 없었다.
+
+**고친 방법** — 세부: [docs/fixes/2026-10-20-shadow-dungeon-rewards.md](fixes/2026-10-20-shadow-dungeon-rewards.md)
+- 꾸미기 목표 `SHADOW_KILLS` · `MOB_KILLS` + 물품 그림자 트로피(5) · 던전 문 장식(10) · 그림자 조끼(20, 직원 유니폼) · 야식 슬라임 인형(잡몹 30). 그림은 `decor.ts`. 못 얻은 유니폼은 잠금 + 진행도.
+- 도감: 그림자 사냥 테두리(`F_SHADOW`, 8주 연속), 새 칸 **몬스터 도감**(잡몹 5종, 처음 잡으면 등록, 장착 없음).
+- 처치 공유 카드(`ShadowShareEditor`, 러닝 · 출석과 같은 사진 카드): 던전 보스 처치 카드 · `/shadow` 에서.
+
+**확인한 방법**
+- 새 테스트 3개, 백엔드 전체 116개 통과(꾸미기 전체 수 33 → 36). `verify.sh` 통과. 8081 실제 호출로 몬스터 카드 · 테두리 진행도 · 꾸미기 진행도 · 트로피 놓기, `/collection` 몬스터 탭(375px 포함), `/dev/dungeon` 처치 → 공유 카드 캔버스 그려짐. 시험 계정 정리.
+
+**아직 못 한 것**
+- 눈으로 본 확인(새 물품 · 몬스터 카드 · 공유 카드 그림), 휴대폰 Web Share.
+
+---
+
+## 2026-10-20 · 그림자 던전 지도판 D2 — 걸어 다니는 던전 · 조이스틱 · 잡몹 그림 · 전투 창
+
+**불편** (사용자: "지도처럼 움직이고, 조이스틱으로 다니다 몬스터를 만나면 스킬로 잡는 것")
+- PR #54 의 던전은 전체 화면 한 장이라 돌아다닐 수 없었고, D1 로 생긴 잡몹을 볼 화면이 없었다.
+
+**원인(근거)**
+- `/shadow/dungeon` 이 `DungeonView`(무대 + 기술 원판)만 그렸다. 지도 엔진 · 입력 · 잡몹 그림이 없었다.
+
+**고친 방법** — 세부: [docs/fixes/2026-10-20-shadow-dungeon-map.md](fixes/2026-10-20-shadow-dungeon-map.md)
+- `components/dungeon/dungeonWorld.ts`: 20×36칸 캔버스 던전(입구 → 방 A → 가운데 방 → 보스 방), 카메라 따라감, 조이스틱 · 방향키 · WASD 연속 이동 + 벽 충돌, 바닥 · 몬스터 탭 길찾기, 잡몹 순찰(쫓아오지 않음), 닿으면 전투, 출구 매트.
+- `Joystick.tsx`(고무 원 + 빨간 원판 손잡이), `mobArt.ts` · `MobSprite.tsx`(잡몹 5종 픽셀 — 지도 · 전투 창 공용), `DungeonMap.tsx`(HUD · 조이스틱 · 전투 창 = 기존 `DungeonStage` · `TimingGauge` · `SkillPlates`).
+- `DungeonStage` 에 상대 그림(`foe`) · 체력 바 이름, `/shadow/dungeon` · `/dev/dungeon` 을 지도판으로, 전체 화면판 `DungeonView` 삭제, 로컬 셈에 잡몹.
+
+**확인한 방법**
+- `verify.sh` 통과. 미리보기 창이 숨겨져 rAF 가 0번이라, rAF 를 손으로 돌리는 심으로 엔진을 움직여 확인: 이동 83px/초 · 벽 · 잡몹 닿음 → 전투 → 처치 · 조각 · 반환 → 물러나 재개 · 보스 전투 · 탭 길찾기 · 조이스틱. 실제 서버(8081)에서 잡몹 처치까지. 375px 넘침 없음.
+
+**아직 못 한 것**
+- 눈으로 본 확인 · 스크린샷(사용자가 `/dev/dungeon` 에서), 실제 휴대폰 터치, D3 보상.
+
+---
+
+## 2026-10-20 · 그림자 던전 지도판 D1 — 백엔드 잡몹(배치 · 잡몹 strike · 남은 힘 반환 · 조각 · 타이밍 +5/+2%)
+
+**불편** (사용자: "D1(백엔드 잡몹)부터 시작해")
+- 지도판 설계대로 던전에 잡몹 여러 마리를 두려면 서버가 잡몹을 만들고, strike 가 보스 말고 잡몹도 칠 수 있어야 했다.
+
+**원인(근거)**
+- PR #54 의 `strike` 는 보스(`shadow_weeks.damage` · `shadow_hits`)만 쳤고 잡몹을 둘 자리가 없었다. 타이밍 보너스는 +10/+5% 였다(`ShadowRules.TIMING_*`).
+
+**고친 방법** — 세부: [docs/fixes/2026-10-20-shadow-dungeon-mobs.md](fixes/2026-10-20-shadow-dungeon-mobs.md)
+- 새 표 `shadow_mobs`(`ShadowMob`) · `shadow_weeks.mob_force`. 주마다 4종(내일부터 · 야식 슬라임 · 알람 스누즈 · 핑계) + 지난주 보스를 50% 이상 오버킬하면 희귀 소파 괴물. 체력 = 보스 체력 × 10~20%(최소 15), 배치는 사용자 · 주 시드.
+- `strike` 에 `target`(BOSS 또는 잡몹 id). 잡몹은 체력을 채우는 최소 힘만 쓰고 나머지는 통으로(오버킬 없음), 잡으면 조각 · 종류별 첫 처치 표시. 잡몹 피해는 보스 합계와 섞지 않고, 잡몹에 쓴 힘은 다음 주 체력 계산에 센다.
+- 타이밍 PERFECT +5% · GOOD +2%. `status` · `enter` 에 `mobs`. 탈퇴에 `ShadowMob`. 프론트는 타입 · 문구만(화면은 D2).
+
+**확인한 방법**
+- 테스트 24개(새 6), 백엔드 전체 113개 통과. `verify.sh` 통과. 8081 실제 호출로 잡몹 처치 · 반환 46 · 조각 · 첫 처치 · 다시 치면 400 · 보스 타 · DB `mob_force` 14 확인, 시험 계정 정리.
+
+**아직 못 한 것**
+- D2(맵 · 조이스틱 · 잡몹 그림 · 전투 창) · D3(꾸미기 보상). Postgres 확인.
+
+---
+
+## 2026-10-20 · 그림자 던전 지도판 설계(걸어 다니는 던전 · 조이스틱 · 잡몹 · 꾸미기 보상)
+
+**불편** (사용자: "지도처럼 움직이고, 조이스틱으로 다니다 몬스터를 만나면 스킬로 잡는 것. 컨트롤로 갈리는 건 거의 없게. 보상은 제안해 줘")
+- PR #54 의 던전은 전체 화면 한 장(무대 + 기술 원판)이라 "들어가서 돌아다니는" 느낌이 없었다.
+
+**원인(근거)**
+- 2차 설계 5절이 "선택 + 타이밍"만 정했고 맵 · 이동 · 여러 적이 없었다. 홈 지도(`gymMap/engine.ts`, 16×26칸 한 화면)보다 라운지 광장(`lounge/plaza.ts`, 28×40칸 · 카메라 따라감 · 방향키 · 탭 이동)이 던전에 맞다는 걸 코드로 확인.
+
+**고친 방법**
+- 설계 [docs/design/shadow-dungeon-map.md](design/shadow-dungeon-map.md) 새로 씀(2차 설계 5절을 대신함): 광장 엔진을 본뜬 20×36칸 던전 맵 · 조이스틱(모바일) · 방향키 · 탭 이동, 잡몹 5종(내일부터 · 야식 슬라임 · 알람 스누즈 · 핑계 · 희귀 소파 괴물)은 쫓아오지 않고 내 캐릭터는 체력이 없음, 닿으면 지금 전투 부품으로 전투 창, 타이밍 보너스 +5 · +2% 로 낮춤, 잡몹과 보스가 힘을 나눠 씀(배분이 전략), 보상은 꾸미기 · 자랑만(조각 · 도감 몬스터 카드 · 누적 처치 꾸미기 물품 · 연속 테두리 · 희귀 잡몹 · 공유 카드). PR D1 백엔드 잡몹 · D2 맵 · D3 보상, #54 는 D2 뒤에 함께 머지.
+
+**확인한 방법**
+- 설계 문서만(코드 변경 없음). 사용자와 "운동 = 힘, 잡으면 꾸미기" 한 줄 합의, 9절 결정 3개는 추천값.
+
+**아직 못 한 것**
+- D1 · D2 · D3 구현 전부.
+
+---
+
+## 2026-10-20 · 그림자 던전 PR B + C — 화면(전체 화면 던전 · 기술 원판 · 타이밍 · 충전 연출 · 입구)
+
+**불편** (사용자: "화면까지 한번에 하고 볼게")
+- PR A 로 서버는 힘을 모으고 던전 API 를 열었지만 화면이 없었다. 저장 결과의 1차 전투 장면도 응답 칸이 바뀌어 안 떴다.
+
+**원인(근거)**
+- `/shadow/dungeon` 라우트 · 던전 부품이 없었고, `WorkoutSession.tsx` · `Running.tsx` 가 사라진 `result.shadow` 를 읽었다(`lib/workoutSession.ts` · `lib/running.ts` 타입도 1차).
+
+**고친 방법** — 세부: [docs/fixes/2026-10-20-shadow-dungeon-screens.md](fixes/2026-10-20-shadow-dungeon-screens.md)
+- **던전** `/shadow/dungeon`(`pages/ShadowDungeon.tsx` + `components/boss/DungeonView.tsx`): 전체 화면(머리 · 탭바 위), 무대(`DungeonStage`) · 능력치 칩 · 패시브 칩 · 타이밍 게이지(`TimingGauge`, 0.8초 · ±6% PERFECT · ±15% GOOD) · 기술 원판 5개 + 초크 통(`SkillPlates`). 원판 탭 → 힘주는 자세 + 게이지 → 탭 → `POST /api/shadow/dungeon/strike` → 기술별 연출(지진 점프 · 밀어내기 넉백 · 들어 던지기 2타 · 연타 4타 · 돌진 관통) → 합계 쾅 + 등급 · 치명타 도장 → 처치면 DOWN + 전리품.
+- **충전 연출** `ChargeScene`: 운동 · 러닝 결과 맨 위에서 원판이 던전 문으로 날아가 쌓임 → "+65 모음" → [던전 가서 쓰기]. 타입 `shadow` → `shadowCharge`.
+- **입구**: 홈 지도 입구 매트 목록 맨 위 "그림자 던전", 홈 한 줄 "힘 120 모음 · 던전 →", `/shadow` 맨 위 통 5개 + [던전 들어가기]. `/dev/dungeon` 가짜 4종(서버 없이).
+- CSS "그림자 던전" 블록(`.dg-jump` `.dg-launch` `.dg-knock-far` `.dg-lift-up` `.dg-slam-down` `.dg-dash-jab` `.dg-through` `.dg-ghost` `.dg-crack` `.dg-dust` `.dg-gauge-slide` `.dg-fly` …). 새 픽셀 그림 · 블러 · 글로우 없음.
+
+**확인한 방법**
+- `verify.sh` 통과(tsc 0 · 린트 늘지 않음 · 빌드). main 의 바코드 패키지가 worktree 에 없어 tsc 가 깨진 건 `npm install`.
+- `/dev/dungeon` 서버 없이 4종(보통 주 치명타 +108 · 돌진 2타 · 들어 던지기 · 연타 · 빈 통 토스트 · 처치 DOWN + 전리품). 이 브랜치 백엔드(8081) + 시험 계정으로 실제 `/shadow/dungeon`(enter → 치명타 지진 +95, 통 80 → 20) · `/shadow` 통 현황 · 홈 한 줄. 계정 · 행 정리.
+- 미리보기 창이 숨겨진 세션이라 타이머가 늦춰지고 스크린샷이 안 찍혔다 — DOM · 숫자로 확인. 눈으로는 사용자가 `localhost:5174/dev/dungeon` 에서(375px 도).
+
+**아직 못 한 것**
+- 실제 세션 저장 흐름에서 충전 연출 · 375px 스크린샷 · 처치 공유 카드. 개발 서버 StrictMode 에서 `enter` 가 2번(통계 칸만).
+
+---
+
+## 2026-10-20 · 그림자 던전 PR A — 백엔드(저장 = 힘 모으기, 던전 strike · 타이밍 · 패시브 · 정산)
+
+**불편** (사용자: "던전에 들어가서 스킬 · 능력치로 내가 직접 잡는 느낌")
+- 1차 그림자는 저장하면 혼자 때리고 끝나 고를 게 없었다. 설계 [docs/design/shadow-dungeon.md](design/shadow-dungeon.md)(8절 결정은 추천값으로 확정).
+
+**원인(근거)**
+- `ShadowBossService.onSession/onRun` 이 저장 끝에 바로 `attack` 을 불렀고(`shadow_hits` 한 줄 = 세션 하나), 힘을 모아 두는 자리 · 기술 · 보너스 규칙이 없었다.
+
+**고친 방법** — 세부: [docs/fixes/2026-10-20-shadow-dungeon-backend.md](fixes/2026-10-20-shadow-dungeon-backend.md)
+- **새 표 `shadow_charges`**(`ShadowCharge`): 저장 한 번 = 통(LEGS · CHEST · BACK · ARMS · RUN)별 한 줄. `shadow_weeks` 에 통 5칸 · `crit_tokens` · `settled` · `visits`, `shadow_hits` 에 `skill` · `grade` · `bonus`(전부 `@ColumnDefault`).
+- **규칙** `ShadowRules`: 종목 category → 통, 한 번 누름 60, PERFECT +10% · GOOD +5%, 패시브 4개(삼대장 · 장거리 · 꾸준함 · 그림자 사냥꾼) 각 +5% 합 15%, 치명타 토큰은 내가 고른 타에, 연출용 타 분배 `shares`.
+- **서비스**: 저장 → `charge`(하루 상한 300 은 충전 기준, 큰 통부터) · `POST /api/shadow/dungeon/enter` · `POST /api/shadow/dungeon/strike {skill, grade, crit}` · 안 쓴 힘은 **월요일 00:05 자동 정산**(`ShadowScheduler`, 못 돌면 상태 볼 때) · 삭제는 통에서 먼저 빼고 이미 쓴 힘은 마지막 타부터 깎음 · 탈퇴에 `ShadowCharge`.
+- 저장 응답 `shadow` → **`shadowCharge`**(모은 힘 · 토큰 · 상한 · 통 현황). `GET /api/shadow` 에 `charge` · `critTokens` · `passives` · `stats`.
+- `force` 는 MySQL 예약어라 칸 이름을 `gained` 로(설계 3절과 다름).
+
+**확인한 방법**
+- `ShadowBossServiceTest` 19개로 다시 씀(통 분배 · 상한 · 60 묶음 · 타이밍 · 토큰 · 패시브 · 처치 · 연속 · 삭제 · 1차 행 · 휴식 · 정산 · 스케줄러 · API · 이메일 없음), 백엔드 전체 101개 통과(local 프로필). `verify.sh --quick` 통과(화면 변경 없음).
+- 8081 에 이 브랜치 백엔드를 띄워 시험 계정으로 운동 · 러닝 저장 → 충전 → enter → strike(치명타 · 보너스 · 분배) → 빈 통 400 → 세션 삭제 재계산 → 401 → 탈퇴까지 실제 호출. 계정 · 행 정리.
+
+**아직 못 한 것**
+- Postgres 17 에서 `@ColumnDefault` 칸 추가 미확인 — 배포 전 Railway 스냅샷 + 첫 기동 로그 확인(안 되면 migration SQL).
+- PR B(던전 화면) · PR C(입구 · 충전 연출 · 홈 한 줄). 그동안 저장 결과의 1차 전투 장면은 안 뜬다(응답 칸 이름이 바뀜).
+---
+---
+
 ## 2026-10-20 · 인바디 "판정 장면" — 상담 결과 맨 위에 원판이 쾅 떨어지고 도장이 찍힌다
 
 **불편** (사용자 요청)

@@ -7,6 +7,7 @@ import com.ajou.muscleup.entity.UserCollectionItem;
 import com.ajou.muscleup.repository.AttendanceLogRepository;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.RunSessionRepository;
+import com.ajou.muscleup.repository.ShadowMobRepository;
 import com.ajou.muscleup.repository.ShadowWeekRepository;
 import com.ajou.muscleup.repository.UserCollectionItemRepository;
 import com.ajou.muscleup.repository.UserCollectionRepository;
@@ -46,6 +47,7 @@ public class CollectionService {
     private final WorkoutSessionRepository workoutSessionRepository;
     private final RunSessionRepository runSessionRepository;
     private final ShadowWeekRepository shadowWeekRepository;
+    private final ShadowMobRepository shadowMobRepository;
     private final CharacterProfileRepository characterProfileRepository;
     private final WeeklyGoalService weeklyGoalService;
     private final RewardRandom random;
@@ -170,6 +172,9 @@ public class CollectionService {
             if (item == null || item.category != cat) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 칸에 낄 수 없는 거예요.");
             }
+            if (cat == CollectionItem.Category.MONSTER) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "몬스터 카드는 도감에서 보기만 해요.");
+            }
             if (!itemRepository.existsByUser_IdAndItemCode(me.getId(), item.name())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "아직 모으지 못한 거예요.");
             }
@@ -210,6 +215,14 @@ public class CollectionService {
     public void grantBox(User me, String source) {
         UserCollection wallet = lockedWallet(me);
         wallet.setBoxes(wallet.getBoxes() + 1);
+    }
+
+    /** 조각을 지갑에 넣는다(던전 잡몹 처치). 조각으로 원하는 아이템을 만든다(craft) */
+    @Transactional
+    public void grantShards(User me, int shards) {
+        if (shards <= 0) return;
+        UserCollection wallet = lockedWallet(me);
+        wallet.setShards(wallet.getShards() + shards);
     }
 
     /** 조건을 채운 업적 아이템을 새로 준다 → 새로 얻은 이름들(그림자 처치 뒤처럼 출석 밖에서 확인할 때) */
@@ -295,7 +308,12 @@ public class CollectionService {
                 case RUN_42K -> (int) runSessionRepository.sumDistanceByUserId(me.getId());
                 case ACTIVITY_10, ACTIVITY_25 -> activity().level();
                 case SHADOW_1 -> (int) shadowWeekRepository.countByUser_IdAndKilledAtIsNotNull(me.getId());
-                case SHADOW_STREAK_4 -> shadowStreak();
+                case SHADOW_STREAK_4, SHADOW_STREAK_8 -> shadowStreak();
+                case MOB_TOMORROW -> mobKilled("TOMORROW");
+                case MOB_MIDNIGHT_SNACK -> mobKilled("MIDNIGHT_SNACK");
+                case MOB_SNOOZE -> mobKilled("SNOOZE");
+                case MOB_EXCUSE -> mobKilled("EXCUSE");
+                case MOB_SOFA -> mobKilled("SOFA");
             };
         }
 
@@ -312,6 +330,10 @@ public class CollectionService {
         }
 
         /** 그림자 연속 처치 주 수(ShadowRules.streakWeeks 와 같은 계산) */
+        private int mobKilled(String code) {
+            return shadowMobRepository.countByUser_IdAndCodeAndKilledAtIsNotNull(me.getId(), code) > 0 ? 1 : 0;
+        }
+
         private int shadowStreak() {
             LocalDate ws = WeeklyGoalService.weekStart(LocalDate.now(clock));
             return ShadowRules.streakWeeks(shadowWeekRepository.findAllByUser_IdAndWeekStartBetween(me.getId(),

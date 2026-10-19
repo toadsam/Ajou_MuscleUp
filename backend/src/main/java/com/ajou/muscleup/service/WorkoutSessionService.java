@@ -2,7 +2,7 @@ package com.ajou.muscleup.service;
 
 import com.ajou.muscleup.dto.attendance.AttendanceLogResponse;
 import com.ajou.muscleup.dto.attendance.AttendanceUpsertRequest;
-import com.ajou.muscleup.dto.shadow.ShadowHitResponse;
+import com.ajou.muscleup.dto.shadow.ShadowChargeResponse;
 import com.ajou.muscleup.entity.ShadowHit;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.WorkoutSession;
@@ -34,7 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
  * - 끝낼 때 무게가 있는 종목마다 가장 좋은 세트(추정 1RM)로 운동 기록(LiftService.record)을 하나 만든다 → 개인 최고 · 3대 · 점수가 PR F 와 똑같이.
  * - 원하면 오늘 출석도 함께(아직 안 했을 때만, 웨이트로) — 출석 점수 · 주간 목표 · 오늘 할 일이 그대로 붙는다.
  * - 세션을 지우면 그 세션이 만든 운동 기록도 지운다(3대 기록은 내려가지 않음 — PR F 와 같음).
- * - 저장 끝에 주간 보스 "그림자"를 공격한다(ShadowBossService.onSession, PR 이 있으면 치명타) → 응답 shadow. 지우면 그 공격도 지운다.
+ * - 저장 끝에 주간 보스 "그림자" 던전의 힘을 모은다(ShadowBossService.onSession, PR 이 있으면 치명타 토큰) → 응답 shadowCharge. 지우면 모은 힘도 뺀다.
  */
 @Service
 @RequiredArgsConstructor
@@ -77,9 +77,9 @@ public class WorkoutSessionService {
     /** rewardBox: 이 출석으로 받은 보상 상자(WEEKLY_GOAL · LUCKY · null) */
     public record AttendanceResult(boolean created, Integer expEarned, Integer weeklyGoalBonus, String rewardBox) {}
 
-    /** shadow: 이 세션이 그림자에게 한 공격(힘 1 미만이면 null) */
+    /** shadowCharge: 이 세션으로 그림자 던전에 모인 힘(힘 1 미만이면 null) */
     public record SaveResult(Detail session, List<LiftService.Pr> prs, List<LiftService.StatUpdate> statUpdates, int points,
-                             AttendanceResult attendance, ShadowHitResponse shadow) {}
+                             AttendanceResult attendance, ShadowChargeResponse shadowCharge) {}
 
     public record Previous(LocalDate date, List<SetView> sets) {}
 
@@ -176,8 +176,8 @@ public class WorkoutSessionService {
                     AttendanceUpsertRequest.workout(List.of("weight"), sessionMemo(saved)));
             attendance = new AttendanceResult(true, a.getExpEarned(), a.getWeeklyGoalBonus(), a.getRewardBox());
         }
-        ShadowHitResponse shadow = shadowBossService.onSession(me, saved, !prs.isEmpty());
-        return new SaveResult(detail(saved), prs, statUpdates, points, attendance, shadow);
+        ShadowChargeResponse shadowCharge = shadowBossService.onSession(me, saved, !prs.isEmpty());
+        return new SaveResult(detail(saved), prs, statUpdates, points, attendance, shadowCharge);
     }
 
     @Transactional(readOnly = true)

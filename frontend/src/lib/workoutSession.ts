@@ -1,7 +1,7 @@
 // 운동 세션(번핏처럼) — 진행 중 상태는 이 기기에만(localStorage) 두고, 끝낼 때 서버에 한 번 저장한다.
 // 새로고침 · 화면 꺼짐 · 다른 화면에 다녀와도 이어서 할 수 있게 바뀔 때마다 저장한다.
 import type { LiftPr, LiftStatUpdate } from "./lifts";
-import type { ShadowHit } from "./shadow";
+import type { ShadowCharge } from "./shadow";
 
 export type ActiveSet = { weight: string; reps: string; done: boolean };
 
@@ -44,7 +44,8 @@ export type SessionSaveResult = {
   points: number;
   attendance: { created: boolean; expEarned: number | null; weeklyGoalBonus: number | null; rewardBox?: string | null };
   /** 이 세션이 주간 보스 그림자에게 한 공격(힘 1 미만이면 null) */
-  shadow: ShadowHit | null;
+  /** 이 세션으로 그림자 던전에 모인 힘(힘 1 미만이면 null) */
+  shadowCharge: ShadowCharge | null;
 };
 
 const KEY = "dg-workout-session-v1";

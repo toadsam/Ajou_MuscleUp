@@ -68,6 +68,8 @@ export const HIRES: { id: StaffId; slot: HireSlot; code: string }[] = [
 
 export const UNIFORM_COLOR: Record<string, string> = {
   UNIFORM_YELLOW: "#F0BE2E", UNIFORM_ORANGE: "#E8772E", UNIFORM_WHITE: "#E4E2DA", UNIFORM_CHARCOAL: "#3A3C42",
+  // 그림자 던전 보상(그림자 20번 처치)
+  UNIFORM_SHADOW: "#26272B",
 };
 export const HAIR_COLOR: Record<string, string> = {
   HAIR_BLACK: "#1B1B1F", HAIR_BROWN: "#5A3A22", HAIR_GRAY: "#8C8F96", HAIR_BLOND: "#C9A25A",
@@ -476,6 +478,66 @@ function menuBoard(g: G, x: number, y: number, w: number) {
   });
 }
 
+// ── 그림자 던전 보상(docs/design/shadow-dungeon-map.md 5절)
+
+/** 그림자 트로피: 먹색 컵에 빨간 눈 두 점 */
+function shadowCup(g: G, cx: number, bottom: number) {
+  fill(g, cx - 5, bottom - 3, 10, 3, K.ink);
+  fill(g, cx - 4, bottom - 2, 8, 1, K.steelL);
+  fill(g, cx - 1, bottom - 6, 2, 3, K.steelD);
+  fill(g, cx - 6, bottom - 14, 12, 9, K.ink);
+  fill(g, cx - 5, bottom - 13, 10, 7, "#26272B");
+  fill(g, cx - 3, bottom - 11, 2, 2, K.red);
+  fill(g, cx + 1, bottom - 11, 2, 2, K.red);
+  fill(g, cx - 8, bottom - 13, 3, 4, K.ink);
+  fill(g, cx + 5, bottom - 13, 3, 4, K.ink);
+  fill(g, cx - 7, bottom - 12, 1, 2, "#3A3D43");
+  fill(g, cx + 6, bottom - 12, 1, 2, "#3A3D43");
+}
+
+function shadowTrophy(g: G, x: number, y: number, w: number, h: number, onWall: boolean) {
+  if (onWall) {
+    fill(g, x + 4, y + h - 5, w - 8, 3, K.ink);
+    fill(g, x + 5, y + h - 5, w - 10, 1, "#A47141");
+    shadowCup(g, x + (w >> 1), y + h - 5);
+    return;
+  }
+  shadowCup(g, x + (w >> 1), y + h - 1);
+}
+
+/** 던전 문 장식: 볼트 철판 문틀 안 어둠 + 빨간 눈 */
+function dungeonDoor(g: G, x: number, y: number, w: number) {
+  const left = x + (w >> 1) - 9;
+  fill(g, left, y + 3, 18, 24, K.ink);
+  fill(g, left + 1, y + 4, 16, 23, K.steelD);
+  fill(g, left + 3, y + 6, 12, 21, "#060607");
+  fill(g, left + 1, y + 4, 2, 2, K.steelL);
+  fill(g, left + 15, y + 4, 2, 2, K.steelL);
+  fill(g, left + 6, y + 14, 2, 2, K.red);
+  fill(g, left + 10, y + 14, 2, 2, K.red);
+  // 양옆 횃불 대신 노랑 · 검정 줄 띠
+  for (let i = 0; i < 4; i++) {
+    fill(g, left - 6, y + 6 + i * 5, 3, 3, i % 2 ? K.ink : K.yellow);
+    fill(g, left + 21, y + 6 + i * 5, 3, 3, i % 2 ? K.ink : K.yellow);
+  }
+}
+
+/** 야식 슬라임 인형: 구석에 앉은 주황 슬라임 */
+function slimePlush(g: G, x: number, y: number) {
+  fill(g, x + 1, y + 13, 14, 10, K.ink);
+  fill(g, x + 2, y + 11, 12, 3, K.ink);
+  fill(g, x + 4, y + 10, 8, 2, K.ink);
+  fill(g, x + 2, y + 14, 12, 8, "#F08A2E");
+  fill(g, x + 3, y + 12, 10, 3, "#F08A2E");
+  fill(g, x + 5, y + 11, 6, 1, "#F08A2E");
+  fill(g, x + 2, y + 20, 12, 2, "#C4661C");
+  fill(g, x + 4, y + 14, 2, 2, K.ink);
+  fill(g, x + 10, y + 14, 2, 2, K.ink);
+  fill(g, x + 4, y + 14, 1, 1, K.chalk);
+  fill(g, x + 10, y + 14, 1, 1, K.chalk);
+  fill(g, x + 7, y + 18, 2, 1, K.ink);
+}
+
 /** 한 자리에 물품 하나를 그린다(모르는 코드는 그리지 않는다) */
 export function drawDecorItem(g: G, slot: SlotId, code: string) {
   const [x, y, w, h] = SLOTS[slot].box;
@@ -523,6 +585,12 @@ export function drawDecorItem(g: G, slot: SlotId, code: string) {
       return saladBar(g, x, y, w, h);
     case "MENU_BOARD":
       return menuBoard(g, x, y, w);
+    case "SHADOW_TROPHY":
+      return shadowTrophy(g, x, y, w, h, y < 10);
+    case "DUNGEON_DOOR":
+      return dungeonDoor(g, x, y, w);
+    case "SLIME_PLUSH":
+      return slimePlush(g, x + ((w - 16) >> 1), y + h - 24);
     case "RING_RED":
       return ring(g, x, y, w, h, "#3E1C19", "#35201D");
     case "RING_YELLOW":

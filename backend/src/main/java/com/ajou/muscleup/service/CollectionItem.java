@@ -53,9 +53,19 @@ public enum CollectionItem {
     F_YELLOW(Category.FRAME, Rarity.RARE, "노란 원판 테두리", "plate-yellow", null),
     F_GREEN(Category.FRAME, Rarity.RARE, "초록 원판 테두리", "plate-green", null),
     F_GOLD(Category.FRAME, Rarity.EPIC, "금테", "gold", null),
-    F_HAZARD(Category.FRAME, Rarity.LEGENDARY, "출입 금지 테이프", "hazard", null);
+    F_HAZARD(Category.FRAME, Rarity.LEGENDARY, "출입 금지 테이프", "hazard", null),
+    // ── 카드 테두리: 업적(그림자 8주 연속 — docs/design/shadow-dungeon-map.md 5절)
+    F_SHADOW(Category.FRAME, Rarity.EPIC, "그림자 사냥 테두리", "shadow", Achievement.SHADOW_STREAK_8),
 
-    public enum Category { TITLE, TANK, FRAME }
+    // ── 몬스터 도감(보기만, 장착 없음): 던전 잡몹을 처음 잡으면 등록. value = 잡몹 코드(그림은 frontend components/dungeon/mobArt)
+    M_TOMORROW(Category.MONSTER, Rarity.COMMON, "내일부터", "TOMORROW", Achievement.MOB_TOMORROW),
+    M_MIDNIGHT_SNACK(Category.MONSTER, Rarity.COMMON, "야식 슬라임", "MIDNIGHT_SNACK", Achievement.MOB_MIDNIGHT_SNACK),
+    M_SNOOZE(Category.MONSTER, Rarity.COMMON, "알람 스누즈", "SNOOZE", Achievement.MOB_SNOOZE),
+    M_EXCUSE(Category.MONSTER, Rarity.RARE, "핑계", "EXCUSE", Achievement.MOB_EXCUSE),
+    M_SOFA(Category.MONSTER, Rarity.EPIC, "소파 괴물", "SOFA", Achievement.MOB_SOFA);
+
+    /** MONSTER: 몬스터 도감 카드(장착하지 않는다) */
+    public enum Category { TITLE, TANK, FRAME, MONSTER }
 
     public enum Rarity {
         COMMON(60, 5, 30), RARE(28, 12, 80), EPIC(10, 30, 200), LEGENDARY(2, 80, 500);
@@ -87,7 +97,13 @@ public enum CollectionItem {
         ACTIVITY_10("활동 레벨 10", 10),
         ACTIVITY_25("활동 레벨 25", 25),
         SHADOW_1("주간 보스 그림자 처치 1번", 1),
-        SHADOW_STREAK_4("그림자 4주 연속 처치", 4);
+        SHADOW_STREAK_4("그림자 4주 연속 처치", 4),
+        SHADOW_STREAK_8("그림자 8주 연속 처치", 8),
+        MOB_TOMORROW("던전에서 '내일부터' 잡기", 1),
+        MOB_MIDNIGHT_SNACK("던전에서 '야식 슬라임' 잡기", 1),
+        MOB_SNOOZE("던전에서 '알람 스누즈' 잡기", 1),
+        MOB_EXCUSE("던전에서 '핑계' 잡기", 1),
+        MOB_SOFA("던전의 희귀 몬스터 '소파 괴물' 잡기", 1);
 
         public final String hint;
         public final int goal;

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import DungeonDoor from "../boss/DungeonDoor";
+import { DUNGEON_PATH } from "../../lib/shadow";
 import { barbellWeight } from "../gym/plates";
 import { logEvent } from "../../utils/analytics";
 import AvatarRenderer from "../avatar/AvatarRenderer";
@@ -922,6 +924,23 @@ export default function GymMap(props: Props) {
               <p className="gm-eyebrow">입구 · 다른 공간</p>
               <h2>어디로 갈까요?</h2>
               <ul className="gm-decor-list">
+                {/* 그림자 던전(docs/design/shadow-dungeon.md 5.1): 잠금 없음, 전체 화면 라우트로 */}
+                <li className={loggedIn ? "" : "locked"}>
+                  <span className="gm-decor-preview flex items-center justify-center bg-steel-950" aria-hidden="true">
+                    <DungeonDoor size={28} />
+                  </span>
+                  <div className="gm-decor-info">
+                    <b>그림자 던전</b>
+                    <small>{loggedIn ? "이번 주 운동으로 모은 힘을 기술로 쏴요" : "로그인하면 들어갈 수 있어요"}</small>
+                  </div>
+                  {loggedIn ? (
+                    <Link to={DUNGEON_PATH} className="dg-btn dg-btn-primary">
+                      들어가기
+                    </Link>
+                  ) : (
+                    <span className="gm-decor-state font-num">잠김</span>
+                  )}
+                </li>
                 {spaces.map(({ id, item }) => {
                   const open = Boolean(item?.owned);
                   return (
@@ -1043,11 +1062,13 @@ export default function GymMap(props: Props) {
                     key={item.code}
                     type="button"
                     aria-pressed={layout.UNIFORM === item.code}
-                    disabled={placing}
+                    disabled={placing || !item.owned}
+                    title={item.owned ? undefined : item.hint}
                     onClick={() => void place("UNIFORM", item.code, `${item.label}로 갈아입었어요`)}
                   >
                     <i style={{ background: UNIFORM_COLOR[item.code] }} />
                     {item.label}
+                    {!item.owned && <small className="font-num"> {item.progress}/{item.goal}</small>}
                   </button>
                 ))}
               </div>
