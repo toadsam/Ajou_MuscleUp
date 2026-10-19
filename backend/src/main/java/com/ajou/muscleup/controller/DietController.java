@@ -2,6 +2,7 @@ package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.repository.UserRepository;
+import com.ajou.muscleup.service.BarcodeService;
 import com.ajou.muscleup.service.DietService;
 import com.ajou.muscleup.service.FoodCatalogService;
 import com.ajou.muscleup.service.FoodPhotoService;
@@ -24,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
  *   GET    /api/diet/summary?from=&to=   날짜별 합계(최대 31일, 기본 최근 7일)
  *   GET    /api/diet/recent-foods        최근 적은 음식(다시 넣기)
  *   GET    /api/diet/foods?q=            음식 검색(공공 영양 DB, 100g · 100ml 기준 값, 최대 30개)
+ *   GET    /api/diet/barcode/{code}      포장 바코드 → 제품 이름 + 영양값 후보(식약처 바코드 정보 → 음식 검색, 저장 안 함, 하루 100번)
  *   GET    /api/diet/my-foods            내 음식(검색에 없는 음식을 저장해 둔 것)
  *   POST   /api/diet/my-foods            내 음식 저장(같은 이름이면 새 값으로) { name, amount, kcal, proteinG, carbG, fatG }
  *   PUT    /api/diet/my-foods/{id}       고치기
@@ -43,6 +45,7 @@ public class DietController {
     private final DietService dietService;
     private final FoodCatalogService foodCatalogService;
     private final FoodPhotoService foodPhotoService;
+    private final BarcodeService barcodeService;
     private final MyFoodService myFoodService;
     private final UserRepository userRepository;
 
@@ -71,6 +74,11 @@ public class DietController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "검색어는 40자까지예요.");
         }
         return foodCatalogService.search(q);
+    }
+
+    @GetMapping("/barcode/{code}")
+    public BarcodeService.BarcodeResult barcode(@AuthenticationPrincipal String email, @PathVariable String code) {
+        return barcodeService.lookup(me(email), code);
     }
 
     @GetMapping("/my-foods")

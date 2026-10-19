@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
 import FoodSearchField from "../components/diet/FoodSearchField";
 import PhotoMealDialog from "../components/diet/PhotoMealDialog";
+import BarcodeScanPanel from "../components/diet/BarcodeScanPanel";
 import { FOOD_SOURCE_LABEL, type FoodHit } from "../lib/foodSearch";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
@@ -87,7 +88,7 @@ export default function Diet() {
   const [day, setDay] = useState<DayView | null>(null);
   const [week, setWeek] = useState<DaySummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<{ mealType: MealType; entry?: Entry } | null>(null);
+  const [editing, setEditing] = useState<{ mealType: MealType; entry?: Entry; scan?: boolean } | null>(null);
   const [goalOpen, setGoalOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -205,15 +206,20 @@ export default function Diet() {
           <>
             <GoalBoard totals={day.totals} goal={day.goal} onEditGoal={() => setGoalOpen(true)} />
 
-            {/* 사진으로 한 끼 — 끼니는 지금 시각으로 미리 고른다(창에서 바꿀 수 있음) */}
+            {/* 사진 · 바코드로 한 끼 — 끼니는 지금 시각으로 미리 고른다(창에서 바꿀 수 있음) */}
             <div className="dg-steel flex flex-wrap items-center justify-between gap-3 p-4 md:p-5">
               <div>
-                <h2 className="font-display text-xl">사진으로 기록</h2>
-                <p className="mt-1 text-xs text-steel-400">음식 사진을 찍으면 음식과 양을 찾아 줘요. 저장 전에 확인할 수 있어요.</p>
+                <h2 className="font-display text-xl">찍어서 기록</h2>
+                <p className="mt-1 text-xs text-steel-400">음식 사진이나 포장 바코드를 찍으면 찾아 줘요. 저장 전에 확인할 수 있어요.</p>
               </div>
-              <button type="button" onClick={() => setPhotoOpen(true)} className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">
-                사진으로 기록
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setPhotoOpen(true)} className="dg-btn dg-btn-primary min-h-[40px] px-4 text-sm">
+                  사진으로 기록
+                </button>
+                <button type="button" onClick={() => setEditing({ mealType: mealForNow(), scan: true })} className="dg-btn dg-btn-steel min-h-[40px] px-4 text-sm">
+                  바코드 찍기
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -286,6 +292,7 @@ export default function Diet() {
           date={day.date}
           mealType={editing.mealType}
           entry={editing.entry}
+          scanFirst={editing.scan}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -438,12 +445,15 @@ function EntryDialog({
   date,
   mealType: initialMeal,
   entry,
+  scanFirst = false,
   onClose,
   onSaved,
 }: {
   date: string;
   mealType: MealType;
   entry?: Entry;
+  /** 바코드 칸을 열고 시작(목록 위 "바코드 찍기") */
+  scanFirst?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -464,6 +474,7 @@ function EntryDialog({
   const myFoods = useMyFoods();
   const [saveMine, setSaveMine] = useState(false);
   const [editMine, setEditMine] = useState(false);
+  const [scanning, setScanning] = useState(scanFirst && !entry);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const nameId = useId();
@@ -628,12 +639,36 @@ function EntryDialog({
           </div>
         )}
 
+        {scanning && (
+          <BarcodeScanPanel
+            onPick={(f) => {
+              pickFood(f);
+              setScanning(false);
+            }}
+            onName={(n) => {
+              // 영양 정보가 없는 제품: 이름만 채우고, 포장 값을 적으면 다음엔 바로 나오게 내 음식 저장을 켜 둔다
+              setFood(null);
+              setName(n.slice(0, 60));
+              setSaveMine(true);
+              setScanning(false);
+            }}
+            onClose={() => setScanning(false)}
+          />
+        )}
+
         {/* 이름 칸은 검색 목록이 붙으므로 한 줄을 다 쓴다 */}
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-3 space-y-1">
-            <label htmlFor={nameId} className="text-xs font-bold text-steel-300">
-              음식 이름
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor={nameId} className="text-xs font-bold text-steel-300">
+                음식 이름
+              </label>
+              {!entry && !scanning && (
+                <button type="button" onClick={() => setScanning(true)} className="text-xs font-bold text-plate-yellow underline underline-offset-4">
+                  바코드로 찾기
+                </button>
+              )}
+            </div>
             <FoodSearchField
               id={nameId}
               value={name}

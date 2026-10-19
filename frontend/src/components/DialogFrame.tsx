@@ -39,7 +39,9 @@ export default function DialogFrame({ open, onClose, title, description, childre
       Array.from(dialog?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter((el) => !el.hasAttribute("disabled"));
     // 첫 입력 칸(라디오 · 글상자)이 있으면 그쪽, 없으면 첫 버튼
     const firstField = dialog?.querySelector<HTMLElement>("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
-    (firstField ?? focusables()[0])?.focus();
+    // data-autofocus 가 있으면 그쪽(바코드 카메라처럼 키보드가 화면을 가리면 안 될 때)
+    const preferred = dialog?.querySelector<HTMLElement>("[data-autofocus]");
+    (preferred ?? firstField ?? focusables()[0])?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {

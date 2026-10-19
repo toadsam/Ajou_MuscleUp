@@ -38,3 +38,15 @@ export type PhotoCandidate = {
 };
 
 export type PhotoResult = { food: boolean; items: PhotoCandidate[]; catalogReady: boolean; dailyLimit: number };
+
+/** 바코드 조회(/api/diet/barcode/{code}). 제품 이름은 식약처 바코드 정보, matches 는 그 이름으로 찾은 음식 DB 후보 */
+export type BarcodeResult = {
+  barcode: string;
+  found: boolean;
+  name: string | null;
+  maker: string | null;
+  category: string | null;
+  otherNames: string[];
+  matches: FoodHit[];
+  catalogReady: boolean;
+};
