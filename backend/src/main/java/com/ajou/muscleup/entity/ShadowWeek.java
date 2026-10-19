@@ -94,6 +94,10 @@ public class ShadowWeek extends BaseTimeEntity {
     @ColumnDefault("0")
     @Column(nullable = false)
     private int visits;
+    /** 잡몹에 쓴 힘(보너스 전) — 다음 주 체력 계산에 보스 피해와 함께 센다(그 주에 한 운동량) */
+    @ColumnDefault("0")
+    @Column(name = "mob_force", nullable = false)
+    private int mobForce;
 
     /** 그 통에 남은 힘 */
     public int charge(String skill) {

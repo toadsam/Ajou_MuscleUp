@@ -19,8 +19,9 @@ import java.util.Set;
  *
  * 2차 던전(docs/design/shadow-dungeon.md 2절): 저장은 힘을 통(기술)에 모으고, 던전에서 한 번 누를 때 통에서 60씩 쓴다.
  * - 통 5개 = 종목 category: 하체 LEGS(지진) · 가슴 CHEST(밀어내기) · 등 BACK(들어 던지기) · 어깨 · 팔 · 코어 · 기타 ARMS(연타) · 러닝 RUN(돌진).
- * - 타이밍 PERFECT +10% · GOOD +5%(한 타 상한 10%), 패시브 4개 각 +5%(합 상한 15%), 치명타 토큰은 내가 고른 타에(세션당 1개).
- * - 능력치 · 패시브는 데미지 총량을 운동량 밖으로 늘리지 않는다: 보너스 전부 합쳐도 한 타의 25% 이하.
+ * - 타이밍 PERFECT +5% · GOOD +2%(지도판에서 낮춤), 패시브 4개 각 +5%(합 상한 15%), 치명타 토큰은 내가 고른 타에(세션당 1개).
+ * - 능력치 · 패시브는 데미지 총량을 운동량 밖으로 늘리지 않는다: 보너스 전부 합쳐도 한 타의 20% 이하.
+ * 지도판(docs/design/shadow-dungeon-map.md 3절): 주마다 잡몹 4마리(+ 희귀 1). 체력 = 보스 체력 × 비율(최소 15), 오버킬 없음(남는 힘은 통으로), 보상은 조각.
  */
 public final class ShadowRules {
     /** 보스 이름(8절 결정: "그림자" 그대로) */
@@ -75,8 +76,9 @@ public final class ShadowRules {
     public static final String PERFECT = "PERFECT";
     public static final String GOOD = "GOOD";
     public static final String MISS = "MISS";
-    public static final int TIMING_PERFECT_PCT = 10;
-    public static final int TIMING_GOOD_PCT = 5;
+    /** 지도판(shadow-dungeon-map.md 4.2): 조작 영향을 "거의 없게" — 10 · 5 에서 낮춤 */
+    public static final int TIMING_PERFECT_PCT = 5;
+    public static final int TIMING_GOOD_PCT = 2;
     /** 패시브 하나 +5%, 합쳐서 15% 까지 */
     public static final int PASSIVE_PCT = 5;
     public static final int PASSIVE_CAP_PCT = 15;
@@ -97,7 +99,54 @@ public final class ShadowRules {
     public static final int ARMS_STRIKES = 4;
     public static final double BACK_FIRST_SHARE = 0.3;
 
+    // ---- 지도판 잡몹 ----
+    /** 잡몹 한 종류: 이름 · 보스 체력 대비 비율(%) · 잡으면 받는 조각 · 희귀 */
+    public record MobDef(String code, String name, int hpPct, int shards, boolean rare) {}
+
+    public static final MobDef TOMORROW = new MobDef("TOMORROW", "내일부터", 10, 1, false);
+    public static final MobDef MIDNIGHT_SNACK = new MobDef("MIDNIGHT_SNACK", "야식 슬라임", 12, 1, false);
+    public static final MobDef SNOOZE = new MobDef("SNOOZE", "알람 스누즈", 10, 1, false);
+    public static final MobDef EXCUSE = new MobDef("EXCUSE", "핑계", 14, 2, false);
+    public static final MobDef SOFA = new MobDef("SOFA", "소파 괴물", 20, 5, true);
+    /** 매주 나오는 잡몹(희귀 제외) */
+    public static final List<MobDef> COMMON_MOBS = List.of(TOMORROW, MIDNIGHT_SNACK, SNOOZE, EXCUSE);
+    public static final Map<String, MobDef> MOBS = Map.of(
+            TOMORROW.code(), TOMORROW, MIDNIGHT_SNACK.code(), MIDNIGHT_SNACK, SNOOZE.code(), SNOOZE, EXCUSE.code(), EXCUSE, SOFA.code(), SOFA);
+    public static final int MOB_MIN_HP = 15;
+    /** 지난주 보스를 이만큼(%) 이상 오버킬로 잡으면 이번 주에 희귀 잡몹 */
+    public static final int RARE_OVERKILL_PCT = 50;
+    /** 맵 자리 수(입구 방 2 · 가운데 방 2 · 희귀 1) */
+    public static final int MOB_SLOTS = 5;
+    public static final String TARGET_BOSS = "BOSS";
+
     private ShadowRules() {}
+
+    /** 잡몹 체력: round(보스 체력 × 비율), 최소 15 */
+    public static int mobHp(int bossHp, MobDef def) {
+        return Math.max(MOB_MIN_HP, (int) Math.round(bossHp * def.hpPct() / 100.0));
+    }
+
+    /**
+     * 이번 주 잡몹 배치: 매주 4종 + (지난주 큰 오버킬이면) 희귀 1. 자리는 사용자 · 주 시드로 섞는다(같은 주는 늘 같은 배치).
+     * 반환: 자리 순서대로 MobDef(자리 번호 = 목록 위치, 희귀는 마지막 자리 4)
+     */
+    public static List<MobDef> mobLineup(long userId, LocalDate weekStart, boolean rare) {
+        java.util.ArrayList<MobDef> out = new java.util.ArrayList<>(COMMON_MOBS);
+        java.util.Collections.shuffle(out, new java.util.Random(userId * 1_000_003L + weekStart.toEpochDay()));
+        if (rare) out.add(SOFA);
+        return List.copyOf(out);
+    }
+
+    /**
+     * 잡몹을 칠 때 실제로 쓰는 힘: 통에서 꺼낸 force 중 남은 체력을 채우는 가장 작은 값(나머지는 통으로).
+     * 보너스 · 치명타를 넣은 피해가 remaining 이상이 되는 최소 f(1..force). 다 써도 모자라면 force
+     */
+    public static int neededForce(int force, int remaining, int bonusPct, boolean crit, double critMultiplier) {
+        for (int f = 1; f <= force; f++) {
+            if (strikeDamage(f, bonusPct, crit, critMultiplier) >= remaining) return f;
+        }
+        return force;
+    }
 
     /** 종목 category → 통. LEGS · CHEST · BACK 은 그대로, 나머지(SHOULDERS · ARMS · CORE · OTHER · 모름)는 ARMS */
     public static String skillOf(String category) {

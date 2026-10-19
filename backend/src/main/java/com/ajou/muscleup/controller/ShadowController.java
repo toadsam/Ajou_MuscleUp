@@ -24,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
  *   GET  /api/shadow                  이번 주 그림자(체력 · 들어간 힘 · 공격 목록 · 연속 처치 · 지난주 · 통 · 토큰 · 패시브 · 능력치)
  *   GET  /api/shadow/history?weeks=8  최근 n 주 전적
  *   POST /api/shadow/dungeon/enter    던전에 들어옴(횟수만 센다) → 상태
- *   POST /api/shadow/dungeon/strike   {skill, grade, crit} 기술 한 번 → 한 타
+ *   POST /api/shadow/dungeon/strike   {target, skill, grade, crit} 기술 한 번 → 한 타(target: BOSS 또는 잡몹 id)
  * 힘 모으기는 운동 세션 · 러닝 저장(POST /api/workouts · /api/runs)이 하고, 응답의 shadowCharge 칸으로 돌아온다.
  */
 @RestController
@@ -51,7 +51,7 @@ public class ShadowController {
 
     @PostMapping("/dungeon/strike")
     public ShadowHitResponse strike(@AuthenticationPrincipal String email, @RequestBody ShadowStrikeRequest req) {
-        return shadowBossService.strike(me(email), req.skill(), req.grade(), Boolean.TRUE.equals(req.crit()));
+        return shadowBossService.strike(me(email), req.target(), req.skill(), req.grade(), Boolean.TRUE.equals(req.crit()));
     }
 
     private User me(String email) {

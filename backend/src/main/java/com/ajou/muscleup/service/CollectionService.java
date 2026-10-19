@@ -212,6 +212,14 @@ public class CollectionService {
         wallet.setBoxes(wallet.getBoxes() + 1);
     }
 
+    /** 조각을 지갑에 넣는다(던전 잡몹 처치). 조각으로 원하는 아이템을 만든다(craft) */
+    @Transactional
+    public void grantShards(User me, int shards) {
+        if (shards <= 0) return;
+        UserCollection wallet = lockedWallet(me);
+        wallet.setShards(wallet.getShards() + shards);
+    }
+
     /** 조건을 채운 업적 아이템을 새로 준다 → 새로 얻은 이름들(그림자 처치 뒤처럼 출석 밖에서 확인할 때) */
     @Transactional
     public List<String> unlockAchievements(User me) {

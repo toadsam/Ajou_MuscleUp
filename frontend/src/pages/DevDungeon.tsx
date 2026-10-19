@@ -62,6 +62,7 @@ function statusOf(p: Preset): ShadowStatus {
     critTokens: w.critTokens,
     passives: w.passives,
     stats: p.stats,
+    mobs: [],
   };
 }
 

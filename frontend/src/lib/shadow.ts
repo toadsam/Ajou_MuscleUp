@@ -3,8 +3,8 @@
 
 import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
 
-/** 1차 SESSION · RUN(저장이 곧 공격이던 때), 2차 DUNGEON(던전 타) · SETTLE(주 끝 자동 정산) */
-export type ShadowSource = "SESSION" | "RUN" | "DUNGEON" | "SETTLE";
+/** 1차 SESSION · RUN(저장이 곧 공격이던 때), 2차 DUNGEON(던전 타) · SETTLE(주 끝 자동 정산), 지도판 MOB(잡몹 타 — 응답에만) */
+export type ShadowSource = "SESSION" | "RUN" | "DUNGEON" | "SETTLE" | "MOB";
 
 /** 기술 = 통(종목 category). 순서 = 화면 원판 순서 */
 export type ShadowSkill = "LEGS" | "CHEST" | "BACK" | "ARMS" | "RUN";
@@ -41,7 +41,15 @@ export type ShadowHit = {
   /** strike 응답에만: 이 타 뒤 남은 통 · 토큰 */
   chargeLeft: Record<ShadowSkill, number> | null;
   critTokensLeft: number | null;
+  /** 지도판: 잡몹을 친 타면 그 결과(hp · hpBefore · hpAfter · killed 도 잡몹 것). 보스 타는 null */
+  mob: ShadowMobHit | null;
 };
+
+/** 잡몹을 친 결과: 통으로 돌려준 힘 · 받은 조각 · 종류별 첫 처치(도감 카드) */
+export type ShadowMobHit = { id: number; code: string; name: string; rare: boolean; refunded: number; shards: number; firstKill: boolean };
+
+/** 이번 주 잡몹 한 마리(slot = 맵 자리 번호) */
+export type ShadowMob = { id: number; code: string; name: string; slot: number; hp: number; remaining: number; killed: boolean; rare: boolean; shards: number };
 
 export type ShadowStats = { strengthKg: number; enduranceKm: number; attendanceStreak: number; weeklyStreak: number; level: number };
 
@@ -66,6 +74,8 @@ export type ShadowStatus = {
   critTokens: number;
   passives: string[];
   stats: ShadowStats;
+  /** 지도판: 이번 주 잡몹(자리 순) */
+  mobs: ShadowMob[];
 };
 
 /** 운동 · 러닝 저장 응답의 shadowCharge — 이 저장으로 모인 힘 */
@@ -93,12 +103,13 @@ export const DUNGEON_PATH = "/shadow/dungeon";
 /** 서버 ShadowRules 와 같은 숫자 — 화면 설명 · 개발 화면의 흉내 계산용 */
 export const SHADOW_DAILY_CAP = 300;
 export const STRIKE_CHUNK = 60;
-export const TIMING_PCT: Record<ShadowGrade, number> = { PERFECT: 10, GOOD: 5, MISS: 0 };
+/** 지도판에서 낮춤(조작 영향 "거의 없게") — 서버 ShadowRules.TIMING_* */
+export const TIMING_PCT: Record<ShadowGrade, number> = { PERFECT: 5, GOOD: 2, MISS: 0 };
 export const PASSIVE_PCT = 5;
 export const PASSIVE_CAP_PCT = 15;
 export const PASSIVES = { BIG_THREE: "삼대장", LONG_RUN: "장거리", STEADY: "꾸준함", HUNTER: "그림자 사냥꾼" } as const;
 
-export const SOURCE_LABEL: Record<ShadowSource, string> = { SESSION: "운동", RUN: "러닝", DUNGEON: "던전", SETTLE: "자동" };
+export const SOURCE_LABEL: Record<ShadowSource, string> = { SESSION: "운동", RUN: "러닝", DUNGEON: "던전", SETTLE: "자동", MOB: "잡몹" };
 
 /** 기술 하나의 화면 정보: 이름 · 채우는 운동 · 원판 색(국제 규격 — 의미: 통 구분) · 내 동작 · 연출 종류 */
 export type SkillMeta = {
@@ -249,6 +260,7 @@ export function localStrike(w: LocalWorld, skill: ShadowSkill, grade: ShadowGrad
     shares: localShares(skill, damage, w.passives),
     chargeLeft: charge,
     critTokensLeft: world.critTokens,
+    mob: null,
   };
   return { hit, world };
 }

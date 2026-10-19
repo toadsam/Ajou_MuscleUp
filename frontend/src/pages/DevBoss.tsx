@@ -33,6 +33,7 @@ const base: Omit<ShadowHit, "id"> = {
   shares: [],
   chargeLeft: null,
   critTokensLeft: null,
+  mob: null,
 };
 
 const CASES: { label: string; hit: ShadowHit; motion: FightMotion }[] = [

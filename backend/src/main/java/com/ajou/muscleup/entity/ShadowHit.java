@@ -28,6 +28,8 @@ public class ShadowHit extends BaseTimeEntity {
     public static final String RUN = "RUN";
     public static final String DUNGEON = "DUNGEON";
     public static final String SETTLE = "SETTLE";
+    /** 잡몹을 친 타 — 응답에만 쓰고 이 표에는 넣지 않는다(잡몹 피해는 shadow_mobs.damage, 보스 합계와 섞지 않음) */
+    public static final String MOB = "MOB";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

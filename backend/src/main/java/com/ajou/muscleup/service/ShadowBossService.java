@@ -3,6 +3,7 @@ package com.ajou.muscleup.service;
 import com.ajou.muscleup.dto.shadow.ShadowChargeResponse;
 import com.ajou.muscleup.dto.shadow.ShadowHistoryItem;
 import com.ajou.muscleup.dto.shadow.ShadowHitResponse;
+import com.ajou.muscleup.dto.shadow.ShadowMobView;
 import com.ajou.muscleup.dto.shadow.ShadowStatusResponse;
 import com.ajou.muscleup.entity.AttendanceLog;
 import com.ajou.muscleup.entity.CharacterProfile;
@@ -10,6 +11,7 @@ import com.ajou.muscleup.entity.Gender;
 import com.ajou.muscleup.entity.RunSession;
 import com.ajou.muscleup.entity.ShadowCharge;
 import com.ajou.muscleup.entity.ShadowHit;
+import com.ajou.muscleup.entity.ShadowMob;
 import com.ajou.muscleup.entity.ShadowWeek;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.WeeklyGoalWeek;
@@ -20,6 +22,7 @@ import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.RunSessionRepository;
 import com.ajou.muscleup.repository.ShadowChargeRepository;
 import com.ajou.muscleup.repository.ShadowHitRepository;
+import com.ajou.muscleup.repository.ShadowMobRepository;
 import com.ajou.muscleup.repository.ShadowWeekRepository;
 import com.ajou.muscleup.repository.UserCollectionItemRepository;
 import com.ajou.muscleup.repository.WeeklyGoalWeekRepository;
@@ -50,6 +53,9 @@ import org.springframework.web.server.ResponseStatusException;
  * - 처치 보상은 한 주 한 번: 캐릭터 점수 +10(applyAttendance), 상자 1개(SHADOW), 칭호(업적 SHADOW_1 · SHADOW_STREAK_4).
  * - 세션 · 러닝을 지우면 모은 힘을 통에서 빼고, 이미 쓴 힘이면 마지막 타부터 깎아 합계를 다시 더한다. 처치 · 보상은 되돌리지 않는다.
  * - 1차 때 생긴 공격 행(source SESSION · RUN)은 그대로 되감기 · 삭제된다. 숫자 규칙은 모두 ShadowRules.
+ * - 지도판(docs/design/shadow-dungeon-map.md): 주마다 잡몹 4마리(+ 희귀). strike 의 target 으로 잡몹을 치면 체력을 채우는 만큼만 쓰고
+ *   남는 힘은 통으로 돌려준다(오버킬 없음). 잡으면 조각, 종류별 첫 처치는 도감 카드. 잡몹에 쓴 힘(mob_force)도 다음 주 체력 계산에 센다.
+ *   세션을 지울 때 이미 쓴 힘은 보스 타에서만 깎는다(잡몹 처치 · 조각은 되돌리지 않는다).
  */
 @Service
 @RequiredArgsConstructor
@@ -63,6 +69,7 @@ public class ShadowBossService {
     private final ShadowWeekRepository weekRepository;
     private final ShadowHitRepository hitRepository;
     private final ShadowChargeRepository chargeRepository;
+    private final ShadowMobRepository mobRepository;
     private final WeeklyGoalWeekRepository weeklyGoalWeekRepository;
     private final CharacterProfileRepository profileRepository;
     private final RunSessionRepository runRepository;
@@ -95,7 +102,8 @@ public class ShadowBossService {
                 ShadowRules.remaining(week.getHp(), week.getDamage()), week.getKilledAt() != null, week.getKilledAt(),
                 ShadowRules.overkillPct(week.getHp(), week.getDamage()), week.getLevelAtStart(), hits,
                 ShadowRules.streakWeeks(recent, ws), last,
-                chargeMap(week), week.chargeTotal(), week.getCritTokens(), List.copyOf(passives), stats(user, week, ws, today));
+                chargeMap(week), week.chargeTotal(), week.getCritTokens(), List.copyOf(passives), stats(user, week, ws, today),
+                mobRepository.findAllByWeek_IdOrderBySlotAsc(week.getId()).stream().map(ShadowBossService::mobView).toList());
     }
 
     /** 최근 n 주 전적(이번 주 포함, 최근 순). 행이 없는 주는 빠진다 */
@@ -200,12 +208,18 @@ public class ShadowBossService {
         return status(user);
     }
 
-    /**
-     * 기술 한 번: 통에서 min(남은 힘, 60)을 꺼내 때린다. grade 는 클라이언트가 말하는 타이밍(보너스 상한 10% 라 속여도 작다).
-     * useCrit 이고 토큰이 있으면 이 타가 치명타. 통이 비면 400.
-     */
+    /** 보스를 친다(target 없음) — 2차 화면 · 테스트가 쓰던 모양 */
     @Transactional
     public ShadowHitResponse strike(User user, String skill, String gradeIn, boolean useCrit) {
+        return strike(user, null, skill, gradeIn, useCrit);
+    }
+
+    /**
+     * 기술 한 번: 통에서 min(남은 힘, 60)을 꺼내 때린다. grade 는 클라이언트가 말하는 타이밍(보너스 상한 5% 라 속여도 작다).
+     * useCrit 이고 토큰이 있으면 이 타가 치명타. 통이 비면 400. target 이 잡몹 id 면 그 잡몹을(strikeMob), 없거나 BOSS 면 보스를.
+     */
+    @Transactional
+    public ShadowHitResponse strike(User user, String target, String skill, String gradeIn, boolean useCrit) {
         if (!ShadowRules.isSkill(skill)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모르는 기술이에요.");
         }
@@ -213,15 +227,18 @@ public class ShadowBossService {
         LocalDate today = LocalDate.now(clock);
         LocalDate ws = WeeklyGoalService.weekStart(today);
         ShadowWeek week = currentWeek(user, ws);
+        // 상대부터 확인(모르는 몬스터 404 · 쓰러짐 400) → 그다음 통
+        ShadowMob mob = mobTarget(user, week, target);
         int pool = week.charge(skill);
         if (pool <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "이번 주 " + ShadowRules.POOL_LABEL.get(skill) + " 운동으로 모은 힘이 없어요. 운동하고 다시 와요.");
         }
         int force = ShadowRules.chunk(pool);
-        week.addCharge(skill, -force);
         boolean crit = useCrit && week.getCritTokens() > 0;
         if (crit) week.setCritTokens(week.getCritTokens() - 1);
+        if (mob != null) return strikeMob(user, week, ws, today, mob, skill, grade, force, crit);
+        week.addCharge(skill, -force);
 
         Set<String> passives = passives(user, week, ws);
         int bonusPct = ShadowRules.timingPct(grade) + ShadowRules.passivePct(skill, passives);
@@ -344,7 +361,7 @@ public class ShadowBossService {
         return new ShadowHitResponse(hit.getId(), source, day, week.getHp(), raw, damage, crit, before, after, killedNow,
                 ShadowRules.overkillPct(week.getHp(), week.getDamage()), reward,
                 skill, grade, bonus, ShadowRules.shares(skill, damage, passives),
-                withLeft ? chargeMap(week) : null, withLeft ? week.getCritTokens() : null);
+                withLeft ? chargeMap(week) : null, withLeft ? week.getCritTokens() : null, null);
     }
 
     /** 처치 보상(한 주 한 번): 점수 +10 · 상자 1 · 업적 확인(칭호). 주간 목표 보너스와 같은 길 */
@@ -365,13 +382,90 @@ public class ShadowBossService {
         ShadowWeek week = weekRepository.findByUser_IdAndWeekStart(user.getId(), ws).orElse(null);
         if (week == null) {
             List<Integer> recent = weekRepository.findAllByUser_IdAndWeekStartBetween(user.getId(),
-                    ws.minusWeeks(ShadowRules.HP_WEEKS), ws.minusWeeks(1)).stream().map(ShadowWeek::getDamage).toList();
+                    ws.minusWeeks(ShadowRules.HP_WEEKS), ws.minusWeeks(1)).stream().map(w -> w.getDamage() + w.getMobForce()).toList();
             week = weekRepository.save(ShadowWeek.builder().user(user).weekStart(ws).hp(ShadowRules.hp(recent))
                     .levelAtStart(level(user)).rest(rest).settled(false).build());
         } else if (week.getKilledAt() == null && week.isRest() != rest) {
             week.setRest(rest);
         }
+        ensureMobs(user, week);
         return week;
+    }
+
+    /** 이번 주 잡몹이 없으면 만든다(새 주 · 배포 전에 생긴 이번 주 행). 지난주 보스를 크게 오버킬했으면 희귀 1 더 */
+    private void ensureMobs(User user, ShadowWeek week) {
+        if (week.getId() == null || !mobRepository.findAllByWeek_IdOrderBySlotAsc(week.getId()).isEmpty()) return;
+        boolean rare = weekRepository.findByUser_IdAndWeekStart(user.getId(), week.getWeekStart().minusWeeks(1))
+                .filter(w -> w.getKilledAt() != null && ShadowRules.overkillPct(w.getHp(), w.getDamage()) >= ShadowRules.RARE_OVERKILL_PCT)
+                .isPresent();
+        List<ShadowRules.MobDef> lineup = ShadowRules.mobLineup(user.getId(), week.getWeekStart(), rare);
+        List<ShadowMob> rows = new ArrayList<>(lineup.size());
+        for (int i = 0; i < lineup.size(); i++) {
+            ShadowRules.MobDef def = lineup.get(i);
+            rows.add(ShadowMob.builder().week(week).user(user).code(def.code()).slot(i).hp(ShadowRules.mobHp(week.getHp(), def)).build());
+        }
+        mobRepository.saveAll(rows);
+    }
+
+    /** strike 의 target → 이번 주 내 잡몹(없으면 보스 = null). 남의 것 · 모르는 id 404, 지난주 것 · 이미 쓰러짐 400 */
+    private ShadowMob mobTarget(User user, ShadowWeek week, String target) {
+        if (target == null || target.isBlank() || ShadowRules.TARGET_BOSS.equalsIgnoreCase(target.trim())) return null;
+        long id;
+        try {
+            id = Long.parseLong(target.trim());
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모르는 상대예요.");
+        }
+        ShadowMob mob = mobRepository.findByIdAndUser_Id(id, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "그 몬스터를 찾을 수 없어요."));
+        if (!mob.getWeek().getId().equals(week.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지난주 몬스터예요. 이번 주 던전에서 다시 만나요.");
+        }
+        if (mob.getKilledAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 쓰러진 몬스터예요.");
+        }
+        return mob;
+    }
+
+    /**
+     * 잡몹 한 타: 꺼낸 힘(force) 중 남은 체력을 채우는 최소만 쓰고 나머지는 통으로(오버킬 없음).
+     * 쓰러지면 조각 · 종류별 첫 처치 표시. 잡몹 피해는 보스 합계(shadow_hits)에 넣지 않는다.
+     */
+    private ShadowHitResponse strikeMob(User user, ShadowWeek week, LocalDate ws, LocalDate today, ShadowMob mob,
+                                        String skill, String grade, int force, boolean crit) {
+        ShadowRules.MobDef def = ShadowRules.MOBS.getOrDefault(mob.getCode(), ShadowRules.TOMORROW);
+        Set<String> passives = passives(user, week, ws);
+        int bonusPct = ShadowRules.timingPct(grade) + ShadowRules.passivePct(skill, passives);
+        double critMultiplier = ShadowRules.critMultiplier(week.getLevelAtStart(), passives.contains(ShadowRules.PASSIVE_HUNTER));
+        int before = Math.max(0, mob.getHp() - mob.getDamage());
+        int used = ShadowRules.neededForce(force, before, bonusPct, crit, critMultiplier);
+        int dealt = Math.min(before, ShadowRules.strikeDamage(used, bonusPct, crit, critMultiplier));
+        int bonus = Math.min(dealt, ShadowRules.boosted(used, bonusPct) - used);
+        week.addCharge(skill, -used);
+        week.setMobForce(week.getMobForce() + used);
+        mob.setDamage(mob.getDamage() + dealt);
+        int after = Math.max(0, mob.getHp() - mob.getDamage());
+
+        boolean killedNow = after == 0;
+        int shards = 0;
+        boolean firstKill = false;
+        if (killedNow) {
+            firstKill = mobRepository.countByUser_IdAndCodeAndKilledAtIsNotNull(user.getId(), mob.getCode()) == 0;
+            mob.setKilledAt(LocalDateTime.now(clock));
+            shards = def.shards();
+            collectionService.grantShards(user, shards);
+        }
+        mobRepository.save(mob);
+        weekRepository.save(week);
+        return new ShadowHitResponse(mob.getId(), ShadowHit.MOB, today, mob.getHp(), used, dealt, crit, before, after, killedNow, 0, null,
+                skill, grade, bonus, ShadowRules.shares(skill, dealt, passives), chargeMap(week), week.getCritTokens(),
+                new ShadowHitResponse.MobHit(mob.getId(), mob.getCode(), def.name(), def.rare(), force - used, shards, firstKill));
+    }
+
+    static ShadowMobView mobView(ShadowMob m) {
+        ShadowRules.MobDef def = ShadowRules.MOBS.getOrDefault(m.getCode(), ShadowRules.TOMORROW);
+        return new ShadowMobView(m.getId(), m.getCode(), def.name(), m.getSlot(), m.getHp(), Math.max(0, m.getHp() - m.getDamage()),
+                m.getKilledAt() != null, def.rare(), def.shards());
     }
 
     private int level(User user) {
@@ -464,7 +558,7 @@ public class ShadowBossService {
             if (killedNow) killedBefore = true;
             out.add(new ShadowHitResponse(h.getId(), h.getSource(), h.getHitOn(), week.getHp(), h.getRaw(), h.getDamage(), h.isCrit(),
                     before, after, killedNow, ShadowRules.overkillPct(week.getHp(), cumulative), null,
-                    h.getSkill(), h.getGrade(), h.getBonus(), ShadowRules.shares(h.getSkill(), h.getDamage(), passives), null, null));
+                    h.getSkill(), h.getGrade(), h.getBonus(), ShadowRules.shares(h.getSkill(), h.getDamage(), passives), null, null, null));
         }
         return out;
     }

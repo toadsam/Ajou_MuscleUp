@@ -11,11 +11,18 @@ import java.util.Map;
  * 2차 던전: skill(기술 · 통), grade(타이밍 등급), bonus(타이밍 + 패시브로 더해진 힘), shares(연출용 타 분배, 합 = damage),
  * chargeLeft · critTokensLeft(이 타 뒤 남은 통 · 토큰 — strike 응답에만, 목록에서는 null).
  * 1차 공격(source SESSION · RUN) · 자동 정산(SETTLE)은 skill · grade 가 null 일 수 있다.
+ * 지도판: 잡몹을 친 타는 source MOB, hp · hpBefore · hpAfter · killed 가 그 잡몹 것이고 mob 에 잡몹 결과가 온다(보스 타는 mob null).
  */
 public record ShadowHitResponse(Long id, String source, LocalDate hitOn, int hp, int raw, int damage, boolean crit, int hpBefore, int hpAfter,
                                 boolean killed, int overkillPct, Reward reward,
                                 String skill, String grade, int bonus, List<Integer> shares,
-                                Map<String, Integer> chargeLeft, Integer critTokensLeft) {
+                                Map<String, Integer> chargeLeft, Integer critTokensLeft, MobHit mob) {
     /** titles: 이 처치로 새로 얻은 칭호 이름들 */
     public record Reward(int points, int box, List<String> titles) {}
+
+    /**
+     * 잡몹을 친 결과. refunded: 체력을 채우고 남아 통으로 돌려준 힘, shards: 이번 처치로 받은 조각(못 잡았으면 0),
+     * firstKill: 이 종류를 처음 잡음(도감 몬스터 카드)
+     */
+    public record MobHit(Long id, String code, String name, boolean rare, int refunded, int shards, boolean firstKill) {}
 }

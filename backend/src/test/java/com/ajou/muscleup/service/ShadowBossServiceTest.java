@@ -4,11 +4,13 @@ import com.ajou.muscleup.config.TimeConfig;
 import com.ajou.muscleup.dto.shadow.ShadowChargeResponse;
 import com.ajou.muscleup.dto.shadow.ShadowHistoryItem;
 import com.ajou.muscleup.dto.shadow.ShadowHitResponse;
+import com.ajou.muscleup.dto.shadow.ShadowMobView;
 import com.ajou.muscleup.dto.shadow.ShadowStatusResponse;
 import com.ajou.muscleup.entity.AttendanceLog;
 import com.ajou.muscleup.entity.CharacterProfile;
 import com.ajou.muscleup.entity.CharacterTier;
 import com.ajou.muscleup.entity.RunSession;
+import com.ajou.muscleup.entity.ShadowMob;
 import com.ajou.muscleup.entity.ShadowWeek;
 import com.ajou.muscleup.entity.User;
 import com.ajou.muscleup.entity.WeeklyGoalWeek;
@@ -17,6 +19,7 @@ import com.ajou.muscleup.entity.WorkoutSet;
 import com.ajou.muscleup.repository.CharacterProfileRepository;
 import com.ajou.muscleup.repository.ShadowChargeRepository;
 import com.ajou.muscleup.repository.ShadowHitRepository;
+import com.ajou.muscleup.repository.ShadowMobRepository;
 import com.ajou.muscleup.repository.ShadowWeekRepository;
 import com.ajou.muscleup.repository.UserCollectionItemRepository;
 import com.ajou.muscleup.repository.UserCollectionRepository;
@@ -85,6 +88,7 @@ class ShadowBossServiceTest {
     @Autowired ShadowWeekRepository weeks;
     @Autowired ShadowHitRepository hits;
     @Autowired ShadowChargeRepository charges;
+    @Autowired ShadowMobRepository mobs;
     @Autowired CharacterProfileRepository profiles;
     @Autowired UserCollectionRepository wallets;
     @Autowired UserCollectionItemRepository items;
@@ -296,11 +300,11 @@ class ShadowBossServiceTest {
         assertThat(miss.hitOn()).isEqualTo(TODAY);
 
         ShadowHitResponse perfect = shadow.strike(alice, "LEGS", "PERFECT", false);
-        assertThat(perfect.damage()).isEqualTo(66);
-        assertThat(perfect.bonus()).isEqualTo(6);
+        assertThat(perfect.damage()).isEqualTo(63); // 60 + 5%
+        assertThat(perfect.bonus()).isEqualTo(3);
         ShadowHitResponse good = shadow.strike(alice, "LEGS", "GOOD", false); // 남은 30
         assertThat(good.raw()).isEqualTo(30);
-        assertThat(good.damage()).isEqualTo(32); // round(31.5)
+        assertThat(good.damage()).isEqualTo(31); // round(30 × 1.02 = 30.6)
         assertThat(good.chargeLeft().get("LEGS")).isZero();
 
         // 통이 비면 400 + 한국어 문구. 모르는 등급은 MISS, 모르는 기술은 400
@@ -310,18 +314,18 @@ class ShadowBossServiceTest {
         assertThatThrownBy(() -> shadow.strike(alice, "CHEST", null, false)).hasMessageContaining("가슴");
 
         ShadowStatusResponse s = shadow.status(alice);
-        assertThat(s.damage()).isEqualTo(158);
+        assertThat(s.damage()).isEqualTo(154);
         assertThat(s.hits()).hasSize(3);
         assertThat(s.hits().get(1).grade()).isEqualTo("PERFECT");
-        assertThat(s.hits().get(2).hpAfter()).isEqualTo(892);
+        assertThat(s.hits().get(2).hpAfter()).isEqualTo(896);
         assertThat(thisWeek().getHits()).isEqualTo(3);
 
         assertThat(ShadowRules.chunk(150)).isEqualTo(60);
         assertThat(ShadowRules.chunk(30)).isEqualTo(30);
-        assertThat(ShadowRules.timingPct("PERFECT")).isEqualTo(10);
-        assertThat(ShadowRules.timingPct("GOOD")).isEqualTo(5);
+        assertThat(ShadowRules.timingPct("PERFECT")).isEqualTo(5);
+        assertThat(ShadowRules.timingPct("GOOD")).isEqualTo(2);
         assertThat(ShadowRules.timingPct("whatever")).isZero();
-        assertThat(ShadowRules.boosted(60, 10)).isEqualTo(66);
+        assertThat(ShadowRules.boosted(60, 5)).isEqualTo(63);
     }
 
     @Test
@@ -342,16 +346,16 @@ class ShadowBossServiceTest {
         assertThat(crit.crit()).isTrue();
         assertThat(crit.damage()).isEqualTo(102);
         assertThat(crit.critTokensLeft()).isEqualTo(1);
-        // 타이밍 보너스 뒤에 배율: (60 + 10%) = 66 × 1.7 = 112.2 → 112
+        // 타이밍 보너스 뒤에 배율: (60 + 5%) = 63 × 1.7 = 107.1 → 107
         ShadowHitResponse both = shadow.strike(alice, "LEGS", "PERFECT", true);
-        assertThat(both.damage()).isEqualTo(112);
-        assertThat(both.bonus()).isEqualTo(6);
+        assertThat(both.damage()).isEqualTo(107);
+        assertThat(both.bonus()).isEqualTo(3);
         assertThat(both.critTokensLeft()).isZero();
         assertThat(thisWeek().getCrits()).isEqualTo(2);
 
         assertThat(ShadowRules.critMultiplier(20)).isEqualTo(1.7);
         assertThat(ShadowRules.strikeDamage(60, 0, true, 1.51)).isEqualTo(91); // Lv1
-        assertThat(ShadowRules.strikeDamage(60, 10, true, 1.7)).isEqualTo(112);
+        assertThat(ShadowRules.strikeDamage(60, 5, true, 1.7)).isEqualTo(107);
     }
 
     @Test
@@ -368,11 +372,11 @@ class ShadowBossServiceTest {
         assertThat(s.stats().enduranceKm()).isEqualTo(10.4);
         assertThat(s.stats().attendanceStreak()).isEqualTo(3); // 오늘(15)은 아직 → 어제(14)부터 거꾸로 12 까지 3일
 
-        // 돌진 PERFECT: 10% + 5%(장거리) + 5%(꾸준함) = 20% → 72, 장거리라 2타 [36, 36]
+        // 돌진 PERFECT: 5% + 5%(장거리) + 5%(꾸준함) = 15% → 69, 장거리라 2타 [34, 35]
         ShadowHitResponse dash = shadow.strike(alice, "RUN", "PERFECT", false);
-        assertThat(dash.damage()).isEqualTo(72);
-        assertThat(dash.bonus()).isEqualTo(12);
-        assertThat(dash.shares()).containsExactly(36, 36);
+        assertThat(dash.damage()).isEqualTo(69);
+        assertThat(dash.bonus()).isEqualTo(9);
+        assertThat(dash.shares()).containsExactly(34, 35);
         // 하체 기술엔 장거리가 안 붙는다: 60 + 5%(꾸준함) = 63
         shadow.onSession(alice, squat(alice, 6), false);
         assertThat(shadow.strike(alice, "LEGS", "MISS", false).damage()).isEqualTo(63);
@@ -726,16 +730,17 @@ class ShadowBossServiceTest {
                 .andExpect(jsonPath("$.skill").value("RUN"))
                 .andExpect(jsonPath("$.grade").value("GOOD"))
                 .andExpect(jsonPath("$.raw").value(52))
-                .andExpect(jsonPath("$.damage").value(55))
+                .andExpect(jsonPath("$.damage").value(53))
                 .andExpect(jsonPath("$.crit").value(false))
-                .andExpect(jsonPath("$.hpAfter").value(45))
+                .andExpect(jsonPath("$.hpAfter").value(47))
+                .andExpect(jsonPath("$.mob").doesNotExist())
                 .andExpect(jsonPath("$.chargeLeft.RUN").value(0))
                 .andExpect(jsonPath("$.critTokensLeft").value(1));
 
         mvc.perform(get("/api/shadow/history?weeks=8").with(as(alice)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].damage").value(55))
+                .andExpect(jsonPath("$[0].damage").value(53))
                 .andExpect(jsonPath("$[0].killed").value(false))
                 .andExpect(content().string(not(containsString("@test.local"))));
 
@@ -743,5 +748,184 @@ class ShadowBossServiceTest {
         mvc.perform(post("/api/shadow/dungeon/enter")).andExpect(status().is4xxClientError());
         mvc.perform(post("/api/shadow/dungeon/strike").contentType(MediaType.APPLICATION_JSON).content("{\"skill\":\"RUN\"}"))
                 .andExpect(status().is4xxClientError());
+    }
+
+    // ---------------- 지도판 잡몹 (docs/design/shadow-dungeon-map.md) ----------------
+
+    private ShadowMobView mobOf(ShadowStatusResponse s, String code) {
+        return s.mobs().stream().filter(m -> m.code().equals(code)).findFirst().orElseThrow();
+    }
+
+    @Test
+    void weekGetsFourMobsScaledToBossHpWithAStableLineup() {
+        week(alice, WEEK.minusWeeks(1), 400, 400, false, false); // 체력 420
+        ShadowStatusResponse s = shadow.status(alice);
+        assertThat(s.hp()).isEqualTo(420);
+        assertThat(s.mobs()).hasSize(4);
+        assertThat(s.mobs()).extracting(ShadowMobView::code).containsExactlyInAnyOrder("TOMORROW", "MIDNIGHT_SNACK", "SNOOZE", "EXCUSE");
+        assertThat(s.mobs()).extracting(ShadowMobView::slot).containsExactly(0, 1, 2, 3);
+        assertThat(mobOf(s, "TOMORROW").hp()).isEqualTo(42); // 420 × 10%
+        assertThat(mobOf(s, "MIDNIGHT_SNACK").hp()).isEqualTo(50); // × 12% = 50.4
+        assertThat(mobOf(s, "EXCUSE").hp()).isEqualTo(59); // × 14% = 58.8
+        assertThat(mobOf(s, "EXCUSE").shards()).isEqualTo(2);
+        assertThat(mobOf(s, "SNOOZE").name()).isEqualTo("알람 스누즈");
+        assertThat(s.mobs()).noneMatch(ShadowMobView::killed).noneMatch(ShadowMobView::rare);
+
+        // 다시 봐도 새로 만들지 않고, 배치는 사용자 · 주 시드로 늘 같다
+        assertThat(shadow.status(alice).mobs()).extracting(ShadowMobView::id).containsExactlyElementsOf(s.mobs().stream().map(ShadowMobView::id).toList());
+        assertThat(ShadowRules.mobLineup(alice.getId(), WEEK, false)).extracting(ShadowRules.MobDef::code)
+                .containsExactlyElementsOf(s.mobs().stream().map(ShadowMobView::code).toList());
+        // 첫 주(체력 100) — 최소 15
+        User bob = save("sb-bob@test.local");
+        assertThat(shadow.status(bob).mobs()).allSatisfy(m -> assertThat(m.hp()).isEqualTo(15));
+        assertThat(ShadowRules.mobHp(100, ShadowRules.EXCUSE)).isEqualTo(15);
+    }
+
+    @Test
+    void bigOverkillLastWeekSpawnsTheRareSofa() {
+        week(alice, WEEK.minusWeeks(1), 100, 160, true, false); // 오버킬 60%
+        ShadowStatusResponse s = shadow.status(alice);
+        assertThat(s.mobs()).hasSize(5);
+        ShadowMobView sofa = mobOf(s, "SOFA");
+        assertThat(sofa.rare()).isTrue();
+        assertThat(sofa.slot()).isEqualTo(4);
+        assertThat(sofa.name()).isEqualTo("소파 괴물");
+        assertThat(sofa.shards()).isEqualTo(5);
+
+        User bob = save("sb-bob@test.local");
+        week(bob, WEEK.minusWeeks(1), 100, 140, true, false); // 오버킬 40% — 희귀 없음
+        assertThat(shadow.status(bob).mobs()).hasSize(4);
+    }
+
+    @Test
+    void strikingAMobUsesOnlyWhatItNeedsAndRefundsTheRest() {
+        week(alice, WEEK.minusWeeks(1), 400, 400, false, false); // 체력 420, 내일부터 42
+        shadow.onSession(alice, squat(alice, 10), false); // 하체 100
+        Long tomorrow = mobOf(shadow.status(alice), "TOMORROW").id();
+
+        // 60 을 꺼냈지만 42 면 충분 → 42 만 쓰고 18 은 통으로, 오버킬 없음
+        ShadowHitResponse hit = shadow.strike(alice, String.valueOf(tomorrow), "LEGS", "MISS", false);
+        assertThat(hit.source()).isEqualTo("MOB");
+        assertThat(hit.hp()).isEqualTo(42);
+        assertThat(hit.raw()).isEqualTo(42);
+        assertThat(hit.damage()).isEqualTo(42);
+        assertThat(hit.hpBefore()).isEqualTo(42);
+        assertThat(hit.hpAfter()).isZero();
+        assertThat(hit.killed()).isTrue();
+        assertThat(hit.overkillPct()).isZero();
+        assertThat(hit.reward()).isNull();
+        assertThat(hit.mob().code()).isEqualTo("TOMORROW");
+        assertThat(hit.mob().name()).isEqualTo("내일부터");
+        assertThat(hit.mob().refunded()).isEqualTo(18);
+        assertThat(hit.mob().shards()).isEqualTo(1);
+        assertThat(hit.mob().firstKill()).isTrue();
+        assertThat(hit.chargeLeft().get("LEGS")).isEqualTo(58);
+
+        // 보스 합계 · 공격 목록에는 섞이지 않는다. 잡몹에 쓴 힘은 따로 센다
+        ShadowStatusResponse s = shadow.status(alice);
+        assertThat(s.damage()).isZero();
+        assertThat(s.hits()).isEmpty();
+        assertThat(mobOf(s, "TOMORROW").killed()).isTrue();
+        assertThat(mobOf(s, "TOMORROW").remaining()).isZero();
+        assertThat(thisWeek().getMobForce()).isEqualTo(42);
+        assertThat(wallets.findByUser_Id(alice.getId()).orElseThrow().getShards()).isEqualTo(1);
+
+        // 보너스가 있으면 더 적게 쓴다: 야식 슬라임 50, PERFECT 5% → round(f × 1.05) ≥ 50 인 최소 f = 48
+        Long snack = mobOf(s, "MIDNIGHT_SNACK").id();
+        ShadowHitResponse perfect = shadow.strike(alice, String.valueOf(snack), "LEGS", "PERFECT", false);
+        assertThat(perfect.raw()).isEqualTo(48);
+        assertThat(perfect.damage()).isEqualTo(50);
+        assertThat(perfect.mob().refunded()).isEqualTo(10);
+        assertThat(ShadowRules.neededForce(60, 50, 5, false, 1.5)).isEqualTo(48);
+
+        // 힘이 모자라면 깎이기만 하고 남는다(조각 없음)
+        Long excuse = mobOf(shadow.status(alice), "EXCUSE").id(); // 59
+        ShadowHitResponse partial = shadow.strike(alice, String.valueOf(excuse), "LEGS", "MISS", false); // 남은 10
+        assertThat(partial.raw()).isEqualTo(10);
+        assertThat(partial.hpAfter()).isEqualTo(49);
+        assertThat(partial.killed()).isFalse();
+        assertThat(partial.mob().shards()).isZero();
+        assertThat(partial.mob().refunded()).isZero();
+        assertThat(mobOf(shadow.status(alice), "EXCUSE").remaining()).isEqualTo(49);
+    }
+
+    @Test
+    void mobTargetsAreCheckedAndFirstKillIsPerKind() {
+        shadow.onSession(alice, squat(alice, 20), false); // 하체 200, 잡몹 체력 전부 15
+        ShadowStatusResponse s = shadow.status(alice);
+        Long tomorrow = mobOf(s, "TOMORROW").id();
+        assertThat(shadow.strike(alice, String.valueOf(tomorrow), "LEGS", "MISS", false).killed()).isTrue();
+
+        // 이미 쓰러짐 · 모르는 id · 남의 것 · 이상한 값
+        assertThatThrownBy(() -> shadow.strike(alice, String.valueOf(tomorrow), "LEGS", "MISS", false)).hasMessageContaining("이미 쓰러진");
+        assertThatThrownBy(() -> shadow.strike(alice, "999999", "LEGS", "MISS", false)).hasMessageContaining("찾을 수 없어요");
+        User bob = save("sb-bob@test.local");
+        Long bobs = mobOf(shadow.status(bob), "SNOOZE").id();
+        assertThatThrownBy(() -> shadow.strike(alice, String.valueOf(bobs), "LEGS", "MISS", false)).hasMessageContaining("찾을 수 없어요");
+        assertThatThrownBy(() -> shadow.strike(alice, "dragon", "LEGS", "MISS", false)).hasMessageContaining("모르는 상대");
+        // 통이 비었으면 잡몹도 못 친다
+        assertThatThrownBy(() -> shadow.strike(alice, String.valueOf(mobOf(s, "SNOOZE").id()), "CHEST", "MISS", false)).hasMessageContaining("가슴");
+
+        // 지난주에 같은 종류를 잡았으면 첫 처치가 아니다(도감 카드는 한 번)
+        User carol = save("sb-carol@test.local");
+        ShadowWeek last = week(carol, WEEK.minusWeeks(1), 100, 0, false, false);
+        em.persist(ShadowMob.builder().week(last).user(carol).code("SNOOZE").slot(0).hp(15).damage(15).killedAt(WEEK.minusDays(2).atTime(9, 0)).build());
+        em.flush();
+        shadow.onSession(carol, squat(carol, 6), false);
+        ShadowStatusResponse cs = shadow.status(carol);
+        ShadowHitResponse again = shadow.strike(carol, String.valueOf(mobOf(cs, "SNOOZE").id()), "LEGS", "MISS", false);
+        assertThat(again.killed()).isTrue();
+        assertThat(again.mob().firstKill()).isFalse();
+        ShadowHitResponse fresh = shadow.strike(carol, String.valueOf(mobOf(cs, "TOMORROW").id()), "LEGS", "MISS", false);
+        assertThat(fresh.mob().firstKill()).isTrue();
+        // 지난주 잡몹은 칠 수 없다
+        Long lastWeekMob = mobs.findAllByWeek_IdOrderBySlotAsc(last.getId()).get(0).getId();
+        assertThatThrownBy(() -> shadow.strike(carol, String.valueOf(lastWeekMob), "LEGS", "MISS", false)).hasMessageContaining("지난주");
+    }
+
+    @Test
+    void mobSpendingAndBossDamageBothCountTowardNextWeeksHp() {
+        ShadowWeek last = week(alice, WEEK.minusWeeks(1), 100, 200, true, false);
+        last.setMobForce(100);
+        em.flush();
+        // 지난주: 보스 200 + 잡몹 100 = 300 → 이번 주 체력 315
+        assertThat(shadow.status(alice).hp()).isEqualTo(315);
+    }
+
+    @Test
+    void apiEnterListsMobsAndStrikeTakesATarget() throws Exception {
+        shadow.onSession(alice, squat(alice, 6), false); // 하체 60, 잡몹 15
+        String body = mvc.perform(post("/api/shadow/dungeon/enter").with(as(alice)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mobs.length()").value(4))
+                .andExpect(jsonPath("$.mobs[0].hp").value(15))
+                .andExpect(jsonPath("$.mobs[0].killed").value(false))
+                .andExpect(content().string(not(containsString("@test.local"))))
+                .andReturn().getResponse().getContentAsString();
+        Integer mobId = JsonPath.read(body, "$.mobs[0].id");
+        String code = JsonPath.read(body, "$.mobs[0].code");
+
+        mvc.perform(post("/api/shadow/dungeon/strike").with(as(alice)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"target\":\"" + mobId + "\",\"skill\":\"LEGS\",\"grade\":\"MISS\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.source").value("MOB"))
+                .andExpect(jsonPath("$.raw").value(15))
+                .andExpect(jsonPath("$.killed").value(true))
+                .andExpect(jsonPath("$.mob.code").value(code))
+                .andExpect(jsonPath("$.mob.refunded").value(45))
+                .andExpect(jsonPath("$.mob.firstKill").value(true))
+                .andExpect(jsonPath("$.chargeLeft.LEGS").value(45));
+        // BOSS 는 이름으로도
+        mvc.perform(post("/api/shadow/dungeon/strike").with(as(alice)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"target\":\"BOSS\",\"skill\":\"LEGS\",\"grade\":\"MISS\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.source").value("DUNGEON"))
+                .andExpect(jsonPath("$.raw").value(45));
+        mvc.perform(post("/api/shadow/dungeon/strike").with(as(alice)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"target\":\"" + mobId + "\",\"skill\":\"LEGS\"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/shadow/dungeon/strike").with(as(alice)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"target\":\"424242\",\"skill\":\"LEGS\"}"))
+                .andExpect(status().isNotFound());
     }
 }
