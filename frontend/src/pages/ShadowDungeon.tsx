@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DungeonView from "../components/boss/DungeonView";
+import DungeonMap, { type StrikeTarget } from "../components/dungeon/DungeonMap";
 import type { StageCharacter } from "../components/workout/LiftStage";
 import { api } from "../lib/api";
 import { friendlyError } from "../lib/httpError";
 import { SHADOW_ENTER_PATH, SHADOW_STRIKE_PATH, type ShadowGrade, type ShadowHit, type ShadowSkill, type ShadowStatus } from "../lib/shadow";
 
-// 그림자 던전(/shadow/dungeon, docs/design/shadow-dungeon.md 5.2) — 전체 화면. 들어오면 enter(횟수) → 상태, 기술마다 strike.
+// 그림자 던전(/shadow/dungeon, docs/design/shadow-dungeon-map.md) — 걸어 다니는 던전 지도. 들어오면 enter(횟수 · 잡몹) → 지도,
+// 몬스터와 닿으면 전투 창에서 strike({target, skill, grade, crit}).
+
+type CharacterMe = StageCharacter & { tank?: string | null };
 
 export default function ShadowDungeon() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<ShadowStatus | null>(null);
-  const [character, setCharacter] = useState<StageCharacter | null>(null);
+  const [character, setCharacter] = useState<CharacterMe | null>(null);
   const [mbti, setMbti] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +22,7 @@ export default function ShadowDungeon() {
     let alive = true;
     void Promise.all([
       api.post<ShadowStatus>(SHADOW_ENTER_PATH),
-      api.get<StageCharacter>("/api/character/me").catch(() => null),
+      api.get<CharacterMe>("/api/character/me").catch(() => null),
       api.get<{ mbti?: string | null }>("/api/mypage/stats").catch(() => null),
     ])
       .then(([s, c, st]) => {
@@ -34,8 +37,8 @@ export default function ShadowDungeon() {
     };
   }, []);
 
-  const strike = (skill: ShadowSkill, grade: ShadowGrade, crit: boolean) =>
-    api.post<ShadowHit>(SHADOW_STRIKE_PATH, { skill, grade, crit }).then((r) => r.data);
+  const strike = (target: StrikeTarget, skill: ShadowSkill, grade: ShadowGrade, crit: boolean) =>
+    api.post<ShadowHit>(SHADOW_STRIKE_PATH, { target: String(target), skill, grade, crit }).then((r) => r.data);
 
   const exit = () => navigate("/shadow");
 
@@ -62,5 +65,5 @@ export default function ShadowDungeon() {
       </div>
     );
   }
-  return <DungeonView status={status} character={character} mbti={mbti} strike={strike} onExit={exit} />;
+  return <DungeonMap status={status} character={character} mbti={mbti} tank={character?.tank ?? null} strike={strike} onExit={exit} />;
 }

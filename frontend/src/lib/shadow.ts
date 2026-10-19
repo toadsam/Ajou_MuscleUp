@@ -215,18 +215,72 @@ export type LocalWorld = {
   killed: boolean;
   rewarded: boolean;
   nextId: number;
+  /** 지도판 잡몹 */
+  mobs: ShadowMob[];
 };
 
-/** 개발 화면용 한 타: 서버 strike 와 같은 셈. 통이 비면 null */
-export function localStrike(w: LocalWorld, skill: ShadowSkill, grade: ShadowGrade, useCrit: boolean): { hit: ShadowHit; world: LocalWorld } | null {
+const localDamage = (force: number, bonusPct: number, crit: boolean, mult: number) => {
+  const boosted = Math.round((force * (100 + bonusPct)) / 100);
+  return crit ? Math.round(boosted * mult) : boosted;
+};
+
+/** 개발 화면용 한 타: 서버 strike 와 같은 셈. 통이 비면 null. target 이 잡몹 id 면 그 잡몹(남는 힘은 통으로) */
+export function localStrike(w: LocalWorld, skill: ShadowSkill, grade: ShadowGrade, useCrit: boolean, target: "BOSS" | number = "BOSS"): { hit: ShadowHit; world: LocalWorld } | null {
   const pool = w.charge[skill] ?? 0;
   if (pool <= 0) return null;
-  const raw = Math.min(pool, STRIKE_CHUNK);
+  const force = Math.min(pool, STRIKE_CHUNK);
   const crit = useCrit && w.critTokens > 0;
   const bonusPct = TIMING_PCT[grade] + localPassivePct(skill, w.passives);
-  const boosted = Math.round((raw * (100 + bonusPct)) / 100);
   const mult = 1.5 + w.level * 0.01 + (w.passives.includes(PASSIVES.HUNTER) ? 0.1 : 0);
-  const damage = crit ? Math.round(boosted * mult) : boosted;
+  if (target !== "BOSS") {
+    const mob = w.mobs.find((m) => m.id === target);
+    if (!mob || mob.killed) return null;
+    const before = mob.remaining;
+    let used = force;
+    for (let f = 1; f <= force; f += 1) {
+      if (localDamage(f, bonusPct, crit, mult) >= before) {
+        used = f;
+        break;
+      }
+    }
+    const dealt = Math.min(before, localDamage(used, bonusPct, crit, mult));
+    const after = before - dealt;
+    const killedNow = after === 0;
+    const firstKill = killedNow && !w.mobs.some((m) => m.code === mob.code && m.killed);
+    const charge = { ...w.charge, [skill]: pool - used };
+    const world: LocalWorld = {
+      ...w,
+      charge,
+      critTokens: crit ? w.critTokens - 1 : w.critTokens,
+      mobs: w.mobs.map((m) => (m.id === mob.id ? { ...m, remaining: after, killed: killedNow } : m)),
+      nextId: w.nextId + 1,
+    };
+    const hit: ShadowHit = {
+      id: mob.id,
+      source: "MOB",
+      hitOn: new Date().toISOString().slice(0, 10),
+      hp: mob.hp,
+      raw: used,
+      damage: dealt,
+      crit,
+      hpBefore: before,
+      hpAfter: after,
+      killed: killedNow,
+      overkillPct: 0,
+      reward: null,
+      skill,
+      grade,
+      bonus: Math.min(dealt, Math.round((used * (100 + bonusPct)) / 100) - used),
+      shares: localShares(skill, dealt, w.passives),
+      chargeLeft: charge,
+      critTokensLeft: world.critTokens,
+      mob: { id: mob.id, code: mob.code, name: mob.name, rare: mob.rare, refunded: force - used, shards: killedNow ? mob.shards : 0, firstKill },
+    };
+    return { hit, world };
+  }
+  const raw = force;
+  const boosted = Math.round((raw * (100 + bonusPct)) / 100);
+  const damage = localDamage(raw, bonusPct, crit, mult);
   const before = Math.max(0, w.hp - w.damage);
   const total = w.damage + damage;
   const after = Math.max(0, w.hp - total);

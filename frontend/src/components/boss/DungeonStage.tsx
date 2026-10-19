@@ -5,6 +5,7 @@ import type { StageCharacter } from "../workout/LiftStage";
 import HpBar from "./HpBar";
 import ImpactMark, { FloorCrack } from "./ImpactMark";
 import ShadowSprite from "./ShadowSprite";
+import MobSprite from "../dungeon/MobSprite";
 import { SHARDS, buildOf, prefersReducedMotion, splitShares } from "./fightParts";
 import { spawnChalk } from "../../lib/chalkBurst";
 import { SKILL_META, type ShadowHit, type ShadowSkill } from "../../lib/shadow";
@@ -36,6 +37,10 @@ type Props = {
   entering?: boolean;
   plates?: PixelPlate[];
   onDone?: (hit: ShadowHit) => void;
+  /** 상대: 그림자(기본) 또는 잡몹(지도판 — 그림은 components/dungeon/mobArt) */
+  foe?: { kind: "boss" } | { kind: "mob"; code: string };
+  /** 체력 바 이름(기본 "그림자 HP") */
+  hpLabel?: string;
 };
 
 type Phase = "idle" | "fight" | "slam" | "collapse" | "shatter" | "done";
@@ -58,7 +63,7 @@ const GRADE_STYLE: Record<string, string> = {
 };
 const GRADE_TEXT: Record<string, string> = { PERFECT: "PERFECT!", GOOD: "GOOD", MISS: "MISS" };
 
-export default function DungeonStage({ character, mbti, hp, remaining, hit, playKey, windup, down, entering = false, plates = [], onDone }: Props) {
+export default function DungeonStage({ character, mbti, hp, remaining, hit, playKey, windup, down, entering = false, plates = [], onDone, foe = { kind: "boss" }, hpLabel }: Props) {
   const reduce = useRef(prefersReducedMotion()).current;
   const [phase, setPhase] = useState<Phase>("idle");
   const [strike, setStrike] = useState<Strike | null>(null);
@@ -300,7 +305,10 @@ export default function DungeonStage({ character, mbti, hp, remaining, hit, play
           </div>
 
           <div ref={shadowRef} className="relative z-10 flex h-full w-[112px] flex-none items-end justify-center">
-            {!shadowGone && (
+            {!shadowGone && foe.kind === "mob" && (
+              <MobSprite key={contact ? `mob-${playKey}-${contact.index}` : `mob-${playKey}-${phase}-${entering}`} code={foe.code} size={84} className={shadowFx} />
+            )}
+            {!shadowGone && foe.kind === "boss" && (
               <ShadowSprite
                 key={contact ? `sh-${playKey}-${contact.index}` : `sh-${playKey}-${phase}-${entering}`}
                 avatarSeed={character?.avatarSeed ?? "shadow"}
@@ -353,7 +361,7 @@ export default function DungeonStage({ character, mbti, hp, remaining, hit, play
         </div>
       </div>
       <div className="mt-3">
-        <HpBar hp={hp} value={hpValue} />
+        <HpBar hp={hp} value={hpValue} label={hpLabel} />
       </div>
     </div>
   );
