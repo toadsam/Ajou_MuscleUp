@@ -59,6 +59,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const DevAvatars = import.meta.env.DEV ? lazy(() => import("./pages/DevAvatars")) : null;
 const DevLounge = import.meta.env.DEV ? lazy(() => import("./pages/DevLounge")) : null;
 const DevBoss = import.meta.env.DEV ? lazy(() => import("./pages/DevBoss")) : null;
+const DevInbody = import.meta.env.DEV ? lazy(() => import("./pages/DevInbody")) : null;
 
 function RouteLoading() {
   return (
@@ -93,6 +94,7 @@ function App() {
               {DevAvatars && <Route path="/dev/avatars" element={<DevAvatars />} />}
               {DevLounge && <Route path="/dev/lounge" element={<DevLounge />} />}
               {DevBoss && <Route path="/dev/boss" element={<DevBoss />} />}
+              {DevInbody && <Route path="/dev/inbody" element={<DevInbody />} />}
               <Route
                 path="/shadow"
                 element={
