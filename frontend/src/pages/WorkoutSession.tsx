@@ -5,7 +5,7 @@ import ExercisePicker from "../components/lifts/ExercisePicker";
 import ExerciseIcon from "../components/lifts/ExerciseIcon";
 import LiftStage, { type StageCharacter, type StageCue } from "../components/workout/LiftStage";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
-import BossFight from "../components/boss/BossFight";
+import ChargeScene from "../components/boss/ChargeScene";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
 import { friendlyError } from "../lib/httpError";
@@ -335,7 +335,7 @@ export default function WorkoutSession() {
   // ── 끝난 뒤 결과
   if (result) {
     const s = result.session.summary;
-    // 전투 장면의 내 동작: 첫 종목(바벨이면 가장 무거운 세트의 원판)
+    // 충전 연출의 내 동작: 첫 종목(바벨이면 가장 무거운 세트의 원판)
     const firstEx = result.session.exercises[0];
     const firstMotion = motionFor(firstEx ? exerciseInfo(firstEx.exercise) : null);
     const firstKg = firstEx ? Math.max(0, ...firstEx.sets.map((x) => x.weightKg)) : 0;
@@ -347,7 +347,7 @@ export default function WorkoutSession() {
             <p className="text-sm font-bold text-plate-yellow">운동 끝</p>
             <h1 className="text-3xl">수고했어요!</h1>
           </header>
-          {result.shadow && <BossFight hit={result.shadow} character={character} mbti={mbti} motion={fightMotion} />}
+          {result.shadowCharge && <ChargeScene charge={result.shadowCharge} character={character} mbti={mbti} motion={fightMotion} />}
           {character && (
             // 펌핑: 1시간 동안 근육이 한 단계 커 보인다(서버 AvatarLookService — 친구 · 모임 · 라운지에서도)
             <div className="dg-steel flex items-center gap-4 p-4">

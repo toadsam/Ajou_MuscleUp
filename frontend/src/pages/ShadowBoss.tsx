@@ -4,30 +4,42 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import BossFight, { type FightMotion } from "../components/boss/BossFight";
 import HpBar from "../components/boss/HpBar";
 import ShadowSprite from "../components/boss/ShadowSprite";
+import { PlateIcon } from "../components/boss/SkillPlates";
 import type { StageCharacter } from "../components/workout/LiftStage";
 import { api } from "../lib/api";
 import { friendlyError } from "../lib/httpError";
 import {
+  DUNGEON_PATH,
   SHADOW_DAILY_CAP,
   SHADOW_HISTORY_PATH,
   SHADOW_PATH,
+  SKILLS,
+  SKILL_META,
   SOURCE_LABEL,
+  STRIKE_CHUNK,
   recentWeekStarts,
   shortDate,
   type ShadowHistoryItem,
+  type ShadowHit,
   type ShadowStatus,
 } from "../lib/shadow";
 
-// 그림자 화면(/shadow, docs/design/shadow-boss.md 5.4).
-// 위: 마지막 공격 다시 보기(없으면 마주 선 둘). 가운데: 이번 주 공격 목록. 아래: 최근 8주 전적(원판 줄) + 규칙 한 문단.
+// 그림자 화면(/shadow, docs/design/shadow-boss.md 5.4 · shadow-dungeon.md 5.5).
+// 위: 모은 힘(통 5개) + 던전 들어가기 → 마지막 타 다시 보기(없으면 마주 선 둘). 가운데: 이번 주 타 목록. 아래: 최근 8주 전적(원판 줄) + 규칙.
 
 const HISTORY_WEEKS = 8;
 
-/** 다시 볼 때 쓰는 대표 동작 — 세션은 종목을 모르니 스쿼트, 러닝은 달리기 */
-const REPLAY_MOTION: Record<"SESSION" | "RUN", FightMotion> = {
-  SESSION: { kind: "squat", equip: "barbell" },
-  RUN: { kind: "run", equip: "none" },
-};
+/** 다시 볼 때 쓰는 동작 — 던전 타는 그 기술, 1차 공격 · 자동 정산은 출처로(세션 스쿼트 · 러닝 달리기) */
+function replayMotion(hit: ShadowHit): FightMotion {
+  if (hit.skill) return { kind: SKILL_META[hit.skill].kind, equip: SKILL_META[hit.skill].equip };
+  return hit.source === "RUN" ? { kind: "run", equip: "none" } : { kind: "squat", equip: "barbell" };
+}
+
+/** 타 한 줄의 이름: 기술이면 기술 이름, 아니면 출처 */
+function hitLabel(hit: ShadowHit) {
+  if (hit.skill) return `${SKILL_META[hit.skill].label}${hit.source === "SETTLE" ? " (자동)" : ""}`;
+  return SOURCE_LABEL[hit.source];
+}
 
 type WeekMark = { weekStart: string; kind: "killed" | "missed" | "rest" | "none"; damage: number; hp: number };
 
@@ -138,9 +150,9 @@ export default function ShadowBoss() {
           </div>
         ) : lastHit ? (
           <div className="space-y-2">
-            <BossFight hit={lastHit} character={character} mbti={mbti} motion={REPLAY_MOTION[lastHit.source]} replayKey={replayKey} noLinks />
+            <BossFight hit={lastHit} character={character} mbti={mbti} motion={replayMotion(lastHit)} replayKey={replayKey} noLinks />
             <div className="flex items-center justify-between text-xs text-steel-400">
-              <span>마지막 공격 {shortDate(lastHit.hitOn)} · {SOURCE_LABEL[lastHit.source]}</span>
+              <span>마지막 타 {shortDate(lastHit.hitOn)} · {hitLabel(lastHit)}</span>
               <button type="button" onClick={() => setReplayKey((k) => k + 1)} className="underline underline-offset-4">
                 다시 보기
               </button>
@@ -171,7 +183,7 @@ export default function ShadowBoss() {
             <div className="mt-3">
               <HpBar hp={status.hp} value={status.remaining} />
             </div>
-            <p className="mt-3 text-sm text-steel-300">아직 공격이 없어요. 운동이나 러닝을 저장하면 그 힘만큼 그림자가 깎여요.</p>
+            <p className="mt-3 text-sm text-steel-300">아직 때린 적이 없어요. 운동이나 러닝을 저장하면 힘이 통에 쌓이고, 던전에서 기술로 쏴요.</p>
             <div className="mt-3 flex gap-2">
               <Link to="/workout/session" className="dg-btn dg-btn-primary min-h-[40px] flex-1 text-sm">
                 운동 시작
@@ -183,30 +195,67 @@ export default function ShadowBoss() {
           </div>
         )}
 
+        {status && (
+          <div className="dg-steel space-y-3 p-4">
+            <div className="flex items-baseline justify-between">
+              <h2 className="font-display text-xl">모은 힘</h2>
+              <span className="font-num text-sm text-steel-300">
+                통 {status.chargeTotal.toLocaleString()} · 치명타 토큰 {status.critTokens}
+              </span>
+            </div>
+            <ul className="grid grid-cols-5 gap-1">
+              {SKILLS.map((s) => {
+                const left = status.charge[s] ?? 0;
+                return (
+                  <li key={s} className="flex flex-col items-center gap-1 text-center" aria-label={`${SKILL_META[s].label} ${left}`}>
+                    <PlateIcon skill={s} size={40} empty={left <= 0} />
+                    <span className={`font-num text-base leading-none ${left <= 0 ? "text-steel-500" : "text-white"}`}>{left}</span>
+                    <span className="text-[11px] leading-none text-steel-400">{SKILL_META[s].label}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            {status.passives.length > 0 && (
+              <p className="flex flex-wrap gap-1 text-xs">
+                {status.passives.map((p) => (
+                  <span key={p} className="dg-chip border-plate-yellow/70 text-plate-yellow">
+                    {p}
+                  </span>
+                ))}
+              </p>
+            )}
+            <Link to={DUNGEON_PATH} className={`dg-btn min-h-[44px] w-full text-sm ${status.chargeTotal > 0 ? "dg-btn-primary" : "dg-btn-steel"}`}>
+              {status.chargeTotal > 0 ? "던전 들어가기 →" : "던전 둘러보기"}
+            </Link>
+            <p className="text-xs text-steel-500">한 번 누르면 통에서 {STRIKE_CHUNK}씩. 안 쓴 힘은 월요일 새벽에 자동으로 들어가요.</p>
+          </div>
+        )}
+
         {status && !status.rest && (
           <div className="dg-steel space-y-3 p-4">
             <div className="flex items-baseline justify-between">
-              <h2 className="font-display text-xl">이번 주 공격 {status.hits.length}번</h2>
+              <h2 className="font-display text-xl">이번 주 타 {status.hits.length}번</h2>
               <span className="font-num text-sm text-steel-300">
                 {status.killed ? `처치 · 오버킬 ${status.overkillPct}%` : `${status.remaining.toLocaleString()} 남음`}
               </span>
             </div>
             {status.hits.length === 0 ? (
-              <p className="text-sm text-steel-400">첫 공격을 기다리고 있어요.</p>
+              <p className="text-sm text-steel-400">첫 타를 기다리고 있어요.</p>
             ) : (
               <ul className="divide-y divide-steel-700/70 text-sm">
                 {status.hits.map((h, i) => (
                   <li key={h.id} className="flex items-center gap-3 py-2">
                     <span className="w-16 flex-none font-num text-steel-400">{shortDate(h.hitOn)}</span>
-                    <span className="flex-none text-steel-200">{SOURCE_LABEL[h.source]}</span>
+                    <span className="flex-none text-steel-200">{hitLabel(h)}</span>
                     <span className="flex-1 truncate text-xs text-steel-500">
-                      {h.damage === 0 && h.raw > 0 ? `오늘 상한 ${SHADOW_DAILY_CAP} 초과` : h.crit ? `자기 기록 갱신 · 힘 ${h.raw} → ${h.damage}` : ""}
+                      {h.damage === 0 && h.raw > 0 ? `오늘 상한 ${SHADOW_DAILY_CAP} 초과` : h.bonus > 0 ? `힘 ${h.raw} + 보너스 ${h.bonus}` : h.crit ? `힘 ${h.raw} → ${h.damage}` : ""}
                     </span>
+                    {h.grade === "PERFECT" && <span className="dg-chip flex-none font-num text-[11px] text-plate-yellow">PERFECT</span>}
                     {h.crit && <span className="dg-chip flex-none text-[11px] text-plate-yellow">치명타</span>}
                     {h.killed && <span className="dg-chip flex-none text-[11px] text-plate-red">처치</span>}
                     <span className={`w-14 flex-none text-right font-num text-lg ${h.damage === 0 ? "text-steel-500" : "text-white"}`}>
                       {h.damage > 0 ? `+${h.damage}` : "0"}
-                      <span className="sr-only">{i === status.hits.length - 1 ? " (마지막 공격)" : ""}</span>
+                      <span className="sr-only">{i === status.hits.length - 1 ? " (마지막 타)" : ""}</span>
                     </span>
                   </li>
                 ))}
@@ -240,9 +289,12 @@ export default function ShadowBoss() {
           <p className="font-display text-base text-white">그림자는 지난 나예요</p>
           <p>
             체력은 최근 4주 동안 넣은 힘의 평균에 5%를 더한 값(최소 100)이에요. 운동 세션은 볼륨 100kg·회가 힘 1, 맨몸 종목은 한 번을 20kg으로 쳐요. 러닝은 100m가
-            힘 1이에요. 하루에 넣을 수 있는 힘은 {SHADOW_DAILY_CAP}까지.
+            힘 1이에요. 하루에 모을 수 있는 힘은 {SHADOW_DAILY_CAP}까지.
           </p>
-          <p>개인 최고나 러닝 기록을 깨면 그 공격은 치명타 — 힘에 1.5배와 레벨당 1%를 더해요. 평소 공격에는 레벨 배율이 없어요. 그림자는 공정한 거울이니까요.</p>
+          <p>
+            힘은 종목에 따라 다섯 통(하체 · 가슴 · 등 · 어깨팔코어 · 러닝)에 쌓이고, 던전에서 그 통의 기술로 쏴요. 한 번에 {STRIKE_CHUNK}씩, 타이밍이 맞으면 최대 10%,
+            삼대장 · 장거리 · 꾸준함 같은 패시브로 합쳐서 15%까지 더 들어가요. 개인 최고나 러닝 기록을 깨면 치명타 토큰 — 내가 고른 타에 1.5배와 레벨당 1%.
+          </p>
           <p>월요일마다 새 그림자가 서요. 처치하면 캐릭터 점수 +10, 보상 상자 1개, 그리고 칭호. 쉬는 주에는 잠들어 있어 연속이 끊기지 않아요.</p>
         </div>
       </div>

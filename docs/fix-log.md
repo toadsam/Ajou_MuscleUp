@@ -8,6 +8,30 @@
 
 ---
 
+## 2026-10-20 · 그림자 던전 PR B + C — 화면(전체 화면 던전 · 기술 원판 · 타이밍 · 충전 연출 · 입구)
+
+**불편** (사용자: "화면까지 한번에 하고 볼게")
+- PR A 로 서버는 힘을 모으고 던전 API 를 열었지만 화면이 없었다. 저장 결과의 1차 전투 장면도 응답 칸이 바뀌어 안 떴다.
+
+**원인(근거)**
+- `/shadow/dungeon` 라우트 · 던전 부품이 없었고, `WorkoutSession.tsx` · `Running.tsx` 가 사라진 `result.shadow` 를 읽었다(`lib/workoutSession.ts` · `lib/running.ts` 타입도 1차).
+
+**고친 방법** — 세부: [docs/fixes/2026-10-20-shadow-dungeon-screens.md](fixes/2026-10-20-shadow-dungeon-screens.md)
+- **던전** `/shadow/dungeon`(`pages/ShadowDungeon.tsx` + `components/boss/DungeonView.tsx`): 전체 화면(머리 · 탭바 위), 무대(`DungeonStage`) · 능력치 칩 · 패시브 칩 · 타이밍 게이지(`TimingGauge`, 0.8초 · ±6% PERFECT · ±15% GOOD) · 기술 원판 5개 + 초크 통(`SkillPlates`). 원판 탭 → 힘주는 자세 + 게이지 → 탭 → `POST /api/shadow/dungeon/strike` → 기술별 연출(지진 점프 · 밀어내기 넉백 · 들어 던지기 2타 · 연타 4타 · 돌진 관통) → 합계 쾅 + 등급 · 치명타 도장 → 처치면 DOWN + 전리품.
+- **충전 연출** `ChargeScene`: 운동 · 러닝 결과 맨 위에서 원판이 던전 문으로 날아가 쌓임 → "+65 모음" → [던전 가서 쓰기]. 타입 `shadow` → `shadowCharge`.
+- **입구**: 홈 지도 입구 매트 목록 맨 위 "그림자 던전", 홈 한 줄 "힘 120 모음 · 던전 →", `/shadow` 맨 위 통 5개 + [던전 들어가기]. `/dev/dungeon` 가짜 4종(서버 없이).
+- CSS "그림자 던전" 블록(`.dg-jump` `.dg-launch` `.dg-knock-far` `.dg-lift-up` `.dg-slam-down` `.dg-dash-jab` `.dg-through` `.dg-ghost` `.dg-crack` `.dg-dust` `.dg-gauge-slide` `.dg-fly` …). 새 픽셀 그림 · 블러 · 글로우 없음.
+
+**확인한 방법**
+- `verify.sh` 통과(tsc 0 · 린트 늘지 않음 · 빌드). main 의 바코드 패키지가 worktree 에 없어 tsc 가 깨진 건 `npm install`.
+- `/dev/dungeon` 서버 없이 4종(보통 주 치명타 +108 · 돌진 2타 · 들어 던지기 · 연타 · 빈 통 토스트 · 처치 DOWN + 전리품). 이 브랜치 백엔드(8081) + 시험 계정으로 실제 `/shadow/dungeon`(enter → 치명타 지진 +95, 통 80 → 20) · `/shadow` 통 현황 · 홈 한 줄. 계정 · 행 정리.
+- 미리보기 창이 숨겨진 세션이라 타이머가 늦춰지고 스크린샷이 안 찍혔다 — DOM · 숫자로 확인. 눈으로는 사용자가 `localhost:5174/dev/dungeon` 에서(375px 도).
+
+**아직 못 한 것**
+- 실제 세션 저장 흐름에서 충전 연출 · 375px 스크린샷 · 처치 공유 카드. 개발 서버 StrictMode 에서 `enter` 가 2번(통계 칸만).
+
+---
+
 ## 2026-10-20 · 그림자 던전 PR A — 백엔드(저장 = 힘 모으기, 던전 strike · 타이밍 · 패시브 · 정산)
 
 **불편** (사용자: "던전에 들어가서 스킬 · 능력치로 내가 직접 잡는 느낌")

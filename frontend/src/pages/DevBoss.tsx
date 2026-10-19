@@ -26,6 +26,13 @@ const base: Omit<ShadowHit, "id"> = {
   killed: false,
   overkillPct: 0,
   reward: null,
+  // 2차 던전 칸(1차 연출은 안 쓴다)
+  skill: null,
+  grade: null,
+  bonus: 0,
+  shares: [],
+  chargeLeft: null,
+  critTokensLeft: null,
 };
 
 const CASES: { label: string; hit: ShadowHit; motion: FightMotion }[] = [

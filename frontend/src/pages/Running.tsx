@@ -4,7 +4,7 @@ import DialogFrame from "../components/DialogFrame";
 import RouteSvg from "../components/running/RouteSvg";
 import RunTrack from "../components/running/RunTrack";
 import RunShareEditor from "../components/running/RunShareEditor";
-import BossFight from "../components/boss/BossFight";
+import ChargeScene from "../components/boss/ChargeScene";
 import type { RunShareData } from "../lib/runShareCard";
 import type { StageCharacter } from "../components/workout/LiftStage";
 import { useLiveHeartbeat, useLiveVisible } from "../lib/live";
@@ -400,7 +400,7 @@ export default function Running() {
             <p className="text-sm font-bold text-plate-yellow">러닝 끝</p>
             <h1 className="text-3xl">수고했어요!</h1>
           </header>
-          {result.save.shadow && <BossFight hit={result.save.shadow} character={character} mbti={mbti} motion={{ kind: "run", equip: "none" }} />}
+          {result.save.shadowCharge && <ChargeScene charge={result.save.shadowCharge} character={character} mbti={mbti} motion={{ kind: "run", equip: "none" }} />}
           <div className="dg-steel p-4 text-center">
             <p className="font-num text-6xl leading-none">
               {formatKm(r.distanceM)}

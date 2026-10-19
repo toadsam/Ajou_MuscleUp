@@ -38,6 +38,7 @@ const WorkoutStart = lazy(() => import("./pages/WorkoutStart"));
 const ActivitySession = lazy(() => import("./pages/ActivitySession"));
 const Collection = lazy(() => import("./pages/Collection"));
 const ShadowBoss = lazy(() => import("./pages/ShadowBoss"));
+const ShadowDungeon = lazy(() => import("./pages/ShadowDungeon"));
 const AttendanceShareView = lazy(() => import("./pages/AttendanceShareView"));
 const Rankings = lazy(() => import("./pages/Rankings"));
 const Lounge = lazy(() => import("./pages/Lounge"));
@@ -59,6 +60,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const DevAvatars = import.meta.env.DEV ? lazy(() => import("./pages/DevAvatars")) : null;
 const DevLounge = import.meta.env.DEV ? lazy(() => import("./pages/DevLounge")) : null;
 const DevBoss = import.meta.env.DEV ? lazy(() => import("./pages/DevBoss")) : null;
+const DevDungeon = import.meta.env.DEV ? lazy(() => import("./pages/DevDungeon")) : null;
 
 function RouteLoading() {
   return (
@@ -93,11 +95,20 @@ function App() {
               {DevAvatars && <Route path="/dev/avatars" element={<DevAvatars />} />}
               {DevLounge && <Route path="/dev/lounge" element={<DevLounge />} />}
               {DevBoss && <Route path="/dev/boss" element={<DevBoss />} />}
+              {DevDungeon && <Route path="/dev/dungeon" element={<DevDungeon />} />}
               <Route
                 path="/shadow"
                 element={
                   <ProtectedRoute>
                     <ShadowBoss />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/shadow/dungeon"
+                element={
+                  <ProtectedRoute>
+                    <ShadowDungeon />
                   </ProtectedRoute>
                 }
               />

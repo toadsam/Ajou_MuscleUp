@@ -215,6 +215,10 @@ bonus  INT NOT NULL DEFAULT 0   -- 타이밍 + 패시브로 더해진 피해
 
 ## 6. PR 나누기 (전부 main 기준, 1차 #52 머지 뒤)
 
+> (구현) 사용자가 "화면까지 한번에"라고 해 A · B · C 를 **PR #54 하나**에 넣었다. 던전은 머리를 숨기는 대신 `fixed inset-0 z-[70]` 으로 덮는다(앱 껍데기 변경 없음).
+> 기록: `docs/fixes/2026-10-20-shadow-dungeon-backend.md` · `…-screens.md`.
+
+
 | PR | 내용 | 끝난 상태 | 크기 |
 |---|---|---|---|
 | **A. 백엔드 던전** | `shadow_charges` · `shadow_weeks` 칸 · `ShadowRules` 기술 · 타이밍 · 패시브 상수 · `onSession/onRun` → 충전 · `strike` · `enter` · 정산(스케줄 + 읽을 때) · 삭제 재계산 · 탈퇴 · 테스트 | `strike` 가 통을 깎고 `Hit` 를 준다. 정산 후 1차 테스트 12개가 그대로 통과 | M~L |
