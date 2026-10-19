@@ -392,6 +392,10 @@
   border: 7px solid #f0be2e;
   border-image: repeating-linear-gradient(45deg, #f0be2e 0 9px, #0e0e10 9px 18px) 7;
 }
+/* 그림자 사냥 테두리(그림자 8주 연속): 먹색 두 줄 사이에 빨간 눈 같은 점선 */
+.dg-frame-shadow {
+  box-shadow: 0 0 0 3px #0e0e10, 0 0 0 7px #26272b, 0 0 0 9px #d9302a, 0 0 0 12px #0e0e10;
+}
 /* 테두리 미리보기(도감 칸) */
 .dg-frame-swatch { width: 100%; aspect-ratio: 4 / 3; background: var(--dg-steel); border-radius: 6px; }
 

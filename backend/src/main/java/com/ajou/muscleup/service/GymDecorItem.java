@@ -45,6 +45,11 @@ public enum GymDecorItem {
     SALAD_BAR(Kind.DECOR, "샐러드 바", Goal.MY_FOODS, 5, false, Slot.group(Slot.Group.SIDE)),
     MENU_BOARD(Kind.DECOR, "메뉴판", Goal.DIET_DAYS, 30, false, Slot.DN_WALL),
 
+    // ── 그림자 던전 보상(docs/design/shadow-dungeon-map.md 5절) — 1층 자리
+    SHADOW_TROPHY(Kind.DECOR, "그림자 트로피", Goal.SHADOW_KILLS, 5, false, Slot.plus(Slot.group(Slot.Group.WALL), Slot.COUNTER)),
+    DUNGEON_DOOR(Kind.DECOR, "던전 문 장식", Goal.SHADOW_KILLS, 10, false, Slot.group(Slot.Group.WALL)),
+    SLIME_PLUSH(Kind.DECOR, "야식 슬라임 인형", Goal.MOB_KILLS, 30, false, Slot.group(Slot.Group.CORNER)),
+
     // ── 테마(바닥 · 벽, 1층 · 2층에 같이)
     THEME_RUBBER(Kind.THEME, "고무 매트", null, 0, false, Slot.THEME),
     THEME_MAPLE(Kind.THEME, "메이플 우드", Goal.ATTENDANCE, 30, false, Slot.THEME),
@@ -61,6 +66,8 @@ public enum GymDecorItem {
     UNIFORM_ORANGE(Kind.LOOK, "주황 조끼", null, 0, false, Slot.UNIFORM),
     UNIFORM_WHITE(Kind.LOOK, "흰 조끼", null, 0, false, Slot.UNIFORM),
     UNIFORM_CHARCOAL(Kind.LOOK, "먹색 조끼", null, 0, false, Slot.UNIFORM),
+    /** 그림자 20번 처치 — 직원들이 그림자색 조끼(던전 보상) */
+    UNIFORM_SHADOW(Kind.LOOK, "그림자 조끼", Goal.SHADOW_KILLS, 20, false, Slot.UNIFORM),
     HAIR_BLACK(Kind.LOOK, "검은 머리", null, 0, true, Slot.hairSlots()),
     HAIR_BROWN(Kind.LOOK, "갈색 머리", null, 0, true, Slot.hairSlots()),
     HAIR_GRAY(Kind.LOOK, "회색 머리", null, 0, true, Slot.hairSlots()),
@@ -169,7 +176,9 @@ public enum GymDecorItem {
         MY_FOODS("내 음식 %d개 저장"),
         WEEKLY_STREAK("주간 목표 %d주 연속"),
         BODY("몸무게(체성분) 입력"),
-        DECOR_COUNT("꾸미기 물품 %d개 얻기");
+        DECOR_COUNT("꾸미기 물품 %d개 얻기"),
+        SHADOW_KILLS("주간 보스 그림자 %d번 처치"),
+        MOB_KILLS("던전 몬스터 %d마리 처치");
 
         private final String hint;
 

@@ -4,6 +4,7 @@ import type { StageCharacter } from "../workout/LiftStage";
 import DungeonStage from "../boss/DungeonStage";
 import SkillPlates, { PlateIcon } from "../boss/SkillPlates";
 import TimingGauge from "../boss/TimingGauge";
+import ShadowShareEditor from "../boss/ShadowShareEditor";
 import Joystick from "./Joystick";
 import { createDungeon, type DungeonController, type EncounterTarget } from "./dungeonWorld";
 import { barbellLoad } from "../../lib/liftMotion";
@@ -45,6 +46,7 @@ export default function DungeonMap({ status, character, mbti, tank, strike, onEx
   const [busy, setBusy] = useState(false);
   const [critArmed, setCritArmed] = useState(false);
   const [lastHit, setLastHit] = useState<ShadowHit | null>(null);
+  const [sharing, setSharing] = useState(false);
   const runCount = useRef(0);
 
   const plates = useMemo(() => barbellLoad(Math.max(40, Math.min(140, Math.round(view.stats.strengthKg / 3 / 5) * 5))).pixel, [view.stats.strengthKg]);
@@ -248,6 +250,20 @@ export default function DungeonMap({ status, character, mbti, tank, strike, onEx
           </>
         )}
 
+        {sharing && (
+          <ShadowShareEditor
+            data={{
+              weekStart: view.weekStart,
+              weekEnd: view.weekEnd,
+              hp: view.hp,
+              overkillPct: view.overkillPct,
+              streakWeeks: Math.max(1, view.streakWeeks + (view.killed && lastHit?.killed && !lastHit.mob ? 1 : 0)),
+              mobsKilled: view.mobs.filter((m) => m.killed).length,
+            }}
+            onClose={() => setSharing(false)}
+          />
+        )}
+
         {/* 전투 창 */}
         {battle && (
           <div className="absolute inset-0 flex flex-col justify-end bg-steel-950/70">
@@ -282,7 +298,14 @@ export default function DungeonMap({ status, character, mbti, tank, strike, onEx
                 <div className="dg-steel dg-pop flex flex-wrap items-center gap-2 p-3 text-sm">
                   <span className="font-display text-base text-plate-yellow">{lastHit.mob.name} 처치!</span>
                   <span className="dg-chip">조각 +{lastHit.mob.shards}</span>
-                  {lastHit.mob.firstKill && <span className="dg-chip border-plate-yellow/70 text-plate-yellow">도감 카드 첫 등록</span>}
+                  {lastHit.mob.firstKill &&
+                    (onReset ? (
+                      <span className="dg-chip border-plate-yellow/70 text-plate-yellow">도감 카드 첫 등록</span>
+                    ) : (
+                      <Link to="/collection" className="dg-chip border-plate-yellow/70 text-plate-yellow underline-offset-2 hover:underline">
+                        도감 카드 첫 등록 →
+                      </Link>
+                    ))}
                   {lastHit.mob.refunded > 0 && <span className="dg-chip text-steel-300">남은 힘 {lastHit.mob.refunded} 돌려받음</span>}
                 </div>
               )}
@@ -301,11 +324,16 @@ export default function DungeonMap({ status, character, mbti, tank, strike, onEx
                       </>
                     )}
                   </p>
-                  {!onReset && (
-                    <Link to="/collection" className="dg-btn dg-btn-primary min-h-[40px] w-full text-sm">
-                      상자 열기
-                    </Link>
-                  )}
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setSharing(true)} className="dg-btn dg-btn-primary min-h-[40px] flex-1 text-sm">
+                      공유 카드
+                    </button>
+                    {!onReset && (
+                      <Link to="/collection" className="dg-btn dg-btn-steel min-h-[40px] flex-1 text-sm">
+                        상자 열기
+                      </Link>
+                    )}
+                  </div>
                 </div>
               )}
 

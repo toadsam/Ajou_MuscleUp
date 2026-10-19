@@ -49,6 +49,8 @@ public class GymDecorService {
     private final MyFoodRepository myFoodRepository;
     private final UserBodyStatsRepository bodyStatsRepository;
     private final WeeklyGoalService weeklyGoalService;
+    private final com.ajou.muscleup.repository.ShadowWeekRepository shadowWeekRepository;
+    private final com.ajou.muscleup.repository.ShadowMobRepository shadowMobRepository;
     private final Clock clock;
 
     public record SlotView(String slot, String code) {}
@@ -193,6 +195,8 @@ public class GymDecorService {
                 case WEEKLY_STREAK -> weeklyGoalService.status(me).streakWeeks();
                 case BODY -> body() != null && body().getWeightKg() != null ? 1 : 0;
                 case RUN_COUNT -> (int) runSessionRepository.countByUser_Id(id);
+                case SHADOW_KILLS -> (int) shadowWeekRepository.countByUser_IdAndKilledAtIsNotNull(id);
+                case MOB_KILLS -> (int) shadowMobRepository.countByUser_IdAndKilledAtIsNotNull(id);
                 case DECOR_COUNT -> (int) java.util.Arrays.stream(GymDecorItem.values())
                         .filter(i -> i.kind == GymDecorItem.Kind.DECOR && !i.isDefault() && i.goal != GymDecorItem.Goal.DECOR_COUNT)
                         .filter(this::owned)

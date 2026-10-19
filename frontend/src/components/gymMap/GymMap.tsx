@@ -1062,11 +1062,13 @@ export default function GymMap(props: Props) {
                     key={item.code}
                     type="button"
                     aria-pressed={layout.UNIFORM === item.code}
-                    disabled={placing}
+                    disabled={placing || !item.owned}
+                    title={item.owned ? undefined : item.hint}
                     onClick={() => void place("UNIFORM", item.code, `${item.label}로 갈아입었어요`)}
                   >
                     <i style={{ background: UNIFORM_COLOR[item.code] }} />
                     {item.label}
+                    {!item.owned && <small className="font-num"> {item.progress}/{item.goal}</small>}
                   </button>
                 ))}
               </div>

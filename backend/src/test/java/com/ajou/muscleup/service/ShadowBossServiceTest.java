@@ -93,6 +93,8 @@ class ShadowBossServiceTest {
     @Autowired UserCollectionRepository wallets;
     @Autowired UserCollectionItemRepository items;
     @Autowired ShadowBossService shadow;
+    @Autowired GymDecorService decor;
+    @Autowired CollectionService collection;
 
     private User alice;
 
@@ -927,5 +929,66 @@ class ShadowBossServiceTest {
         mvc.perform(post("/api/shadow/dungeon/strike").with(as(alice)).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"target\":\"424242\",\"skill\":\"LEGS\"}"))
                 .andExpect(status().isNotFound());
+    }
+
+    // ---------------- D3 꾸미기 보상 (docs/design/shadow-dungeon-map.md 5절) ----------------
+
+    private GymDecorService.ItemView decorItem(User u, String code) {
+        return decor.view(u).items().stream().filter(i -> i.code().equals(code)).findFirst().orElseThrow();
+    }
+
+    @Test
+    void killingAMobRegistersItsMonsterCardWhichCannotBeEquipped() {
+        shadow.onSession(alice, squat(alice, 6), false); // 하체 60, 잡몹 15씩
+        Long snooze = mobOf(shadow.status(alice), "SNOOZE").id();
+        assertThat(items.existsByUser_IdAndItemCode(alice.getId(), "M_SNOOZE")).isFalse();
+        shadow.strike(alice, String.valueOf(snooze), "LEGS", "MISS", false);
+        assertThat(items.existsByUser_IdAndItemCode(alice.getId(), "M_SNOOZE")).isTrue();
+        assertThat(items.existsByUser_IdAndItemCode(alice.getId(), "M_TOMORROW")).isFalse();
+
+        CollectionService.ItemView card = collection.view(alice).items().stream().filter(i -> i.code().equals("M_SNOOZE")).findFirst().orElseThrow();
+        assertThat(card.category()).isEqualTo("MONSTER");
+        assertThat(card.value()).isEqualTo("SNOOZE");
+        assertThat(card.owned()).isTrue();
+        assertThatThrownBy(() -> collection.equip(alice, "MONSTER", "M_SNOOZE")).hasMessageContaining("보기만");
+        // 몬스터 카드는 상자에서 나오지 않는다
+        assertThat(CollectionItem.boxItems(CollectionItem.Rarity.COMMON)).noneMatch(i -> i.category == CollectionItem.Category.MONSTER);
+    }
+
+    @Test
+    void eightWeekStreakUnlocksTheShadowFrame() {
+        for (int i = 1; i <= 7; i++) week(alice, WEEK.minusWeeks(i), 100, 120, true, false);
+        shadow.onSession(alice, squat(alice, 20), false); // 체력 126, 하체 200
+        ShadowHitResponse kill = null;
+        while (kill == null || !kill.killed()) kill = shadow.strike(alice, "LEGS", "MISS", false);
+        assertThat(shadow.status(alice).streakWeeks()).isEqualTo(8);
+        assertThat(items.existsByUser_IdAndItemCode(alice.getId(), "F_SHADOW")).isTrue();
+        assertThat(collection.equip(alice, "FRAME", "F_SHADOW").frame()).isEqualTo("shadow");
+    }
+
+    @Test
+    void shadowAndMobKillsUnlockGymDecor() {
+        // 처치 0 → 잠김, 진행도 0/5 · 0/30
+        assertThat(decorItem(alice, "SHADOW_TROPHY").owned()).isFalse();
+        assertThat(decorItem(alice, "SHADOW_TROPHY").goal()).isEqualTo(5);
+        assertThat(decorItem(alice, "SHADOW_TROPHY").hint()).contains("그림자");
+        assertThat(decorItem(alice, "SLIME_PLUSH").goal()).isEqualTo(30);
+        assertThat(decorItem(alice, "UNIFORM_SHADOW").owned()).isFalse();
+
+        // 지난 5주 처치 → 트로피 열림, 문 장식(10) 은 5/10
+        for (int i = 1; i <= 5; i++) week(alice, WEEK.minusWeeks(i), 100, 120, true, false);
+        assertThat(decorItem(alice, "SHADOW_TROPHY").owned()).isTrue();
+        assertThat(decorItem(alice, "DUNGEON_DOOR").owned()).isFalse();
+        assertThat(decorItem(alice, "DUNGEON_DOOR").progress()).isEqualTo(5);
+
+        // 잡몹 처치 수가 인형 진행도
+        shadow.onSession(alice, squat(alice, 6), false);
+        Long tomorrow = mobOf(shadow.status(alice), "TOMORROW").id();
+        shadow.strike(alice, String.valueOf(tomorrow), "LEGS", "MISS", false);
+        assertThat(decorItem(alice, "SLIME_PLUSH").progress()).isEqualTo(1);
+
+        // 놓을 수 있다(벽 자리), 못 얻은 그림자 조끼는 못 입는다
+        assertThat(decor.place(alice, "WALL", "SHADOW_TROPHY").slots()).anyMatch(s -> s.slot().equals("WALL") && "SHADOW_TROPHY".equals(s.code()));
+        assertThatThrownBy(() -> decor.place(alice, "UNIFORM", "UNIFORM_SHADOW")).isInstanceOf(ResponseStatusException.class);
     }
 }

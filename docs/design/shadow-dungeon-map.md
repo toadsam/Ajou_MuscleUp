@@ -168,7 +168,7 @@ killed_at DATETIME NULL, slot INT(맵 자리 번호), created_at
 | **#54 (열림)** | 지금 그대로 두고 **머지는 D2 뒤로**. 사용자가 곧 바뀔 전체 화면 던전을 보지 않게 | — |
 | **D1. 백엔드 잡몹** (2026-10-20 끝 — `docs/fixes/2026-10-20-shadow-dungeon-mobs.md`) | `shadow_mobs` · 배치 시드 · strike `target` · 잡몹 남은 힘 반환 · 타이밍 5 · 2% · 조각 · 몬스터 카드 · 탈퇴 · 테스트 | strike 로 잡몹 · 보스를 각각 칠 수 있다 |
 | **D2. 던전 맵** (2026-10-20 끝 — `docs/fixes/2026-10-20-shadow-dungeon-map.md`) | `dungeonWorld.ts` · `DungeonMap.tsx` · `Joystick` · 맵 그림 · 몬스터 그림 5 · 닿음 → 전투 창(지금 부품) · HUD · `/dev/dungeon` 맵판 | 375px 에서 걸어서 잡몹 · 보스까지 잡는다 |
-| **D3. 보상 · 꾸미기** | `SHADOW_KILLS` · `MOB_KILLS` 물품 4 · 테두리 · 도감 몬스터 분류 · 처치 공유 카드 | 잡으면 꾸밀 것이 생긴다 |
+| **D3. 보상 · 꾸미기** (2026-10-20 끝 — `docs/fixes/2026-10-20-shadow-dungeon-rewards.md`) | `SHADOW_KILLS` · `MOB_KILLS` 물품 4 · 테두리 · 도감 몬스터 분류 · 처치 공유 카드 | 잡으면 꾸밀 것이 생긴다 |
 
 #54 + D1 + D2 는 같은 날 배포(저장 응답 · 던전 화면이 함께 바뀐다).
 

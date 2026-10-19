@@ -454,6 +454,9 @@ public class ShadowBossService {
             mob.setKilledAt(LocalDateTime.now(clock));
             shards = def.shards();
             collectionService.grantShards(user, shards);
+            // 도감 몬스터 카드(업적 MOB_*)가 이번 처치를 보도록 먼저 쓴다
+            mobRepository.saveAndFlush(mob);
+            collectionService.unlockAchievements(user);
         }
         mobRepository.save(mob);
         weekRepository.save(week);

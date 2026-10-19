@@ -5,6 +5,7 @@ import BossFight, { type FightMotion } from "../components/boss/BossFight";
 import HpBar from "../components/boss/HpBar";
 import ShadowSprite from "../components/boss/ShadowSprite";
 import { PlateIcon } from "../components/boss/SkillPlates";
+import ShadowShareEditor from "../components/boss/ShadowShareEditor";
 import type { StageCharacter } from "../components/workout/LiftStage";
 import { api } from "../lib/api";
 import { friendlyError } from "../lib/httpError";
@@ -82,6 +83,7 @@ export default function ShadowBoss() {
   const [mbti, setMbti] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [replayKey, setReplayKey] = useState(0);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -108,6 +110,22 @@ export default function ShadowBoss() {
   const weekMarks = useMemo(() => (status ? marks(status, history) : []), [status, history]);
   const killsIn8 = weekMarks.filter((m) => m.kind === "killed").length;
 
+  if (sharing && status) {
+    return (
+      <ShadowShareEditor
+        data={{
+          weekStart: status.weekStart,
+          weekEnd: status.weekEnd,
+          hp: status.hp,
+          overkillPct: status.overkillPct,
+          streakWeeks: status.streakWeeks,
+          mobsKilled: status.mobs.filter((m) => m.killed).length,
+        }}
+        onClose={() => setSharing(false)}
+      />
+    );
+  }
+
   if (error) {
     return (
       <section className="min-h-screen px-4 pb-20 pt-28 text-white md:px-10">
@@ -127,6 +145,11 @@ export default function ShadowBoss() {
               {shortDate(status.weekStart)} ~ {shortDate(status.weekEnd)} · 지난 4주의 나보다 5% 세요
               {status.streakWeeks > 0 && <span className="dg-chip ml-2 text-xs text-plate-yellow">{status.streakWeeks}주 연속 처치</span>}
             </p>
+          )}
+          {status?.killed && (
+            <button type="button" onClick={() => setSharing(true)} className="dg-btn dg-btn-primary mt-2 min-h-[40px] px-4 text-sm">
+              처치 공유 카드 만들기
+            </button>
           )}
         </header>
 

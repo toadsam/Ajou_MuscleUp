@@ -84,7 +84,7 @@ class GymDecorTest {
                 .andExpect(jsonPath(item("CLOCK", "goal")).value(hasItem(7)))
                 .andExpect(jsonPath(item("CLOCK", "hint")).value(hasItem("운동 출석 7일")))
                 .andExpect(jsonPath("$.owned").value(3)) // 화분 · 빨간 원 · 고무 매트(직원 겉모습은 세지 않는다)
-                .andExpect(jsonPath("$.total").value(33));
+                .andExpect(jsonPath("$.total").value(36)); // + 그림자 던전 보상 3(그림자 트로피 · 던전 문 · 슬라임 인형, 그림자 조끼는 LOOK 이라 안 셈)
 
         // 아직 못 얻은 건 못 놓는다
         place(alice, "WALL", "CLOCK").andExpect(status().isBadRequest());

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DialogFrame from "../components/DialogFrame";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import MobSprite from "../components/dungeon/MobSprite";
 import type { CharacterTier, GrowthParams } from "../components/avatar/types";
 import { api } from "../lib/api";
 import { toast } from "../lib/toast";
@@ -32,7 +33,7 @@ type MyCharacter = {
   gender?: "MALE" | "FEMALE" | null;
 };
 
-const CATEGORIES: CollectionCategory[] = ["TITLE", "TANK", "FRAME"];
+const CATEGORIES: CollectionCategory[] = ["TITLE", "TANK", "FRAME", "MONSTER"];
 
 function ItemPreview({ item, size = "md" }: { item: Pick<CollectionItemView, "category" | "value" | "label">; size?: "md" | "lg" }) {
   if (item.category === "TITLE") {
@@ -50,6 +51,10 @@ function ItemPreview({ item, size = "md" }: { item: Pick<CollectionItemView, "ca
         style={{ backgroundColor: item.value, clipPath: "polygon(22% 0, 38% 0, 42% 14%, 58% 14%, 62% 0, 78% 0, 82% 26%, 82% 100%, 18% 100%, 18% 26%)" }}
       />
     );
+  }
+  if (item.category === "MONSTER") {
+    // 던전 잡몹 픽셀 그림(지도 · 전투 창과 같은 그림)
+    return <MobSprite code={item.value} size={size === "lg" ? 112 : 64} />;
   }
   return (
     <span className={`block p-3 ${size === "lg" ? "w-40" : "w-full"}`}>
@@ -162,7 +167,7 @@ export default function Collection() {
   };
 
   const equippedCode = (cat: CollectionCategory) =>
-    !view ? null : cat === "TITLE" ? view.equipped.titleCode : cat === "TANK" ? view.equipped.tankCode : view.equipped.frameCode;
+    !view || cat === "MONSTER" ? null : cat === "TITLE" ? view.equipped.titleCode : cat === "TANK" ? view.equipped.tankCode : view.equipped.frameCode;
 
   if (error) {
     return (
@@ -260,7 +265,7 @@ export default function Collection() {
               onClick={() => setTab(cat)}
               className={`dg-btn min-h-[44px] flex-1 px-2 text-sm ${tab === cat ? "dg-btn-primary" : "dg-btn-steel"}`}
             >
-              {cat === "FRAME" ? "테두리" : CATEGORY_LABEL[cat]}{" "}
+              {cat === "FRAME" ? "테두리" : cat === "MONSTER" ? "몬스터" : CATEGORY_LABEL[cat]}{" "}
               <span className="font-num">
                 {ownedIn(cat)}/{totalIn(cat)}
               </span>
@@ -284,7 +289,9 @@ export default function Collection() {
                   <ItemPreview item={item} />
                 </div>
                 <p className="text-sm font-semibold leading-tight">{item.label}</p>
-                {item.owned ? (
+                {item.owned && item.category === "MONSTER" ? (
+                  <p className="mt-auto text-xs text-plate-green">던전에서 잡았어요</p>
+                ) : item.owned ? (
                   <button
                     type="button"
                     disabled={busyCode != null}

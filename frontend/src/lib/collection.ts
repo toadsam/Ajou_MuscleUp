@@ -3,7 +3,8 @@
 import { loadAppearanceBySeed, saveAppearanceBySeed } from "../utils/avatarAppearanceState";
 import type { ActivityLevel } from "./quests";
 
-export type CollectionCategory = "TITLE" | "TANK" | "FRAME";
+/** MONSTER: 던전 몬스터 도감 카드(보기만, 장착 없음) */
+export type CollectionCategory = "TITLE" | "TANK" | "FRAME" | "MONSTER";
 export type Rarity = "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
 
 export type CollectionItemView = {
@@ -67,6 +68,7 @@ export const CATEGORY_LABEL: Record<CollectionCategory, string> = {
   TITLE: "칭호",
   TANK: "민소매 색",
   FRAME: "카드 테두리",
+  MONSTER: "몬스터 도감",
 };
 
 export const RARITY_LABEL: Record<Rarity, string> = {
