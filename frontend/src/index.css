@@ -434,3 +434,163 @@
   60% { transform: rotate(-5deg) translateY(-2px); }
   80% { transform: rotate(3deg); }
 }
+
+/* ---------- 주간 보스 그림자 (components/boss) ---------- */
+
+/* 체력 바: 빨강은 바로 깎이고, 초크색 잔상이 0.5초 뒤따라 내려온다. 0 이 되면 두 번 깜빡 */
+.dg-hp-ghost {
+  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dg-hp-empty {
+  animation: dgHpEmpty 0.3s steps(2, end) 0.3s 2;
+}
+
+/* 돌진: 움츠림(뒤로) → 그림자까지(--dash) → 닿은 채 멈칫(히트스톱) → 제자리. 한 타 640ms */
+.dg-dash {
+  animation: dgDash 0.64s cubic-bezier(0.3, 0, 0.2, 1) both;
+  will-change: transform;
+}
+.dg-dash-heavy {
+  animation-duration: 0.78s;
+  animation-name: dgDashHeavy;
+}
+
+/* 피격: 색 반전 1프레임 + 넉백 · 되돌아옴 300ms. 센 타는 2프레임 반전 · 더 멀리 420ms */
+.dg-hit {
+  animation: dgHit 0.3s steps(1, end);
+}
+.dg-hit-hard {
+  animation: dgHitHard 0.42s steps(1, end);
+}
+
+/* 타격 자국: 닿은 자리에 픽셀 별이 커졌다 사라진다 220ms */
+.dg-impact {
+  animation: dgImpact 0.22s steps(3, end) forwards;
+}
+
+/* 맞은 자리 위로 뜨는 조각 숫자 */
+.dg-float {
+  animation: dgFloat 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* 합계 숫자 · 도장: 크게 왔다가 쾅 찍힌다 */
+.dg-slam {
+  animation: dgSlam 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+.dg-stamp {
+  animation: dgStamp 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+.dg-ink-shadow {
+  text-shadow: 3px 3px 0 var(--dg-ink);
+}
+
+/* 무대 흔들림: 보통 타 200ms(±3px), 치명타 260ms(±7px) */
+.dg-quake {
+  animation: dgQuake 0.2s linear;
+}
+.dg-quake-hard {
+  animation: dgQuakeHard 0.26s linear;
+}
+
+/* 처치: 아래로 4단계 줄어들며 사라진다 480ms */
+.dg-collapse {
+  animation: dgCollapse 0.48s steps(4, end) forwards;
+}
+
+/* 처치: 원판 조각이 흩어진다 600ms (--dx --dy --rot 는 BossFight 가 준다) */
+.dg-shard {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 2px solid var(--dg-ink);
+  border-radius: 50%;
+  animation: dgShatter 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes dgHpEmpty {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+
+@keyframes dgDash {
+  0% { transform: translateX(0) scaleX(1); }
+  22% { transform: translateX(-12px) scaleX(0.94); }
+  47% { transform: translateX(var(--dash, 60px)) scaleX(1.06); }
+  61% { transform: translateX(var(--dash, 60px)) scaleX(1); }
+  100% { transform: translateX(0) scaleX(1); }
+}
+
+@keyframes dgDashHeavy {
+  0% { transform: translateX(0) scaleX(1); }
+  18% { transform: translateX(-18px) scaleX(0.9) translateY(2px); }
+  38% { transform: translateX(var(--dash, 60px)) scaleX(1.1); }
+  60% { transform: translateX(var(--dash, 60px)) scaleX(1); }
+  100% { transform: translateX(0) scaleX(1); }
+}
+
+@keyframes dgHit {
+  0% { filter: invert(1); transform: translateX(10px) rotate(4deg); }
+  30% { filter: none; transform: translateX(14px) rotate(5deg); }
+  60% { transform: translateX(6px) rotate(2deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@keyframes dgHitHard {
+  0% { filter: invert(1); transform: translateX(14px) rotate(6deg); }
+  25% { filter: invert(1); transform: translateX(26px) rotate(10deg) translateY(-4px); }
+  50% { filter: none; transform: translateX(22px) rotate(8deg); }
+  75% { transform: translateX(8px) rotate(3deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@keyframes dgImpact {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.25) rotate(15deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.6) rotate(30deg); opacity: 0; }
+}
+
+@keyframes dgFloat {
+  0% { transform: translate(-50%, 10px) scale(0.6); opacity: 0; }
+  25% { transform: translate(-50%, -6px) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -34px) scale(1); opacity: 0; }
+}
+
+@keyframes dgSlam {
+  0% { transform: scale(2.6); opacity: 0; }
+  40% { transform: scale(0.9); opacity: 1; }
+  65% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes dgStamp {
+  0% { transform: scale(2.2) rotate(-6deg); opacity: 0; }
+  55% { transform: scale(0.92) rotate(-6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-6deg); }
+}
+
+@keyframes dgQuake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(3px, -2px); }
+  60% { transform: translate(-2px, -1px); }
+  80% { transform: translate(2px, 1px); }
+}
+
+@keyframes dgQuakeHard {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-7px, 4px); }
+  30% { transform: translate(7px, -5px); }
+  45% { transform: translate(-5px, 3px); }
+  60% { transform: translate(5px, -2px); }
+  80% { transform: translate(-2px, 1px); }
+}
+
+@keyframes dgCollapse {
+  from { clip-path: inset(0 0 0 0); transform: translateY(0); }
+  to { clip-path: inset(100% 0 0 0); transform: translateY(8px); }
+}
+
+@keyframes dgShatter {
+  from { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.6); opacity: 0; }
+}

@@ -37,6 +37,7 @@ const Running = lazy(() => import("./pages/Running"));
 const WorkoutStart = lazy(() => import("./pages/WorkoutStart"));
 const ActivitySession = lazy(() => import("./pages/ActivitySession"));
 const Collection = lazy(() => import("./pages/Collection"));
+const ShadowBoss = lazy(() => import("./pages/ShadowBoss"));
 const AttendanceShareView = lazy(() => import("./pages/AttendanceShareView"));
 const Rankings = lazy(() => import("./pages/Rankings"));
 const Lounge = lazy(() => import("./pages/Lounge"));
@@ -57,6 +58,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 // 개발 서버에서만 여는 픽셀 아바타 갤러리
 const DevAvatars = import.meta.env.DEV ? lazy(() => import("./pages/DevAvatars")) : null;
 const DevLounge = import.meta.env.DEV ? lazy(() => import("./pages/DevLounge")) : null;
+const DevBoss = import.meta.env.DEV ? lazy(() => import("./pages/DevBoss")) : null;
 
 function RouteLoading() {
   return (
@@ -90,6 +92,15 @@ function App() {
               <Route path="/forbidden" element={<Forbidden />} />
               {DevAvatars && <Route path="/dev/avatars" element={<DevAvatars />} />}
               {DevLounge && <Route path="/dev/lounge" element={<DevLounge />} />}
+              {DevBoss && <Route path="/dev/boss" element={<DevBoss />} />}
+              <Route
+                path="/shadow"
+                element={
+                  <ProtectedRoute>
+                    <ShadowBoss />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route path="/proteins/:id" element={<ProteinDetail />} />
               <Route
