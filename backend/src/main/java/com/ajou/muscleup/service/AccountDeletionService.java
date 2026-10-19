@@ -72,6 +72,8 @@ public class AccountDeletionService {
         exec("delete from AttendanceShareReport r where r.attendanceLog.user.id = :id or r.user.id = :id", id);
         exec("delete from AttendanceLog a where a.user.id = :id", id);
         exec("delete from WeeklyGoalWeek w where w.user.id = :id", id);
+        exec("delete from ShadowHit h where h.user.id = :id", id);
+        exec("delete from ShadowWeek w where w.user.id = :id", id);
         exec("delete from WeeklyGoalSetting s where s.user.id = :id", id);
         exec("delete from DailyQuest q where q.user.id = :id", id);
         exec("delete from LiftEntry l where l.user.id = :id", id);
