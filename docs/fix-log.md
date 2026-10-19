@@ -8,6 +8,31 @@
 
 ---
 
+## 2026-10-20 · 그림자 던전 PR A — 백엔드(저장 = 힘 모으기, 던전 strike · 타이밍 · 패시브 · 정산)
+
+**불편** (사용자: "던전에 들어가서 스킬 · 능력치로 내가 직접 잡는 느낌")
+- 1차 그림자는 저장하면 혼자 때리고 끝나 고를 게 없었다. 설계 [docs/design/shadow-dungeon.md](design/shadow-dungeon.md)(8절 결정은 추천값으로 확정).
+
+**원인(근거)**
+- `ShadowBossService.onSession/onRun` 이 저장 끝에 바로 `attack` 을 불렀고(`shadow_hits` 한 줄 = 세션 하나), 힘을 모아 두는 자리 · 기술 · 보너스 규칙이 없었다.
+
+**고친 방법** — 세부: [docs/fixes/2026-10-20-shadow-dungeon-backend.md](fixes/2026-10-20-shadow-dungeon-backend.md)
+- **새 표 `shadow_charges`**(`ShadowCharge`): 저장 한 번 = 통(LEGS · CHEST · BACK · ARMS · RUN)별 한 줄. `shadow_weeks` 에 통 5칸 · `crit_tokens` · `settled` · `visits`, `shadow_hits` 에 `skill` · `grade` · `bonus`(전부 `@ColumnDefault`).
+- **규칙** `ShadowRules`: 종목 category → 통, 한 번 누름 60, PERFECT +10% · GOOD +5%, 패시브 4개(삼대장 · 장거리 · 꾸준함 · 그림자 사냥꾼) 각 +5% 합 15%, 치명타 토큰은 내가 고른 타에, 연출용 타 분배 `shares`.
+- **서비스**: 저장 → `charge`(하루 상한 300 은 충전 기준, 큰 통부터) · `POST /api/shadow/dungeon/enter` · `POST /api/shadow/dungeon/strike {skill, grade, crit}` · 안 쓴 힘은 **월요일 00:05 자동 정산**(`ShadowScheduler`, 못 돌면 상태 볼 때) · 삭제는 통에서 먼저 빼고 이미 쓴 힘은 마지막 타부터 깎음 · 탈퇴에 `ShadowCharge`.
+- 저장 응답 `shadow` → **`shadowCharge`**(모은 힘 · 토큰 · 상한 · 통 현황). `GET /api/shadow` 에 `charge` · `critTokens` · `passives` · `stats`.
+- `force` 는 MySQL 예약어라 칸 이름을 `gained` 로(설계 3절과 다름).
+
+**확인한 방법**
+- `ShadowBossServiceTest` 19개로 다시 씀(통 분배 · 상한 · 60 묶음 · 타이밍 · 토큰 · 패시브 · 처치 · 연속 · 삭제 · 1차 행 · 휴식 · 정산 · 스케줄러 · API · 이메일 없음), 백엔드 전체 101개 통과(local 프로필). `verify.sh --quick` 통과(화면 변경 없음).
+- 8081 에 이 브랜치 백엔드를 띄워 시험 계정으로 운동 · 러닝 저장 → 충전 → enter → strike(치명타 · 보너스 · 분배) → 빈 통 400 → 세션 삭제 재계산 → 401 → 탈퇴까지 실제 호출. 계정 · 행 정리.
+
+**아직 못 한 것**
+- Postgres 17 에서 `@ColumnDefault` 칸 추가 미확인 — 배포 전 Railway 스냅샷 + 첫 기동 로그 확인(안 되면 migration SQL).
+- PR B(던전 화면) · PR C(입구 · 충전 연출 · 홈 한 줄). 그동안 저장 결과의 1차 전투 장면은 안 뜬다(응답 칸 이름이 바뀜).
+
+---
+
 ## 2026-10-19 · 주간 보스 "그림자" PR 2 — 화면(전투 장면 · 홈 카드 · /shadow · /dev/boss)
 
 **불편** (사용자: "화면까지 만들자, 역동적으로")

@@ -4,7 +4,9 @@ import com.ajou.muscleup.entity.ShadowWeek;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 주간 보스 "그림자"의 숫자와 공식(docs/design/shadow-boss.md 2절). 튜닝 상수는 모두 여기, 함수는 모두 순수 함수.
@@ -14,6 +16,11 @@ import java.util.Map;
  * - 하루 상한 300(수기 입력 부풀리기 막기), 힘 1 미만은 공격 안 함(1분짜리 저장 막기).
  * - 체력 = max(100, round(최근 4주 중 힘 > 0 인 주의 평균 × 1.05)) — 지난 나보다 늘 조금 더 세다.
  * - 치명타(자기 기록 갱신이 있는 세션 · 러닝)만 레벨 배율 × (1.5 + 레벨 × 0.01). 평상 공격엔 레벨 배율 없음(공정한 거울).
+ *
+ * 2차 던전(docs/design/shadow-dungeon.md 2절): 저장은 힘을 통(기술)에 모으고, 던전에서 한 번 누를 때 통에서 60씩 쓴다.
+ * - 통 5개 = 종목 category: 하체 LEGS(지진) · 가슴 CHEST(밀어내기) · 등 BACK(들어 던지기) · 어깨 · 팔 · 코어 · 기타 ARMS(연타) · 러닝 RUN(돌진).
+ * - 타이밍 PERFECT +10% · GOOD +5%(한 타 상한 10%), 패시브 4개 각 +5%(합 상한 15%), 치명타 토큰은 내가 고른 타에(세션당 1개).
+ * - 능력치 · 패시브는 데미지 총량을 운동량 밖으로 늘리지 않는다: 보너스 전부 합쳐도 한 타의 25% 이하.
  */
 public final class ShadowRules {
     /** 보스 이름(8절 결정: "그림자" 그대로) */
@@ -48,7 +55,134 @@ public final class ShadowRules {
     /** 연속 처치를 거꾸로 셀 때 최대 몇 주까지 보나(2년) */
     public static final int STREAK_LOOKBACK_WEEKS = 104;
 
+    // ---- 2차 던전 ----
+    /** 통(기술) 코드 — 문자열(enum 칸 금지). 순서 = 화면의 원판 순서 */
+    public static final String LEGS = "LEGS";
+    public static final String CHEST = "CHEST";
+    public static final String BACK = "BACK";
+    public static final String ARMS = "ARMS";
+    public static final String RUN = "RUN";
+    public static final List<String> SKILLS = List.of(LEGS, CHEST, BACK, ARMS, RUN);
+    /** 기술 이름(화면 · 오류 문구) */
+    public static final Map<String, String> SKILL_LABEL = Map.of(
+            LEGS, "지진", CHEST, "밀어내기", BACK, "들어 던지기", ARMS, "연타", RUN, "돌진");
+    /** 통 이름(어떤 운동이 채우는지) */
+    public static final Map<String, String> POOL_LABEL = Map.of(
+            LEGS, "하체", CHEST, "가슴", BACK, "등", ARMS, "어깨 · 팔 · 코어", RUN, "러닝");
+    /** 한 번 누르면 통에서 이만큼(세트 묶음 하나) */
+    public static final int STRIKE_CHUNK = 60;
+    /** 타이밍 등급 · 보너스(%) */
+    public static final String PERFECT = "PERFECT";
+    public static final String GOOD = "GOOD";
+    public static final String MISS = "MISS";
+    public static final int TIMING_PERFECT_PCT = 10;
+    public static final int TIMING_GOOD_PCT = 5;
+    /** 패시브 하나 +5%, 합쳐서 15% 까지 */
+    public static final int PASSIVE_PCT = 5;
+    public static final int PASSIVE_CAP_PCT = 15;
+    public static final String PASSIVE_BIG_THREE = "삼대장";
+    public static final String PASSIVE_LONG_RUN = "장거리";
+    public static final String PASSIVE_STEADY = "꾸준함";
+    public static final String PASSIVE_HUNTER = "그림자 사냥꾼";
+    /** 삼대장: 3대 추정 1RM 합(kg) */
+    public static final int BIG_THREE_KG = 300;
+    public static final int BIG_THREE_KG_FEMALE = 200;
+    /** 장거리: 이번 주 러닝(m) */
+    public static final int LONG_RUN_M = 10_000;
+    /** 꾸준함: 이번 주 출석(운동한 날) */
+    public static final int STEADY_DAYS = 3;
+    /** 그림자 사냥꾼(칭호 T_SHADOW_STREAK_4): 치명타 배율 + */
+    public static final double HUNTER_CRIT_BONUS = 0.1;
+    /** 연타 타 수 · 들어 던지기 분배 */
+    public static final int ARMS_STRIKES = 4;
+    public static final double BACK_FIRST_SHARE = 0.3;
+
     private ShadowRules() {}
+
+    /** 종목 category → 통. LEGS · CHEST · BACK 은 그대로, 나머지(SHOULDERS · ARMS · CORE · OTHER · 모름)는 ARMS */
+    public static String skillOf(String category) {
+        if (category == null) return ARMS;
+        return switch (category) {
+            case LEGS, CHEST, BACK -> category;
+            default -> ARMS;
+        };
+    }
+
+    public static boolean isSkill(String skill) {
+        return skill != null && SKILLS.contains(skill);
+    }
+
+    /** 등급 문자열 정리: 모르는 값 · null 은 MISS */
+    public static String grade(String grade) {
+        return PERFECT.equals(grade) ? PERFECT : GOOD.equals(grade) ? GOOD : MISS;
+    }
+
+    /** 한 번 누를 때 통에서 쓰는 힘: min(남은 힘, 60) */
+    public static int chunk(int pool) {
+        return Math.max(0, Math.min(pool, STRIKE_CHUNK));
+    }
+
+    /** 타이밍 보너스(%) */
+    public static int timingPct(String grade) {
+        return switch (grade(grade)) {
+            case PERFECT -> TIMING_PERFECT_PCT;
+            case GOOD -> TIMING_GOOD_PCT;
+            default -> 0;
+        };
+    }
+
+    /** 그 기술에 걸리는 패시브 보너스(%): 삼대장(LEGS · CHEST · BACK) · 장거리(RUN) · 꾸준함(전부). 합 15% 까지 */
+    public static int passivePct(String skill, Set<String> passives) {
+        int pct = 0;
+        if (passives.contains(PASSIVE_BIG_THREE) && (LEGS.equals(skill) || CHEST.equals(skill) || BACK.equals(skill))) pct += PASSIVE_PCT;
+        if (passives.contains(PASSIVE_LONG_RUN) && RUN.equals(skill)) pct += PASSIVE_PCT;
+        if (passives.contains(PASSIVE_STEADY)) pct += PASSIVE_PCT;
+        return Math.min(pct, PASSIVE_CAP_PCT);
+    }
+
+    /** 치명타 배율(사냥꾼 패시브면 +0.1) */
+    public static double critMultiplier(int level, boolean hunter) {
+        return critMultiplier(level) + (hunter ? HUNTER_CRIT_BONUS : 0);
+    }
+
+    /** 보너스(%)를 더한 힘: 60 + 15% → 69 */
+    public static int boosted(int force, int bonusPct) {
+        return (int) Math.round(force * (100 + Math.max(0, bonusPct)) / 100.0);
+    }
+
+    /** 실제 들어가는 힘(보너스 뒤, 치명타면 배율) */
+    public static int strikeDamage(int force, int bonusPct, boolean crit, double critMultiplier) {
+        int b = boosted(force, bonusPct);
+        if (b <= 0) return 0;
+        return crit ? (int) Math.round(b * critMultiplier) : b;
+    }
+
+    /**
+     * 연출용 타 분배(합 = damage). 지진 · 밀어내기 · 돌진 1타, 들어 던지기 [30%, 70%], 연타 4타 균등,
+     * 돌진은 장거리 패시브면 2타 반반. 0 이면 [0].
+     */
+    public static List<Integer> shares(String skill, int damage, Set<String> passives) {
+        if (damage <= 0) return List.of(0);
+        if (BACK.equals(skill)) {
+            int first = (int) Math.round(damage * BACK_FIRST_SHARE);
+            return List.of(first, damage - first);
+        }
+        if (ARMS.equals(skill)) return split(damage, ARMS_STRIKES);
+        if (RUN.equals(skill) && passives.contains(PASSIVE_LONG_RUN)) return split(damage, 2);
+        return List.of(damage);
+    }
+
+    /** n 등분(나머지는 뒤 타에). 타 수가 힘보다 많으면 힘만큼만 */
+    static List<Integer> split(int damage, int n) {
+        int count = Math.max(1, Math.min(n, damage));
+        int base = damage / count;
+        int rest = damage - base * count;
+        java.util.ArrayList<Integer> out = new java.util.ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            out.add(base + (i >= count - rest ? 1 : 0));
+        }
+        return List.copyOf(out);
+    }
 
     /** 운동 세션의 힘: (볼륨 + 맨몸 횟수 × 20kg) ÷ 100, 반올림. 6,000kg → 60 · 턱걸이 8회 3세트 → 480kg → 5 */
     public static int sessionForce(double totalVolume, int bodyweightReps) {

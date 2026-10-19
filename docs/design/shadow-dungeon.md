@@ -88,7 +88,7 @@
 
 ### 2.6 정산 — 안 쓴 힘은 버리지 않는다
 
-- 던전에 안 들어가도 손해가 없어야 한다(라운지만 쓰는 사람). **주가 끝나면(월요일 00:05 KST, `@Scheduled`) 남은 힘을 보너스 없이 기본 공격으로 자동 정산**한다. 치명타 토큰은 가장 큰 통에 자동 사용.
+- 던전에 안 들어가도 손해가 없어야 한다(라운지만 쓰는 사람). **주가 끝나면(월요일 00:05 KST, `@Scheduled`) 남은 힘을 보너스 없이 기본 공격으로 자동 정산**한다. 치명타 토큰은 가장 큰 통에 자동 사용. (구현) 통을 60 씩이 아니라 통째로 한 타씩(큰 통부터), 날은 그 주 일요일, source `SETTLE`.
 - 보조: `status()` · `history()` 를 읽을 때 지난 주에 미정산 힘이 있으면 그 자리에서 정산(스케줄러가 못 돌았을 때).
 - 그래서 1차 규칙(처치 · 연속 · 칭호)은 결과적으로 유지된다. 던전은 "보너스 ≤ 10% + 내 손으로 잡는 느낌"을 더하는 것.
 - 1차 데이터 호환: 이미 공격이 적용된 과거 주는 `charge` 0 · `settled` true 로 그대로.
@@ -108,11 +108,12 @@
 
 새 표 1개 + 칸 추가(`ddl-auto=update`, 추가 칸은 전부 기본값 있는 숫자 · 불린 · 문자열).
 
-**`shadow_charges`** (새 표) — 저장 한 번 = 한 줄. 하루 상한 · 삭제 재계산의 기준
+**`shadow_charges`** (새 표) — 저장 한 번 = **통별 한 줄**. 하루 상한 · 삭제 재계산의 기준
 ```
 id, week_id(FK shadow_weeks), user_id, source VARCHAR(10) SESSION|RUN, source_id,
-skill VARCHAR(10) LEGS|CHEST|BACK|ARMS|RUN, raw INT, hit_on DATE, crit_token BIT, created_at
+skill VARCHAR(10) LEGS|CHEST|BACK|ARMS|RUN, raw INT(상한 전), gained INT(통에 들어간 힘), hit_on DATE, crit_token BIT, created_at
 ```
+- (구현) `force` 는 MySQL 예약어라 `gained`. 새 칸 기본값은 `@ColumnDefault` — PR A 기록 참고.
 - 1차 `shadow_hits` 의 `source` · `source_id` · `hit_on` 역할이 여기로 온다. **충전과 타격을 한 표에 섞지 않는다.**
 
 **`shadow_weeks`** 추가
@@ -144,9 +145,9 @@ bonus  INT NOT NULL DEFAULT 0   -- 타이밍 + 패시브로 더해진 피해
 |---|---|---|
 | GET | `/api/shadow` | 1차 응답 + `charge: {LEGS, CHEST, BACK, ARMS, RUN}` · `critTokens` · `passives: ["삼대장", …]` · `stats: {strengthKg, enduranceKm, attendanceStreak, weeklyStreak, level}` |
 | POST | `/api/shadow/dungeon/enter` | `visits+1`, 응답은 GET 과 같음(통 · 패시브 · 체력). 들어올 때 한 번 |
-| POST | `/api/shadow/dungeon/strike` | 몸 `{skill, grade, crit: boolean}` → `Hit`(1차 `ShadowHitResponse` + `skill` · `grade` · `bonus` · `shares: [..]` 연타 분배 · `chargeLeft` · `critTokensLeft`). 통이 비면 400 한국어 문구, 이미 쓰러졌으면 200 + `alreadyDown` |
+| POST | `/api/shadow/dungeon/strike` | 몸 `{skill, grade, crit: boolean}` → `Hit`(1차 `ShadowHitResponse` + `skill` · `grade` · `bonus` · `shares: [..]` 연타 분배 · `chargeLeft` · `critTokensLeft`). 통이 비면 400 한국어 문구, 이미 쓰러졌으면 200 에 `hpBefore 0`(따로 칸 없음) |
 | GET | `/api/shadow/history` | 1차 그대로 |
-| 저장 응답 `shadow` | `POST /api/workouts` · `/api/runs` | `{charged: {LEGS: 40, CHEST: 25}, total: 65, critToken: boolean, capped: boolean, chargeLeft: {...}}` — 1차 `Hit` 모양에서 바뀜(화면 PR 과 같이) |
+| 저장 응답 **`shadowCharge`** | `POST /api/workouts` · `/api/runs` | `{charged: {LEGS: 40, CHEST: 25}, total: 65, critToken, capped, chargeLeft: {...}, chargeTotal, critTokens, hp, remaining, killed}` — 1차 `shadow`(Hit) 칸은 없어진다(화면 PR C 와 같이) |
 
 이메일 · 사용자 번호 없음(1차 규칙). `/api/shadow/**` 권한은 1차 설정 그대로.
 

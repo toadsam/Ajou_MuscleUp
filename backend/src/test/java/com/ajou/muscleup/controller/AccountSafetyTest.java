@@ -153,6 +153,8 @@ class AccountSafetyTest {
         em.persist(shadowWeek);
         em.persist(com.ajou.muscleup.entity.ShadowHit.builder().week(shadowWeek).user(alice).source("SESSION").sourceId(1L)
                 .hitOn(java.time.LocalDate.now()).raw(60).damage(60).hpAfter(40).build());
+        em.persist(com.ajou.muscleup.entity.ShadowCharge.builder().week(shadowWeek).user(alice).source("SESSION").sourceId(1L)
+                .skill("LEGS").hitOn(java.time.LocalDate.now()).raw(60).gained(60).build());
         em.flush();
 
         // 확인 문구 없으면 거절
@@ -184,6 +186,7 @@ class AccountSafetyTest {
         assertThat(count("select count(w) from WeeklyGoalWeek w where w.user.id = :id", id)).isZero();
         assertThat(count("select count(w) from ShadowWeek w where w.user.id = :id", id)).isZero();
         assertThat(count("select count(h) from ShadowHit h where h.user.id = :id", id)).isZero();
+        assertThat(count("select count(c) from ShadowCharge c where c.user.id = :id", id)).isZero();
         assertThat(count("select count(s) from WeeklyGoalSetting s where s.user.id = :id", id)).isZero();
         assertThat(count("select count(q) from DailyQuest q where q.user.id = :id", id)).isZero();
         assertThat(count("select count(l) from LiftEntry l where l.user.id = :id", id)).isZero();
