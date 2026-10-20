@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { resolveSeedFeatures } from "./seed";
 import { CELL, buildPixelAvatar, type Pose, type PixelAction, type PixelAvatarSpec } from "./pixelAvatar";
-import { CHIBI_FRONT_KINDS, bodyStageOf, buildChibi, type ChibiExpression, type ChibiSpec } from "./chibiArt";
+import { CHIBI_FRONT_KINDS, bodyStageOf, buildChibi, tierStepOf, type ChibiExpression, type ChibiSpec } from "./chibiArt";
 import type { AvatarSeed, CharacterTier, GrowthParams } from "./types";
 import { defaultGrowthParams } from "./types";
 import { TIER_PRESETS } from "./tierPreset";
@@ -53,17 +53,6 @@ const BRANCH_COLOR: Record<EvolutionBranch, string> = {
   TITAN: "#D9302A",
   BLAZE: "#F0BE2E",
   PHANTOM: "#2F6FD0",
-};
-
-const TIER_STEP: Record<CharacterTier, number> = {
-  BRONZE: 0,
-  SILVER: 1,
-  GOLD: 2,
-  PLATINUM: 3,
-  DIAMOND: 4,
-  MASTER: 5,
-  GRANDMASTER: 6,
-  CHALLENGER: 7,
 };
 
 const mbtiMotionClass = (mbti?: string | null) => {
@@ -132,7 +121,7 @@ export default function AvatarRenderer({
 
   const rawGrowth = growthParams ?? defaultGrowthParams;
   const growth = resolvedBranch ? amplifyGrowthParams(rawGrowth, resolvedBranch, resolvedSkillCount) : rawGrowth;
-  const tierStep = TIER_STEP[tier] ?? 0;
+  const tierStep = tierStepOf(tier);
   const tierPreset = TIER_PRESETS[tier];
   const motionClass = mbtiMotionClass(mbti);
   const svgId = useId().replace(/[:]/g, "");

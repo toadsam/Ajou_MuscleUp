@@ -5,6 +5,7 @@ import type { StageCharacter } from "../workout/LiftStage";
 import HpBar from "./HpBar";
 import ImpactMark, { FloorCrack } from "./ImpactMark";
 import ShadowSprite from "./ShadowSprite";
+import { bodyStageFor } from "../avatar/spriteShape";
 import MobSprite from "../dungeon/MobSprite";
 import { SHARDS, buildOf, prefersReducedMotion, splitShares } from "./fightParts";
 import { spawnChalk } from "../../lib/chalkBurst";
@@ -314,6 +315,7 @@ export default function DungeonStage({ character, mbti, hp, remaining, hit, play
                 key={contact ? `sh-${playKey}-${contact.index}` : `sh-${playKey}-${phase}-${entering}`}
                 avatarSeed={character?.avatarSeed ?? "shadow"}
                 build={buildOf(character)}
+              bodyStage={character ? bodyStageFor(character) : null}
                 female={character?.gender === "FEMALE"}
                 action={shadowAction}
                 size={100}

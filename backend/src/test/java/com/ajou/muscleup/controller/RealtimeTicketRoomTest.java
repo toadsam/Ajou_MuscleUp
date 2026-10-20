@@ -91,6 +91,8 @@ class RealtimeTicketRoomTest {
                 .andExpect(jsonPath("$.room").value("square"))
                 .andReturn().getResponse().getContentAsString();
         assertThat(claimsOf(res)).contains("\"room\":\"square\"");
+        // 몸 단계(라운지 작은 그림을 카드 그림과 같게) — 갓 시작한 사람은 0
+        assertThat(claimsOf(res)).contains("\"bs\":0");
     }
 
     @Test

@@ -73,6 +73,8 @@ export type PlayerState = {
   isPumped?: boolean;
   tank?: string;
   title?: string;
+  /** 몸 단계 0~5 (입장권에서만) */
+  bodyStage?: number;
   recentAttendanceCount?: number;
   activeEventTitle?: string;
   activeEventProgress?: string;
@@ -97,6 +99,7 @@ export type VerifiedProfile = Pick<
   | "isPumped"
   | "tank"
   | "title"
+  | "bodyStage"
 >;
 
 /** Self-described, cosmetic fields the client may still send (validated + length-limited). */

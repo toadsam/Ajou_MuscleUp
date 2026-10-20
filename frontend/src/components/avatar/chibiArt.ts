@@ -36,7 +36,17 @@ export type ChibiSpec = {
   skills?: { aura: boolean; wave: boolean; burst: boolean };
   /** 정면 운동 동작(CHIBI_FRONT_KINDS). 있으면 pose 대신 이 동작으로 팔 · 다리 · 기구를 그린다 */
   action?: PixelAction | null;
+  /** 눈 색(그림자 보스: 빨강). 없으면 잉크 */
+  eyeColor?: string;
+  /** 볼터치(그림자는 끈다). 기본 켜짐 */
+  blush?: boolean;
 };
+
+/** 티어 → 장비 단계 0(BRONZE) ~ 7(CHALLENGER) */
+const TIER_STEP: Record<string, number> = { BRONZE: 0, SILVER: 1, GOLD: 2, PLATINUM: 3, DIAMOND: 4, MASTER: 5, GRANDMASTER: 6, CHALLENGER: 7 };
+export const tierStepOf = (tier?: string | null) => TIER_STEP[(tier ?? "").toUpperCase()] ?? 0;
+/** 머리띠 색: 민소매가 빨강이면 파랑, 아니면 빨강 */
+export const headbandFor = (tank: string) => (tank.toUpperCase() === "#D9302A" ? "#2F6FD0" : "#D9302A");
 
 /** 치비 정면 그림으로 그리는 운동 동작(나머지는 옆모습 — pixelPoses · buildSideArt) */
 export const CHIBI_FRONT_KINDS: ReadonlySet<ActionKind> = new Set<ActionKind>(["squat", "deadlift", "press", "curl", "raise", "fly", "pullup", "legraise", "flex"]);
@@ -485,7 +495,7 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
   }
 
   if (tier >= 4) {
-    const band = tank.toUpperCase() === "#D9302A" ? "#2F6FD0" : "#D9302A";
+    const band = headbandFor(tank);
     g.rect(hx0 - 1, hx1 + 1, fringe - 1, fringe - 1, band);
   }
 
@@ -495,22 +505,23 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
   const exL = hx0 + Math.max(2, Math.round(hw * 0.35)); // 왼쪽 눈 왼쪽 열
   const exR = 23 - exL - (eyeW - 1); // 거울
   const last = eyeRow + v.eyeH - 1;
+  const eyeInk = spec.eyeColor ?? INK;
   const eye = (x: number) => {
     const left = x < 12;
     if (ex === "strain") {
       // > < 꾹 감은 눈
       const mid = eyeRow + Math.floor(v.eyeH / 2);
-      g.set(left ? x : x + 1, mid - 1, INK);
-      g.set(left ? x + 1 : x, mid, INK);
-      g.set(left ? x : x + 1, mid + 1, INK);
+      g.set(left ? x : x + 1, mid - 1, eyeInk);
+      g.set(left ? x + 1 : x, mid, eyeInk);
+      g.set(left ? x : x + 1, mid + 1, eyeInk);
       return;
     }
     if (spec.resting) {
-      g.rect(x, x + eyeW - 1, last, last, INK); // 감은 눈(쉬는 중)
+      g.rect(x, x + eyeW - 1, last, last, eyeInk); // 감은 눈(쉬는 중)
       return;
     }
     if (ex === "tired") {
-      g.rect(x, x + eyeW - 1, last, last, INK); // 반쯤 감긴 눈
+      g.rect(x, x + eyeW - 1, last, last, eyeInk); // 반쯤 감긴 눈
       g.rect(x, x + eyeW - 1, last - 1, last - 1, skinShade);
       return;
     }
@@ -518,12 +529,12 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
       // ^ ^ 웃는 눈(세 칸)
       const x0 = left ? x : x - 1;
       const row = eyeRow + Math.floor(v.eyeH / 2);
-      g.set(x0, row, INK);
-      g.set(x0 + 1, row - 1, INK);
-      g.set(x0 + 2, row, INK);
+      g.set(x0, row, eyeInk);
+      g.set(x0 + 1, row - 1, eyeInk);
+      g.set(x0 + 2, row, eyeInk);
       return;
     }
-    g.rect(x, x + eyeW - 1, eyeRow, last, INK);
+    g.rect(x, x + eyeW - 1, eyeRow, last, eyeInk);
     g.set(x + 1, last, IRIS); // 아래 반사광
     g.set(x, eyeRow, ex === "sparkle" ? STAR : WHITE); // 하이라이트(빛은 왼쪽 위)
     if (v.eyeH >= 4) g.set(x, eyeRow + 1, ex === "sparkle" ? WHITE : WHITE);
@@ -539,7 +550,7 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
     g.set(exR, eyeRow, hairShade);
   }
   // 볼터치(눈 아래 바깥쪽)
-  if (ex !== "tired") {
+  if (ex !== "tired" && spec.blush !== false) {
     g.rect(exL - 1, exL, last + 1, last + 1, PINK);
     g.rect(exR + 1, exR + 2, last + 1, last + 1, PINK);
   }

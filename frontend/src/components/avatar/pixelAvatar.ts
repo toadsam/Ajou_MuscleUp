@@ -498,7 +498,7 @@ function buildSideArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palette): Pi
     if (tier >= 2) g.rect(14, 14, 17, 20, tier >= 6 ? "#F0BE2E" : "#6B4A2E");
     // 목 · 머리(얼굴이 위, 뒤통수가 벤치에) — 치비 큰 머리
     g.rect(5, 6, 18, 20, skin);
-    face = drawSideHead(g, [3, 18], [-1, 0], [0, -1], pal, { tier, resting: spec.resting, strain: f === 1 && !spec.resting, eye: spec.eyeColor ?? undefined });
+    face = drawSideHead(g, [3, 18], [-1, 0], [0, -1], pal, { tier, resting: spec.resting, strain: f === 1 && !spec.resting, eye: spec.eyeColor ?? undefined, blush: !spec.eyeColor });
     // 팔 · 바벨(프레임 1 은 팔을 다 편 자세)
     const hy = f === 1 ? 7 : 13;
     g.rect(10, 11, hy + 2, 17, skin);
@@ -528,7 +528,7 @@ function buildSideArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palette): Pi
     g.rect(6, 9, 29, 30, handColor);
     // 목 · 머리(앞을 보며 바닥 쪽으로) — 치비 큰 머리
     g.rect(5, 6, sy - 1, sy, skin);
-    face = drawSideHead(g, [4, sy - 2], [-1, 0], [0, 1], pal, { tier, resting: spec.resting, strain: f === 1 && !spec.resting, eye: spec.eyeColor ?? undefined });
+    face = drawSideHead(g, [4, sy - 2], [-1, 0], [0, 1], pal, { tier, resting: spec.resting, strain: f === 1 && !spec.resting, eye: spec.eyeColor ?? undefined, blush: !spec.eyeColor });
   }
 
   g.outline();

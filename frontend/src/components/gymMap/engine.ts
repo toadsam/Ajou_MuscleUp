@@ -107,10 +107,15 @@ export function toneForMbti(mbti?: string | null): Tone {
   return { skin: "#E8B98F", tank: "#D9302A", hair: "#2B2420" };
 }
 
-/** h 머리 · s 피부 · k 눈(잉크) · r 민소매 · b 반바지 · w 흰색(신발 · 눈 반짝임) · p 볼(없으면 피부색) */
-export type Pal = Record<"h" | "s" | "k" | "r" | "b" | "w", string> & { p?: string };
+/**
+ * 작은 그림의 사람마다 다른 모양 — 큰 카드 그림(chibiArt)과 같은 값에서 온다(avatar/spriteShape.ts).
+ * hair 머리 모양(시드 0..), female 여자(긴 머리 · 똥머리), stage 몸 단계 0~5, band 머리띠 색(티어 다이아 이상)
+ */
+export type SpriteShape = { hair: number; female: boolean; stage: number; band?: string | null };
+/** h 머리 · s 피부 · k 눈(잉크) · r 민소매 · b 반바지 · w 흰색(신발 · 눈 반짝임) · p 볼(없으면 피부색) · shape 사람마다 다른 모양(없으면 기본) */
+export type Pal = Record<"h" | "s" | "k" | "r" | "b" | "w", string> & { p?: string; shape?: SpriteShape | null };
 export const BLUSH = "#EE9C86";
-export const palOf = (t: Tone): Pal => ({ h: t.hair, s: t.skin, k: C.ink, r: t.tank, b: "#2C2D31", w: C.chalk, p: BLUSH });
+export const palOf = (t: Tone, shape?: SpriteShape | null): Pal => ({ h: t.hair, s: t.skin, k: C.ink, r: t.tank, b: "#2C2D31", w: C.chalk, p: BLUSH, shape: shape ?? null });
 const GUESTS: Pal[] = [
   { h: "#5A3A22", s: "#F0C7A0", k: C.ink, r: C.blue, b: "#2C2D31", w: C.chalk, p: BLUSH },
   { h: "#16161A", s: "#D9A577", k: C.ink, r: C.yellow, b: "#2C2D31", w: C.chalk, p: BLUSH },
@@ -505,9 +510,11 @@ export function paintScenePreview(canvas: HTMLCanvasElement, scene: Exclude<Scen
 
 /* ---------- 캐릭터 (10×16 픽셀, 2026-10-20 치비) ----------
    큰 카드 그림(chibiArt)과 같은 비율: 머리 8줄(키의 절반) · 큰 눈 2×2(반짝임 한 칸) · 볼 · 짧은 몸 4줄 · 다리 4줄.
-   글자: h 머리 · s 피부 · k 눈 · w 흰색 · p 볼 · r 민소매 · b 반바지. 외곽선은 잉크로 한 칸 둘러 그린다. */
+   글자: h 머리 · s 피부 · k 눈 · w 흰색 · p 볼 · r 민소매 · b 반바지 · d 머리띠. 외곽선은 잉크로 한 칸 둘러 그린다.
+   사람마다(pal.shape): 머리 모양 4가지(기본 · 삐죽 · 높은 앞머리 · 옆으로 넘긴 앞머리), 여자는 긴 머리 · 똥머리,
+   몸 단계 0 마른 몸 → 1 · 2~3 어깨 · 팔이 몸 밖으로 → 4~5 한 칸씩 더 넓은 어깨(12칸), 티어 다이아 이상 머리띠. */
 
-const BASE = [
+const HEAD = [
   "..hhhhhh..",
   ".hhhhhhhh.",
   "hhhhhhhhhh",
@@ -516,13 +523,16 @@ const BASE = [
   "hskksskksh",
   ".pssssssp.",
   "..ssssss..",
-  ".srrrrrrs.",
-  ".srrrrrrs.",
-  ".s.rrrr.s.",
-  "..bbbbbb..",
 ];
 /** 뒷모습: 얼굴 자리를 머리카락으로, 목덜미만 피부 */
 const BACK = { 3: "hhhhhhhhhh", 4: "hhhhhhhhhh", 5: "hhhhhhhhhh", 6: ".hhhhhhhh.", 7: "..ssssss.." } as Record<number, string>;
+/** 몸통 4줄 [왼쪽 칸 차이, 줄] — 몸 단계별 */
+const BODY: Record<"thin" | "base" | "broad" | "huge", [number, string][]> = {
+  thin: [[0, "..srrrrs.."], [0, "..srrrrs.."], [0, "..s.rr.s.."], [0, "..bbbbbb.."]],
+  base: [[0, ".srrrrrrs."], [0, ".srrrrrrs."], [0, ".s.rrrr.s."], [0, "..bbbbbb.."]],
+  broad: [[0, "ssrrrrrrss"], [0, "ssrrrrrrss"], [0, "ss.rrrr.ss"], [0, "..bbbbbb.."]],
+  huge: [[-1, "sssrrrrrrsss"], [-1, "sssrrrrrrsss"], [-1, "ss.srrrrs.ss"], [-1, "ss.bbbbbb.ss"]],
+};
 const LEGS = [
   ["..bb..bb..", "..ss..ss..", "..ss..ss..", "..ww..ww.."],
   ["..bb..bb..", "..ss..ss..", "..ww..ss..", "......ww.."],
@@ -530,20 +540,49 @@ const LEGS = [
 ];
 export type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean };
 
+/** 그릴 칸 목록 [x, y, 글자](x · y 는 왼쪽 위 기준, 위로 솟는 머리는 y < 0) */
+function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, number, string][] {
+  const stage = sh?.stage ?? 1;
+  const hair = Math.abs(Math.round(sh?.hair ?? 0)) % 4;
+  const female = sh?.female ?? false;
+  const head = HEAD.slice();
+  if (o.back) Object.entries(BACK).forEach(([i, row]) => (head[Number(i)] = row));
+  if (!female && hair === 3 && !o.back) head[3] = "hhhhhsshhh"; // 옆으로 넘긴 앞머리
+  if (female && hair % 2 === 0) {
+    // 긴 머리: 볼 옆으로 내려온다
+    head[6] = o.back ? ".hhhhhhhh." : "hpssssssph";
+    head[7] = o.back ? ".hhhhhhhh." : "h.ssssss.h";
+  }
+  if (sh?.band) head[2] = "dddddddddd";
+  const rows: [number, number, string][] = head.map((row, i) => [i, 0, row]);
+  if (female && hair % 2 === 1) rows.push([-3, 0, "....hh...."], [-2, 0, "...hhhh..."], [-1, 0, "....hh...."]); // 똥머리(둥근 공 + 묶은 자리)
+  else if (!female && hair === 1) rows.push([-1, 0, ".h..h.h.h."]); // 삐죽 머리
+  else if (!female && hair === 2) rows.push([-1, 0, "..hhhhh..."]); // 높은 앞머리
+  const body = stage <= 0 ? BODY.thin : stage <= 1 ? BODY.base : stage <= 3 ? BODY.broad : BODY.huge;
+  body.forEach(([dx, row], i) => rows.push([8 + i, dx, row]));
+  if (!o.sit) LEGS[o.frame ?? 0].forEach((row, i) => rows.push([12 + i, 0, row]));
+  const cells: [number, number, string][] = [];
+  for (const [dy, dx, row] of rows) {
+    for (let i = 0; i < row.length; i += 1) {
+      const ch = row[i];
+      if (ch === ".") continue;
+      const cx = dx + i;
+      // 머리 위로 바를 든다: 옆 팔을 지우고(머리 바깥으로 세운 팔은 아래에서 따로)
+      if (o.over && dy >= 8 && dy <= 10 && (cx < 2 || cx > 7)) continue;
+      cells.push([cx, dy, ch]);
+    }
+  }
+  return cells;
+}
+
 /** 10×16 픽셀 치비(홈 지도 · 라운지 광장 · 던전이 같은 그림) */
 export function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal: Pal, o: CharOpts = {}) {
-  let rows = o.sit ? BASE.slice() : BASE.concat(LEGS[o.frame ?? 0]);
-  if (o.back) rows = rows.map((row, j) => BACK[j] ?? row);
-  // 머리 위로 바를 든다: 옆 팔을 지우고 머리 바깥으로 팔을 세운다
-  if (o.over) rows = rows.map((row, i) => (i >= 8 && i <= 10 ? `..${row.slice(2, 8)}..` : row));
+  const cells = charCells(o, pal.shape);
   g.fillStyle = C.ink;
-  rows.forEach((row, j) => {
-    for (let i = 0; i < 10; i++)
-      if (row[i] !== ".") {
-        g.fillRect(x + i - 1, y + j, 3, 1);
-        g.fillRect(x + i, y + j - 1, 1, 3);
-      }
-  });
+  for (const [cx, cy] of cells) {
+    g.fillRect(x + cx - 1, y + cy, 3, 1);
+    g.fillRect(x + cx, y + cy - 1, 1, 3);
+  }
   if (o.over) {
     fill(g, x - 2, y - 3, 3, 13, C.ink);
     fill(g, x + 9, y - 3, 3, 13, C.ink);
@@ -551,14 +590,10 @@ export function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal:
     fill(g, x - 7, y - 8, 4, 11, C.ink);
     fill(g, x + 13, y - 8, 4, 11, C.ink);
   }
-  rows.forEach((row, j) => {
-    for (let i = 0; i < 10; i++) {
-      const ch = row[i];
-      if (ch === ".") continue;
-      g.fillStyle = ch === "p" ? (pal.p ?? pal.s) : pal[ch as keyof Pal] ?? pal.s;
-      g.fillRect(x + i, y + j, 1, 1);
-    }
-  });
+  for (const [cx, cy, ch] of cells) {
+    g.fillStyle = ch === "p" ? (pal.p ?? pal.s) : ch === "d" ? (pal.shape?.band ?? pal.h) : (pal[ch as "h" | "s" | "k" | "r" | "b" | "w"] ?? pal.s);
+    g.fillRect(x + cx, y + cy, 1, 1);
+  }
   if (o.over) {
     fill(g, x - 1, y - 2, 1, 11, pal.s);
     fill(g, x + 10, y - 2, 1, 11, pal.s);
@@ -588,6 +623,8 @@ export type MapState = {
   checked: boolean;
   loungeCount: number;
   tone: Tone;
+  /** 내 캐릭터 모양(머리 · 성별 · 몸 단계 · 머리띠) — 카드 그림과 같게. 없으면 기본 */
+  shape?: SpriteShape | null;
   decor?: DecorLayout;
   decorEdit?: boolean;
   decorPick?: SlotId | null;
@@ -645,7 +682,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   let look = staffLookOf(layout);
   setDecorSolid(layout);
   paintBg(layout);
-  let pal = palOf(state.tone);
+  let pal = palOf(state.tone, state.shape);
   /** 화면에 꽂혀 보이는 원판 수(출석 연출 중에는 state.plates 보다 하나 적다) */
   let shownPlates = state.plates;
   const player: Walker = { x: START[0], y: START[1], path: [], speed: WALK_SPEED, anim: 0, moving: false, back: true };
@@ -985,7 +1022,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     setState(next) {
       const platesChanged = next.plates !== undefined && next.plates !== state.plates;
       state = { ...state, ...next };
-      if (next.tone) pal = palOf(state.tone);
+      if (next.tone || next.shape !== undefined) pal = palOf(state.tone, state.shape);
       if (next.scene && next.scene !== currentScene) {
         // 다른 공간으로: 막힌 칸 · 배경을 바꾸고 그 공간 입구에 선다
         setScene(next.scene);

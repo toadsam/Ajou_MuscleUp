@@ -5,7 +5,7 @@
 // 이동: 조이스틱 · 방향키 · WASD 는 누르는 동안 계속(84px/초), 바닥 탭은 길찾기, 몬스터 탭은 그 옆까지 걸어감.
 // 몬스터는 2~4칸을 천천히 왕복할 뿐 쫓아오지 않는다. 닿으면 onEncounter(한 번), 멀어지면(28px) 다시 닿을 수 있다.
 // React 는 HUD · 조이스틱 · 전투 창을 맡고, 이 파일은 그림 · 걷기 · 순찰 · 닿음만 맡는다. 전투 중(paused)엔 멈춘다.
-import { drawChar, palOf, toneForMbti, type Pal } from "../gymMap/engine";
+import { drawChar, palOf, toneForMbti, type Pal, type SpriteShape } from "../gymMap/engine";
 import { artSize, drawMob } from "./mobArt";
 
 export const TILE = 16;
@@ -221,12 +221,14 @@ export type DungeonController = {
   /** 전투가 끝나고 지도로 돌아올 때: 그 상대에서 한 걸음 물러선다 */
   stepBack: () => void;
   destroy: () => void;
+  /** 내 캐릭터 모양(카드 그림과 같게) — 캐릭터 정보가 늦게 와도 지도를 다시 만들지 않고 바꾼다. 그림자 보스도 같은 모양 */
+  setShape: (shape: SpriteShape | null) => void;
   /** 개발 확인용 */
   debug: () => { x: number; y: number; paused: boolean; mobs: { id: number; x: number; y: number; killed: boolean }[] };
   teleport: (x: number, y: number) => void;
 };
 
-export function createDungeon(canvas: HTMLCanvasElement, me: { mbti?: string | null; tank?: string | null }, cb: DungeonCallbacks): DungeonController {
+export function createDungeon(canvas: HTMLCanvasElement, me: { mbti?: string | null; tank?: string | null; shape?: SpriteShape | null }, cb: DungeonCallbacks): DungeonController {
   const g = canvas.getContext("2d")!;
   const bg = document.createElement("canvas");
   bg.width = WORLD_W;
@@ -234,8 +236,11 @@ export function createDungeon(canvas: HTMLCanvasElement, me: { mbti?: string | n
   paintDungeon(bg.getContext("2d")!);
 
   const tone = toneForMbti(me.mbti);
-  const myPal: Pal = palOf(me.tank ? { ...tone, tank: me.tank } : tone);
-  const shadowPal: Pal = { h: "#1A1A1C", s: "#26272B", k: C.red, r: "#3A3D43", b: "#1F2024", w: "#3C3E44" };
+  const myTone = me.tank ? { ...tone, tank: me.tank } : tone;
+  let myPal: Pal = palOf(myTone, me.shape);
+  // 그림자 보스 = 나의 그림자: 같은 머리 · 몸, 어두운 색 · 빨간 눈(머리띠 · 볼은 없다)
+  const shadowOf = (shape: SpriteShape | null | undefined): Pal => ({ h: "#1A1A1C", s: "#26272B", k: C.red, r: "#3A3D43", b: "#1F2024", w: "#3C3E44", shape: shape ? { ...shape, band: null } : null });
+  let shadowPal: Pal = shadowOf(me.shape);
 
   const player = { x: START[0], y: START[1], path: [] as [number, number][], step: 0, back: true };
   let mobs: MobActor[] = [];
@@ -522,6 +527,10 @@ export function createDungeon(canvas: HTMLCanvasElement, me: { mbti?: string | n
   raf = requestAnimationFrame(loop);
 
   return {
+    setShape(shape) {
+      myPal = palOf(myTone, shape);
+      shadowPal = shadowOf(shape);
+    },
     setMobs(list) {
       const prev = new Map(mobs.map((m) => [m.id, m]));
       mobs = list.map((m) => {

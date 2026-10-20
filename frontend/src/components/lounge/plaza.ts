@@ -5,7 +5,7 @@
 // 아래: 잔디 · 나무 · 남쪽 입구(처음 서는 곳).
 // 사람 그림은 홈 지도와 같은 10×16 리프터(drawChar). 이름표 · 말풍선 · 이모트는 캔버스에 같이 그린다.
 // 위치는 월드 픽셀(발 가운데)로 주고받는다 — 실시간 서버는 x · y 를 받아 범위만 자르고 그대로 전한다.
-import { drawChar, palOf, toneForMbti, type Pal } from "../gymMap/engine";
+import { drawChar, palOf, toneForMbti, type Pal, type SpriteShape } from "../gymMap/engine";
 
 export const TILE = 16;
 export const COLS = 28;
@@ -443,6 +443,8 @@ export type PlazaPlayer = {
   level?: number;
   mbti?: string | null;
   tank?: string | null;
+  /** 머리 · 성별 · 몸 단계 · 머리띠(카드 그림과 같게, 입장권 값으로) */
+  shape?: SpriteShape | null;
   x: number;
   y: number;
 };
@@ -471,9 +473,9 @@ export type PlazaController = {
   destroy: () => void;
 };
 
-const toPal = (p: Pick<PlazaPlayer, "mbti" | "tank">): Pal => {
+const toPal = (p: Pick<PlazaPlayer, "mbti" | "tank" | "shape">): Pal => {
   const tone = toneForMbti(p.mbti);
-  return palOf(p.tank ? { ...tone, tank: p.tank } : tone);
+  return palOf(p.tank ? { ...tone, tank: p.tank } : tone, p.shape);
 };
 
 const inWorld = (x: number, y: number) => x > 0 && y > 0 && x < WORLD_W && y < WORLD_H && walkable(Math.floor(x / TILE), Math.floor(y / TILE));

@@ -1,6 +1,8 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import { spriteShapeOf } from "../components/avatar/spriteShape";
+import { toneForMbti } from "../components/gymMap/engine";
 import CountUp from "../components/gym/CountUp";
 import GymMap from "../components/gymMap/GymMap";
 import type { GrowthParams } from "../components/avatar/types";
@@ -356,6 +358,11 @@ export default function Home() {
   }, [logs]);
 
   const todayLog = useMemo(() => logMap.get(todayKey), [logMap, todayKey]);
+  // 지도 위 작은 내 캐릭터 모양(카드 그림과 같은 머리 · 성별 · 몸 단계 · 머리띠)
+  const mapShape = useMemo(
+    () => (character ? spriteShapeOf({ ...character, pumped: (character.pumpedUntil ?? 0) > Date.now() }, character.tank ?? toneForMbti(mbti).tank) : null),
+    [character, mbti],
+  );
   const isAttendanceDone = Boolean(todayLog);
   const todayLabel = todayLog
     ? todayLog.didWorkout
@@ -509,6 +516,8 @@ export default function Home() {
                 ) : undefined
               }
               mbti={mbti}
+              tank={character?.tank ?? null}
+              shape={mapShape}
               weekDays={weekStats.workoutDays}
               streak={summary?.currentStreak ?? 0}
               monthCount={summary?.monthWorkoutCount}
