@@ -5,7 +5,7 @@
 // 이동: 조이스틱 · 방향키 · WASD 는 누르는 동안 계속(84px/초), 바닥 탭은 길찾기, 몬스터 탭은 그 옆까지 걸어감.
 // 몬스터는 2~4칸을 천천히 왕복할 뿐 쫓아오지 않는다. 닿으면 onEncounter(한 번), 멀어지면(28px) 다시 닿을 수 있다.
 // React 는 HUD · 조이스틱 · 전투 창을 맡고, 이 파일은 그림 · 걷기 · 순찰 · 닿음만 맡는다. 전투 중(paused)엔 멈춘다.
-import { drawChar, palOf, toneForMbti, type Pal, type SpriteShape } from "../gymMap/engine";
+import { drawChar, palOf, toneForMbti, walkPose, type Pal, type SpriteShape } from "../gymMap/engine";
 import { artSize, drawMob } from "./mobArt";
 
 export const TILE = 16;
@@ -480,8 +480,8 @@ export function createDungeon(canvas: HTMLCanvasElement, me: { mbti?: string | n
         g.ellipse(player.x, player.y + 1, 5, 2, 0, 0, Math.PI * 2);
         g.fill();
         const moving = player.path.length > 0 || Math.hypot(input().x, input().y) > 0.15;
-        const frame = moving && !paused ? 1 + (Math.floor(player.step * 8) % 2) : 0;
-        drawChar(g, Math.round(player.x - 5), Math.round(player.y - 16), myPal, { frame, back: player.back });
+        const pose = walkPose(player.step * 8, moving && !paused, now);
+        drawChar(g, Math.round(player.x - 5), Math.round(player.y - 16), myPal, { frame: pose.frame, back: player.back, hop: pose.hop, squash: pose.squash });
       },
     });
     list.sort((a, b) => a.y - b.y).forEach((d) => d.draw());

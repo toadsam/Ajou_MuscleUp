@@ -1,6 +1,7 @@
 // 개발 전용: 픽셀 아바타의 모든 변형을 한 화면에서 본다 (로그인 없이). App.tsx 에서 DEV 일 때만 라우트를 연다.
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import BodyStageUp from "../components/avatar/BodyStageUp";
 import ChibiAvatar from "../components/avatar/ChibiAvatar";
 import type { ChibiExpression, ChibiVariant } from "../components/avatar/chibiArt";
 import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
@@ -45,10 +46,65 @@ function Cell({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** 움직임(2026-10-20) 확인: 숨쉬기 · 이긴 순간(누르면 다시) · 몸이 커지는 순간 창 */
+function MotionLifeDemo() {
+  const [win, setWin] = useState(0);
+  const [grow, setGrow] = useState<string | null>(null);
+  const avatar = (bodyStage: number, size: number, stage = 1) => (
+    <AvatarRenderer avatarSeed="jaehun" tier="GOLD" stage={stage} gender="MALE" mbti="ESTJ" bodyStage={bodyStage} size={size} />
+  );
+  const openGrow = () => {
+    // 이 기기에서 "지난번 본 몸 단계 2" 로 적어 두고 4 로 띄운다
+    const key = `dev-grow-${Date.now()}`;
+    try {
+      const seen = JSON.parse(localStorage.getItem("body_stage_seen_v1") || "{}") as Record<string, number>;
+      localStorage.setItem("body_stage_seen_v1", JSON.stringify({ ...seen, [key]: 2 }));
+    } catch {
+      // 개발 화면: 저장 못 하면 창이 안 뜰 뿐
+    }
+    setGrow(key);
+  };
+  return (
+    <section className="space-y-3" id="motion-life">
+      <h2 className="font-bold text-plate-yellow">움직임 — 숨쉬기 · 이긴 순간 · 몸이 커지는 순간</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Cell label="숨쉬기 · 서기">{avatar(2, 120)}</Cell>
+        <Cell label="숨쉬기 · 알통">{avatar(4, 120, 3)}</Cell>
+        <Cell label="숨쉬기 · 쉬는 중">
+          <AvatarRenderer avatarSeed="mina" tier="SILVER" stage={1} gender="FEMALE" mbti="ENFP" bodyStage={1} isResting size={120} />
+        </Cell>
+        <Cell label="이긴 순간 · 누르면 다시">
+          <button type="button" onClick={() => setWin((w) => w + 1)} aria-label="이긴 순간 다시 보기">
+            <AvatarRenderer
+              key={win}
+              avatarSeed="jaehun"
+              tier="GOLD"
+              stage={3}
+              gender="MALE"
+              mbti="ESTJ"
+              bodyStage={3}
+              size={120}
+              action={{ kind: "flex", frame: 1, equip: "none", plates: [] }}
+              pumped
+              celebrate
+            />
+          </button>
+        </Cell>
+      </div>
+      <button type="button" className="dg-btn dg-btn-steel min-h-[44px] px-4 text-sm" onClick={openGrow}>
+        몸이 커지는 순간 보기(단계 2 → 4)
+      </button>
+      {grow && <BodyStageUp key={grow} seedKey={grow} stage={4} renderAvatar={(b, size) => avatar(b, size)} />}
+    </section>
+  );
+}
+
 export default function DevAvatars() {
   return (
     <main className="mx-auto max-w-6xl space-y-10 px-4 pb-20 pt-24">
       <h1 className="text-4xl">픽셀 아바타 갤러리</h1>
+
+      <MotionLifeDemo />
 
       {/* ── 치비 시안 B(2026-10-20, 사용자 선택): 머리 큰 2.5등신 · 몸 단계 0 새싹 → 5 전설. 실제 화면은 아직 아래의 지금 그림 ── */}
       <section className="space-y-4" id="chibi">

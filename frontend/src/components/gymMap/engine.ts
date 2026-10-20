@@ -538,7 +538,25 @@ const LEGS = [
   ["..bb..bb..", "..ss..ss..", "..ww..ss..", "......ww.."],
   ["..bb..bb..", "..ss..ss..", "..ss..ww..", "..ww......"],
 ];
-export type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean };
+/**
+ * frame 다리(0 서기 · 1 · 2 걷기) · sit 앉기 · back 뒷모습 · over 머리 위 바
+ * hop 몸 전체를 위로(통통 걷기) · squash 머리를 한 칸 내려 어깨에 묻는다(착지 · 숨 내쉬기)
+ */
+export type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean; hop?: number; squash?: boolean };
+
+/**
+ * 작은 그림의 움직임(2026-10-20) — 치비답게 통통.
+ * 걷기: cycle(걸음 수 같은 연속 값)을 4박자로 나눠 다리 1 · 1 · 2 · 2, 박자마다 뜸(hop 1) → 착지(머리가 한 박자 늦게 내려앉음).
+ * 서기: 1.6초마다 0.35초 머리가 한 칸 내려앉는 숨쉬기. seed 로 사람마다 박자를 어긋나게.
+ */
+export function walkPose(cycle: number, moving: boolean, now: number, seed = 0): { frame: number; hop: number; squash: boolean } {
+  if (moving) {
+    const phase = Math.floor(cycle * 2) % 4;
+    return { frame: phase < 2 ? 1 : 2, hop: phase % 2 === 0 ? 1 : 0, squash: phase % 2 === 1 };
+  }
+  const t = (now / 1000 + seed * 0.37) % 1.6;
+  return { frame: 0, hop: 0, squash: t > 1.25 };
+}
 
 /** 그릴 칸 목록 [x, y, 글자](x · y 는 왼쪽 위 기준, 위로 솟는 머리는 y < 0) */
 function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, number, string][] {
@@ -555,9 +573,12 @@ function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, nu
   }
   if (sh?.band) head[2] = "dddddddddd";
   const rows: [number, number, string][] = head.map((row, i) => [i, 0, row]);
-  if (female && hair % 2 === 1) rows.push([-3, 0, "....hh...."], [-2, 0, "...hhhh..."], [-1, 0, "....hh...."]); // 똥머리(둥근 공 + 묶은 자리)
-  else if (!female && hair === 1) rows.push([-1, 0, ".h..h.h.h."]); // 삐죽 머리
-  else if (!female && hair === 2) rows.push([-1, 0, "..hhhhh..."]); // 높은 앞머리
+  const headRows: [number, number, string][] = [];
+  if (female && hair % 2 === 1) headRows.push([-3, 0, "....hh...."], [-2, 0, "...hhhh..."], [-1, 0, "....hh...."]); // 똥머리(둥근 공 + 묶은 자리)
+  else if (!female && hair === 1) headRows.push([-1, 0, ".h..h.h.h."]); // 삐죽 머리
+  else if (!female && hair === 2) headRows.push([-1, 0, "..hhhhh..."]); // 높은 앞머리
+  rows.push(...headRows);
+  if (o.squash) rows.forEach((r) => (r[0] += 1));
   const body = stage <= 0 ? BODY.thin : stage <= 1 ? BODY.base : stage <= 3 ? BODY.broad : BODY.huge;
   body.forEach(([dx, row], i) => rows.push([8 + i, dx, row]));
   if (!o.sit) LEGS[o.frame ?? 0].forEach((row, i) => rows.push([12 + i, 0, row]));
@@ -576,7 +597,8 @@ function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, nu
 }
 
 /** 10×16 픽셀 치비(홈 지도 · 라운지 광장 · 던전이 같은 그림) */
-export function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal: Pal, o: CharOpts = {}) {
+export function drawChar(g: CanvasRenderingContext2D, x: number, y0: number, pal: Pal, o: CharOpts = {}) {
+  const y = y0 - (o.hop ?? 0);
   const cells = charCells(o, pal.shape);
   g.fillStyle = C.ink;
   for (const [cx, cy] of cells) {
@@ -817,14 +839,15 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     }
   };
 
-  const drawNpc = (n: Npc) => {
+  const drawNpc = (n: Npc, now: number, seed: number) => {
     const px = Math.round(n.w.x * TILE + 3);
     const py = Math.round(n.w.y * TILE) - 1;
-    const frame = n.w.moving ? 1 + (Math.floor(n.w.anim * 7) % 2) : 0;
+    const pose = walkPose(n.w.anim * 7, n.w.moving, now, seed);
+    const frame = pose.frame;
     g.globalAlpha = 0.35;
     fill(g, px, py + 15, 10, 2, "#000");
     g.globalAlpha = 1;
-    drawChar(g, px, py, npcPal(n.id, look), { frame, back: n.w.back });
+    drawChar(g, px, py, npcPal(n.id, look), { frame, back: n.w.back, hop: pose.hop, squash: pose.squash });
     if (n.id === "staff") {
       // 걸레: 자루 + 걸레 머리(걸을 때 좌우로 흔들림)
       const sway = n.w.moving ? (frame === 1 ? -1 : 1) : 0;
@@ -960,14 +983,14 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     const px = Math.round(player.x * TILE + 3);
     const py = Math.round(player.y * TILE) - 1;
     const over = now < overUntil;
-    const walkFrame = player.moving ? 1 + (Math.floor(player.anim * 12) % 2) : 0;
+    const walk = walkPose(player.anim * 12, player.moving && !over, now);
     const sitters = main ? Math.min(3, Math.max(0, state.loungeCount)) : 0;
     const actors: { y: number; draw: () => void }[] = [];
     for (let i = 0; i < sitters; i++) {
       const [sx, sy] = SEATS[i];
-      actors.push({ y: sy + 16, draw: () => drawChar(g, sx, sy, GUESTS[i], { sit: true }) });
+      actors.push({ y: sy + 16, draw: () => drawChar(g, sx, sy, GUESTS[i], { sit: true, squash: walkPose(0, false, now, i + 3).squash }) });
     }
-    for (const n of npcs) actors.push({ y: n.w.y * TILE + 15, draw: () => drawNpc(n) });
+    npcs.forEach((n, i) => actors.push({ y: n.w.y * TILE + 15, draw: () => drawNpc(n, now, i + 1) }));
     actors.push({
       y: py + 16.5,
       draw: () => {
@@ -975,7 +998,7 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
         fill(g, px - 1, py + 15, 12, 2, C.yellow);
         fill(g, px + 1, py + 17, 8, 1, C.yellow);
         g.globalAlpha = 1;
-        drawChar(g, px, py - (walkFrame === 1 ? 1 : 0), pal, { frame: over ? 0 : walkFrame, back: !over && player.back, over });
+        drawChar(g, px, py, pal, { frame: over ? 0 : walk.frame, back: !over && player.back, over, hop: walk.hop, squash: !over && walk.squash });
       },
     });
     actors.sort((a, b) => a.y - b.y).forEach((a) => a.draw());

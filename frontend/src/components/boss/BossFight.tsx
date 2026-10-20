@@ -260,6 +260,7 @@ export default function BossFight({ hit, character, mbti, motion, replayKey = 0,
                 size={104}
                 action={myAction}
                 pumped={done}
+                celebrate={done && killed}
               />
             ) : (
               <span className="pb-6 text-xs text-steel-500">캐릭터 불러오는 중</span>

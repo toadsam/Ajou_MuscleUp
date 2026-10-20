@@ -36,6 +36,8 @@ type Props = {
    * 치비 그림(chibiArt, 2026-10-20): 서기 · 알통 · 휴식과 정면 운동 동작 9가지. 옆모습 동작(벤치 · 머신 · 러닝 등)은 pixelPoses 가 큰 머리로 그린다.
    */
   bodyStage?: number | null;
+  /** 이긴 순간(몬스터를 쓰러뜨림): 반짝이는 눈 + 한 번 펄쩍 */
+  celebrate?: boolean;
 };
 
 // 피부·머리 색은 MBTI 를 따르고, 민소매 색은 원판 팔레트에서 고른다.
@@ -85,6 +87,7 @@ export default function AvatarRenderer({
   tank = null,
   pumped = false,
   bodyStage = null,
+  celebrate = false,
 }: Props) {
   const [persistedAppearance, setPersistedAppearance] = useState(() => loadAppearanceBySeed(avatarSeed));
 
@@ -158,7 +161,9 @@ export default function AvatarRenderer({
       const expression: ChibiExpression = chibiAct
         ? chibiAct.frame === 1
           ? chibiAct.kind === "flex"
-            ? "smile"
+            ? celebrate
+              ? "sparkle"
+              : "smile"
             : "strain"
           : "normal"
         : resolvedAttendanceRisk !== "normal"
@@ -229,10 +234,16 @@ export default function AvatarRenderer({
     actionKey,
     pumped,
     bodyStage,
+    celebrate,
   ]);
 
   const y = (row: number) => row * CELL;
   const custom = action ? null : resolvedCustomization;
+  // 숨쉬기(치비 서기 · 알통 · 휴식): 턱 위 줄(머리 · 머리카락 · 알통 주먹)만 따로 묶어 한 칸 내려앉았다 올라온다. 운동 동작은 그대로
+  const breatheY = !actionKey ? art.regions.face.y + art.regions.face.h - 1 : null;
+  const cell = (run: { x: number; y: number; w: number; color: string }) => (
+    <rect key={`${run.x}:${run.y}`} x={run.x * CELL} y={y(run.y)} width={run.w * CELL} height={CELL} fill={run.color} />
+  );
   const region = (r: { x: number; y: number; w: number; h: number }) => ({
     x: r.x * CELL,
     y: y(r.y),
@@ -242,7 +253,7 @@ export default function AvatarRenderer({
 
   return (
     <div
-      className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${resolvedGender === "FEMALE" ? "avatar-gender-female" : "avatar-gender-male"} ${resolvedResting ? "avatar-resting" : ""} ${resolvedAttendanceRisk === "warning" ? "avatar-risk-warning" : ""} ${resolvedAttendanceRisk === "critical" ? "avatar-risk-critical" : ""} ${tierPreset.burst ? "avatar-master-burst" : ""}`}
+      className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${resolvedGender === "FEMALE" ? "avatar-gender-female" : "avatar-gender-male"} ${resolvedResting ? "avatar-resting" : ""} ${resolvedAttendanceRisk === "warning" ? "avatar-risk-warning" : ""} ${resolvedAttendanceRisk === "critical" ? "avatar-risk-critical" : ""} ${tierPreset.burst ? "avatar-master-burst" : ""} ${celebrate ? "avatar-victory" : ""}`}
       style={{ width: size, height: size }}
     >
       {resolvedResting && <div className="avatar-rest-banner">{"휴식 중"}</div>}
@@ -284,16 +295,14 @@ export default function AvatarRenderer({
         {/* 바닥 그림자 */}
         <rect x={4 * CELL} y={y(31)} width={16 * CELL} height={CELL} fill="rgba(0,0,0,0.35)" />
 
-        {art.runs.map((run) => (
-          <rect
-            key={`${run.x}:${run.y}`}
-            x={run.x * CELL}
-            y={y(run.y)}
-            width={run.w * CELL}
-            height={CELL}
-            fill={run.color}
-          />
-        ))}
+        {breatheY === null ? (
+          art.runs.map(cell)
+        ) : (
+          <>
+            {art.runs.filter((run) => run.y >= breatheY).map(cell)}
+            <g className={resolvedResting ? "pxa-breathe pxa-breathe-slow" : "pxa-breathe"}>{art.runs.filter((run) => run.y < breatheY).map(cell)}</g>
+          </>
+        )}
 
         {custom?.body && (
           <image
