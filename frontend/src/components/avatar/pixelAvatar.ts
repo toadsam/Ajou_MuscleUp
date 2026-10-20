@@ -24,7 +24,7 @@ import {
   shade,
   type Palette,
 } from "./pixelGrid";
-import { buildPoseArt, isPoseKind, type PoseKind } from "./pixelPoses";
+import { buildPoseArt, drawSideHead, isPoseKind, type PoseKind } from "./pixelPoses";
 
 export { CELL, GRID_BOTTOM, GRID_LEFT, GRID_RIGHT, GRID_TOP, GRID_W, INK } from "./pixelGrid";
 
@@ -125,7 +125,7 @@ type Box = { x0: number; x1: number; y0: number; y1: number };
 type ArmStyle = "stand" | "flex" | "overhead" | "rack" | "rackLow" | "curl" | "wide" | "front" | "hang";
 
 /** 정면 바벨: y 행에 봉, xIn 열(왼쪽 안쪽 원판의 오른쪽 끝)부터 바깥으로 무거운 원판부터 끼운다 */
-function drawBar(g: Grid, y: number, xIn: number, plates: PixelPlate[]) {
+export function drawBar(g: Grid, y: number, xIn: number, plates: PixelPlate[]) {
   const list = plates.slice(0, MAX_PIXEL_PLATES);
   const widths = list.map((p) => (p.size === 0 ? 2 : 1));
   const total = widths.reduce((a, w) => a + w, 0);
@@ -477,7 +477,7 @@ export function buildPixelAvatar(spec: PixelAvatarSpec): PixelAvatarArt {
 /** 옆모습(머리가 왼쪽): 벤치프레스 · 푸시업. 정면 그림과 같은 색 · 같은 외곽선 규칙 */
 function buildSideArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palette): PixelAvatarArt {
   const g = new Grid();
-  const { skin, hair, tank, shorts, shoe, handColor } = pal;
+  const { skin, tank, shorts, shoe, handColor } = pal;
   const b = spec.build;
   const tier = spec.tierStep;
   const f = act.frame;
@@ -496,14 +496,9 @@ function buildSideArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palette): Pi
     g.rect(7, 14, b >= 2 ? 16 : 17, 20, tank);
     g.rect(15, 18, 17, 20, shorts);
     if (tier >= 2) g.rect(14, 14, 17, 20, tier >= 6 ? "#F0BE2E" : "#6B4A2E");
-    // 목 · 머리(얼굴이 위, 뒤통수가 벤치에)
-    g.rect(6, 6, 18, 20, skin);
-    g.rect(1, 5, 15, 20, skin);
-    g.rect(1, 1, 15, 20, hair);
-    g.rect(1, 5, 20, 20, hair);
-    g.set(5, 15, null);
-    g.set(3, 14, skin); // 코
-    g.set(4, 16, spec.resting ? skin : (spec.eyeColor ?? INK)); // 눈
+    // 목 · 머리(얼굴이 위, 뒤통수가 벤치에) — 치비 큰 머리
+    g.rect(5, 6, 18, 20, skin);
+    face = drawSideHead(g, [3, 18], [-1, 0], [0, -1], pal, { tier, resting: spec.resting, strain: f === 1 && !spec.resting, eye: spec.eyeColor ?? undefined });
     // 팔 · 바벨(프레임 1 은 팔을 다 편 자세)
     const hy = f === 1 ? 7 : 13;
     g.rect(10, 11, hy + 2, 17, skin);
@@ -531,14 +526,9 @@ function buildSideArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palette): Pi
     // 팔(앞쪽)과 손
     g.rect(7, 8, sy + 1, 28, skin);
     g.rect(6, 9, 29, 30, handColor);
-    // 목 · 머리(아래를 본다)
-    g.rect(6, 6, sy - 1, sy, skin);
-    g.rect(1, 5, sy - 4, sy, skin);
-    g.rect(1, 5, sy - 4, sy - 4, hair);
-    g.rect(5, 5, sy - 4, sy - 2, hair);
-    g.set(1, sy, null);
-    g.set(2, sy - 2, spec.resting ? skin : (spec.eyeColor ?? INK)); // 눈
-    face = { x: 1, y: sy - 4, w: 5, h: 5 };
+    // 목 · 머리(앞을 보며 바닥 쪽으로) — 치비 큰 머리
+    g.rect(5, 6, sy - 1, sy, skin);
+    face = drawSideHead(g, [4, sy - 2], [-1, 0], [0, 1], pal, { tier, resting: spec.resting, strain: f === 1 && !spec.resting, eye: spec.eyeColor ?? undefined });
   }
 
   g.outline();

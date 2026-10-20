@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { resolveSeedFeatures } from "./seed";
 import { CELL, buildPixelAvatar, type Pose, type PixelAction, type PixelAvatarSpec } from "./pixelAvatar";
-import { bodyStageOf, buildChibi, type ChibiExpression, type ChibiSpec } from "./chibiArt";
+import { CHIBI_FRONT_KINDS, bodyStageOf, buildChibi, type ChibiExpression, type ChibiSpec } from "./chibiArt";
 import type { AvatarSeed, CharacterTier, GrowthParams } from "./types";
 import { defaultGrowthParams } from "./types";
 import { TIER_PRESETS } from "./tierPreset";
@@ -33,7 +33,7 @@ type Props = {
   pumped?: boolean;
   /**
    * 몸 단계 0~5(서버 BodyStage — 근육량 · 레벨 · 활동 레벨 중 가장 높은 것). 없으면 근육량과 진화 단계(레벨)로 짐작한다.
-   * 동작(action)이 없을 때는 치비 그림(chibiArt, 2026-10-20)으로, 운동 동작은 아직 예전 리프터 그림으로 그린다.
+   * 치비 그림(chibiArt, 2026-10-20): 서기 · 알통 · 휴식과 정면 운동 동작 9가지. 옆모습 동작(벤치 · 머신 · 러닝 등)은 pixelPoses 가 큰 머리로 그린다.
    */
   bodyStage?: number | null;
 };
@@ -157,15 +157,28 @@ export default function AvatarRenderer({
     const emblem = resolvedBranch && skills.has("branch") ? BRANCH_COLOR[resolvedBranch] : null;
 
     // 서 있는 캐릭터(카드 · 홈 · 친구 · 모임 등) — 머리 큰 치비 B, 몸 단계 0~5
-    if (resolvedResting || !act) {
+    // 정면 운동 동작(스쿼트 · 데드 · 프레스 · 컬 · 레이즈 · 플라이 · 턱걸이 · 다리 들기 · 알통)도 치비로
+    const chibiAct = act && !resolvedResting && CHIBI_FRONT_KINDS.has(act.kind) ? act : null;
+    if (resolvedResting || !act || chibiAct) {
       const known = bodyStage !== null && bodyStage !== undefined && Number.isFinite(bodyStage);
       const base = known
         ? Math.max(0, Math.min(5, Math.round(bodyStage as number)))
         : bodyStageOf({ muscularity: growth.muscularityNormalized, level: Math.max(1, stage) * 10 + 1, activityLevel: 0 });
       const chibiStage = Math.min(5, base + (pumpedNow ? 1 : 0)) as ChibiSpec["bodyStage"];
       const chibiPose = resolvedResting ? "stand" : pose === "stand" ? "stand" : "flex";
-      const expression: ChibiExpression =
-        resolvedAttendanceRisk !== "normal" ? "tired" : pumpedNow ? "smile" : chibiPose === "flex" || tierStep >= 5 ? "smile" : "normal";
+      const expression: ChibiExpression = chibiAct
+        ? chibiAct.frame === 1
+          ? chibiAct.kind === "flex"
+            ? "smile"
+            : "strain"
+          : "normal"
+        : resolvedAttendanceRisk !== "normal"
+          ? "tired"
+          : pumpedNow
+            ? "smile"
+            : chibiPose === "flex" || tierStep >= 5
+              ? "smile"
+              : "normal";
       return buildChibi({
         variant: "B",
         bodyStage: chibiStage,
@@ -179,6 +192,7 @@ export default function AvatarRenderer({
         resting: resolvedResting,
         emblem,
         pumped: pumpedNow,
+        action: chibiAct,
         skills: { aura: skills.has("aura"), wave: skills.has("wave"), burst: skills.has("burst") },
       });
     }

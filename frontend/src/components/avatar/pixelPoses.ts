@@ -29,6 +29,54 @@ export const isPoseKind = (kind: string): kind is PoseKind => (POSE_KINDS as rea
 
 type P = [number, number];
 type Dir = [number, number];
+
+const BLUSH = "#F4A3A3";
+/**
+ * 옆모습 치비 머리(9×9, 2026-10-20) — 정면 치비처럼 머리를 크게. 목 쪽 끝은 예전 5×5 머리와 같은 자리에 두고
+ * 정수리 쪽으로 두 칸 키운다(몸을 더 가리지 않게). 정수리 · 뒤통수 · 앞머리는 머리카락, 얼굴 쪽에 큰 눈(2칸) · 볼 · 귀.
+ * at 은 예전 머리 가운데, crown 은 정수리 방향, look 은 얼굴이 보는 방향.
+ */
+export function drawSideHead(
+  g: Grid,
+  at: P,
+  crown: Dir,
+  look: Dir,
+  pal: Palette,
+  o: { tier: number; resting?: boolean; strain?: boolean; eye?: string },
+): { x: number; y: number; w: number; h: number } {
+  const cx = at[0] + crown[0] * 2;
+  const cy = at[1] + crown[1] * 2;
+  const pos = (w: number, u: number): P => [cx + look[0] * w + crown[0] * u, cy + look[1] * w + crown[1] * u];
+  for (let dy = -4; dy <= 4; dy += 1) {
+    for (let dx = -4; dx <= 4; dx += 1) {
+      if (Math.abs(dx) + Math.abs(dy) > 6) continue;
+      const u = dx * crown[0] + dy * crown[1]; // 정수리 쪽 +
+      const w = dx * look[0] + dy * look[1]; // 얼굴 쪽 +
+      const hair = u >= 2 || (w <= -2 && u >= -2) || (u === 1 && w >= 0);
+      g.set(cx + dx, cy + dy, o.tier >= 4 && u === 1 ? pal.headband : hair ? pal.hair : pal.skin);
+    }
+  }
+  const put = (w: number, u: number, color: string) => {
+    const [x, y] = pos(w, u);
+    g.set(x, y, color);
+  };
+  put(-1, -1, pal.skinShade); // 귀
+  if (o.resting) {
+    put(2, -1, INK); // 감은 눈
+    put(3, -1, INK);
+  } else if (o.strain) {
+    put(2, 0, INK); // 꾹 감은 눈(>)
+    put(3, -1, INK);
+    put(2, -2, INK);
+  } else {
+    put(2, 0, o.eye ?? INK); // 큰 눈(2칸) + 반짝임
+    put(2, -1, o.eye ?? INK);
+    put(3, 0, "#FFFFFF");
+  }
+  put(1, -2, BLUSH); // 볼
+  put(3, -3, o.strain ? INK : pal.skinShade); // 입
+  return { x: cx - 4, y: cy - 4, w: 9, h: 9 };
+}
 /** 기구: 사각형(양 끝 포함) 또는 선 */
 type Prop = { r: [number, number, number, number]; c: string } | { line: [P, P]; c: string; t?: number };
 
@@ -387,25 +435,8 @@ export function buildPoseArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palet
   }
   line(g, fr.head, fr.shoulder, 2, pal.skin);
 
-  // 머리(5×5, 모서리를 깎는다): 정수리 쪽 · 뒤통수 쪽은 머리카락
-  const [cx, cy] = fr.head;
-  for (let dy = -2; dy <= 2; dy += 1) {
-    for (let dx = -2; dx <= 2; dx += 1) {
-      if (Math.abs(dx) === 2 && Math.abs(dy) === 2) continue;
-      const hair = dx * fr.crown[0] + dy * fr.crown[1] === 2 || dx * fr.look[0] + dy * fr.look[1] === -2;
-      g.set(cx + dx, cy + dy, hair ? pal.hair : pal.skin);
-    }
-  }
-  if (spec.tierStep >= 4) {
-    // 머리띠: 정수리 바로 아래 줄
-    for (let k = -2; k <= 2; k += 1) {
-      const x = cx + fr.crown[0] * 1 + (fr.crown[0] ? 0 : k);
-      const y = cy + fr.crown[1] * 1 + (fr.crown[1] ? 0 : k);
-      if (g.get(x, y) === pal.skin) g.set(x, y, pal.headband);
-    }
-  }
-  g.set(cx + fr.look[0] * 3, cy + fr.look[1] * 3, pal.skin); // 코
-  g.set(cx + fr.look[0] + fr.crown[0], cy + fr.look[1] + fr.crown[1], spec.resting ? pal.skin : (spec.eyeColor ?? INK)); // 눈
+  // 머리(치비 9×9): 정수리 쪽으로 커지고 큰 눈 · 볼
+  const face = drawSideHead(g, fr.head, fr.crown, fr.look, pal, { tier: spec.tierStep, resting: spec.resting, strain: act.frame === 1 && !spec.resting, eye: spec.eyeColor ?? undefined });
 
   // 손에 든 것 — 옆에서 보면 가까운 원판이 몸을 다 가려서, 조금 작게 몸통 앞 · 가까운 팔다리 뒤에 그린다
   const hand = arms[arms.length - 1].hand;
@@ -433,7 +464,7 @@ export function buildPoseArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palet
     runs: g.runs(),
     effects: [],
     regions: {
-      face: { x: cx - 2, y: cy - 2, w: 5, h: 5 },
+      face,
       body: { x: Math.min(fr.shoulder[0], fr.hip[0]), y: Math.min(fr.shoulder[1], fr.hip[1]), w: 4, h: 4 },
       emblem: { x: fr.shoulder[0], y: fr.shoulder[1], w: 2, h: 2 },
     },
