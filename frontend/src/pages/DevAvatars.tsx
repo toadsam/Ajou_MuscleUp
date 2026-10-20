@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import BodyStageUp from "../components/avatar/BodyStageUp";
 import TapAvatar from "../components/avatar/TapAvatar";
+import TierUp from "../components/avatar/TierUp";
 import ChibiAvatar from "../components/avatar/ChibiAvatar";
 import type { ChibiExpression, ChibiVariant } from "../components/avatar/chibiArt";
 import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
@@ -51,6 +52,20 @@ function Cell({ label, children }: { label: string; children: ReactNode }) {
 function MotionLifeDemo() {
   const [win, setWin] = useState(0);
   const [grow, setGrow] = useState<string | null>(null);
+  const [tierKey, setTierKey] = useState<string | null>(null);
+  const [turn, setTurn] = useState(0);
+  const TANKS = ["#2E9C55", "#D9302A", "#2F6FD0", "#F0BE2E"];
+  const openTier = () => {
+    // 이 기기에서 "지난번 본 티어 SILVER(1)" 로 적어 두고 DIAMOND 로 띄운다
+    const key = `dev-tier-${Date.now()}`;
+    try {
+      const seen = JSON.parse(localStorage.getItem("tier_seen_v1") || "{}") as Record<string, number>;
+      localStorage.setItem("tier_seen_v1", JSON.stringify({ ...seen, [key]: 1 }));
+    } catch {
+      // 개발 화면: 저장 못 하면 창이 안 뜰 뿐
+    }
+    setTierKey(key);
+  };
   const avatar = (bodyStage: number, size: number, stage = 1) => (
     <AvatarRenderer avatarSeed="jaehun" tier="GOLD" stage={stage} gender="MALE" mbti="ESTJ" bodyStage={bodyStage} size={size} />
   );
@@ -68,7 +83,7 @@ function MotionLifeDemo() {
   return (
     <section className="space-y-3" id="motion-life">
       <h2 className="font-bold text-plate-yellow">움직임 — 숨쉬기 · 이긴 순간 · 누르면 반응 · 몸이 커지는 순간</h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Cell label="숨쉬기 · 서기">{avatar(2, 120)}</Cell>
         <Cell label="숨쉬기 · 알통">{avatar(4, 120, 3)}</Cell>
         <Cell label="숨쉬기 · 쉬는 중">
@@ -76,6 +91,13 @@ function MotionLifeDemo() {
         </Cell>
         <Cell label="누르면 반응(알통 → 윙크 → 펄쩍)">
           <TapAvatar avatarSeed="mina" tier="DIAMOND" stage={1} gender="FEMALE" mbti="ENFP" bodyStage={2} size={120} />
+        </Cell>
+        <Cell label="민소매 갈아입기 · 누르면 다음 색">
+          <button type="button" onClick={() => setTurn((n) => n + 1)} aria-label="민소매 갈아입기">
+            <div key={turn} className={turn ? "pxa-turn" : ""}>
+              <AvatarRenderer avatarSeed="jaehun" tier="GOLD" stage={1} gender="MALE" mbti="ESTJ" bodyStage={2} tank={TANKS[turn % TANKS.length]} size={120} />
+            </div>
+          </button>
         </Cell>
         <Cell label="이긴 순간 · 누르면 다시">
           <button type="button" onClick={() => setWin((w) => w + 1)} aria-label="이긴 순간 다시 보기">
@@ -98,6 +120,17 @@ function MotionLifeDemo() {
       <button type="button" className="dg-btn dg-btn-steel min-h-[44px] px-4 text-sm" onClick={openGrow}>
         몸이 커지는 순간 보기(단계 2 → 4)
       </button>
+      <button type="button" className="dg-btn dg-btn-steel ml-2 min-h-[44px] px-4 text-sm" onClick={openTier}>
+        티어가 오르는 순간 보기(SILVER → DIAMOND)
+      </button>
+      {tierKey && (
+        <TierUp
+          key={tierKey}
+          seedKey={tierKey}
+          tier="DIAMOND"
+          renderAvatar={(t, size) => <AvatarRenderer avatarSeed="jaehun" tier={t as CharacterTier} stage={1} gender="MALE" mbti="ESTJ" bodyStage={3} size={size} />}
+        />
+      )}
       {grow && <BodyStageUp key={grow} seedKey={grow} stage={4} renderAvatar={(b, size) => avatar(b, size)} />}
     </section>
   );

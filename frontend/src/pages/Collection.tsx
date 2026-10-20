@@ -66,6 +66,8 @@ function ItemPreview({ item, size = "md" }: { item: Pick<CollectionItemView, "ca
 
 export default function Collection() {
   const [view, setView] = useState<CollectionView | null>(null);
+  /** 민소매를 갈아입을 때마다 1씩 — 내 모습이 한 바퀴 도는 장면을 다시 튼다 */
+  const [turn, setTurn] = useState(0);
   const [character, setCharacter] = useState<MyCharacter | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<CollectionCategory>("TITLE");
@@ -97,6 +99,8 @@ export default function Collection() {
   }, [load]);
 
   const applyEquipped = (equipped: Equipped) => {
+    // 민소매가 바뀌면 내 모습이 한 바퀴 돌며 갈아입는다
+    if ((view?.equipped.tank ?? null) !== (equipped.tank ?? null)) setTurn((n) => n + 1);
     setView((v) => (v ? { ...v, equipped } : v));
     syncEquippedTank(character?.avatarSeed, equipped.tank);
   };
@@ -213,7 +217,7 @@ export default function Collection() {
             <div className="dg-rubber relative flex h-[150px] w-[120px] flex-none items-end justify-center overflow-hidden rounded-lg border-[3px] border-black">
               <div aria-hidden="true" className="dg-platform absolute inset-x-0 bottom-0 h-6" />
               {character && (
-                <div className="relative z-[1] mb-5">
+                <div key={turn} className={`relative z-[1] mb-5 ${turn ? "pxa-turn" : ""}`}>
                   <AvatarRenderer
                     avatarSeed={character.avatarSeed}
                     tier={character.tier}
@@ -221,6 +225,7 @@ export default function Collection() {
                     growthParams={character.growthParams}
                     bodyStage={character.bodyStage}
                     gender={character.gender}
+                    tank={view.equipped.tank}
                     size={104}
                   />
                 </div>

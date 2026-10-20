@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import { bodyStageFor, spriteShapeOf } from "../components/avatar/spriteShape";
 import BodyStageUp from "../components/avatar/BodyStageUp";
+import TierUp from "../components/avatar/TierUp";
 import TapAvatar from "../components/avatar/TapAvatar";
 import { toneForMbti } from "../components/gymMap/engine";
 import CountUp from "../components/gym/CountUp";
@@ -184,6 +185,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showReaction, setShowReaction] = useState(false);
+  // 성장 순간 창 순서: 티어 → 몸 단계
+  const [tierSeen, setTierSeen] = useState(false);
   const [activeEvents, setActiveEvents] = useState<EventItem[]>([]);
   const [eventIndex, setEventIndex] = useState(0);
   const [isEventPaused, setIsEventPaused] = useState(false);
@@ -432,6 +435,9 @@ export default function Home() {
               pumped={(character.pumpedUntil ?? 0) > Date.now()}
               tank={character.tank}
               size={170}
+              // 출석한 순간: 알통 자랑 + 펄쩍
+              action={showReaction ? { kind: "flex", frame: 1, equip: "none", plates: [] } : undefined}
+              celebrate={showReaction}
             />
           </div>
         ) : (
@@ -497,6 +503,28 @@ export default function Home() {
 
           <div className="hero-map dg-rubber">
             {character && (
+              // 티어가 지난번 본 것보다 오르면 "티어가 올랐어요" — 끝나면 몸 단계 창(겹치지 않게 차례로)
+              <TierUp
+                key={`tier-${character.avatarSeed}`}
+                seedKey={character.avatarSeed}
+                tier={character.tier}
+                onDone={() => setTierSeen(true)}
+                renderAvatar={(t, size) => (
+                  <AvatarRenderer
+                    avatarSeed={character.avatarSeed}
+                    growthParams={character.growthParams}
+                    bodyStage={character.bodyStage}
+                    tier={t as typeof character.tier}
+                    stage={character.evolutionStage}
+                    gender={character.gender}
+                    mbti={mbti}
+                    tank={character.tank}
+                    size={size}
+                  />
+                )}
+              />
+            )}
+            {character && tierSeen && (
               // 몸 단계가 지난번 본 값보다 오르면 "몸이 커졌어요"(펌핑은 빼고)
               <BodyStageUp
                 key={character.avatarSeed}
