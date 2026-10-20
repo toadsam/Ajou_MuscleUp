@@ -6,6 +6,8 @@ import { DEFAULT_LAYOUT, type DecorLayout, type SceneId } from "../components/gy
 import { SCENES } from "../components/gymMap/scenes";
 import ReportDialog from "../components/ReportDialog";
 import { MAP_H, MAP_W, createGymMap, toneForMbti, type GymMapController } from "../components/gymMap/engine";
+import { spriteShapeOf } from "../components/avatar/spriteShape";
+import { api } from "../lib/api";
 import { errorStatus, friendlyError } from "../lib/httpError";
 import { GUESTBOOK_MAX, deleteGuestbook, fetchFriendGym, writeGuestbook, type FriendGym as FriendGymView } from "../lib/gymVisit";
 import { timeAgo } from "../lib/timeAgo";
@@ -23,6 +25,18 @@ function apiErrorMessage(e: unknown, fallback: string) {
   return friendlyError(e, fallback);
 }
 
+/** 지도 위를 걷는 나(구경 온 사람) — 카드 그림과 같은 모양을 만들 재료 */
+type MyLook = {
+  avatarSeed: string;
+  tier?: string | null;
+  evolutionStage?: number | null;
+  growthParams?: { muscularityNormalized?: number | null } | null;
+  bodyStage?: number | null;
+  gender?: string | null;
+  tank?: string | null;
+  pumpedUntil?: number | null;
+};
+
 export default function FriendGym() {
   const { userId } = useParams();
   const id = Number(userId);
@@ -34,6 +48,34 @@ export default function FriendGym() {
   const [reportId, setReportId] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<GymMapController | null>(null);
+  // 지도 위를 걷는 사람 = 나(2026-10-20): 내 캐릭터 · MBTI 를 불러와 카드 그림과 같은 모습으로(못 불러오면 기본 모습)
+  const [me, setMe] = useState<MyLook | null>(null);
+  const [myMbti, setMyMbti] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api
+      .get<MyLook>("/api/character/me")
+      .then((r) => alive && setMe(r.data))
+      .catch(() => undefined);
+    api
+      .get<{ mbti?: string | null }>("/api/mypage/stats")
+      .then((r) => alive && setMyMbti(r.data?.mbti ?? null))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const myTone = useMemo(() => {
+    const base = toneForMbti(myMbti);
+    return me?.tank ? { ...base, tank: me.tank } : base;
+  }, [me, myMbti]);
+  const myShape = useMemo(() => (me ? spriteShapeOf({ ...me, pumped: (me.pumpedUntil ?? 0) > Date.now() }, myTone.tank) : null), [me, myTone]);
+  // 지도는 한 번 만들고 모습은 나중에 넣는다(만들 때는 그때까지 온 값)
+  const lookRef = useRef({ tone: myTone, shape: myShape });
+  lookRef.current = { tone: myTone, shape: myShape };
+  useEffect(() => {
+    mapRef.current?.setState({ tone: myTone, shape: myShape });
+  }, [myTone, myShape]);
 
   useEffect(() => {
     if (!Number.isFinite(id)) {
@@ -67,7 +109,7 @@ export default function FriendGym() {
     if (!canvas || !ready) return;
     const map = createGymMap(
       canvas,
-      { plates: 0, checked: true, loungeCount: 0, tone: toneForMbti(null), decor: layout },
+      { plates: 0, checked: true, loungeCount: 0, tone: lookRef.current.tone, shape: lookRef.current.shape, decor: layout },
       {
         // 출구에 서면 1층으로(포탈 창 대신 지도 위 칸을 쓴다)
         onZone: (z) => {
