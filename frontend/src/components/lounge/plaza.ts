@@ -5,7 +5,7 @@
 // 아래: 잔디 · 나무 · 남쪽 입구(처음 서는 곳).
 // 사람 그림은 홈 지도와 같은 10×16 리프터(drawChar). 이름표 · 말풍선 · 이모트는 캔버스에 같이 그린다.
 // 위치는 월드 픽셀(발 가운데)로 주고받는다 — 실시간 서버는 x · y 를 받아 범위만 자르고 그대로 전한다.
-import { drawChar, palOf, toneForMbti, type Pal, type SpriteShape } from "../gymMap/engine";
+import { drawChar, palOf, toneForMbti, walkPose, type Pal, type SpriteShape } from "../gymMap/engine";
 
 export const TILE = 16;
 export const COLS = 28;
@@ -714,8 +714,10 @@ export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x"
       g.ellipse(a.x, a.y + 1, 5, 2, 0, 0, Math.PI * 2);
       g.fill();
       const moving = a === mine ? mine.path.length > 0 : Math.hypot(a.tx - a.x, a.ty - a.y) > 0.5;
-      const frame = moving ? 1 + (Math.floor(a.step * 8) % 2) : 0;
-      drawChar(g, Math.round(a.x - 5), Math.round(a.y - 16), a.pal, { frame });
+      // 사람마다 숨쉬기 박자를 어긋나게(아이디 글자로)
+      const seed = a.id.length ? a.id.charCodeAt(a.id.length - 1) : 0;
+      const pose = walkPose(a.step * 8, moving, now, seed);
+      drawChar(g, Math.round(a.x - 5), Math.round(a.y - 16), a.pal, { frame: pose.frame, hop: pose.hop, squash: pose.squash });
     }
     for (const a of actors) {
       const isMe = a === mine;

@@ -272,6 +272,7 @@ export default function DungeonStage({ character, mbti, hp, remaining, hit, play
                   size={100}
                   action={myAction}
                   pumped={down}
+                  celebrate={down && myAction?.kind === "flex"}
                 />
               ) : (
                 <span className="pb-6 text-xs text-steel-500">캐릭터 불러오는 중</span>

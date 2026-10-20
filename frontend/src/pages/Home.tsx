@@ -1,7 +1,8 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
-import { spriteShapeOf } from "../components/avatar/spriteShape";
+import { bodyStageFor, spriteShapeOf } from "../components/avatar/spriteShape";
+import BodyStageUp from "../components/avatar/BodyStageUp";
 import { toneForMbti } from "../components/gymMap/engine";
 import CountUp from "../components/gym/CountUp";
 import GymMap from "../components/gymMap/GymMap";
@@ -493,6 +494,27 @@ export default function Home() {
           </div>
 
           <div className="hero-map dg-rubber">
+            {character && (
+              // 몸 단계가 지난번 본 값보다 오르면 "몸이 커졌어요"(펌핑은 빼고)
+              <BodyStageUp
+                key={character.avatarSeed}
+                seedKey={character.avatarSeed}
+                stage={bodyStageFor({ ...character, pumped: false })}
+                renderAvatar={(b, size) => (
+                  <AvatarRenderer
+                    avatarSeed={character.avatarSeed}
+                    growthParams={character.growthParams}
+                    bodyStage={b}
+                    tier={character.tier}
+                    stage={character.evolutionStage}
+                    gender={character.gender}
+                    mbti={mbti}
+                    tank={character.tank}
+                    size={size}
+                  />
+                )}
+              />
+            )}
             <GymMap
               loggedIn={Boolean(user)}
               level={character?.level}

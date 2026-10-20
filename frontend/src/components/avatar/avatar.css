@@ -227,6 +227,59 @@
   animation: master-screen-burst 0.9s ease-out;
 }
 
+/* 치비 숨쉬기(2026-10-20): 머리가 한 칸(6) 내려앉았다 올라온다. 칸 단위로 끊어 픽셀이 번지지 않게. 쉬는 중은 느리게 */
+.pxa-breathe {
+  animation: pxa-breathe 2.4s steps(1, end) infinite;
+}
+
+.pxa-breathe-slow {
+  animation-duration: 3.6s;
+}
+
+@keyframes pxa-breathe {
+  0% { transform: translateY(0); }
+  72% { transform: translateY(6px); }
+  90% { transform: translateY(0); }
+}
+
+/* 몸이 커지는 순간(BodyStageUp): 예전 몸이 떨리고 → 새 몸이 아래에서 튀어나온다 */
+.pxa-grow-old {
+  animation: pxa-grow-old 0.7s steps(1, end) both;
+}
+
+@keyframes pxa-grow-old {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-3px) scale(0.96); }
+  80% { transform: translateX(3px) scale(0.92); }
+  100% { transform: translateX(0) scale(0.9); }
+}
+
+.pxa-grow-new {
+  transform-origin: 50% 100%;
+  animation: pxa-grow-new 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+@keyframes pxa-grow-new {
+  0% { transform: scale(0.75); filter: brightness(1.8); }
+  60% { transform: scale(1.1); filter: brightness(1.15); }
+  100% { transform: scale(1); filter: none; }
+}
+
+/* 몬스터를 쓰러뜨린 순간: 한 번 펄쩍(0.6초) */
+.avatar-victory > svg {
+  animation: avatar-victory 0.6s ease-out both;
+}
+
+@keyframes avatar-victory {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-16px); }
+  60% { transform: translateY(0); }
+  78% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
 @keyframes avatar-energetic {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(-2px) scale(1.01); }

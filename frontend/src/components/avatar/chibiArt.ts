@@ -42,6 +42,9 @@ export type ChibiSpec = {
   blush?: boolean;
 };
 
+/** 몸 단계 이름(0~5) — 화면 글자 */
+export const BODY_STAGE_NAMES = ["새싹", "입문", "근력", "벌크", "괴력", "전설"];
+
 /** 티어 → 장비 단계 0(BRONZE) ~ 7(CHALLENGER) */
 const TIER_STEP: Record<string, number> = { BRONZE: 0, SILVER: 1, GOLD: 2, PLATINUM: 3, DIAMOND: 4, MASTER: 5, GRANDMASTER: 6, CHALLENGER: 7 };
 export const tierStepOf = (tier?: string | null) => TIER_STEP[(tier ?? "").toUpperCase()] ?? 0;
