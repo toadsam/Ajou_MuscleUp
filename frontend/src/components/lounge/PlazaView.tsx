@@ -92,7 +92,7 @@ export default function PlazaView(p: Props) {
     for (const e of p.emotes) {
       if (shownEmote.current.has(e.id)) continue;
       shownEmote.current.add(e.id);
-      ctl.current?.say(e.playerId, EMOTES.find((x) => x.kind === e.kind)?.say ?? "!", "emote");
+      ctl.current?.say(e.playerId, EMOTES.find((x) => x.kind === e.kind)?.say ?? "!", "emote", e.kind);
     }
   }, [p.emotes]);
 

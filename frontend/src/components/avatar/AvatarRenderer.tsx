@@ -38,6 +38,8 @@ type Props = {
   bodyStage?: number | null;
   /** 이긴 순간(몬스터를 쓰러뜨림): 반짝이는 눈 + 한 번 펄쩍 */
   celebrate?: boolean;
+  /** 치비 표정을 직접 고른다(누르면 반응 — 윙크 등). 없으면 상태로 정한다 */
+  expression?: ChibiExpression | null;
 };
 
 // 피부·머리 색은 MBTI 를 따르고, 민소매 색은 원판 팔레트에서 고른다.
@@ -88,6 +90,7 @@ export default function AvatarRenderer({
   pumped = false,
   bodyStage = null,
   celebrate = false,
+  expression: expressionOverride = null,
 }: Props) {
   const [persistedAppearance, setPersistedAppearance] = useState(() => loadAppearanceBySeed(avatarSeed));
 
@@ -158,7 +161,7 @@ export default function AvatarRenderer({
         : bodyStageOf({ muscularity: growth.muscularityNormalized, level: Math.max(1, stage) * 10 + 1, activityLevel: 0 });
       const chibiStage = Math.min(5, base + (pumpedNow ? 1 : 0)) as ChibiSpec["bodyStage"];
       const chibiPose = resolvedResting ? "stand" : pose === "stand" ? "stand" : "flex";
-      const expression: ChibiExpression = chibiAct
+      const expression: ChibiExpression = expressionOverride ?? (chibiAct
         ? chibiAct.frame === 1
           ? chibiAct.kind === "flex"
             ? celebrate
@@ -172,7 +175,7 @@ export default function AvatarRenderer({
             ? "smile"
             : chibiPose === "flex" || tierStep >= 5
               ? "smile"
-              : "normal";
+              : "normal");
       return buildChibi({
         variant: "B",
         bodyStage: chibiStage,
@@ -235,6 +238,7 @@ export default function AvatarRenderer({
     pumped,
     bodyStage,
     celebrate,
+    expressionOverride,
   ]);
 
   const y = (row: number) => row * CELL;

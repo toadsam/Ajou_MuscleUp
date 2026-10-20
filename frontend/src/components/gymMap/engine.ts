@@ -541,8 +541,45 @@ const LEGS = [
 /**
  * frame 다리(0 서기 · 1 · 2 걷기) · sit 앉기 · back 뒷모습 · over 머리 위 바
  * hop 몸 전체를 위로(통통 걷기) · squash 머리를 한 칸 내려 어깨에 묻는다(착지 · 숨 내쉬기)
+ * pose 자세(팔을 따로 그린다) · poseFrame 자세의 두 장면(0 · 1 번갈아)
  */
-export type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean; hop?: number; squash?: boolean };
+export type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean; hop?: number; squash?: boolean; pose?: SpritePose | null; poseFrame?: number };
+
+/**
+ * 작은 그림 자세(2026-10-20)
+ *  라운지 이모트: wave 인사(오른손 흔들기) · cheer 화이팅(두 주먹 위로) · clap 박수(두 손 모으기) · gg 꾸벅(고개 숙이기)
+ *  홈 지도 기구: squat 파워랙(바를 메고 앉았다 일어나기) · flex 거울(알통 자세, 알통이 부풀었다 줄었다)
+ */
+export type SpritePose = "wave" | "cheer" | "clap" | "gg" | "squat" | "flex";
+
+/** 자세별 왼팔 칸 [x, y](오른팔은 9 - x 로 거울). wave 는 오른팔만 */
+function poseArms(pose: SpritePose, f: number): [number, number][] {
+  const left = (cells: [number, number][]) => [...cells, ...cells.map(([x, y]) => [9 - x, y] as [number, number])];
+  switch (pose) {
+    case "wave":
+      // 오른손을 머리 옆으로 들어 좌우로 흔든다
+      return [[9, 8], [9, 7], [10, 6], [10, 5], [10, 4], [10, 3], ...(f ? ([[11, 2], [11, 1]] as [number, number][]) : ([[10, 2], [10, 1]] as [number, number][]))];
+    case "cheer": {
+      // 두 주먹을 머리 옆 → 머리 위로
+      const top = f ? 0 : 3;
+      const arm: [number, number][] = [[0, 8]];
+      for (let yy = 7; yy > top; yy -= 1) arm.push([-1, yy]);
+      return left([...arm, [-1, top], [-1, top - 1]]);
+    }
+    case "clap":
+      // 벌렸다 → 가슴 앞에서 손을 모은다
+      return left(f ? [[1, 8], [2, 9], [3, 9], [4, 9]] : [[1, 8], [1, 9], [1, 10], [2, 10]]);
+    case "flex":
+      // 더블 바이셉스: 위팔은 옆으로, 팔뚝은 위로, 주먹은 머리 옆. 장면 1 은 알통이 한 칸 더 솟는다
+      return left([[0, 8], [-1, 8], [-2, 8], [-2, 7], [-2, 6], [-2, 5], [-3, 4], [-2, 4], [-1, 7], ...(f ? ([[-1, 6]] as [number, number][]) : [])]);
+    case "squat":
+      // 목 뒤 바를 두 손으로 쥔다
+      return left([[0, 8], [-1, 8], [-1, 7], [-1, 6]]);
+    default:
+      return [];
+  }
+}
+const SQUAT_LEGS = [".sb....bs.", "ww......ww"];
 
 /**
  * 작은 그림의 움직임(2026-10-20) — 치비답게 통통.
@@ -578,10 +615,21 @@ function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, nu
   else if (!female && hair === 1) headRows.push([-1, 0, ".h..h.h.h."]); // 삐죽 머리
   else if (!female && hair === 2) headRows.push([-1, 0, "..hhhhh..."]); // 높은 앞머리
   rows.push(...headRows);
-  if (o.squash) rows.forEach((r) => (r[0] += 1));
+  const pose = o.pose ?? null;
+  const f = o.poseFrame ?? 0;
+  // 꾸벅(gg 장면 1)은 머리를 두 칸, 착지 · 숨쉬기는 한 칸 내려앉힌다
+  const sink = pose === "gg" && f === 1 ? 2 : o.squash ? 1 : 0;
+  if (sink) rows.forEach((r) => (r[0] += sink));
   const body = stage <= 0 ? BODY.thin : stage <= 1 ? BODY.base : stage <= 3 ? BODY.broad : BODY.huge;
-  body.forEach(([dx, row], i) => rows.push([8 + i, dx, row]));
-  if (!o.sit) LEGS[o.frame ?? 0].forEach((row, i) => rows.push([12 + i, 0, row]));
+  // 자세가 있으면 옆 팔(몸통 밖 피부 칸)을 지우고 아래에서 자세 팔을 따로 그린다(꾸벅은 팔 그대로, 인사는 오른팔만)
+  const clearArm = (dx: number, row: string) =>
+    !pose || pose === "gg"
+      ? row
+      : [...row].map((ch, i) => (ch === "s" && ((pose !== "wave" && dx + i < 2) || dx + i > 7) ? "." : ch)).join("");
+  body.forEach(([dx, row], i) => rows.push([8 + i, dx, clearArm(dx, row)]));
+  const squatDown = pose === "squat" && f === 1;
+  if (squatDown) rows.forEach((r) => (r[0] += 2)); // 앉으면 몸이 두 칸 내려가고 다리는 접힌다
+  if (!o.sit) (squatDown ? SQUAT_LEGS : LEGS[o.frame ?? 0]).forEach((row, i) => rows.push([(squatDown ? 14 : 12) + i, 0, row]));
   const cells: [number, number, string][] = [];
   for (const [dy, dx, row] of rows) {
     for (let i = 0; i < row.length; i += 1) {
@@ -593,6 +641,7 @@ function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, nu
       cells.push([cx, dy, ch]);
     }
   }
+  if (pose) for (const [ax, ay] of poseArms(pose, f)) cells.push([ax, ay + (squatDown ? 2 : 0), "s"]);
   return cells;
 }
 
@@ -600,6 +649,16 @@ function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, nu
 export function drawChar(g: CanvasRenderingContext2D, x: number, y0: number, pal: Pal, o: CharOpts = {}) {
   const y = y0 - (o.hop ?? 0);
   const cells = charCells(o, pal.shape);
+  if (o.pose === "squat") {
+    // 목 뒤 바벨(머리가 앞을 가린다): 봉 · 빨간 원판
+    const by = y + 7 + ((o.poseFrame ?? 0) === 1 ? 2 : 0);
+    fill(g, x - 7, by - 1, 24, 3, C.ink);
+    fill(g, x - 7, by - 4, 4, 9, C.ink);
+    fill(g, x + 13, by - 4, 4, 9, C.ink);
+    fill(g, x - 6, by, 22, 1, "#B9BCC3");
+    fill(g, x - 6, by - 3, 2, 7, C.red);
+    fill(g, x + 14, by - 3, 2, 7, C.red);
+  }
   g.fillStyle = C.ink;
   for (const [cx, cy] of cells) {
     g.fillRect(x + cx - 1, y + cy, 3, 1);
@@ -983,7 +1042,11 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
     const px = Math.round(player.x * TILE + 3);
     const py = Math.round(player.y * TILE) - 1;
     const over = now < overUntil;
-    const walk = walkPose(player.anim * 12, player.moving && !over, now);
+    // 기구 앞에 멈춰 서면 운동: 파워랙 스쿼트 · 거울 알통 · 러닝머신 제자리 달리기(1층에서만)
+    const gear = main && !player.moving && !over && (zone === "rack" || zone === "mirror" || zone === "crew") ? zone : null;
+    const walk = gear === "crew" ? walkPose(now / 90, true, now) : walkPose(player.anim * 12, player.moving && !over, now);
+    const gearPose: SpritePose | null = gear === "rack" ? "squat" : gear === "mirror" ? "flex" : null;
+    const gearFrame = Math.floor(now / (gear === "rack" ? 650 : 750)) % 2;
     const sitters = main ? Math.min(3, Math.max(0, state.loungeCount)) : 0;
     const actors: { y: number; draw: () => void }[] = [];
     for (let i = 0; i < sitters; i++) {
@@ -998,7 +1061,15 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
         fill(g, px - 1, py + 15, 12, 2, C.yellow);
         fill(g, px + 1, py + 17, 8, 1, C.yellow);
         g.globalAlpha = 1;
-        drawChar(g, px, py, pal, { frame: over ? 0 : walk.frame, back: !over && player.back, over, hop: walk.hop, squash: !over && walk.squash });
+        drawChar(g, px, py, pal, {
+          frame: over ? 0 : walk.frame,
+          back: !over && !gear && player.back,
+          over,
+          hop: gearPose ? 0 : walk.hop,
+          squash: !over && !gearPose && walk.squash,
+          pose: gearPose,
+          poseFrame: gearFrame,
+        });
       },
     });
     actors.sort((a, b) => a.y - b.y).forEach((a) => a.draw());

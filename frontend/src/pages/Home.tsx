@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import { bodyStageFor, spriteShapeOf } from "../components/avatar/spriteShape";
 import BodyStageUp from "../components/avatar/BodyStageUp";
+import TapAvatar from "../components/avatar/TapAvatar";
 import { toneForMbti } from "../components/gymMap/engine";
 import CountUp from "../components/gym/CountUp";
 import GymMap from "../components/gymMap/GymMap";
@@ -418,7 +419,8 @@ export default function Home() {
       <div className="character-stage dg-rubber">
         {character ? (
           <div className={`avatar-shell ${showReaction ? "reacted" : ""}`}>
-            <AvatarRenderer
+            {/* 누르면 알통 자랑 → 윙크 → 펄쩍 */}
+            <TapAvatar
               avatarSeed={character.avatarSeed}
               growthParams={character.growthParams}
               bodyStage={character.bodyStage}

@@ -12,7 +12,7 @@ import { BAR, Grid, INK, IRON, shade } from "./pixelGrid";
 import { drawBar, type ActionKind, type Equip, type PixelAction, type PixelAvatarArt, type PixelEffect } from "./pixelAvatar";
 
 export type ChibiVariant = "A" | "B" | "C";
-export type ChibiExpression = "normal" | "smile" | "strain" | "tired" | "sparkle";
+export type ChibiExpression = "normal" | "smile" | "strain" | "tired" | "sparkle" | "wink";
 export type ChibiPose = "stand" | "flex";
 
 export type ChibiSpec = {
@@ -511,6 +511,14 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
   const eyeInk = spec.eyeColor ?? INK;
   const eye = (x: number) => {
     const left = x < 12;
+    if (ex === "wink" && !left) {
+      // 윙크: 오른쪽 눈만 ^ 로 감는다
+      const row = eyeRow + Math.floor(v.eyeH / 2);
+      g.set(x - 1, row, eyeInk);
+      g.set(x, row - 1, eyeInk);
+      g.set(x + 1, row, eyeInk);
+      return;
+    }
     if (ex === "strain") {
       // > < 꾹 감은 눈
       const mid = eyeRow + Math.floor(v.eyeH / 2);
@@ -559,7 +567,7 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
   }
   // 입(턱 두 줄 위)
   const my = headBottom - 2;
-  if (ex === "smile" || ex === "sparkle") {
+  if (ex === "smile" || ex === "sparkle" || ex === "wink") {
     g.set(10, my - 1, INK);
     g.rect(11, 12, my, my, MOUTH);
     g.set(13, my - 1, INK);
