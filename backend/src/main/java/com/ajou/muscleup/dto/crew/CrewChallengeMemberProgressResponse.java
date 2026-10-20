@@ -27,4 +27,6 @@ public class CrewChallengeMemberProgressResponse {
     /** 운동 직후 펌핑 중 */
     @JsonProperty("isPumped")
     private boolean isPumped;
+    /** 몸 단계 0~5(AvatarLookService) */
+    private int bodyStage;
 }

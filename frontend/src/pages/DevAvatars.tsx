@@ -1,6 +1,8 @@
 // 개발 전용: 픽셀 아바타의 모든 변형을 한 화면에서 본다 (로그인 없이). App.tsx 에서 DEV 일 때만 라우트를 연다.
 import type { ReactNode } from "react";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
+import ChibiAvatar from "../components/avatar/ChibiAvatar";
+import type { ChibiExpression, ChibiVariant } from "../components/avatar/chibiArt";
 import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
 import { barbellLoad } from "../lib/liftMotion";
 import ExerciseIcon from "../components/lifts/ExerciseIcon";
@@ -47,6 +49,84 @@ export default function DevAvatars() {
   return (
     <main className="mx-auto max-w-6xl space-y-10 px-4 pb-20 pt-24">
       <h1 className="text-4xl">픽셀 아바타 갤러리</h1>
+
+      {/* ── 치비 시안 B(2026-10-20, 사용자 선택): 머리 큰 2.5등신 · 몸 단계 0 새싹 → 5 전설. 실제 화면은 아직 아래의 지금 그림 ── */}
+      <section className="space-y-4" id="chibi">
+        <h2 className="font-bold text-plate-yellow">치비 시안 B — 몸 단계 0 새싹 → 5 전설 (헐렁한 민소매 → 몸에 붙는 V → 끈 나시 · 크롭탑)</h2>
+        {[
+          { label: "남 · 서기", female: false, pose: "stand" as const, seed: "jaehun", mbti: "ESTJ" },
+          { label: "남 · 알통", female: false, pose: "flex" as const, seed: "jaehun", mbti: "ESTJ" },
+          { label: "여 · 서기", female: true, pose: "stand" as const, seed: "mina", mbti: "ENFP" },
+          { label: "여 · 알통", female: true, pose: "flex" as const, seed: "mina", mbti: "ENFP" },
+        ].map((row) => (
+          <div key={row.label} className="space-y-2">
+            <p className="text-sm text-steel-300">{row.label}</p>
+            <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
+              {([0, 1, 2, 3, 4, 5] as const).map((s) => (
+                <Cell key={s} label={`단계 ${s} · ${["새싹", "입문", "근력", "벌크", "괴력", "전설"][s]}`}>
+                  <ChibiAvatar
+                    seed={row.seed}
+                    mbti={row.mbti}
+                    variant="B"
+                    bodyStage={s}
+                    fat={0}
+                    female={row.female}
+                    expression={row.pose === "flex" ? "strain" : s >= 4 ? "smile" : "normal"}
+                    pose={row.pose}
+                    size={120}
+                  />
+                </Cell>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div className="space-y-2">
+          <p className="text-sm text-steel-300">표정 5가지(단계 2) · 체지방 · 머리 모양</p>
+          <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
+            {(["normal", "smile", "strain", "tired", "sparkle"] as ChibiExpression[]).map((ex) => (
+              <Cell key={ex} label={{ normal: "기본", smile: "웃음", strain: "힘줌", tired: "지침", sparkle: "반짝" }[ex]}>
+                <ChibiAvatar seed="jaehun" mbti="ESTJ" variant="B" bodyStage={2} fat={0} female={false} expression={ex} pose="stand" size={112} />
+              </Cell>
+            ))}
+            <Cell label="체지방 높음">
+              <ChibiAvatar seed="jaehun" mbti="INTP" variant="B" bodyStage={1} fat={1} female={false} expression="smile" pose="stand" size={112} />
+            </Cell>
+            {["a", "b", "c", "d"].map((seed) => (
+              <Cell key={seed} label={`머리 시드 ${seed}`}>
+                <ChibiAvatar seed={`hair-${seed}`} mbti="ISFP" variant="B" bodyStage={3} fat={0} female={false} expression="normal" pose="stand" size={112} />
+              </Cell>
+            ))}
+            <Cell label="여 · 똥머리">
+              <ChibiAvatar seed="seoyeon" mbti="ISTJ" variant="B" bodyStage={2} fat={0} female expression="smile" pose="stand" size={112} />
+            </Cell>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm text-steel-300">작은 크기(지도 · 라운지 · 목록): 지금 그림 vs 시안 B 단계 0 · 3 · 5</p>
+          <div className="flex flex-wrap items-end gap-4">
+            {[40, 56, 72].map((size) => (
+              <div key={size} className="flex items-end gap-2">
+                <AvatarRenderer avatarSeed="jaehun" tier="GOLD" stage={2} mbti="ESTJ" growthParams={growth(0.5)} size={size} />
+                {([0, 3, 5] as const).map((s) => (
+                  <ChibiAvatar key={s} seed="jaehun" mbti="ESTJ" variant="B" bodyStage={s} fat={0} female={false} expression="smile" pose="stand" size={size} />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <details className="text-sm text-steel-400">
+          <summary className="cursor-pointer">다른 비율(A 2등신 · C 3등신) 보기</summary>
+          <div className="mt-2 grid grid-cols-3 gap-3 md:grid-cols-6">
+            {(["A", "C"] as ChibiVariant[]).flatMap((variant) =>
+              ([0, 3, 5] as const).map((s) => (
+                <Cell key={`${variant}${s}`} label={`${variant} · 단계 ${s}`}>
+                  <ChibiAvatar seed="jaehun" mbti="ESTJ" variant={variant} bodyStage={s} fat={0} female={false} expression="normal" pose="stand" size={100} />
+                </Cell>
+              )),
+            )}
+          </div>
+        </details>
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-bold">진화 단계 1 → 8 (MASTER, TITAN, 근육 0.7)</h2>

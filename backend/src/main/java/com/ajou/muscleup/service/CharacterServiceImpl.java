@@ -175,6 +175,7 @@ public class CharacterServiceImpl implements CharacterService {
         return CharacterProfileResponse.from(profile, growthParams, buildExpInfo(profile, stats)).toBuilder()
                 .pumpedUntil(look.pumpedUntil())
                 .tank(look.tank())
+                .bodyStage(look.bodyStage())
                 .build();
     }
 

@@ -357,6 +357,7 @@ export default function WorkoutSession() {
                   tier={character.tier}
                   stage={character.evolutionStage}
                   growthParams={character.growthParams}
+                  bodyStage={character.bodyStage}
                   gender={character.gender}
                   mbti={mbti}
                   pumped

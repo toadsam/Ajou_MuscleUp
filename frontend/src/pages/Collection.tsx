@@ -30,6 +30,7 @@ type MyCharacter = {
   tier: CharacterTier;
   evolutionStage: number;
   growthParams?: GrowthParams | null;
+  bodyStage?: number | null;
   gender?: "MALE" | "FEMALE" | null;
 };
 
@@ -218,6 +219,7 @@ export default function Collection() {
                     tier={character.tier}
                     stage={character.evolutionStage}
                     growthParams={character.growthParams}
+                    bodyStage={character.bodyStage}
                     gender={character.gender}
                     size={104}
                   />

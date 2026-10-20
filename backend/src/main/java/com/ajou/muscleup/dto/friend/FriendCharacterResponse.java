@@ -24,6 +24,8 @@ public class FriendCharacterResponse {
     /** 운동 직후 펌핑 중 */
     @JsonProperty("isPumped")
     private boolean isPumped;
+    /** 몸 단계 0~5(AvatarLookService) */
+    private int bodyStage;
 
     public static FriendCharacterResponse from(CharacterProfile profile) {
         return from(profile, null);
@@ -43,6 +45,7 @@ public class FriendCharacterResponse {
                 .tank(look == null ? null : look.tank())
                 .title(look == null ? null : look.title())
                 .isPumped(look != null && look.pumped(System.currentTimeMillis()))
+                .bodyStage(look == null ? 0 : look.bodyStage())
                 .build();
     }
 }

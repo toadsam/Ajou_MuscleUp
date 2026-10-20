@@ -157,6 +157,7 @@ export default function FriendGym() {
             isResting={c?.isResting ?? false}
             tank={c?.tank}
             pumped={c?.isPumped ?? false}
+            bodyStage={c?.bodyStage}
             size={64}
           />
         </div>

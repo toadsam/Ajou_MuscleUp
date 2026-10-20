@@ -45,7 +45,7 @@ public class LiveActivityService {
     /** 다른 사람에게 보이는 한 줄 */
     public record LiveView(String nickname, boolean mine, String activity, String exercise, String label, String category,
                            boolean bodyweight, String avatarSeed, CharacterTier tier, int evolutionStage, Gender gender,
-                           GrowthParamsResponse growthParams, String tank, boolean isPumped, long since) {}
+                           GrowthParamsResponse growthParams, String tank, boolean isPumped, long since, int bodyStage) {}
 
     private record Entry(Long userId, Activity activity, ExerciseCatalog.ExerciseDef exercise, Instant since, Instant seen) {}
 
@@ -107,7 +107,7 @@ public class LiveActivityService {
 
     private static LiveView withMine(LiveView v) {
         return new LiveView(v.nickname(), true, v.activity(), v.exercise(), v.label(), v.category(), v.bodyweight(), v.avatarSeed(),
-                v.tier(), v.evolutionStage(), v.gender(), v.growthParams(), v.tank(), v.isPumped(), v.since());
+                v.tier(), v.evolutionStage(), v.gender(), v.growthParams(), v.tank(), v.isPumped(), v.since(), v.bodyStage());
     }
 
     private List<Row> build() {
@@ -135,7 +135,7 @@ public class LiveActivityService {
                     ex == null ? null : ex.code(), ex == null ? null : ex.label(), ex == null ? null : ex.category(),
                     ex != null && ex.bodyweight(), p.getAvatarSeed(), p.getTier(), p.getEvolutionStage(), p.getGender(),
                     growthCalculator.calculate(stats.get(e.userId())), look == null ? null : look.tank(),
-                    look != null && look.pumped(nowMs), e.since().toEpochMilli());
+                    look != null && look.pumped(nowMs), e.since().toEpochMilli(), look == null ? 0 : look.bodyStage());
             return new Row(e.userId(), v);
         }).toList();
     }

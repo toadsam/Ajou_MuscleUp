@@ -253,6 +253,7 @@ export default function BossFight({ hit, character, mbti, motion, replayKey = 0,
                 tier={character.tier}
                 stage={character.evolutionStage}
                 growthParams={character.growthParams}
+                bodyStage={character.bodyStage}
                 gender={character.gender}
                 mbti={mbti}
                 size={104}

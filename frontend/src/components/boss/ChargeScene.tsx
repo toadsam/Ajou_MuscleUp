@@ -69,7 +69,7 @@ export default function ChargeScene({ charge, character, mbti, motion }: Props) 
         <span className="pointer-events-none absolute inset-x-2 bottom-2 border-t-2 border-dashed border-steel-500/70" aria-hidden="true" />
         <div ref={myRef} className="relative z-20 flex h-full w-[104px] flex-none items-end justify-center">
           {character ? (
-            <AvatarRenderer avatarSeed={character.avatarSeed} tier={character.tier} stage={character.evolutionStage} growthParams={character.growthParams} gender={character.gender} mbti={mbti} size={96} action={action} />
+            <AvatarRenderer avatarSeed={character.avatarSeed} tier={character.tier} stage={character.evolutionStage} growthParams={character.growthParams} bodyStage={character.bodyStage} gender={character.gender} mbti={mbti} size={96} action={action} />
           ) : (
             <span className="pb-6 text-xs text-steel-500">캐릭터 불러오는 중</span>
           )}

@@ -346,6 +346,7 @@ public class CrewServiceImpl implements CrewService {
                             .isResting(profile != null && profile.isResting())
                             .tank(looks.containsKey(userId) ? looks.get(userId).tank() : null)
                             .isPumped(looks.containsKey(userId) && looks.get(userId).pumped(nowMs))
+                            .bodyStage(looks.containsKey(userId) ? looks.get(userId).bodyStage() : 0)
                             .build();
                 })
                 .sorted(Comparator.comparing(CrewMemberAttendanceResponse::getAttendanceRate).reversed())
@@ -432,6 +433,7 @@ public class CrewServiceImpl implements CrewService {
                             .isResting(profile != null && profile.isResting())
                             .tank(looks.containsKey(userId) ? looks.get(userId).tank() : null)
                             .isPumped(looks.containsKey(userId) && looks.get(userId).pumped(nowMs))
+                            .bodyStage(looks.containsKey(userId) ? looks.get(userId).bodyStage() : 0)
                             .build();
                 })
                 .sorted(Comparator.comparing(CrewChallengeMemberProgressResponse::getCompletionRate).reversed())
