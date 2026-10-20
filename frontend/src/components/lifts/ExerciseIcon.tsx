@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CELL, buildPixelAvatar, type PixelAvatarArt } from "../avatar/pixelAvatar";
+import { CHIBI_FRONT_KINDS, buildChibi } from "../avatar/chibiArt";
 import type { LiftExerciseInfo } from "../../lib/lifts";
 import { barbellLoad, motionFor } from "../../lib/liftMotion";
 
@@ -15,7 +16,26 @@ function iconArt(info: LiftExerciseInfo, frame: 0 | 1) {
   const hit = cache.get(key);
   if (hit) return hit;
   const motion = motionFor(info);
-  const art = buildPixelAvatar({
+  const action = {
+    kind: motion.kind,
+    frame,
+    equip: motion.equip,
+    plates: motion.equip === "barbell" ? barbellLoad(DEMO_KG).pixel : [],
+  };
+  // 정면 동작은 캐릭터와 같은 치비(몸 단계 1 · 기본 머리), 옆모습 동작은 큰 머리 옆모습 그림
+  const art = CHIBI_FRONT_KINDS.has(motion.kind)
+    ? buildChibi({
+        variant: "B",
+        bodyStage: 1,
+        fat: 0,
+        female: false,
+        hairStyle: 0,
+        expression: frame === 1 && motion.kind !== "flex" ? "strain" : "normal",
+        pose: "stand",
+        colors: { skin: "#f1c4a5", hair: "#1f2937", tank: "#D9302A" },
+        action,
+      })
+    : buildPixelAvatar({
     build: 1,
     fat: 0,
     female: false,
@@ -29,12 +49,7 @@ function iconArt(info: LiftExerciseInfo, frame: 0 | 1) {
     colors: { skin: "#f1c4a5", hair: "#1f2937", tank: "#D9302A" },
     emblem: null,
     skills: { aura: false, wave: false, burst: false },
-    action: {
-      kind: motion.kind,
-      frame,
-      equip: motion.equip,
-      plates: motion.equip === "barbell" ? barbellLoad(DEMO_KG).pixel : [],
-    },
+    action,
   });
   let x0 = Infinity;
   let y0 = Infinity;

@@ -143,6 +143,7 @@ public class RealtimeTicketController {
         claims.put("pump", look.pumped(System.currentTimeMillis()));
         claims.put("tank", look.tank());
         claims.put("ttl", look.title());
+        claims.put("bs", look.bodyStage()); // 몸 단계 — 라운지 작은 그림을 카드 그림과 같게
         claims.put("fr", friendIds);
         claims.put("room", roomGym == null ? "square" : "gym:" + roomGym.getId());
         claims.put("rname", roomGym == null ? "광장" : truncate(roomGym.getName(), 40));

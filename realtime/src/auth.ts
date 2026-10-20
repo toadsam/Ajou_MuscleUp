@@ -34,6 +34,8 @@ export type TicketClaims = {
   /** 도감에서 장착한 민소매 색 #RRGGBB · 칭호 */
   tank?: string | null;
   ttl?: string | null;
+  /** 몸 단계 0~5(백엔드 BodyStage) — 작은 그림을 카드 그림과 같게 */
+  bs?: number;
   fr: number[];
   /** lounge room: "square" | "gym:{id}" (older tickets: missing = square) */
   room?: string;

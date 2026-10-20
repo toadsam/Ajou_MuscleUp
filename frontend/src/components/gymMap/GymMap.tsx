@@ -5,6 +5,7 @@ import { DUNGEON_PATH } from "../../lib/shadow";
 import { barbellWeight } from "../gym/plates";
 import { logEvent } from "../../utils/analytics";
 import AvatarRenderer from "../avatar/AvatarRenderer";
+import type { SpriteShape } from "./engine";
 import { loadGuestCharacter, saveGuestCharacter, type GuestCharacter } from "./guestCharacter";
 import {
   DEFAULT_LAYOUT,
@@ -61,6 +62,9 @@ type Props = {
   /** 거울 앞에서 보여 줄 내 캐릭터(AvatarRenderer) */
   avatar?: ReactNode;
   mbti?: string | null;
+  /** 지도 위 작은 내 캐릭터: 장착한 민소매 색 · 모양(머리 · 성별 · 몸 단계 · 머리띠) — 카드 그림과 같게 */
+  tank?: string | null;
+  shape?: SpriteShape | null;
   weekDays: number;
   streak: number;
   monthCount?: number | null;
@@ -169,6 +173,14 @@ export default function GymMap(props: Props) {
   const weekDays = isGuest ? (trialDone ? 1 : 0) : props.weekDays;
   const checkedToday = isGuest ? trialDone : props.checkedToday;
   const mbti = isGuest ? (building ? draft.mbti : guest?.mbti) : props.mbti;
+  // 지도 위 작은 캐릭터 — 로그인하면 카드 그림과 같은 민소매 · 모양, 체험은 고른 성별만
+  const { tank: myTank, shape: myShape } = props;
+  const guestFemale = (building ? draft : guest)?.gender === "FEMALE";
+  const tone = useMemo(() => {
+    const base = toneForMbti(mbti);
+    return !isGuest && myTank ? { ...base, tank: myTank } : base;
+  }, [mbti, isGuest, myTank]);
+  const shape = useMemo<SpriteShape | null>(() => (isGuest ? { hair: 0, female: guestFemale, stage: 1 } : (myShape ?? null)), [isGuest, guestFemale, myShape]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const meRef = useRef<HTMLDivElement>(null);
@@ -267,7 +279,7 @@ export default function GymMap(props: Props) {
     if (!canvas) return;
     const map = createGymMap(
       canvas,
-      { plates: weekDays, checked: checkedToday, loungeCount: loungeCount ?? 0, tone: toneForMbti(mbti) },
+      { plates: weekDays, checked: checkedToday, loungeCount: loungeCount ?? 0, tone, shape },
       {
         onZone: (z) => {
           if (z === "exit") {
@@ -337,8 +349,8 @@ export default function GymMap(props: Props) {
   }, []);
 
   useEffect(() => {
-    mapRef.current?.setState({ plates: weekDays, checked: checkedToday, loungeCount: loungeCount ?? 0, tone: toneForMbti(mbti) });
-  }, [weekDays, checkedToday, loungeCount, mbti]);
+    mapRef.current?.setState({ plates: weekDays, checked: checkedToday, loungeCount: loungeCount ?? 0, tone, shape });
+  }, [weekDays, checkedToday, loungeCount, tone, shape]);
 
   useEffect(() => {
     if (!loggedIn) {

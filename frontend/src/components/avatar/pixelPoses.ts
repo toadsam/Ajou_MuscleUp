@@ -42,7 +42,7 @@ export function drawSideHead(
   crown: Dir,
   look: Dir,
   pal: Palette,
-  o: { tier: number; resting?: boolean; strain?: boolean; eye?: string },
+  o: { tier: number; resting?: boolean; strain?: boolean; eye?: string; blush?: boolean },
 ): { x: number; y: number; w: number; h: number } {
   const cx = at[0] + crown[0] * 2;
   const cy = at[1] + crown[1] * 2;
@@ -73,7 +73,7 @@ export function drawSideHead(
     put(2, -1, o.eye ?? INK);
     put(3, 0, "#FFFFFF");
   }
-  put(1, -2, BLUSH); // 볼
+  if (o.blush !== false) put(1, -2, BLUSH); // 볼(그림자는 없다)
   put(3, -3, o.strain ? INK : pal.skinShade); // 입
   return { x: cx - 4, y: cy - 4, w: 9, h: 9 };
 }
@@ -436,7 +436,7 @@ export function buildPoseArt(spec: PixelAvatarSpec, act: PixelAction, pal: Palet
   line(g, fr.head, fr.shoulder, 2, pal.skin);
 
   // 머리(치비 9×9): 정수리 쪽으로 커지고 큰 눈 · 볼
-  const face = drawSideHead(g, fr.head, fr.crown, fr.look, pal, { tier: spec.tierStep, resting: spec.resting, strain: act.frame === 1 && !spec.resting, eye: spec.eyeColor ?? undefined });
+  const face = drawSideHead(g, fr.head, fr.crown, fr.look, pal, { tier: spec.tierStep, resting: spec.resting, strain: act.frame === 1 && !spec.resting, eye: spec.eyeColor ?? undefined, blush: !spec.eyeColor });
 
   // 손에 든 것 — 옆에서 보면 가까운 원판이 몸을 다 가려서, 조금 작게 몸통 앞 · 가까운 팔다리 뒤에 그린다
   const hand = arms[arms.length - 1].hand;

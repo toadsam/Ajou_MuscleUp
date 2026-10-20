@@ -7,6 +7,8 @@ import TimingGauge from "../boss/TimingGauge";
 import ShadowShareEditor from "../boss/ShadowShareEditor";
 import Joystick from "./Joystick";
 import { createDungeon, type DungeonController, type EncounterTarget } from "./dungeonWorld";
+import { spriteShapeOf } from "../avatar/spriteShape";
+import { toneForMbti } from "../gymMap/engine";
 import { barbellLoad } from "../../lib/liftMotion";
 import { friendlyError } from "../../lib/httpError";
 import { toast } from "../../lib/toast";
@@ -51,12 +53,20 @@ export default function DungeonMap({ status, character, mbti, tank, strike, onEx
 
   const plates = useMemo(() => barbellLoad(Math.max(40, Math.min(140, Math.round(view.stats.strengthKg / 3 / 5) * 5))).pixel, [view.stats.strengthKg]);
 
+  // 지도 위 작은 내 캐릭터 모양 — 카드 그림과 같은 머리 · 성별 · 몸 단계 · 머리띠
+  const shape = useMemo(() => (character ? spriteShapeOf(character, tank ?? toneForMbti(mbti).tank) : null), [character, tank, mbti]);
+  const shapeRef = useRef(shape);
+  shapeRef.current = shape;
+  useEffect(() => {
+    ctl.current?.setShape(shape);
+  }, [shape]);
+
   // 지도 만들기(한 번)
   const encounterRef = useRef<(t: EncounterTarget) => void>(() => {});
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
-    const d = createDungeon(c, { mbti, tank }, {
+    const d = createDungeon(c, { mbti, tank, shape: shapeRef.current }, {
       onEncounter: (t) => encounterRef.current(t),
       onExitZone: setAtExit,
     });

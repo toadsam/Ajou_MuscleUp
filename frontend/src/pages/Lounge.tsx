@@ -2,6 +2,8 @@
 import { io, type Socket } from "socket.io-client";
 import LiveZone from "../components/lounge/LiveZone";
 import { plazaThemeOf } from "../components/lounge/plaza";
+import { spriteShapeOf } from "../components/avatar/spriteShape";
+import { toneForMbti } from "../components/gymMap/engine";
 import PlazaView, { type EmoteKind, type PlazaEmote, type PlazaMessage, type PlazaPlayerInfo } from "../components/lounge/PlazaView";
 import { REALTIME_URL, realtimeAuthFor, realtimeConnectError, type LoungeRoom } from "../lib/realtime";
 import { useCurrentGym, useMyGyms } from "../lib/currentGym";
@@ -23,6 +25,13 @@ type ServerPlayer = {
   mbti?: string;
   tank?: string;
   title?: string;
+  /** 캐릭터 모양 재료(입장권에서 온 값) — 작은 그림을 카드 그림과 같게 */
+  avatarSeed?: string;
+  gender?: string;
+  evolutionStage?: number;
+  growthParams?: { muscularityNormalized?: number } | null;
+  isPumped?: boolean;
+  bodyStage?: number;
   x: number;
   y: number;
 };
@@ -33,12 +42,16 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const MUTED_KEY = "lounge_muted_users_v1";
 const MAX_MESSAGES = 80;
 
+/** 작은 그림 모양: 카드 그림과 같은 규칙(머리 모양 시드 · 성별 · 몸 단계 + 펌핑 · 티어 머리띠) */
+const shapeOf = (p: ServerPlayer) => spriteShapeOf({ ...p, pumped: p.isPumped }, p.tank ?? toneForMbti(p.mbti).tank);
+
 const toInfo = (p: ServerPlayer): PlazaPlayerInfo => ({
   id: p.socketId,
   name: p.nickname,
   level: p.level,
   mbti: p.mbti ?? null,
   tank: p.tank ?? null,
+  shape: shapeOf(p),
   title: p.title ?? null,
   tier: p.tier ?? null,
   x: p.x,
@@ -266,7 +279,7 @@ export default function Lounge() {
           ? { board: { body: "우리 모임 공지 · 일정 · 멤버는 모임 페이지에 있어요.", to: `/g/${loungeGym.slug}`, cta: "모임 페이지" } }
           : undefined
       }
-      me={{ id: me.socketId, name: me.nickname, level: me.level, mbti: me.mbti ?? null, tank: me.tank ?? null }}
+      me={{ id: me.socketId, name: me.nickname, level: me.level, mbti: me.mbti ?? null, tank: me.tank ?? null, shape: shapeOf(me) }}
       start={lastPos.current ? [lastPos.current.x, lastPos.current.y] : undefined}
       players={others}
       messages={shownMessages}

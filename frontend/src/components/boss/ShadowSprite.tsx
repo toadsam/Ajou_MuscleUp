@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { CELL, buildPixelAvatar, type PixelAction } from "../avatar/pixelAvatar";
+import { CHIBI_FRONT_KINDS, buildChibi } from "../avatar/chibiArt";
 import { resolveSeedFeatures } from "../avatar/seed";
 
-// 그림자 — 내 캐릭터와 같은 픽셀 리프터를 어두운 색으로 그린다(새 픽셀 아트 없음). 눈만 빨간 원판 색.
+// 그림자 — 내 캐릭터와 같은 치비(머리 모양 · 성별 · 몸 단계)를 어두운 색으로 그린다. 눈만 빨간 원판 색, 볼터치 없음.
+// 서 있기 · 정면 동작은 chibiArt, 옆모습 동작(벤치 · 러닝 등)은 pixelPoses 의 큰 머리 그림(2026-10-20).
 // 피격 동작은 내 동작의 프레임 1 을 고정해 "맞고 버티는" 모습. 옆모습 동작은 좌우를 뒤집어 나와 마주 보게 한다.
 
 const SHADOW_COLORS = { skin: "#26272B", hair: "#1A1A1C", tank: "#3A3D43", eye: "#D9302A" };
@@ -13,8 +15,10 @@ const SIDE_KINDS = new Set(["bench", "pushup", "legpress", "legcurl", "legext", 
 type Props = {
   /** 내 캐릭터 시드 — 머리 모양을 따라가 "나의 그림자"가 된다 */
   avatarSeed: string;
-  /** 근육 단계 0~3 (내 캐릭터와 같게) */
+  /** 근육 단계 0~3 (옆모습 동작용, 내 캐릭터와 같게) */
   build?: 0 | 1 | 2 | 3;
+  /** 몸 단계 0~5 (치비, 내 캐릭터와 같게 — avatar/spriteShape.bodyStageFor) */
+  bodyStage?: number | null;
   female?: boolean;
   action?: PixelAction | null;
   size?: number;
@@ -23,11 +27,27 @@ type Props = {
   className?: string;
 };
 
-export default function ShadowSprite({ avatarSeed, build = 1, female = false, action = null, size = 96, shadow = true, className = "" }: Props) {
+export default function ShadowSprite({ avatarSeed, build = 1, bodyStage = null, female = false, action = null, size = 96, shadow = true, className = "" }: Props) {
   const actionKey = action ? JSON.stringify(action) : "";
   const art = useMemo(() => {
     const seed = resolveSeedFeatures(avatarSeed || "shadow");
     const act = actionKey ? (JSON.parse(actionKey) as PixelAction) : null;
+    if (!act || CHIBI_FRONT_KINDS.has(act.kind)) {
+      const stage = Math.max(0, Math.min(5, Math.round(bodyStage ?? build + 1))) as 0 | 1 | 2 | 3 | 4 | 5;
+      return buildChibi({
+        variant: "B",
+        bodyStage: stage,
+        fat: 0,
+        female,
+        hairStyle: seed.hairStyle,
+        expression: act && act.frame === 1 && act.kind !== "flex" ? "strain" : "normal",
+        pose: "stand",
+        colors: { skin: SHADOW_COLORS.skin, hair: SHADOW_COLORS.hair, tank: SHADOW_COLORS.tank },
+        eyeColor: SHADOW_COLORS.eye,
+        blush: false,
+        action: act,
+      });
+    }
     return buildPixelAvatar({
       build,
       fat: 0,
@@ -45,7 +65,7 @@ export default function ShadowSprite({ avatarSeed, build = 1, female = false, ac
       skills: { aura: false, wave: false, burst: false },
       action: act,
     });
-  }, [avatarSeed, build, female, actionKey]);
+  }, [avatarSeed, build, bodyStage, female, actionKey]);
 
   const flip = action ? SIDE_KINDS.has(action.kind) : false;
   const y = (row: number) => row * CELL;

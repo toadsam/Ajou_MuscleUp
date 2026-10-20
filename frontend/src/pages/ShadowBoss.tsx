@@ -4,6 +4,7 @@ import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import BossFight, { type FightMotion } from "../components/boss/BossFight";
 import HpBar from "../components/boss/HpBar";
 import ShadowSprite from "../components/boss/ShadowSprite";
+import { bodyStageFor } from "../components/avatar/spriteShape";
 import { PlateIcon } from "../components/boss/SkillPlates";
 import ShadowShareEditor from "../components/boss/ShadowShareEditor";
 import type { StageCharacter } from "../components/workout/LiftStage";
@@ -201,7 +202,7 @@ export default function ShadowBoss() {
               </div>
               <span className="relative z-10 self-center font-num text-2xl text-steel-600">VS</span>
               <div className="relative z-10 flex h-full w-[118px] items-end justify-center">
-                <ShadowSprite avatarSeed={character?.avatarSeed ?? "shadow"} female={character?.gender === "FEMALE"} size={104} />
+                <ShadowSprite avatarSeed={character?.avatarSeed ?? "shadow"} female={character?.gender === "FEMALE"} bodyStage={character ? bodyStageFor(character) : null} size={104} />
               </div>
             </div>
             <div className="mt-3">

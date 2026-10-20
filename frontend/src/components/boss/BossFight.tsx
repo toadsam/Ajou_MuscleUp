@@ -5,6 +5,7 @@ import type { ActionKind, Equip, PixelAction, PixelPlate } from "../avatar/pixel
 import type { StageCharacter } from "../workout/LiftStage";
 import HpBar from "./HpBar";
 import ShadowSprite from "./ShadowSprite";
+import { bodyStageFor } from "../avatar/spriteShape";
 import { spawnChalk } from "../../lib/chalkBurst";
 import { SHADOW_DAILY_CAP, SOURCE_LABEL, type ShadowHit } from "../../lib/shadow";
 
@@ -291,6 +292,7 @@ export default function BossFight({ hit, character, mbti, motion, replayKey = 0,
               key={contact ? `fx-${replayKey}-${contact.index}` : `fx-${replayKey}-${stage}`}
               avatarSeed={character?.avatarSeed ?? "shadow"}
               build={buildOf(character)}
+              bodyStage={character ? bodyStageFor(character) : null}
               female={character?.gender === "FEMALE"}
               action={shadowAction}
               size={104}

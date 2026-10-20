@@ -141,6 +141,7 @@ const profileFromTicket = (claims: TicketClaims): VerifiedProfile => ({
   isPumped: claims.pump === true,
   tank: typeof claims.tank === "string" && /^#[0-9A-Fa-f]{6}$/.test(claims.tank) ? claims.tank : undefined,
   title: cleanText(claims.ttl, 20),
+  bodyStage: typeof claims.bs === "number" ? asInt(claims.bs, 0, 5, 0) : undefined,
 });
 
 /** dev mode only (no secret, not production): unverified guest profile from the client payload */
