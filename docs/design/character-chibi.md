@@ -58,7 +58,9 @@ B 단계 그림: ![치비 B 단계](../screenshots/2026-10-20-chibi-b-stages.png
 
 ## 4. 다음 순서 (사용자가 시안을 고른 뒤)
 
-> 2026-10-20 진행: **1 · 2 끝**(B 확정, 카드 교체 · 서버 `BodyStage` → `AvatarLookService.bodyStage` → 응답 · `AvatarRenderer bodyStage`). 장비 그림: ![카드 장비](../screenshots/2026-10-20-chibi-card-gear.png)
+> 2026-10-20 진행: **3 · 4 끝**(작은 그림 `drawChar` 치비, 정면 동작 9가지 치비 · 옆모습 16가지 큰 머리 — [세부](../fixes/2026-10-20-chibi-motions.md)). 남은 것: 5 움직임, 옆모습 몸통의 몸 단계.
+>
+> **1 · 2 끝**(B 확정, 카드 교체 · 서버 `BodyStage` → `AvatarLookService.bodyStage` → 응답 · `AvatarRenderer bodyStage`). 장비 그림: ![카드 장비](../screenshots/2026-10-20-chibi-card-gear.png)
 
 
 1. 비율 하나 고르기(A · B · C) — 얼굴 크기 · 눈 크기 미세 조정

@@ -107,12 +107,14 @@ export function toneForMbti(mbti?: string | null): Tone {
   return { skin: "#E8B98F", tank: "#D9302A", hair: "#2B2420" };
 }
 
-export type Pal = Record<"h" | "s" | "k" | "r" | "b" | "w", string>;
-export const palOf = (t: Tone): Pal => ({ h: t.hair, s: t.skin, k: C.ink, r: t.tank, b: "#2C2D31", w: C.chalk });
+/** h 머리 · s 피부 · k 눈(잉크) · r 민소매 · b 반바지 · w 흰색(신발 · 눈 반짝임) · p 볼(없으면 피부색) */
+export type Pal = Record<"h" | "s" | "k" | "r" | "b" | "w", string> & { p?: string };
+export const BLUSH = "#EE9C86";
+export const palOf = (t: Tone): Pal => ({ h: t.hair, s: t.skin, k: C.ink, r: t.tank, b: "#2C2D31", w: C.chalk, p: BLUSH });
 const GUESTS: Pal[] = [
-  { h: "#5A3A22", s: "#F0C7A0", k: C.ink, r: C.blue, b: "#2C2D31", w: C.chalk },
-  { h: "#16161A", s: "#D9A577", k: C.ink, r: C.yellow, b: "#2C2D31", w: C.chalk },
-  { h: "#7A4A2A", s: "#EDBD95", k: C.ink, r: C.green, b: "#3B3D44", w: C.chalk },
+  { h: "#5A3A22", s: "#F0C7A0", k: C.ink, r: C.blue, b: "#2C2D31", w: C.chalk, p: BLUSH },
+  { h: "#16161A", s: "#D9A577", k: C.ink, r: C.yellow, b: "#2C2D31", w: C.chalk, p: BLUSH },
+  { h: "#7A4A2A", s: "#EDBD95", k: C.ink, r: C.green, b: "#3B3D44", w: C.chalk, p: BLUSH },
 ];
 /* ---------- 헬스장 직원 NPC ----------
    실제 회원과 헷갈리지 않게: 모두 같은 조끼 유니폼(색은 꾸미기에서 고름), 이름표는 역할(코치 · 관장님 · 직원 …)만.
@@ -137,6 +139,7 @@ const npcPal = (id: NpcId, look: StaffLook): Pal => ({
   h: look.hair[id as StaffId] ?? EXTRA_HAIR[id] ?? "#1B1B1F",
   s: NPC_SKIN[id],
   k: C.ink,
+  p: BLUSH,
   // 영양사는 흰 가운, 나머지는 헬스장 조끼
   r: id === "dietitian" ? "#E4E2DA" : look.uniform,
   b: "#1C1D20",
@@ -500,9 +503,26 @@ export function paintScenePreview(canvas: HTMLCanvasElement, scene: Exclude<Scen
   g.drawImage(full, 76, scene === "DINER" ? 120 : 0, 104, 88, 0, 0, 104, 88);
 }
 
-/* ---------- 캐릭터 (10×16 픽셀) ---------- */
+/* ---------- 캐릭터 (10×16 픽셀, 2026-10-20 치비) ----------
+   큰 카드 그림(chibiArt)과 같은 비율: 머리 8줄(키의 절반) · 큰 눈 2×2(반짝임 한 칸) · 볼 · 짧은 몸 4줄 · 다리 4줄.
+   글자: h 머리 · s 피부 · k 눈 · w 흰색 · p 볼 · r 민소매 · b 반바지. 외곽선은 잉크로 한 칸 둘러 그린다. */
 
-const BASE = ["..hhhhhh..", ".hhhhhhhh.", ".hssssssh.", ".skssssks.", ".ssssssss.", "..ssssss..", "...ssss...", ".rrrrrrrr.", "srrrrrrrrs", "srrrrrrrrs", "ss.rrrr.ss", "..bbbbbb.."];
+const BASE = [
+  "..hhhhhh..",
+  ".hhhhhhhh.",
+  "hhhhhhhhhh",
+  "hhsshssshh",
+  "hskwsskwsh",
+  "hskksskksh",
+  ".pssssssp.",
+  "..ssssss..",
+  ".srrrrrrs.",
+  ".srrrrrrs.",
+  ".s.rrrr.s.",
+  "..bbbbbb..",
+];
+/** 뒷모습: 얼굴 자리를 머리카락으로, 목덜미만 피부 */
+const BACK = { 3: "hhhhhhhhhh", 4: "hhhhhhhhhh", 5: "hhhhhhhhhh", 6: ".hhhhhhhh.", 7: "..ssssss.." } as Record<number, string>;
 const LEGS = [
   ["..bb..bb..", "..ss..ss..", "..ss..ss..", "..ww..ww.."],
   ["..bb..bb..", "..ss..ss..", "..ww..ss..", "......ww.."],
@@ -510,16 +530,12 @@ const LEGS = [
 ];
 export type CharOpts = { frame?: number; sit?: boolean; back?: boolean; over?: boolean };
 
-/** 10×16 픽셀 리프터(라운지 광장도 같은 그림) */
+/** 10×16 픽셀 치비(홈 지도 · 라운지 광장 · 던전이 같은 그림) */
 export function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal: Pal, o: CharOpts = {}) {
   let rows = o.sit ? BASE.slice() : BASE.concat(LEGS[o.frame ?? 0]);
-  if (o.back) {
-    rows = rows.slice();
-    rows[2] = ".hhhhhhhh.";
-    rows[3] = ".hhhhhhhh.";
-    rows[4] = ".shhhhhhs.";
-  }
-  if (o.over) rows = rows.map((row, i) => (i >= 8 && i <= 10 ? `.${row.slice(1, 9)}.` : row));
+  if (o.back) rows = rows.map((row, j) => BACK[j] ?? row);
+  // 머리 위로 바를 든다: 옆 팔을 지우고 머리 바깥으로 팔을 세운다
+  if (o.over) rows = rows.map((row, i) => (i >= 8 && i <= 10 ? `..${row.slice(2, 8)}..` : row));
   g.fillStyle = C.ink;
   rows.forEach((row, j) => {
     for (let i = 0; i < 10; i++)
@@ -529,26 +545,28 @@ export function drawChar(g: CanvasRenderingContext2D, x: number, y: number, pal:
       }
   });
   if (o.over) {
-    fill(g, x - 1, y - 3, 3, 13, C.ink);
-    fill(g, x + 8, y - 3, 3, 13, C.ink);
-    fill(g, x - 7, y - 4, 24, 3, C.ink);
-    fill(g, x - 6, y - 8, 4, 11, C.ink);
-    fill(g, x + 12, y - 8, 4, 11, C.ink);
+    fill(g, x - 2, y - 3, 3, 13, C.ink);
+    fill(g, x + 9, y - 3, 3, 13, C.ink);
+    fill(g, x - 8, y - 4, 26, 3, C.ink);
+    fill(g, x - 7, y - 8, 4, 11, C.ink);
+    fill(g, x + 13, y - 8, 4, 11, C.ink);
   }
   rows.forEach((row, j) => {
     for (let i = 0; i < 10; i++) {
-      const ch = row[i] as keyof Pal | ".";
+      const ch = row[i];
       if (ch === ".") continue;
-      g.fillStyle = pal[ch];
+      g.fillStyle = ch === "p" ? (pal.p ?? pal.s) : pal[ch as keyof Pal] ?? pal.s;
       g.fillRect(x + i, y + j, 1, 1);
     }
   });
   if (o.over) {
-    fill(g, x, y - 2, 1, 11, pal.s);
-    fill(g, x + 9, y - 2, 1, 11, pal.s);
-    fill(g, x - 6, y - 3, 22, 1, "#B9BCC3");
-    fill(g, x - 5, y - 7, 2, 9, C.red);
-    fill(g, x + 13, y - 7, 2, 9, C.red);
+    fill(g, x - 1, y - 2, 1, 11, pal.s);
+    fill(g, x + 10, y - 2, 1, 11, pal.s);
+    fill(g, x, y + 8, 1, 1, pal.s);
+    fill(g, x + 9, y + 8, 1, 1, pal.s);
+    fill(g, x - 7, y - 3, 24, 1, "#B9BCC3");
+    fill(g, x - 6, y - 7, 2, 9, C.red);
+    fill(g, x + 14, y - 7, 2, 9, C.red);
   }
 }
 

@@ -1,4 +1,4 @@
-// 치비(머리 큰 귀여운) 픽셀 아바타 — 시안(2026-10-20). 아직 실제 화면에는 안 쓰고 /dev/avatars "치비 시안" 줄에서만 그린다.
+// 치비(머리 큰 귀여운) 픽셀 아바타 — 카드 · 홈 · 친구 · 모임의 서 있는 그림과 정면 운동 동작 9가지(2026-10-20). /dev/avatars 에서 모두 본다.
 //
 // 같은 24×32 칸 · 같은 Grid(좌우 대칭 · 자동 외곽선)를 쓰고, 머리 대 몸 비율만 크게 바꿨다.
 //   A 2등신(머리 14 : 몸 13) · B 2.5등신(12 : 15) · C 3등신(10 : 17). 지금 리프터는 4등신쯤(머리 8 : 몸 24).
@@ -8,8 +8,8 @@
 //   0 새싹 가는 팔 · 좁은 어깨 / 1 입문 팔 두께 2 / 2 근력 둥근 어깨 · 작은 알통 / 3 벌크 V자 · 가슴선 · 승모 · 키 +1
 //   4 괴력 굵은 팔 · 큰 알통 · 가슴 가르는 선 / 5 전설 최대 + 어깨 윤기 · 반짝
 // 셀 셰이딩: 피부 · 민소매 · 반바지 아래쪽 · 안쪽에 한 단계 어두운 색, 머리카락 · 어깨에 하이라이트.
-import { Grid, INK, shade } from "./pixelGrid";
-import type { PixelAvatarArt, PixelEffect } from "./pixelAvatar";
+import { BAR, Grid, INK, IRON, shade } from "./pixelGrid";
+import { drawBar, type ActionKind, type Equip, type PixelAction, type PixelAvatarArt, type PixelEffect } from "./pixelAvatar";
 
 export type ChibiVariant = "A" | "B" | "C";
 export type ChibiExpression = "normal" | "smile" | "strain" | "tired" | "sparkle";
@@ -34,7 +34,36 @@ export type ChibiSpec = {
   /** 운동 직후 펌핑: 땀 · 김(근육 +1 단계는 그리는 쪽이 bodyStage 에 더한다) */
   pumped?: boolean;
   skills?: { aura: boolean; wave: boolean; burst: boolean };
+  /** 정면 운동 동작(CHIBI_FRONT_KINDS). 있으면 pose 대신 이 동작으로 팔 · 다리 · 기구를 그린다 */
+  action?: PixelAction | null;
 };
+
+/** 치비 정면 그림으로 그리는 운동 동작(나머지는 옆모습 — pixelPoses · buildSideArt) */
+export const CHIBI_FRONT_KINDS: ReadonlySet<ActionKind> = new Set<ActionKind>(["squat", "deadlift", "press", "curl", "raise", "fly", "pullup", "legraise", "flex"]);
+
+/**
+ * 동작별 팔 모양 [프레임 0, 프레임 1]. 치비는 머리가 어깨보다 넓어서, 머리 위 · 목 뒤로 가는 팔은 팔꿈치를 머리 바깥으로 뺀다.
+ *  stand 차렷 · flex 알통 · rack 바를 목 뒤에 메고 손은 머리 옆 · rackLow 바를 쇄골 앞에 · overhead 머리 위로 다 편 팔
+ *  curl 팔뚝을 접어 주먹이 어깨 앞 · wide 옆으로 편 팔 · front 가슴 앞에서 모은 손 · hang 철봉에 매달림
+ */
+type ArmMode = "stand" | "flex" | "rack" | "rackLow" | "overhead" | "curl" | "wide" | "front" | "hang";
+function armModeOf(kind: ActionKind, f: 0 | 1, equip: Equip): ArmMode {
+  const table: Partial<Record<ActionKind, [ArmMode, ArmMode]>> = {
+    squat: equip === "barbell" ? ["rack", "rack"] : ["stand", "stand"],
+    deadlift: ["stand", "stand"],
+    press: ["rackLow", "overhead"],
+    curl: ["stand", "curl"],
+    raise: ["stand", "wide"],
+    fly: ["wide", "front"],
+    pullup: ["hang", "hang"],
+    legraise: ["hang", "hang"],
+    flex: ["stand", "flex"],
+  };
+  return table[kind]?.[f] ?? "stand";
+}
+/** 철봉 높이(행) — 턱걸이로 올라가면 머리가 봉 앞을 지난다 */
+const HANG_BAR = 1;
+type Box = { x0: number; x1: number; y0: number; y1: number };
 
 const VARIANT: Record<ChibiVariant, { head: number; headHW: number; eyeH: number; legs: number; torso: number }> = {
   A: { head: 14, headHW: 8, eyeH: 4, legs: 2, torso: 6 },
@@ -109,15 +138,77 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
   const tier = spec.tierStep ?? 0;
   let wrist: { x0: number; x1: number; y: number } | null = null; // 손목(보호대 자리)
 
+  // ---- 운동 동작 ----
+  const act = spec.action ?? null;
+  const kind = act?.kind ?? null;
+  const f = act?.frame ?? 0;
+  const equip = act?.equip ?? "none";
+  // 프레임 1: 스쿼트 · 데드는 몸을 내리고(행 +), 턱걸이는 올린다(행 -)
+  const drop = f === 1 ? (kind === "squat" ? 3 : kind === "deadlift" ? 2 : kind === "pullup" ? -5 : 0) : 0;
+  const bentLegs = f === 1 && (kind === "squat" || kind === "deadlift");
+  const raisedLegs = f === 1 && kind === "legraise";
+  const armMode: ArmMode = kind ? armModeOf(kind, f, equip) : spec.pose === "flex" ? "flex" : "stand";
+  const hl = 12 - v.headHW - 1; // 머리카락까지 머리 왼쪽 끝 열
+  const fw = Math.max(2, armT); // 주먹 폭
+  const shoeColor = tier >= 7 ? "#F0BE2E" : SHOE;
+  // 동작 팔의 주먹 · 팔꿈치(절대 좌표 — 몸이 내려가도 바에 붙은 손은 그대로)
+  const geo = ((): { fist: Box; elbow: { x: number; y: number } | null } | null => {
+    if (armMode === "rack") {
+      const by = torsoTop - 1 + drop;
+      const x1 = Math.min(xs - 1, hl - 2);
+      return { fist: { x0: x1 - fw + 1, x1, y0: by - 1, y1: by }, elbow: { x: x1 - fw + 1, y: by + 4 } };
+    }
+    if (armMode === "overhead" || armMode === "hang") {
+      const by = armMode === "hang" ? HANG_BAR : -1;
+      const x1 = hl - 1;
+      const x0 = x1 - fw + 1;
+      const ey = armMode === "hang" ? headBottom - 3 + drop : headTop + 5;
+      return { fist: { x0, x1, y0: by - 1, y1: by }, elbow: { x: x0 - 1, y: ey } };
+    }
+    if (armMode === "rackLow") {
+      const by = torsoTop + 2 + drop;
+      const x1 = xs - 1;
+      return { fist: { x0: x1 - fw + 1, x1, y0: by - 1, y1: by }, elbow: { x: x1 - fw, y: torsoTop + 6 + drop } };
+    }
+    if (armMode === "wide") {
+      const xEnd = Math.max(-7, xs - 8);
+      const y = torsoTop + 1 + drop;
+      return { fist: { x0: xEnd - fw, x1: xEnd - 1, y0: y, y1: y + 1 }, elbow: null };
+    }
+    if (armMode === "front") {
+      const y = torsoTop + 3 + drop;
+      return { fist: { x0: 10, x1: 11, y0: y - 1, y1: y }, elbow: null };
+    }
+    return null;
+  })();
+  let fist: Box | null = geo?.fist ?? null;
+  // 몸 뒤 기구(머리 · 몸보다 먼저): 철봉 · 목 뒤 · 머리 위 바벨
+  if (kind === "pullup" || kind === "legraise") g.rect(-6, 29, HANG_BAR, HANG_BAR, BAR);
+  if (equip === "barbell" && geo && (armMode === "rack" || armMode === "overhead")) drawBar(g, geo.fist.y1, geo.fist.x0 - 2, act?.plates ?? []);
+
   // ---- 다리 · 신발 ----
   const legX0 = 11 - legW;
-  g.mirrorRect(legX0, 10, legTop, shoeTop - 1, skin);
-  if (legW >= 2) g.mirrorRect(legX0, legX0, legTop, shoeTop - 1, skinShade);
-  if (quad >= 1 && v.legs >= 3) g.mirrorRect(legX0 - 1, legX0 - 1, legTop + 1, legTop + 1, skin); // 종아리
-  g.mirrorRect(legX0 - 1, 10, shoeTop, bottom, SHOE);
-  g.mirrorRect(legX0 - 1, 10, bottom, bottom, "#B9B7B0");
-  g.mirrorSet(legX0 - 1, shoeTop, null); // 신발 앞코 둥글게
-  if (s === 0) g.mirrorRect(legX0 - 2, legX0 - 1, shoeTop, bottom, SHOE); // 큰 신발에 가는 다리(새싹)
+  if (bentLegs) {
+    // 정면에서 본 앉은 자세: 무릎이 반바지 옆으로 벌어지고 발은 넓게
+    const kx0 = Math.min(legX0 - 2, 12 - (waistHW + 1) - 2);
+    const kx1 = kx0 + legW;
+    g.mirrorRect(kx0, kx1, legTop + drop - 2, shoeTop - 1, skin);
+    g.mirrorRect(kx0, kx0, legTop + drop - 2, shoeTop - 1, skinShade);
+    g.mirrorRect(kx0 - 1, kx1, shoeTop, bottom, shoeColor);
+    g.mirrorRect(kx0 - 1, kx1, bottom, bottom, "#B9B7B0");
+  } else if (raisedLegs) {
+    // 다리 들기: 다리가 앞으로 올라와 바닥이 비고, 신발 바닥은 몸 앞(아래 "몸 앞 기구")에 그린다
+  } else {
+    g.oy = kind === "pullup" ? drop : 0; // 턱걸이로 올라가면 다리도 같이
+    g.mirrorRect(legX0, 10, legTop, shoeTop - 1, skin);
+    if (legW >= 2) g.mirrorRect(legX0, legX0, legTop, shoeTop - 1, skinShade);
+    if (quad >= 1 && v.legs >= 3) g.mirrorRect(legX0 - 1, legX0 - 1, legTop + 1, legTop + 1, skin); // 종아리
+    g.mirrorRect(legX0 - 1, 10, shoeTop, bottom, SHOE);
+    g.mirrorRect(legX0 - 1, 10, bottom, bottom, "#B9B7B0");
+    g.mirrorSet(legX0 - 1, shoeTop, null); // 신발 앞코 둥글게
+    if (s === 0) g.mirrorRect(legX0 - 2, legX0 - 1, shoeTop, bottom, SHOE); // 큰 신발에 가는 다리(새싹)
+  }
+  g.oy = drop; // 여기부터 몸통 · 머리는 몸과 같이 움직인다
 
   // ---- 반바지: 허벅지가 굵으면 아래가 퍼진다 ----
   const shortsHW = waistHW + 1;
@@ -127,6 +218,7 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
     g.mirrorRect(12 - shortsHW - quad, 12 - shortsHW - quad, legTop - 2, legTop - 1, shortsShade);
   }
   g.mirrorRect(12 - shortsHW, 12 - shortsHW, shortsTop, legTop - 1, shortsShade);
+  if (bentLegs) g.band(shortsHW + 1, legTop - 2, legTop - 1, SHORTS); // 앉으면 허벅지가 앞으로 와 넓어 보인다
   g.rect(11, 12, legTop - 1, legTop - 1, null); // 가랑이
   g.band(shortsHW, shortsTop, shortsTop, "#3A4C82"); // 허리 밴드
 
@@ -186,8 +278,10 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
   }
 
   // ---- 팔 ----
-  if (spec.pose === "flex") {
+  if (armMode === "flex") {
     drawFlexArms();
+  } else if (armMode !== "stand") {
+    drawActionArms();
   } else {
     // 서기: 어깨 공 → 위팔(알통) → 팔뚝 → 주먹
     const ax1 = xs + delt - 1; // 팔 안쪽 끝(몸통에 붙음)
@@ -215,6 +309,59 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
     g.mirrorRect(ax0 - flare, inner - flare, armBottom, armBottom + 1, skin);
     g.mirrorRect(ax0 - flare, inner - flare, armBottom + 1, armBottom + 1, skinShade);
     wrist = { x0: ax0 - flare, x1: inner - flare, y: armBottom - 1 };
+    fist = { x0: ax0 - flare, x1: inner - flare, y0: armBottom + drop, y1: armBottom + 1 + drop };
+  }
+
+  /** 굵기 t 의 팔 한 토막(왼쪽을 그리고 거울) — 절대 좌표 */
+  function limb(a: { x: number; y: number }, b: { x: number; y: number }, t: number) {
+    const n = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y), 1);
+    for (let i = 0; i <= n; i += 1) {
+      const x = Math.round(a.x + ((b.x - a.x) * i) / n);
+      const y = Math.round(a.y + ((b.y - a.y) * i) / n);
+      g.mirrorRect(x, x + t - 1, y, y + t - 1, skin);
+    }
+  }
+
+  function drawActionArms() {
+    g.oy = 0;
+    const d = drop;
+    // 어깨 공(몸과 같이 움직인다)
+    g.mirrorRect(xs, xs + delt - 1, torsoTop + d, torsoTop + 1 + d, skin);
+    if (s >= 3) g.mirrorRect(xs + 1, xs + 2, torsoTop + d, torsoTop + d, skinLight);
+    const S = { x: xs, y: torsoTop + 1 + d };
+    const bic = STAGE.bicep[s];
+    if (armMode === "curl") {
+      // 팔뚝을 접어 주먹이 어깨 앞 — 위팔이 짧아지고 알통이 한 칸 더 솟는다
+      const ax1 = xs + delt - 1 - (s >= 2 ? 1 : 0);
+      const ax0 = ax1 - armT + 1;
+      g.mirrorRect(ax0, ax1, torsoTop + 2 + d, torsoTop + torsoRows - 2 + d, skin);
+      g.mirrorRect(ax1, ax1, torsoTop + 3 + d, torsoTop + torsoRows - 2 + d, skinShade);
+      const b = bic + 1;
+      g.mirrorRect(ax0 - b, ax0 - 1, torsoTop + 3 + d, torsoTop + 3 + b + d, skin); // 알통
+      g.mirrorSet(ax0 - b, torsoTop + 3 + d, null);
+      g.mirrorSet(ax0 - b, torsoTop + 3 + b + d, null);
+      fist = { x0: ax0, x1: ax0 + fw - 1, y0: torsoTop + d, y1: torsoTop + 1 + d };
+      if (tier >= 1) g.mirrorRect(fist.x0, fist.x1, fist.y1 + 1, fist.y1 + 1, "#EEECE6");
+    } else if (armMode === "wide" && fist) {
+      const th = Math.min(armT, 3);
+      g.mirrorRect(fist.x1 + 1, xs + 1, fist.y0, fist.y0 + th - 1, skin);
+      if (th >= 2) g.mirrorRect(fist.x1 + 1, xs, fist.y0 + th - 1, fist.y0 + th - 1, skinShade);
+      if (bic > 0) g.mirrorRect(xs - 3, xs - 2, fist.y0 - 1, fist.y0 - 1, skin); // 어깨 쪽 알통 윗선
+      if (tier >= 1) g.mirrorRect(fist.x1 + 1, fist.x1 + 1, fist.y0, fist.y1, "#EEECE6");
+    } else if (armMode === "front" && fist) {
+      limb(S, { x: fist.x0 - armT + 1, y: fist.y0 }, armT);
+      if (tier >= 1) g.mirrorRect(fist.x0 - 1, fist.x0 - 1, fist.y0, fist.y1, "#EEECE6");
+    } else if (geo?.elbow && fist) {
+      // 위팔(어깨 → 팔꿈치) · 팔뚝(팔꿈치 → 주먹)
+      limb(S, geo.elbow, armT);
+      limb(geo.elbow, { x: fist.x0, y: fist.y1 + 1 }, Math.min(armT, fw));
+      if (tier >= 1) g.mirrorRect(fist.x0, fist.x1, fist.y1 + 1, fist.y1 + 1, "#EEECE6");
+    }
+    if (fist && armMode !== "curl") {
+      g.mirrorRect(fist.x0, fist.x1, fist.y0, fist.y1, skin);
+      g.mirrorRect(fist.x0, fist.x1, fist.y1, fist.y1, skinShade);
+    }
+    g.oy = d;
   }
 
   function drawFlexArms() {
@@ -235,6 +382,7 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
     g.mirrorRect(elbowX - 1, elbowX + armT, fy0 - 2, fy0 - 1, skin);
     g.mirrorRect(elbowX - 1, elbowX + armT, fy0 - 1, fy0 - 1, skinShade);
     g.mirrorSet(elbowX - 1, fy0 - 2, null);
+    fist = { x0: elbowX - 1, x1: elbowX + armT, y0: fy0 - 2 + drop, y1: fy0 - 1 + drop };
     // 알통: 위팔 위로 솟는 둥근 봉우리 — 단계마다 한 칸씩 크고 높게
     const peak = STAGE.peak[s];
     if (peak > 0) {
@@ -258,12 +406,14 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
     g.band(waistHW, beltY, beltY, tier >= 6 ? "#F0BE2E" : "#6B4A2E");
     g.rect(11, 12, beltY, beltY, tier >= 5 ? (tier >= 6 ? "#B5850E" : "#F0BE2E") : "#B8BBC0");
   }
-  if (tier >= 3) g.mirrorRect(legX0, 10, legTop + (v.legs >= 3 ? 1 : 0), legTop + (v.legs >= 3 ? 1 : 0), "#3A3D43"); // 무릎 보호대
-  if (tier >= 7) {
+  if (tier >= 3 && !bentLegs && !raisedLegs) g.mirrorRect(legX0, 10, legTop + (v.legs >= 3 ? 1 : 0), legTop + (v.legs >= 3 ? 1 : 0), "#3A3D43"); // 무릎 보호대
+  if (tier >= 7 && !bentLegs && !raisedLegs) {
+    g.oy = kind === "pullup" ? drop : 0;
     g.mirrorRect(legX0 - 1, 10, shoeTop, bottom - 1, "#F0BE2E"); // 금 신발
     if (s === 0) g.mirrorRect(legX0 - 2, legX0 - 1, shoeTop, bottom - 1, "#F0BE2E");
+    g.oy = drop;
   }
-  if (spec.resting) g.rect(xs, xs + Math.max(2, delt), torsoTop, torsoTop + 4, WRAPS); // 왼쪽 어깨에 수건
+  if (spec.resting && !act) g.rect(xs, xs + Math.max(2, delt), torsoTop, torsoTop + 4, WRAPS); // 왼쪽 어깨에 수건
   if (spec.emblem) {
     const mark = spec.emblem.toUpperCase() === tank.toUpperCase() ? WRAPS : spec.emblem;
     g.rect(11, 12, torsoTop + 2, torsoTop + 3, mark);
@@ -412,6 +562,30 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
     g.rect(11, 12, my - 1, my - 1, INK);
   }
 
+  // ---- 몸 앞 기구: 바벨(데드 · 프레스 시작 · 컬) · 덤벨 — 주먹이 봉을 쥐게 다시 칠한다 ----
+  g.oy = 0;
+  if (raisedLegs) {
+    // 앞으로 든 다리: 반바지 앞에 정강이 끝과 신발 바닥이 보인다
+    g.mirrorRect(legX0, 10, legTop - 3, legTop - 2, skin);
+    g.mirrorRect(legX0 - 1, 10, legTop - 1, legTop + 1, shoeColor);
+    g.mirrorRect(legX0, 9, legTop, legTop, "#B9B7B0");
+  }
+  if (act && fist) {
+    const fx = fist;
+    const front = armMode === "stand" || armMode === "rackLow" || armMode === "curl" || armMode === "front";
+    if (equip === "barbell" && (armMode === "stand" || armMode === "rackLow" || armMode === "curl")) drawBar(g, fx.y1, fx.x0 - 2, act.plates);
+    if (front) {
+      g.mirrorRect(fx.x0, fx.x1, fx.y0, fx.y1, skin);
+      g.mirrorRect(fx.x0, fx.x1, fx.y1, fx.y1, skinShade);
+    }
+    if (equip === "dumbbell" && armMode !== "hang") {
+      // 덤벨(손잡이를 세로로 쥔 모양): 주먹 위아래로 쇳덩이
+      g.mirrorRect(fx.x0 - 1, fx.x1 + 1, fx.y0 - 2, fx.y0 - 1, IRON);
+      g.mirrorRect(fx.x0 - 1, fx.x1 + 1, fx.y1 + 1, fx.y1 + 2, IRON);
+      g.mirrorRect(fx.x0, fx.x1, fx.y0 - 2, fx.y0 - 2, shade(IRON, -0.3));
+    }
+  }
+
   g.outline();
 
   // ---- 효과(외곽선 없음) ----
@@ -455,9 +629,9 @@ export function buildChibi(spec: ChibiSpec): PixelAvatarArt {
     runs: g.runs(),
     effects,
     regions: {
-      face: { x: hx0, y: headTop, w: hw * 2, h: v.head },
-      body: { x: xs, y: torsoTop, w: shoulderHW * 2, h: torsoRows },
-      emblem: { x: 11, y: torsoTop + 2, w: 2, h: 2 },
+      face: { x: hx0, y: headTop + drop, w: hw * 2, h: v.head },
+      body: { x: xs, y: torsoTop + drop, w: shoulderHW * 2, h: torsoRows },
+      emblem: { x: 11, y: torsoTop + 2 + drop, w: 2, h: 2 },
     },
   };
 }
