@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from "react";
 import AvatarRenderer from "../components/avatar/AvatarRenderer";
 import BodyStageUp from "../components/avatar/BodyStageUp";
+import TapAvatar from "../components/avatar/TapAvatar";
 import ChibiAvatar from "../components/avatar/ChibiAvatar";
 import type { ChibiExpression, ChibiVariant } from "../components/avatar/chibiArt";
 import type { ActionKind, Equip } from "../components/avatar/pixelAvatar";
@@ -66,12 +67,15 @@ function MotionLifeDemo() {
   };
   return (
     <section className="space-y-3" id="motion-life">
-      <h2 className="font-bold text-plate-yellow">움직임 — 숨쉬기 · 이긴 순간 · 몸이 커지는 순간</h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <h2 className="font-bold text-plate-yellow">움직임 — 숨쉬기 · 이긴 순간 · 누르면 반응 · 몸이 커지는 순간</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <Cell label="숨쉬기 · 서기">{avatar(2, 120)}</Cell>
         <Cell label="숨쉬기 · 알통">{avatar(4, 120, 3)}</Cell>
         <Cell label="숨쉬기 · 쉬는 중">
           <AvatarRenderer avatarSeed="mina" tier="SILVER" stage={1} gender="FEMALE" mbti="ENFP" bodyStage={1} isResting size={120} />
+        </Cell>
+        <Cell label="누르면 반응(알통 → 윙크 → 펄쩍)">
+          <TapAvatar avatarSeed="mina" tier="DIAMOND" stage={1} gender="FEMALE" mbti="ENFP" bodyStage={2} size={120} />
         </Cell>
         <Cell label="이긴 순간 · 누르면 다시">
           <button type="button" onClick={() => setWin((w) => w + 1)} aria-label="이긴 순간 다시 보기">
@@ -137,10 +141,10 @@ export default function DevAvatars() {
           </div>
         ))}
         <div className="space-y-2">
-          <p className="text-sm text-steel-300">표정 5가지(단계 2) · 체지방 · 머리 모양</p>
+          <p className="text-sm text-steel-300">표정 6가지(단계 2) · 체지방 · 머리 모양</p>
           <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
-            {(["normal", "smile", "strain", "tired", "sparkle"] as ChibiExpression[]).map((ex) => (
-              <Cell key={ex} label={{ normal: "기본", smile: "웃음", strain: "힘줌", tired: "지침", sparkle: "반짝" }[ex]}>
+            {(["normal", "smile", "strain", "tired", "sparkle", "wink"] as ChibiExpression[]).map((ex) => (
+              <Cell key={ex} label={{ normal: "기본", smile: "웃음", strain: "힘줌", tired: "지침", sparkle: "반짝", wink: "윙크" }[ex]}>
                 <ChibiAvatar seed="jaehun" mbti="ESTJ" variant="B" bodyStage={2} fat={0} female={false} expression={ex} pose="stand" size={112} />
               </Cell>
             ))}

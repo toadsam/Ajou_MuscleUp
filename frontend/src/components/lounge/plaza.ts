@@ -457,6 +457,8 @@ type Actor = PlazaPlayer & {
   frame: number;
   step: number;
   bubble: { text: string; until: number; tone: "chat" | "emote" } | null;
+  /** 이모트 동작(말풍선과 같이 2.5초) */
+  emote?: { kind: EmoteKind; until: number } | null;
 };
 
 export type PlazaCallbacks = {
@@ -468,7 +470,8 @@ export type PlazaCallbacks = {
 
 export type PlazaController = {
   setPlayers: (list: PlazaPlayer[]) => void;
-  say: (id: string, text: string, tone?: "chat" | "emote") => void;
+  /** 말풍선. 이모트면 kind 로 몸 동작도 한다(인사 · 화이팅 · 박수 · 꾸벅) */
+  say: (id: string, text: string, tone?: "chat" | "emote", kind?: EmoteKind) => void;
   walkToZone: (zone: PlazaZone) => void;
   destroy: () => void;
 };
@@ -505,6 +508,7 @@ export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x"
   let zone: PlazaZone | null = null;
   let lastSent = 0;
   let dirty = true;
+  let lastDraw = 0;
   let raf = 0;
   let last = performance.now();
   let scale = 1;
@@ -717,7 +721,15 @@ export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x"
       // 사람마다 숨쉬기 박자를 어긋나게(아이디 글자로)
       const seed = a.id.length ? a.id.charCodeAt(a.id.length - 1) : 0;
       const pose = walkPose(a.step * 8, moving, now, seed);
-      drawChar(g, Math.round(a.x - 5), Math.round(a.y - 16), a.pal, { frame: pose.frame, hop: pose.hop, squash: pose.squash });
+      // 이모트 중(서 있을 때): 몸 동작 두 장면을 번갈아
+      const emote = !moving && a.emote && now < a.emote.until ? a.emote.kind : null;
+      drawChar(g, Math.round(a.x - 5), Math.round(a.y - 16), a.pal, {
+        frame: pose.frame,
+        hop: emote ? (emote === "cheer" && Math.floor(now / 220) % 2 === 1 ? 1 : 0) : pose.hop,
+        squash: !emote && pose.squash,
+        pose: emote,
+        poseFrame: Math.floor(now / 220) % 2,
+      });
     }
     for (const a of actors) {
       const isMe = a === mine;
@@ -743,9 +755,12 @@ export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x"
       dirty = true;
       cb.onZone(zone);
     }
-    // 움직임 · 말풍선 · 누른 자리 표시가 있을 때만 다시 그린다
-    const busy = moved || dirty || [...others.values(), mine].some((a) => a.bubble) || (tapMark && now - tapMark.t < 600);
-    if (busy) render(now);
+    // 움직임 · 말풍선 · 누른 자리 표시가 있으면 매 장면, 없어도 숨쉬기가 보이게 0.1초마다 한 번 다시 그린다
+    const busy = moved || dirty || [...others.values(), mine].some((a) => a.bubble) || (tapMark && now - tapMark.t < 600) || now - lastDraw > 100;
+    if (busy) {
+      render(now);
+      lastDraw = now;
+    }
     dirty = false;
     raf = requestAnimationFrame(loop);
   };
@@ -775,10 +790,11 @@ export function createPlaza(canvas: HTMLCanvasElement, me: Omit<PlazaPlayer, "x"
       for (const id of [...others.keys()]) if (!seen.has(id)) others.delete(id);
       dirty = true;
     },
-    say(id, text, tone = "chat") {
+    say(id, text, tone = "chat", kind) {
       const a = id === me.id ? mine : others.get(id);
       if (!a) return;
       a.bubble = { text, until: performance.now() + (tone === "emote" ? 2500 : 4500), tone };
+      if (kind) a.emote = { kind, until: performance.now() + 2500 };
       dirty = true;
     },
     walkToZone(z) {
