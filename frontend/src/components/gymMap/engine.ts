@@ -621,12 +621,14 @@ function charCells(o: CharOpts, sh: SpriteShape | null | undefined): [number, nu
   const sink = pose === "gg" && f === 1 ? 2 : o.squash ? 1 : 0;
   if (sink) rows.forEach((r) => (r[0] += sink));
   const body = stage <= 0 ? BODY.thin : stage <= 1 ? BODY.base : stage <= 3 ? BODY.broad : BODY.huge;
-  // 자세가 있으면 옆 팔(몸통 밖 피부 칸)을 지우고 아래에서 자세 팔을 따로 그린다(꾸벅은 팔 그대로, 인사는 오른팔만)
-  const clearArm = (dx: number, row: string) =>
-    !pose || pose === "gg"
-      ? row
-      : [...row].map((ch, i) => (ch === "s" && ((pose !== "wave" && dx + i < 2) || dx + i > 7) ? "." : ch)).join("");
-  body.forEach(([dx, row], i) => rows.push([8 + i, dx, clearArm(dx, row)]));
+  // 자세가 있으면 옆 팔(몸통 밖 피부 칸)을 지우고 아래에서 자세 팔을 따로 그린다(꾸벅은 팔 그대로, 인사는 오른팔만).
+  // 어깨 줄(첫 줄)은 남긴다 — 몸 단계 2 이상의 넓은 어깨가 자세를 취해도 그대로 보이게(가장 바깥 팔 칸만 지움)
+  const clearArm = (dx: number, row: string, line: number) => {
+    if (!pose || pose === "gg") return row;
+    const [lo, hi] = line === 0 ? [0, 9] : [2, 7];
+    return [...row].map((ch, i) => (ch === "s" && ((pose !== "wave" && dx + i < lo) || dx + i > hi) ? "." : ch)).join("");
+  };
+  body.forEach(([dx, row], i) => rows.push([8 + i, dx, clearArm(dx, row, i)]));
   const squatDown = pose === "squat" && f === 1;
   if (squatDown) rows.forEach((r) => (r[0] += 2)); // 앉으면 몸이 두 칸 내려가고 다리는 접힌다
   if (!o.sit) (squatDown ? SQUAT_LEGS : LEGS[o.frame ?? 0]).forEach((row, i) => rows.push([(squatDown ? 14 : 12) + i, 0, row]));
