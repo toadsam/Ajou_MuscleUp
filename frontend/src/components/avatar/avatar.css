@@ -267,6 +267,19 @@
   100% { transform: scale(1); filter: none; }
 }
 
+/* 민소매를 갈아입는 순간(도감): 제자리에서 한 바퀴 돈다(0.6초) */
+.pxa-turn {
+  animation: pxa-turn 0.6s steps(6, end) both;
+}
+
+@keyframes pxa-turn {
+  0% { transform: scaleX(1); }
+  25% { transform: scaleX(0.15); }
+  50% { transform: scaleX(-1); }
+  75% { transform: scaleX(0.15); }
+  100% { transform: scaleX(1); }
+}
+
 /* 몬스터를 쓰러뜨린 순간: 한 번 펄쩍(0.6초) */
 .avatar-victory > svg {
   animation: avatar-victory 0.6s ease-out both;

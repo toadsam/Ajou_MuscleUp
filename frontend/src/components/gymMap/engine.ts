@@ -768,6 +768,9 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
   let shownPlates = state.plates;
   const player: Walker = { x: START[0], y: START[1], path: [], speed: WALK_SPEED, anim: 0, moving: false, back: true };
   let overUntil = 0;
+  /** 출석 축하: 바를 들기 전에 화이팅 자세로 두 번 점프(0.64초) */
+  let cheerUntil = 0;
+  const CHEER_MS = 640;
   type Npc = { id: NpcId; w: Walker; wait: number; route: number; talkUntil: number };
   const allNpcs: Npc[] = (Object.keys(NPC_PLANS) as NpcId[]).map((id) => {
     const p = NPC_PLANS[id];
@@ -1041,7 +1044,10 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
 
     const px = Math.round(player.x * TILE + 3);
     const py = Math.round(player.y * TILE) - 1;
-    const over = now < overUntil;
+    const cheering = now < cheerUntil;
+    const over = !cheering && now < overUntil;
+    // 점프: 0.32초에 한 번씩 4칸 높이 포물선
+    const jump = cheering ? Math.round(Math.sin((((now - (cheerUntil - CHEER_MS)) % 320) / 320) * Math.PI) * 4) : 0;
     // 기구 앞에 멈춰 서면 운동: 파워랙 스쿼트 · 거울 알통 · 러닝머신 제자리 달리기(1층에서만)
     const gear = main && !player.moving && !over && (zone === "rack" || zone === "mirror" || zone === "crew") ? zone : null;
     const walk = gear === "crew" ? walkPose(now / 90, true, now) : walkPose(player.anim * 12, player.moving && !over, now);
@@ -1062,13 +1068,13 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
         fill(g, px + 1, py + 17, 8, 1, C.yellow);
         g.globalAlpha = 1;
         drawChar(g, px, py, pal, {
-          frame: over ? 0 : walk.frame,
-          back: !over && !gear && player.back,
+          frame: over || cheering ? 0 : walk.frame,
+          back: !over && !cheering && !gear && player.back,
           over,
-          hop: gearPose ? 0 : walk.hop,
-          squash: !over && !gearPose && walk.squash,
-          pose: gearPose,
-          poseFrame: gearFrame,
+          hop: cheering ? jump : gearPose ? 0 : walk.hop,
+          squash: !over && !cheering && !gearPose && walk.squash,
+          pose: cheering ? "cheer" : gearPose,
+          poseFrame: cheering ? (jump > 1 ? 1 : 0) : gearFrame,
         });
       },
     });
@@ -1187,7 +1193,9 @@ export function createGymMap(canvas: HTMLCanvasElement, initial: MapState, cb: M
       shownPlates = Math.max(0, state.plates - 1);
       player.path = [];
       [player.x, player.y] = ZONES.checkin.anchor;
-      overUntil = performance.now() + 1700;
+      // 화이팅 점프 두 번 → 바벨 번쩍(움직임 줄이기면 바로 든다)
+      cheerUntil = reduce ? 0 : performance.now() + CHEER_MS;
+      overUntil = performance.now() + (reduce ? 0 : CHEER_MS) + 1700;
       puff(player.x * TILE + 8, player.y * TILE + 2, 10);
       flights.push({
         t0: performance.now(),

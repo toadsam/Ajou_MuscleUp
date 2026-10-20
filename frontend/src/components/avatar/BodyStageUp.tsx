@@ -1,29 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import DialogFrame from "../DialogFrame";
 import { BODY_STAGE_NAMES } from "./chibiArt";
+import { rememberSeen, risenFrom } from "./seenStore";
 
 // 몸이 커지는 순간(2026-10-20) — 홈에서 몸 단계(서버 BodyStage)가 이 기기에서 지난번 본 값보다 오르면 한 번 보여 준다.
 // 예전 몸이 떨리다가(0.7초) 새 몸이 튀어나온다(0.6초). 처음 보는 기기는 지금 값을 기억만 하고 띄우지 않는다.
 // 펌핑(+1)은 넘기지 않는다 — 운동 직후마다 "커졌어요"가 뜨지 않게.
 
 const KEY = "body_stage_seen_v1";
-
-const readSeen = (): Record<string, number> => {
-  try {
-    const v = JSON.parse(localStorage.getItem(KEY) || "{}") as unknown;
-    return v && typeof v === "object" ? (v as Record<string, number>) : {};
-  } catch {
-    return {};
-  }
-};
-
-const remember = (seedKey: string, stage: number) => {
-  try {
-    localStorage.setItem(KEY, JSON.stringify({ ...readSeen(), [seedKey]: stage }));
-  } catch {
-    // 저장 못 하는 브라우저(사생활 보호 창)면 다음에 또 보일 뿐이다
-  }
-};
 
 type Props = {
   /** 캐릭터마다 따로 기억(아바타 시드) */
@@ -36,16 +20,13 @@ type Props = {
 
 export default function BodyStageUp({ seedKey, stage, renderAvatar }: Props) {
   // 캐릭터를 불러온 뒤에 붙인다(key 로 다시 만든다) — 처음 값만 보면 된다
-  const [from] = useState<number | null>(() => {
-    const prev = readSeen()[seedKey];
-    return typeof prev === "number" && stage > prev ? prev : null;
-  });
+  const [from] = useState<number | null>(() => risenFrom(KEY, seedKey, stage));
   const [open, setOpen] = useState(from !== null);
   const [grown, setGrown] = useState(false);
 
   useEffect(() => {
     if (from === null) {
-      remember(seedKey, stage); // 처음 보거나 그대로 · 내려감: 조용히 기억
+      rememberSeen(KEY, seedKey, stage); // 처음 보거나 그대로 · 내려감: 조용히 기억
       return;
     }
     const id = window.setTimeout(() => setGrown(true), 700);
@@ -54,7 +35,7 @@ export default function BodyStageUp({ seedKey, stage, renderAvatar }: Props) {
 
   if (from === null || !open) return null;
   const close = () => {
-    remember(seedKey, stage);
+    rememberSeen(KEY, seedKey, stage);
     setOpen(false);
   };
   const name = (s: number) => `단계 ${s} · ${BODY_STAGE_NAMES[s] ?? ""}`;
