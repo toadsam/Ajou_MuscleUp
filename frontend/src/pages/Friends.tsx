@@ -44,6 +44,7 @@ function FriendAvatar({
         isResting={character?.isResting ?? false}
         tank={character?.tank}
         pumped={character?.isPumped ?? false}
+        bodyStage={character?.bodyStage}
         size={size}
       />
     </div>

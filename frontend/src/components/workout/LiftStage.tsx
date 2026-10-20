@@ -18,6 +18,8 @@ export type StageCharacter = {
   evolutionStage: number;
   growthParams?: GrowthParams | null;
   gender?: "MALE" | "FEMALE" | null;
+  /** 몸 단계 0~5(서버 BodyStage) */
+  bodyStage?: number | null;
 };
 
 /** 세트 체크 신호 — id 가 바뀔 때마다 한 번 연출 */
@@ -122,6 +124,7 @@ export default function LiftStage({ character, mbti, info, weightKg, reps, resti
             tier={character.tier}
             stage={character.evolutionStage}
             growthParams={character.growthParams}
+            bodyStage={character.bodyStage}
             gender={character.gender}
             mbti={mbti}
             isResting={restingNow}

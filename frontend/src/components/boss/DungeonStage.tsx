@@ -253,7 +253,7 @@ export default function DungeonStage({ character, mbti, hp, remaining, hit, play
               <>
                 {[0, 1, 2].map((i) => (
                   <span key={`ghost-${playKey}-${strike.index}-${i}`} className="dg-ghost absolute bottom-0 left-0 right-0 flex justify-center" style={{ animationDelay: `${i * 70}ms` }} aria-hidden="true">
-                    <AvatarRenderer avatarSeed={character.avatarSeed} tier={character.tier} stage={character.evolutionStage} growthParams={character.growthParams} gender={character.gender} mbti={mbti} size={100} action={myAction} />
+                    <AvatarRenderer avatarSeed={character.avatarSeed} tier={character.tier} stage={character.evolutionStage} growthParams={character.growthParams} bodyStage={character.bodyStage} gender={character.gender} mbti={mbti} size={100} action={myAction} />
                   </span>
                 ))}
               </>
@@ -265,6 +265,7 @@ export default function DungeonStage({ character, mbti, hp, remaining, hit, play
                   tier={character.tier}
                   stage={character.evolutionStage}
                   growthParams={character.growthParams}
+                  bodyStage={character.bodyStage}
                   gender={character.gender}
                   mbti={mbti}
                   size={100}

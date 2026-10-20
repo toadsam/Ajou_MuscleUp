@@ -17,6 +17,7 @@ type CharacterProfile = {
   avatarSeed: string;
   stylePreset: string;
   growthParams?: GrowthParams | null;
+  bodyStage?: number | null;
 };
 
 type Evaluation = {
@@ -161,6 +162,7 @@ export default function CharacterCard({
               <AvatarRenderer
                 avatarSeed={character.avatarSeed}
                 growthParams={character.growthParams}
+                bodyStage={character.bodyStage}
                 tier={character.tier}
                 stage={character.evolutionStage}
                 gender={gender}

@@ -24,6 +24,8 @@ export type LiveItem = {
   tank: string | null;
   isPumped: boolean;
   since: number;
+  /** 몸 단계 0~5(서버 BodyStage) */
+  bodyStage?: number;
 };
 
 const BEAT_MS = 60_000;

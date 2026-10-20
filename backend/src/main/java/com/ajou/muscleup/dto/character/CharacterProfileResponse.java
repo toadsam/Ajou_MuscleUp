@@ -29,6 +29,8 @@ public class CharacterProfileResponse {
     private Long pumpedUntil;
     /** 도감에서 장착한 민소매 색(#RRGGBB) 또는 null */
     private String tank;
+    /** 몸 단계 0~5(BodyStage — 근육량 · 레벨 · 활동 레벨 중 가장 높은 것, 펌핑 전) */
+    private Integer bodyStage;
 
     // ── 경험치(EXP) ─────────────────────────────────────────────
     // 기존 성장 규칙을 그대로 풀어 보여 주는 값이다(경제 규칙은 바꾸지 않았다).

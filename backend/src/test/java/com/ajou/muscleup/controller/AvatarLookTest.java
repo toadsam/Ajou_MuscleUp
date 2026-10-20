@@ -1,10 +1,15 @@
 package com.ajou.muscleup.controller;
 
 import com.ajou.muscleup.config.TimeConfig;
+import com.ajou.muscleup.entity.CharacterProfile;
+import com.ajou.muscleup.entity.CharacterTier;
+import com.ajou.muscleup.entity.Gender;
 import com.ajou.muscleup.entity.User;
+import com.ajou.muscleup.entity.UserBodyStats;
 import com.ajou.muscleup.entity.UserCollection;
 import com.ajou.muscleup.repository.UserRepository;
 import com.ajou.muscleup.service.AvatarLookService;
+import com.ajou.muscleup.service.BodyStage;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -109,5 +114,41 @@ class AvatarLookTest {
         mvc.perform(get("/api/character/me").with(as(bob)))
                 .andExpect(jsonPath("$.pumpedUntil").doesNotExist())
                 .andExpect(jsonPath("$.tank").doesNotExist());
+    }
+
+    private void profile(User u, int level, int attendancePoints) {
+        em.persist(CharacterProfile.builder().user(u).level(level).tier(CharacterTier.BRONZE).evolutionStage(Math.min(9, (level - 1) / 10))
+                .title("리프터").isPublic(false).attendancePoints(attendancePoints).build());
+    }
+
+    @Test
+    void bodyStageIsTheHighestOfMuscleLevelAndActivity() throws Exception {
+        // alice: 레벨 30(→ 2) · 활동 점수 720(활동 Lv10 → 3) · 근육 없음 → 3
+        profile(alice, 30, 720);
+        // bob: 레벨 5 · 활동 0 · 근육량 21/50kg = 0.42 → (0.42-0.25)/0.30 = 0.567 → 3
+        profile(bob, 5, 0);
+        em.persist(UserBodyStats.builder().user(bob).gender(Gender.MALE).heightCm(175).weightKg(50.0).skeletalMuscleKg(21.0).build());
+        // carol: 갓 시작(레벨 1 · 점수 0) → 0, 응답에서도 빠진다
+        profile(carol, 1, 0);
+        em.flush();
+
+        Map<Long, AvatarLookService.Look> map = looks.looks(List.of(alice.getId(), bob.getId(), carol.getId()));
+        assertThat(map.get(alice.getId()).bodyStage()).isEqualTo(3);
+        assertThat(map.get(bob.getId()).bodyStage()).isEqualTo(3);
+        assertThat(map).doesNotContainKey(carol.getId());
+        assertThat(looks.look(carol.getId()).bodyStage()).isZero();
+
+        mvc.perform(get("/api/character/me").with(as(alice)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bodyStage").value(3));
+
+        // 규칙: 셋 중 가장 높은 단계, 최대 5
+        assertThat(BodyStage.of(0, 1, 1)).isZero();
+        assertThat(BodyStage.of(0, 10, 0)).isEqualTo(1);
+        assertThat(BodyStage.of(0, 0, 6)).isEqualTo(2);
+        assertThat(BodyStage.of(0.5, 0, 0)).isEqualTo(2);
+        assertThat(BodyStage.of(1.0, 0, 0)).isEqualTo(5);
+        assertThat(BodyStage.of(0, 99, 99)).isEqualTo(5);
+        assertThat(BodyStage.of(Double.NaN, 1, 1)).isZero();
     }
 }

@@ -53,6 +53,8 @@ type CharacterProfile = {
   /** 운동 직후 펌핑이 끝나는 시각(ms) · 장착한 민소매 색 */
   pumpedUntil?: number | null;
   tank?: string | null;
+  /** 몸 단계 0~5(서버 BodyStage) */
+  bodyStage?: number | null;
 };
 type StatsResponse = { mbti?: string | null };
 
@@ -411,6 +413,7 @@ export default function Home() {
             <AvatarRenderer
               avatarSeed={character.avatarSeed}
               growthParams={character.growthParams}
+              bodyStage={character.bodyStage}
               tier={character.tier}
               stage={character.evolutionStage}
               gender={character.gender}
@@ -493,6 +496,7 @@ export default function Home() {
                   <AvatarRenderer
                     avatarSeed={character.avatarSeed}
                     growthParams={character.growthParams}
+                    bodyStage={character.bodyStage}
                     tier={character.tier}
                     stage={character.evolutionStage}
                     gender={character.gender}

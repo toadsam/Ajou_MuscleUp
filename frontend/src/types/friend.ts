@@ -20,6 +20,8 @@ export interface FriendCharacterSnapshot {
   tank?: string | null;
   title?: string | null;
   isPumped?: boolean;
+  /** 몸 단계 0~5(서버 BodyStage) */
+  bodyStage?: number;
 }
 
 export interface FriendRequestItem {

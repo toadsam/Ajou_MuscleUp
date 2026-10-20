@@ -86,6 +86,7 @@ export default function LiveZone() {
                     gender={item.gender}
                     tank={item.tank}
                     pumped={item.isPumped}
+                    bodyStage={item.bodyStage}
                     size={64}
                     action={{ kind: motion.kind, frame, equip: motion.equip, plates: motion.equip === "barbell" ? barbellLoad(60).pixel : [] }}
                   />
