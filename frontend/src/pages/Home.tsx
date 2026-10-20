@@ -520,6 +520,7 @@ export default function Home() {
                     mbti={mbti}
                     tank={character.tank}
                     size={size}
+                    banner={false}
                   />
                 )}
               />
@@ -541,6 +542,7 @@ export default function Home() {
                     mbti={mbti}
                     tank={character.tank}
                     size={size}
+                    banner={false}
                   />
                 )}
               />

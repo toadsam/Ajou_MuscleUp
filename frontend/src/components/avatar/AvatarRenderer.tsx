@@ -40,6 +40,8 @@ type Props = {
   celebrate?: boolean;
   /** 치비 표정을 직접 고른다(누르면 반응 — 윙크 등). 없으면 상태로 정한다 */
   expression?: ChibiExpression | null;
+  /** false 면 "휴식 중" · "경고" · "다시 시작해요" 띠와 지친 표정을 끈다(축하 창 속 캐릭터) */
+  banner?: boolean;
 };
 
 // 피부·머리 색은 MBTI 를 따르고, 민소매 색은 원판 팔레트에서 고른다.
@@ -91,6 +93,7 @@ export default function AvatarRenderer({
   bodyStage = null,
   celebrate = false,
   expression: expressionOverride = null,
+  banner = true,
 }: Props) {
   const [persistedAppearance, setPersistedAppearance] = useState(() => loadAppearanceBySeed(avatarSeed));
 
@@ -119,7 +122,7 @@ export default function AvatarRenderer({
   const resolvedTank = (tank && /^#[0-9A-Fa-f]{6}$/.test(tank) ? tank : null) ?? persistedAppearance?.tank ?? null;
   const resolvedGender = gender ?? persistedAppearance?.gender ?? "MALE";
   const resolvedResting = isResting ?? persistedAppearance?.isResting ?? false;
-  const resolvedAttendanceRisk = resolvedResting
+  const resolvedAttendanceRisk = resolvedResting || !banner
     ? "normal"
     : attendanceRisk !== "normal"
       ? attendanceRisk
@@ -260,7 +263,7 @@ export default function AvatarRenderer({
       className={`avatar-shell-v2 ${motionClass} avatar-tier-${tier.toLowerCase()} ${resolvedGender === "FEMALE" ? "avatar-gender-female" : "avatar-gender-male"} ${resolvedResting ? "avatar-resting" : ""} ${resolvedAttendanceRisk === "warning" ? "avatar-risk-warning" : ""} ${resolvedAttendanceRisk === "critical" ? "avatar-risk-critical" : ""} ${tierPreset.burst ? "avatar-master-burst" : ""} ${celebrate ? "avatar-victory" : ""}`}
       style={{ width: size, height: size }}
     >
-      {resolvedResting && <div className="avatar-rest-banner">{"휴식 중"}</div>}
+      {banner && resolvedResting && <div className="avatar-rest-banner">{"휴식 중"}</div>}
       {!resolvedResting && resolvedAttendanceRisk === "warning" && (
         <div className="avatar-risk-banner warning">{"경고"}</div>
       )}

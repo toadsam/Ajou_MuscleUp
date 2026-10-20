@@ -46,7 +46,7 @@ export default function TapAvatar(props: Props) {
       {active && (
         <span
           key={`say-${taps}`}
-          className="dg-pop pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap border-2 border-black bg-chalk px-2 py-0.5 text-xs font-bold text-black"
+          className="dg-pop pointer-events-none absolute right-0 top-[22%] translate-x-1/4 whitespace-nowrap border-2 border-black bg-chalk px-2 py-0.5 text-xs font-bold text-black"
           role="status"
         >
           {r.say}
